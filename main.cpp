@@ -9,6 +9,8 @@
 
 #include <utils.hpp> // for format_out_fp
 
+#include <readline/readline.h> // for readline
+
 
 int TIMEOUT = 5;
 #define SOCKET_FP_LEN 13
@@ -162,6 +164,14 @@ void process_file(char* fp, int fsize){
     
 }
 
+int file_menu(char* fp){
+    printf("%s\n", fp);
+    char* input = readline("\t> ");
+    if (!input)
+        return 1;
+    return 0;
+}
+
 int main(const int argc, const char* argv[]){
     int i = 0;
     int volume = -1;
@@ -213,11 +223,15 @@ int main(const int argc, const char* argv[]){
     }
     
     
+    FILE* inf = fopen("/tmp/mytag.sock", "r");
+    
     char* fp = NULL;
     size_t fp_size;
-    while (getline(&fp, &fp_size, stdin) != -1){
+    while (getline(&fp, &fp_size, inf) != -1){
         fp[strlen(fp)-1] = 0; // Remove \n char
         mpv_open(fp);
+        if (file_menu(fp))
+            break;
     }
     
     close(SOCKET_FD);
