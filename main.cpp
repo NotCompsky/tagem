@@ -163,7 +163,7 @@ void process_file(char* fp, int fsize){
 }
 
 void init_mpv(char** mpv_args){
-    if (execve("/usr/bin/mpv", mpv_args, NULL) == -1)
+    if (execve("/bin/echo", mpv_args, NULL) == -1)
         // Init MPV
         handler(ERR_CANNOT_O_MPV);
 }
@@ -195,6 +195,15 @@ int main(const int argc, const char* argv[]){
 #ifdef DEBUG
     printf("%s\n", SOCKET_FP);
 #endif
+    /* Alt 1 */
+    //char buf[2048];
+    //sprintf(buf, "mpv --really-quiet --idle --input-ipc-server '%s'", SOCKET_FP);
+    //printf("Executing: %s\n", buf);
+    //std::thread t1(system, buf);
+    
+    /* Alt 2 */
+    std::thread t1(init_mpv, mpv_args);
+    
     
     SOCKET_FD = socket(AF_UNIX, SOCK_STREAM, 0);
     // AF_UNIX==1, SOCK_STREAM==1
@@ -217,21 +226,11 @@ int main(const int argc, const char* argv[]){
     }
     
     
-    /* Alt 1 */
-    //char buf[2048];
-    //sprintf(buf, "mpv --really-quiet --idle --input-ipc-server '%s'", SOCKET_FP);
-    //printf("Executing: %s\n", buf);
-    //std::thread t1(system, buf);
-    
-    /* Alt 2 */
-    //std::thread t1(init_mpv, mpv_args);
-    
-    
     for (auto i=1; i<argc; ++i)
         mpv_open((char*)argv[i]);
     
     
-    //t1.join();
+    t1.join();
     //fclose(SOCKET);
     close(SOCKET_FD);
     
