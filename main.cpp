@@ -163,7 +163,7 @@ void process_file(char* fp, int fsize){
 }
 
 void init_mpv(char** mpv_args){
-    if (execve("/bin/echo", mpv_args, NULL) == -1)
+    if (execve("/usr/bin/mpv", mpv_args, NULL) == -1)
         // Init MPV
         handler(ERR_CANNOT_O_MPV);
 }
@@ -192,11 +192,17 @@ int main(const int argc, const char* argv[]){
     //memcpy(SOCKET_FP+16, &pid, 4);
     mpv_args[4] = SOCKET_FP;
     
+    if (volume != -1){
+        mpv_args[5] = "--volume";
+        char buf[3];
+        snprintf(buf, 3, "%d", volume);
+        mpv_args[6] = buf;
+    }
+    
 #ifdef DEBUG
     printf("%s\n", SOCKET_FP);
 #endif
     std::thread t1(init_mpv, mpv_args);
-    
     
     SOCKET_FD = socket(AF_UNIX, SOCK_STREAM, 0);
     // AF_UNIX==1, SOCK_STREAM==1
@@ -205,23 +211,22 @@ int main(const int argc, const char* argv[]){
     memcpy(serv_addr.sa_data, SOCKET_FP, SOCKET_FP_LEN);
     // NOTE: We want to go over the 14 char limit
     
-    if (connect(SOCKET_FD, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
-        return ERR_CANNOT_CONNECT_SOCKET;
-    
-    
-    if (volume != -1){
-        mpv_args[5] = "--volume";
-        char buf[3];
-        snprintf(buf, 3, "%d", volume);
-        mpv_args[6] = buf;
+    int attempts = 0;
+    int rc;
+    while (rc = connect(SOCKET_FD, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("connect returned %d\n", rc);
+        if (++attempts == 2*TIMEOUT)
+            return ERR_CANNOT_CONNECT_SOCKET;
+        usleep(500);
     }
     
-    
+    /*
     for (auto i=1; i<argc; ++i)
         mpv_open((char*)argv[i]);
-    
+    */
     
     t1.join();
+    
     close(SOCKET_FD);
     
     return 0;
