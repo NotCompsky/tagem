@@ -195,13 +195,6 @@ int main(const int argc, const char* argv[]){
 #ifdef DEBUG
     printf("%s\n", SOCKET_FP);
 #endif
-    /* Alt 1 */
-    //char buf[2048];
-    //sprintf(buf, "mpv --really-quiet --idle --input-ipc-server '%s'", SOCKET_FP);
-    //printf("Executing: %s\n", buf);
-    //std::thread t1(system, buf);
-    
-    /* Alt 2 */
     std::thread t1(init_mpv, mpv_args);
     
     
@@ -211,8 +204,6 @@ int main(const int argc, const char* argv[]){
     serv_addr.sa_family = 1;
     memcpy(serv_addr.sa_data, SOCKET_FP, SOCKET_FP_LEN);
     // NOTE: We want to go over the 14 char limit
-    printf("SOCKET_FD:\t%d\nserv_addr:\t%d\t%s\n", SOCKET_FD, serv_addr.sa_family, serv_addr.sa_data);
-    printf("sizeof(serv_addr):\t%ld\n", sizeof(serv_addr));
     
     if (connect(SOCKET_FD, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
         return ERR_CANNOT_CONNECT_SOCKET;
@@ -231,7 +222,6 @@ int main(const int argc, const char* argv[]){
     
     
     t1.join();
-    //fclose(SOCKET);
     close(SOCKET_FD);
     
     return 0;
