@@ -10,16 +10,9 @@
 #include <utils.hpp> // for format_out_fp
 
 
-
-struct sockaddr_bigger {
-    sa_family_t sa_family;
-    char        sa_data[1024]; // Usual is char[14]
-};
-
-
-
 int TIMEOUT = 5;
-char SOCKET_FP[16 + 4 + 1] = "/tmp/mpv-socket.\0\0\0\0";
+#define SOCKET_FP_LEN 35 // 16
+char SOCKET_FP[SOCKET_FP_LEN + 1] = "/tmp/AAAAAAAAAAABSDFSETFG4980456456"; //"/tmp/mpv-socket."; // \0\0\0\0";
 //FILE* SOCKET;
 int SOCKET_FD;
 
@@ -31,10 +24,19 @@ int WIN_H;
 int WIN_S;
 */
 
-#define ERR_CANNOT_CONNECT_SOCKET 1
-#define ERR_CANNOT_W_SOCKET 2
-#define ERR_CANNOT_R_SOCKET 3
-#define ERR_CANNOT_O_MPV 4
+#define ERR_CANNOT_CONNECT_SOCKET 101
+#define ERR_CANNOT_W_SOCKET 102
+#define ERR_CANNOT_R_SOCKET 103
+#define ERR_CANNOT_O_MPV 104
+
+
+
+struct sockaddr_bigger {
+    sa_family_t sa_family;
+    char        sa_data[SOCKET_FP_LEN]; // Usual is char[14]
+};
+
+
 
 void handler(int rc){
     exit(rc);
@@ -194,17 +196,16 @@ int main(const int argc, const char* argv[]){
     printf("%s\n", SOCKET_FP);
 #endif
     
-    //SOCKET_FD = open(SOCKET_FP, O_RDWR);
-    SOCKET_FD = socket(AF_UNIX, SOCK_RAW, 0);
+    SOCKET_FD = socket(AF_UNIX, SOCK_STREAM, 0);
+    // AF_UNIX==1, SOCK_STREAM==1
     sockaddr_bigger serv_addr = {};
     serv_addr.sa_family = 1;
-    int SOCKET_FP_LEN = strlen(SOCKET_FP);
     memcpy(serv_addr.sa_data, SOCKET_FP, SOCKET_FP_LEN);
-    serv_addr.sa_data[SOCKET_FP_LEN] = 0;
     // NOTE: We want to go over the 14 char limit
     printf("SOCKET_FD:\t%d\nserv_addr:\t%d\t%s\n", SOCKET_FD, serv_addr.sa_family, serv_addr.sa_data);
+    printf("sizeof(serv_addr):\t%ld\n", sizeof(serv_addr));
     
-    if (connect(SOCKET_FD, (const sockaddr*)&serv_addr, SOCKET_FP_LEN) < 0)
+    if (connect(SOCKET_FD, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
         return ERR_CANNOT_CONNECT_SOCKET;
     
     
