@@ -11,8 +11,8 @@
 
 
 int TIMEOUT = 5;
-#define SOCKET_FP_LEN 35 // 16
-char SOCKET_FP[SOCKET_FP_LEN + 1] = "/tmp/AAAAAAAAAAABSDFSETFG4980456456"; //"/tmp/mpv-socket."; // \0\0\0\0";
+#define SOCKET_FP_LEN 13
+char SOCKET_FP[SOCKET_FP_LEN + 1] = "/tmp/mpv.sock"; //"/tmp/mpv-socket."; // \0\0\0\0";
 //FILE* SOCKET;
 int SOCKET_FD;
 
@@ -162,12 +162,6 @@ void process_file(char* fp, int fsize){
     
 }
 
-void init_mpv(char** mpv_args){
-    if (execve("/usr/bin/mpv", mpv_args, NULL) == -1)
-        // Init MPV
-        handler(ERR_CANNOT_O_MPV);
-}
-
 int main(const int argc, const char* argv[]){
     int i = 0;
     int volume = -1;
@@ -202,8 +196,6 @@ int main(const int argc, const char* argv[]){
 #ifdef DEBUG
     printf("%s\n", SOCKET_FP);
 #endif
-    std::thread t1(init_mpv, mpv_args);
-    
     SOCKET_FD = socket(AF_UNIX, SOCK_STREAM, 0);
     // AF_UNIX==1, SOCK_STREAM==1
     sockaddr_bigger serv_addr = {};
@@ -220,12 +212,13 @@ int main(const int argc, const char* argv[]){
         usleep(500);
     }
     
-    /*
-    for (auto i=1; i<argc; ++i)
-        mpv_open((char*)argv[i]);
-    */
     
-    t1.join();
+    char* fp = NULL;
+    size_t fp_size;
+    while (getline(&fp, &fp_size, stdin) != -1){
+        fp[strlen(fp)-1] = 0; // Remove \n char
+        mpv_open(fp);
+    }
     
     close(SOCKET_FD);
     
