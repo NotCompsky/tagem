@@ -50,43 +50,37 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     connect(m_player, SIGNAL(positionChanged(qint64)), SLOT(updateSlider(qint64)));
     connect(m_player, SIGNAL(started()), SLOT(updateSlider()));
     connect(m_player, SIGNAL(notifyIntervalChanged()), SLOT(updateSliderUnit()));
-
+    
     vl->addWidget(m_slider);
-    QHBoxLayout *hb = new QHBoxLayout();
-    vl->addLayout(hb);
-    m_openBtn = new QPushButton(tr("Next"));
-    m_playBtn = new QPushButton(tr("Play/Pause"));
-    m_stopBtn = new QPushButton(tr("Stop"));
-    hb->addWidget(m_openBtn);
-    hb->addWidget(m_playBtn);
-    hb->addWidget(m_stopBtn);
-    connect(m_openBtn, SIGNAL(clicked()), SLOT(openMedia()));
-    connect(m_playBtn, SIGNAL(clicked()), SLOT(playPause()));
-    connect(m_stopBtn, SIGNAL(clicked()), m_player, SLOT(stop()));
+    
     inf = fopen("/tmp/mpv.sock", "r");
+    
+    media_fp = NULL;
     
     keyReceiver* key_receiver = new keyReceiver();
     key_receiver->window = this;
     this->installEventFilter(key_receiver);
+    
+    for (auto i=0; i<10; ++i)
+        tag_preset[i] = "";
 }
 
-void PlayerWindow::openMedia()
+void PlayerWindow::media_open()
 {
-    char* fp;
+    // WARNING: fp MUST be initialised, unless called via signal button press
     size_t fp_size;
-    if (getline(&fp, &fp_size, inf) == -1)
+    if (getline(&media_fp, &fp_size, inf) == -1)
         close();
     QString file = "";
-    while (*fp != '\n'){
-        // Last char is \n
-        file += *fp;
-        ++fp;
-    }
+    auto strlen_fp = strlen(media_fp);
+    media_fp[strlen_fp-1] = 0; // Last char is \n
+    for (auto i=0; i<strlen_fp-1; ++i)
+        file += media_fp[i];
     
     if (file.isEmpty())
         return;
     
-    qDebug() << "openMedia " << file; // SegFault without this line
+    //qDebug() << "media_open " << file; // SegFault without this line
     m_player->play(file);
 }
 
@@ -128,15 +122,20 @@ void PlayerWindow::updateSliderUnit()
     updateSlider();
 }
 
-void PlayerWindow::tag(){
+QString PlayerWindow::media_tag(QString str){
     // Triggered on key press
     bool ok;
-    QString str = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, "", &ok);
-    if (ok && !str.isEmpty())
-        qDebug() << "Tag: " << str;
+    QString tagstr = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, str, &ok);
+    if (ok && !tagstr.isEmpty())
+        qDebug() << "Tag: " << tagstr;
+    return tagstr;
 }
 
-void PlayerWindow::overwrite(){
+void PlayerWindow::media_tag_new_preset(int n){
+    tag_preset[n] = media_tag(tag_preset[n]);
+}
+
+void PlayerWindow::media_overwrite(){
     // Triggered on key press
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite"), tr("Value"), QLineEdit::Normal, "Manually deleted", &ok);
@@ -144,7 +143,9 @@ void PlayerWindow::overwrite(){
         qDebug() << "Overwritten with: " << str;
 }
 
-
+void PlayerWindow::media_delete(){
+    qDebug() << "Deleted: " << media_fp;
+}
 
 
 
@@ -172,17 +173,89 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         switch(key->key()){
             case Qt::Key_Enter:
             case Qt::Key_Return:
-                //window->openMedia();
+            case Qt::Key_D:
+                window->media_open(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                 break;
             case Qt::Key_T:
-                window->tag();
+                window->media_tag("");
                 break;
             case Qt::Key_O:
-                window->overwrite();
+                window->media_overwrite();
+                break;
+            case Qt::Key_Q:
+                window->close();
+                break;
+            case Qt::Key_X:
+                window->media_delete();
+                window->media_open();
                 break;
             case Qt::Key_Space:
                 window->playPause();
                 break;
+            
+            /* Preset Tags */
+            // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
+            case Qt::Key_1:
+                window->media_tag(window->tag_preset[1]);
+                break;
+            case Qt::Key_Exclam:
+                window->media_tag_new_preset(1);
+                break;
+            case Qt::Key_2:
+                window->media_tag(window->tag_preset[2]);
+                break;
+            case Qt::Key_QuoteDbl:
+                window->media_tag_new_preset(2);
+                break;
+            case Qt::Key_3:
+                window->media_tag(window->tag_preset[3]);
+                break;
+            case Qt::Key_sterling:
+                window->media_tag_new_preset(3);
+                break;
+            case Qt::Key_4:
+                window->media_tag(window->tag_preset[4]);
+                break;
+            case Qt::Key_Dollar:
+                window->media_tag_new_preset(4);
+                break;
+            case Qt::Key_5:
+                window->media_tag(window->tag_preset[5]);
+                break;
+            case Qt::Key_Percent:
+                window->media_tag_new_preset(5);
+                break;
+            case Qt::Key_6:
+                window->media_tag(window->tag_preset[6]);
+                break;
+            case Qt::Key_AsciiCircum:
+                window->media_tag_new_preset(6);
+                break;
+            case Qt::Key_7:
+                window->media_tag(window->tag_preset[7]);
+                break;
+            case Qt::Key_Ampersand:
+                window->media_tag_new_preset(7);
+                break;
+            case Qt::Key_8:
+                window->media_tag(window->tag_preset[8]);
+                break;
+            case Qt::Key_Asterisk:
+                window->media_tag_new_preset(8);
+                break;
+            case Qt::Key_9:
+                window->media_tag(window->tag_preset[9]);
+                break;
+            case Qt::Key_ParenLeft:
+                window->media_tag_new_preset(9);
+                break;
+            case Qt::Key_0:
+                window->media_tag(window->tag_preset[0]);
+                break;
+            case Qt::Key_ParenRight:
+                window->media_tag_new_preset(0);
+                break;
+            
             default: return QObject::eventFilter(obj, event);
         }
         return true;

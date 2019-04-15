@@ -34,10 +34,13 @@ class PlayerWindow : public QWidget
     Q_OBJECT
 public:
     explicit PlayerWindow(QWidget *parent = 0);
-    void tag();
-    void overwrite();
+    QString media_tag(QString str);
+    void media_tag_new_preset(int n);
+    void media_overwrite();
+    void media_open();
+    void media_delete();
+    QString tag_preset[10];
 public Q_SLOTS:
-    void openMedia();
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
@@ -50,10 +53,8 @@ private:
     QtAV::VideoOutput *m_vo;
     QtAV::AVPlayer *m_player;
     QSlider *m_slider;
-    QPushButton *m_openBtn;
-    QPushButton *m_playBtn;
-    QPushButton *m_stopBtn;
     int m_unit;
+    char* media_fp;
     FILE* inf;
 };
 
