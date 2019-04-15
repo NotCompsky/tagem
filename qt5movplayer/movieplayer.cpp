@@ -1,4 +1,5 @@
 #include <QtWidgets>
+#include <QDebug>
 
 #include "movieplayer.h"
 
@@ -13,8 +14,6 @@ MoviePlayer::MoviePlayer(QWidget *parent)
     movieLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     movieLabel->setBackgroundRole(QPalette::Dark);
     movieLabel->setAutoFillBackground(true);
-
-    currentMovieDirectory = "movies";
 
     createControls();
     createButtons();
@@ -38,20 +37,13 @@ MoviePlayer::MoviePlayer(QWidget *parent)
 
     setWindowTitle(tr("Movie Player"));
     resize(1920/2, 1080);
+    
+    inf = fopen("/tmp/mpv.sock", "r");
 }
 
-void MoviePlayer::open()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open a Movie"),
-                               currentMovieDirectory);
-    if (!fileName.isEmpty())
-        openFile(fileName);
-}
-
-void MoviePlayer::openFile(const QString &fileName)
-{
-    currentMovieDirectory = QFileInfo(fileName).path();
-
+void MoviePlayer::openFile(const QString &fileName){
+    qDebug() << "openFile " << fileName;
+    
     movie->stop();
     movieLabel->setMovie(movie);
     movie->setFileName(fileName);
@@ -59,6 +51,18 @@ void MoviePlayer::openFile(const QString &fileName)
 
     updateFrameSlider();
     updateButtons();
+}
+
+void MoviePlayer::load_next_file(){
+    char* fp;
+    size_t fp_size;
+    if (getline(&fp, &fp_size, inf) == -1)
+        close();
+    fp[strlen(fp)-1] = 0; // Remove \n char
+    QString s = "";
+    for (auto i=0; i<strlen(fp); ++i)
+        s += fp[i];
+    openFile(s);
 }
 
 void MoviePlayer::goToFrame(int frame)
@@ -96,7 +100,7 @@ void MoviePlayer::updateButtons()
                            && movie->state() == QMovie::NotRunning);
     pauseButton->setEnabled(movie->state() != QMovie::NotRunning);
     pauseButton->setChecked(movie->state() == QMovie::Paused);
-    stopButton->setEnabled(movie->state() != QMovie::NotRunning);
+    nextButton->setEnabled(true);
 }
 
 void MoviePlayer::createControls()
@@ -128,12 +132,6 @@ void MoviePlayer::createButtons()
 {
     QSize iconSize(36, 36);
 
-    openButton = new QToolButton;
-    openButton->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
-    openButton->setIconSize(iconSize);
-    openButton->setToolTip(tr("Open File"));
-    connect(openButton, SIGNAL(clicked()), this, SLOT(open()));
-
     playButton = new QToolButton;
     playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     playButton->setIconSize(iconSize);
@@ -147,11 +145,11 @@ void MoviePlayer::createButtons()
     pauseButton->setToolTip(tr("Pause"));
     connect(pauseButton, SIGNAL(clicked(bool)), movie, SLOT(setPaused(bool)));
 
-    stopButton = new QToolButton;
-    stopButton->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
-    stopButton->setIconSize(iconSize);
-    stopButton->setToolTip(tr("Stop"));
-    connect(stopButton, SIGNAL(clicked()), movie, SLOT(stop()));
+    nextButton = new QToolButton;
+    nextButton->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    nextButton->setIconSize(iconSize);
+    nextButton->setToolTip(tr("Next"));
+    connect(nextButton, SIGNAL(clicked()), this, SLOT(load_next_file()));
 
     quitButton = new QToolButton;
     quitButton->setIcon(style()->standardIcon(QStyle::SP_DialogCloseButton));
@@ -161,10 +159,9 @@ void MoviePlayer::createButtons()
 
     buttonsLayout = new QHBoxLayout;
     buttonsLayout->addStretch();
-    buttonsLayout->addWidget(openButton);
     buttonsLayout->addWidget(playButton);
     buttonsLayout->addWidget(pauseButton);
-    buttonsLayout->addWidget(stopButton);
+    buttonsLayout->addWidget(nextButton);
     buttonsLayout->addWidget(quitButton);
     buttonsLayout->addStretch();
 }

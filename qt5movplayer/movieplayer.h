@@ -23,7 +23,7 @@ public:
     void openFile(const QString &fileName);
 
 private slots:
-    void open();
+    void load_next_file();
     void goToFrame(int frame);
     void fitToWindow();
     void updateButtons();
@@ -33,13 +33,11 @@ private:
     void createControls();
     void createButtons();
 
-    QString currentMovieDirectory;
     QLabel *movieLabel;
     QMovie *movie;
-    QToolButton *openButton;
     QToolButton *playButton;
     QToolButton *pauseButton;
-    QToolButton *stopButton;
+    QToolButton *nextButton;
     QToolButton *quitButton;
     QCheckBox *fitCheckBox;
     QSlider *frameSlider;
@@ -50,6 +48,8 @@ private:
     QGridLayout *controlsLayout;
     QHBoxLayout *buttonsLayout;
     QVBoxLayout *mainLayout;
+    
+    FILE* inf;
 };
 
 #endif
