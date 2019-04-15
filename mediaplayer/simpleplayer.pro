@@ -9,6 +9,7 @@ PROJECTROOT = $$PWD/../..
 #preparePaths($$OUT_PWD/../../out)
 
 include(src.pri)
+LIBS += -lmysqlcppconn
 
 DISTFILES += \
     ui/UIForm.ui.qml \

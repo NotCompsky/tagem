@@ -34,6 +34,9 @@
 #include <cppconn/statement.h>
 
 
+// mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
+
+
 using namespace QtAV;
 
 PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
@@ -134,10 +137,21 @@ void PlayerWindow::updateSliderUnit()
     updateSlider();
 }
 
-const char* sql_stmt__insert_into = "INSERT INTO tags (name) values(\"";
-const char* sql_stmt__select_from = "SELECT id FROM tags WHERE name = \"";
+const char* sql_stmt__insert_into_tags = "INSERT INTO tags (name) values(\"";
+#define len_sdflkgdfgffg 32
+const char* sql_stmt__select_from_tags = "SELECT id FROM tags WHERE name = \"";
+#define len_oijerfjgfdgg 34
+
+const char* sql_stmt__insert_into_fileid2tagid = "INSERT INTO files (fp) values(\"";
+#define len_lkfdigdlofjg 31
+const char* sql_stmt__select_from_fileid2tagid = "SELECT id FROM files WHERE fp = \"";
+#define len_odfikjgdfigd 33
+
 
 QString PlayerWindow::media_tag(QString str){
+    if (media_fp == NULL)
+        return "";
+    
     // Triggered on key press
     bool ok;
     QString tagstr = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, str, &ok);
@@ -147,21 +161,22 @@ QString PlayerWindow::media_tag(QString str){
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     
-    char statement[1024 + 35 + 2 + 1];
+    char statement[1024 + 42 + 2 + 1];
     int i;
     
     
     i = strlen(tagchars);
     
+    
     goto__mdsfgdfgdf:
-    memcpy(statement, sql_stmt__select_from, 34);
-    memcpy(statement + 34, tagchars, i);
-    i += 34;
+    memcpy(statement, sql_stmt__select_from_tags, len_oijerfjgfdgg);
+    memcpy(statement + len_oijerfjgfdgg, tagchars, i);
+    i += len_oijerfjgfdgg;
     statement[i++] = '\"';
     statement[i++] = ';';
     statement[i] = 0;
     i -= 2;
-    i -= 34;
+    i -= len_oijerfjgfdgg;
     qDebug() << statement;
     sql_res = sql_stmt->executeQuery(statement);
     
@@ -172,15 +187,15 @@ QString PlayerWindow::media_tag(QString str){
     else {
         qDebug() << "No prior tags of this value";
         
-        memcpy(statement, sql_stmt__insert_into, 32);
-        memcpy(statement + 32, tagchars, i);
-        i += 32;
+        memcpy(statement, sql_stmt__insert_into_tags, len_sdflkgdfgffg);
+        memcpy(statement + len_sdflkgdfgffg, tagchars, i);
+        i += len_sdflkgdfgffg;
         statement[i++] = '\"';
         statement[i++] = ')';
         statement[i++] = ';';
         statement[i] = 0;
         i -= 3;
-        i -= 32;
+        i -= len_sdflkgdfgffg;
         qDebug() << statement;
         sql_stmt->execute(statement);
         
@@ -190,6 +205,50 @@ QString PlayerWindow::media_tag(QString str){
     //sql_res = sql_stmt->executeQuery("SELECT LAST_INSERT_ID() AS id;");
     
     qDebug() << "tag_id: " << tag_id;
+    
+    
+    
+    i = strlen(media_fp);
+    
+    goto__mdsfgdfgda:
+    memcpy(statement, sql_stmt__select_from_fileid2tagid, len_odfikjgdfigd);
+    memcpy(statement + len_odfikjgdfigd, media_fp, i);
+    i += len_odfikjgdfigd;
+    statement[i++] = '\"';
+    statement[i++] = ';';
+    statement[i] = 0;
+    i -= 2;
+    i -= len_odfikjgdfigd;
+    qDebug() << statement;
+    sql_res = sql_stmt->executeQuery(statement);
+    
+    int file_id;
+    
+    if (sql_res->next())
+        file_id = sql_res->getInt(1); // 1 is first column
+    else {
+        qDebug() << "No prior tags of this value";
+        
+        memcpy(statement, sql_stmt__insert_into_fileid2tagid, len_lkfdigdlofjg);
+        memcpy(statement + len_lkfdigdlofjg, media_fp, i);
+        i += len_lkfdigdlofjg;
+        statement[i++] = '\"';
+        statement[i++] = ')';
+        statement[i++] = ';';
+        statement[i] = 0;
+        i -= 3;
+        i -= len_lkfdigdlofjg;
+        qDebug() << statement;
+        sql_stmt->execute(statement);
+        
+        goto goto__mdsfgdfgda;
+    }
+    
+    //sql_res = sql_stmt->executeQuery("SELECT LAST_INSERT_ID() AS id;");
+    
+    qDebug() << "file_id: " << file_id;
+    
+    
     
     return tagstr;
 }
