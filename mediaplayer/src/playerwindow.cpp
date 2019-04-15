@@ -166,7 +166,7 @@ QString PlayerWindow::media_tag(QString str){
     sql_res = sql_stmt->executeQuery(statement);
     
     if (sql_res->next())
-        qDebug() << "ID: " << sql_res->getInt(0);
+        qDebug() << "ID: " << sql_res->getInt(1);
     else
         qDebug() << "No prior tags of this value";
     
