@@ -23,6 +23,7 @@
 
 #include <QWidget>
 #include <QtAV>
+#include <QTextEdit>
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -33,6 +34,8 @@ class PlayerWindow : public QWidget
     Q_OBJECT
 public:
     explicit PlayerWindow(QWidget *parent = 0);
+    void tag();
+    void overwrite();
 public Q_SLOTS:
     void openMedia();
     void seekBySlider(int value);
@@ -52,6 +55,16 @@ private:
     QPushButton *m_stopBtn;
     int m_unit;
     FILE* inf;
+};
+
+class keyReceiver : public QObject
+// src: https://wiki.qt.io/How_to_catch_enter_key
+{
+    Q_OBJECT
+public:
+    PlayerWindow* window;
+protected:
+    bool eventFilter(QObject* obj, QEvent* event);
 };
 
 #endif // PLAYERWINDOW_H

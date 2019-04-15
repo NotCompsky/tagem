@@ -1,5 +1,5 @@
-SOURCES += main.cpp \
-    playerwindow.cpp
+SOURCES += src/main.cpp \
+    src/playerwindow.cpp
 
 HEADERS += \
-    playerwindow.h
+    src/playerwindow.h

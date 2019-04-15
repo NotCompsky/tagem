@@ -3,6 +3,6 @@ find_package(QtAV REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
-add_executable(simpleplayer main.cpp playerwindow.cpp playerwindow.h)
+add_executable(simpleplayer src/main.cpp src/playerwindow.cpp src/playerwindow.h)
 target_include_directories(simpleplayer PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
 target_link_libraries(simpleplayer ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)

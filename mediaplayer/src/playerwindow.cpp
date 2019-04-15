@@ -23,7 +23,9 @@
 #include <QSlider>
 #include <QLayout>
 #include <QMessageBox>
-#include <QFileDialog>
+#include <QDebug>
+#include <QInputDialog>
+#include <QKeyEvent>
 
 using namespace QtAV;
 
@@ -62,6 +64,10 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     connect(m_playBtn, SIGNAL(clicked()), SLOT(playPause()));
     connect(m_stopBtn, SIGNAL(clicked()), m_player, SLOT(stop()));
     inf = fopen("/tmp/mpv.sock", "r");
+    
+    keyReceiver* key_receiver = new keyReceiver();
+    key_receiver->window = this;
+    this->installEventFilter(key_receiver);
 }
 
 void PlayerWindow::openMedia()
@@ -70,13 +76,17 @@ void PlayerWindow::openMedia()
     size_t fp_size;
     if (getline(&fp, &fp_size, inf) == -1)
         close();
-    fp[strlen(fp)-1] = 0; // Remove \n char
     QString file = "";
-    for (auto i=0; i<strlen(fp); ++i)
-        s += fp[i];
+    while (*fp != '\n'){
+        // Last char is \n
+        file += *fp;
+        ++fp;
+    }
     
     if (file.isEmpty())
         return;
+    
+    qDebug() << "openMedia " << file; // SegFault without this line
     m_player->play(file);
 }
 
@@ -116,4 +126,66 @@ void PlayerWindow::updateSliderUnit()
 {
     m_unit = m_player->notifyInterval();
     updateSlider();
+}
+
+void PlayerWindow::tag(){
+    // Triggered on key press
+    bool ok;
+    QString str = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, "", &ok);
+    if (ok && !str.isEmpty())
+        qDebug() << "Tag: " << str;
+}
+
+void PlayerWindow::overwrite(){
+    // Triggered on key press
+    bool ok;
+    QString str = QInputDialog::getText(this, tr("Overwrite"), tr("Value"), QLineEdit::Normal, "Manually deleted", &ok);
+    if (ok && !str.isEmpty())
+        qDebug() << "Overwritten with: " << str;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
+// src: https://wiki.qt.io/How_to_catch_enter_key
+{
+    if (event->type()==QEvent::KeyPress) {
+        QKeyEvent* key = static_cast<QKeyEvent*>(event);
+        switch(key->key()){
+            case Qt::Key_Enter:
+            case Qt::Key_Return:
+                //window->openMedia();
+                break;
+            case Qt::Key_T:
+                window->tag();
+                break;
+            case Qt::Key_O:
+                window->overwrite();
+                break;
+            case Qt::Key_Space:
+                window->playPause();
+                break;
+            default: return QObject::eventFilter(obj, event);
+        }
+        return true;
+    }
+    return QObject::eventFilter(obj, event);
 }
