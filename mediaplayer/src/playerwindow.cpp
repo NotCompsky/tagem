@@ -153,7 +153,7 @@ QString PlayerWindow::media_tag(QString str){
     
     i = strlen(tagchars);
     
-    
+    goto__mdsfgdfgdf:
     memcpy(statement, sql_stmt__select_from, 34);
     memcpy(statement + 34, tagchars, i);
     i += 34;
@@ -165,22 +165,31 @@ QString PlayerWindow::media_tag(QString str){
     qDebug() << statement;
     sql_res = sql_stmt->executeQuery(statement);
     
-    if (sql_res->next())
-        qDebug() << "ID: " << sql_res->getInt(1); // 1 is first column
-    else
-        qDebug() << "No prior tags of this value";
+    int tag_id;
     
-    memcpy(statement, sql_stmt__insert_into, 32);
-    memcpy(statement + 32, tagchars, i);
-    i += 32;
-    statement[i++] = '\"';
-    statement[i++] = ')';
-    statement[i++] = ';';
-    statement[i] = 0;
-    i -= 3;
-    i -= 32;
-    qDebug() << statement;
-    sql_stmt->execute(statement);
+    if (sql_res->next())
+        tag_id = sql_res->getInt(1); // 1 is first column
+    else {
+        qDebug() << "No prior tags of this value";
+        
+        memcpy(statement, sql_stmt__insert_into, 32);
+        memcpy(statement + 32, tagchars, i);
+        i += 32;
+        statement[i++] = '\"';
+        statement[i++] = ')';
+        statement[i++] = ';';
+        statement[i] = 0;
+        i -= 3;
+        i -= 32;
+        qDebug() << statement;
+        sql_stmt->execute(statement);
+        
+        goto goto__mdsfgdfgdf;
+    }
+    
+    //sql_res = sql_stmt->executeQuery("SELECT LAST_INSERT_ID() AS id;");
+    
+    qDebug() << "tag_id: " << tag_id;
     
     return tagstr;
 }
