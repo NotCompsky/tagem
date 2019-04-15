@@ -27,6 +27,13 @@
 #include <QInputDialog>
 #include <QKeyEvent>
 
+
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
+
 using namespace QtAV;
 
 PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
@@ -63,6 +70,11 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     
     for (auto i=0; i<10; ++i)
         tag_preset[i] = "";
+    
+    sql_driver = get_driver_instance();
+    sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
+    sql_con->setSchema("mytags");
+    sql_stmt = sql_con->createStatement();
 }
 
 void PlayerWindow::media_open()
@@ -122,12 +134,54 @@ void PlayerWindow::updateSliderUnit()
     updateSlider();
 }
 
+const char* sql_stmt__insert_into = "INSERT INTO tags (name) values(\"";
+const char* sql_stmt__select_from = "SELECT id FROM tags WHERE name = \"";
+
 QString PlayerWindow::media_tag(QString str){
     // Triggered on key press
     bool ok;
     QString tagstr = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, str, &ok);
     if (ok && !tagstr.isEmpty())
         qDebug() << "Tag: " << tagstr;
+    
+    QByteArray tagstr_ba = tagstr.toLocal8Bit();
+    const char* tagchars = tagstr_ba.data();
+    
+    char statement[1024 + 35 + 2 + 1];
+    int i;
+    
+    
+    i = strlen(tagchars);
+    
+    
+    memcpy(statement, sql_stmt__select_from, 34);
+    memcpy(statement + 34, tagchars, i);
+    i += 34;
+    statement[i++] = '\"';
+    statement[i++] = ';';
+    statement[i] = 0;
+    i -= 2;
+    i -= 34;
+    qDebug() << statement;
+    sql_res = sql_stmt->executeQuery(statement);
+    
+    if (sql_res->next())
+        qDebug() << "ID: " << sql_res->getInt(0);
+    else
+        qDebug() << "No prior tags of this value";
+    
+    memcpy(statement, sql_stmt__insert_into, 32);
+    memcpy(statement + 32, tagchars, i);
+    i += 32;
+    statement[i++] = '\"';
+    statement[i++] = ')';
+    statement[i++] = ';';
+    statement[i] = 0;
+    i -= 3;
+    i -= 32;
+    qDebug() << statement;
+    sql_stmt->execute(statement);
+    
     return tagstr;
 }
 

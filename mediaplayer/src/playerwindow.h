@@ -25,6 +25,12 @@
 #include <QtAV>
 #include <QTextEdit>
 
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
+
 QT_BEGIN_NAMESPACE
 class QSlider;
 class QPushButton;
@@ -56,6 +62,11 @@ private:
     int m_unit;
     char* media_fp;
     FILE* inf;
+    
+    sql::Driver* sql_driver;
+    sql::Connection* sql_con;
+    sql::Statement* sql_stmt;
+    sql::ResultSet* sql_res;
 };
 
 class keyReceiver : public QObject
