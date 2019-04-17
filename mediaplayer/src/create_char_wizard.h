@@ -63,7 +63,8 @@ class CreateCharWizard : public QWizard {
     enum { page_createchar };
     
     void accept() override;
-    CreateCharWizardData* data;
+  signals:
+    void forms_completed(CreateCharWizardData* data);
 };
 
 #endif

@@ -84,7 +84,7 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     sql_stmt = sql_con->createStatement();
     
     wizard_charcreation = new CreateCharWizard(this);
-    connect(wizard_charcreation->button(QWizard::FinishButton), SIGNAL(clicked()), this, SLOT(wizard_charcreation_completed()));
+    connect(wizard_charcreation, SIGNAL(forms_completed(CreateCharWizardData*)), SLOT(wizard_charcreation_completed(CreateCharWizardData*)));
 }
 
 void PlayerWindow::media_open()
@@ -434,9 +434,9 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
     goto goto__select_from_table;
 }
 
-void PlayerWindow::wizard_charcreation_completed(){
-    const char* name        = wizard_charcreation->data->name;
-    const int gender_id     = wizard_charcreation->data->gender_id;
+void PlayerWindow::wizard_charcreation_completed(CreateCharWizardData* data){
+    const char* name        = data->name;
+    const int gender_id     = data->gender_id;
     /*
     1   Vagina
     2   Penis/Ovipositor
@@ -450,14 +450,14 @@ void PlayerWindow::wizard_charcreation_completed(){
         6   Futa
     */
     // 1=F, 2=M  // Bits - so 0=Genderless, 3=Hermaphodite
-    const char* species     = wizard_charcreation->data->species;
-    const char* race        = wizard_charcreation->data->race;
-    const char* skincolour  = wizard_charcreation->data->skincolour;
-    const char* haircolour  = wizard_charcreation->data->haircolour;
-    const char* eyecolour   = wizard_charcreation->data->eyecolour;
-    const int age           = wizard_charcreation->data->age;
-    const char* franchise   = wizard_charcreation->data->franchise;
-    const char* profession  = wizard_charcreation->data->profession;
+    const char* species     = data->species;
+    const char* race        = data->race;
+    const char* skincolour  = data->skincolour;
+    const char* haircolour  = data->haircolour;
+    const char* eyecolour   = data->eyecolour;
+    const int age           = data->age;
+    const char* franchise   = data->franchise;
+    const char* profession  = data->profession;
     
     int species_id      = get_id_from_table("species", species);
     int race_id         = get_id_from_table("race", race);

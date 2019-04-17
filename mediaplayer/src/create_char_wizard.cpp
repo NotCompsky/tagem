@@ -49,6 +49,8 @@ CreateCharWizard::CreateCharWizard(QWidget *parent) : QWizard(parent){
 }
 
 void CreateCharWizard::accept(){
+    CreateCharWizardData* data;
+    
     char* name        = field("name").toString().toLocal8Bit().data();
     int gender_id     = field("gender_id").toInt();
     /*
@@ -83,6 +85,8 @@ void CreateCharWizard::accept(){
     data->eyecolour     = eyecolour;
     data->franchise     = franchise;
     data->profession    = profession;
+    
+    emit(forms_completed(data));
     
     QDialog::accept();
 }

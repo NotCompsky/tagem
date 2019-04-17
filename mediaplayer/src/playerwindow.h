@@ -57,7 +57,7 @@ public Q_SLOTS:
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
-    void wizard_charcreation_completed();
+    void wizard_charcreation_completed(CreateCharWizardData* data);
 private Q_SLOTS:
     void updateSlider(qint64 value);
     void updateSlider();
