@@ -142,11 +142,17 @@ const char* sql_stmt__insert_into_tags = "INSERT INTO tags (name) values(\"";
 const char* sql_stmt__select_from_tags = "SELECT id FROM tags WHERE name = \"";
 #define len_oijerfjgfdgg 34
 
-const char* sql_stmt__insert_into_fileid2tagid = "INSERT INTO files (fp) values(\"";
+const char* sql_stmt__insert_into_files = "INSERT INTO files (fp) values(\"";
 #define len_lkfdigdlofjg 31
-const char* sql_stmt__select_from_fileid2tagid = "SELECT id FROM files WHERE fp = \"";
+const char* sql_stmt__select_from_files = "SELECT id FROM files WHERE fp = \"";
 #define len_odfikjgdfigd 33
 
+const char* sql_stmt__insert_into_tag2file = "INSERT INTO tag2file (file_id, tag_id) values(";
+#define len_lkfdigdlofjh 46
+const char* sql_stmt__select_from_tag2file = "SELECT id FROM tag2file WHERE (file_id, tag_id) = (";
+#define len_odfikjgdfigh 51
+
+#define ASCII_OFFSET 48
 
 QString PlayerWindow::media_tag(QString str){
     if (media_fp == NULL)
@@ -211,7 +217,7 @@ QString PlayerWindow::media_tag(QString str){
     i = strlen(media_fp);
     
     goto__mdsfgdfgda:
-    memcpy(statement, sql_stmt__select_from_fileid2tagid, len_odfikjgdfigd);
+    memcpy(statement, sql_stmt__select_from_files, len_odfikjgdfigd);
     memcpy(statement + len_odfikjgdfigd, media_fp, i);
     i += len_odfikjgdfigd;
     statement[i++] = '\"';
@@ -229,7 +235,7 @@ QString PlayerWindow::media_tag(QString str){
     else {
         qDebug() << "No prior tags of this value";
         
-        memcpy(statement, sql_stmt__insert_into_fileid2tagid, len_lkfdigdlofjg);
+        memcpy(statement, sql_stmt__insert_into_files, len_lkfdigdlofjg);
         memcpy(statement + len_lkfdigdlofjg, media_fp, i);
         i += len_lkfdigdlofjg;
         statement[i++] = '\"';
@@ -247,6 +253,56 @@ QString PlayerWindow::media_tag(QString str){
     //sql_res = sql_stmt->executeQuery("SELECT LAST_INSERT_ID() AS id;");
     
     qDebug() << "file_id: " << file_id;
+    
+    
+    
+    
+    
+    goto__mdsfgdfgdh:
+    i = 0;
+    memcpy(statement + i, sql_stmt__select_from_tag2file, len_odfikjgdfigh);
+    i += len_odfikjgdfigh;
+    for (int j=file_id;  j>0;  j/=10)
+        statement[i++] = ASCII_OFFSET + (j % 10);
+    statement[i++] = ',';
+    statement[i++] = ' ';
+    for (int j=tag_id;  j>0;  j/=10)
+        statement[i++] = ASCII_OFFSET + (j % 10);
+    statement[i++] = ')';
+    statement[i++] = ';';
+    statement[i] = 0;
+    
+    qDebug() << statement;
+    sql_res = sql_stmt->executeQuery(statement);
+    
+    int tag2file_id;
+    
+    if (sql_res->next())
+        tag2file_id = sql_res->getInt(1); // 1 is first column
+    else {
+        qDebug() << "No prior tags of this value";
+        
+        i = 0;
+        memcpy(statement + i, sql_stmt__insert_into_tag2file, len_lkfdigdlofjh);
+        i += len_lkfdigdlofjh;
+        for (int j=file_id;  j>0;  j/=10)
+            statement[i++] = ASCII_OFFSET + (j % 10);
+        statement[i++] = ',';
+        statement[i++] = ' ';
+        for (int j=tag_id;  j>0;  j/=10)
+            statement[i++] = ASCII_OFFSET + (j % 10);
+        statement[i++] = ')';
+        statement[i++] = ';';
+        statement[i] = 0;
+        qDebug() << statement;
+        sql_stmt->execute(statement);
+        
+        goto goto__mdsfgdfgdh;
+    }
+    
+    //sql_res = sql_stmt->executeQuery("SELECT LAST_INSERT_ID() AS id;");
+    
+    qDebug() << "tag2file_id: " << tag2file_id;
     
     
     
