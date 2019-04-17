@@ -30,6 +30,8 @@
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
 
+#include "create_char_wizard.h"
+
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -45,11 +47,17 @@ public:
     void media_overwrite();
     void media_open();
     void media_delete();
+    void create_character(char** statement, const char* name);
+    void add_character();
+    void tag_as_char(int char_id);
+    int get_id_from_table(const char* table_name, const char* entry_name);
+    int search_for_char(const char*);
     QString tag_preset[10];
 public Q_SLOTS:
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
+    void wizard_charcreation_completed();
 private Q_SLOTS:
     void updateSlider(qint64 value);
     void updateSlider();
@@ -67,6 +75,8 @@ private:
     sql::Connection* sql_con;
     sql::Statement* sql_stmt;
     sql::ResultSet* sql_res;
+    
+    CreateCharWizard* wizard_charcreation;
 };
 
 class keyReceiver : public QObject
@@ -75,6 +85,8 @@ class keyReceiver : public QObject
     Q_OBJECT
 public:
     PlayerWindow* window;
+    int state;
+    enum { state_default, state_clicked };
 protected:
     bool eventFilter(QObject* obj, QEvent* event);
 };

@@ -34,6 +34,9 @@
 #include <cppconn/statement.h>
 
 
+// TODO: Add character status (injuries, mood, wearing_glasses, etc.)
+
+
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
 
 
@@ -68,6 +71,7 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     media_fp = NULL;
     
     keyReceiver* key_receiver = new keyReceiver();
+    key_receiver->state = key_receiver->state_default;
     key_receiver->window = this;
     this->installEventFilter(key_receiver);
     
@@ -78,6 +82,9 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
     sql_con->setSchema("mytags");
     sql_stmt = sql_con->createStatement();
+    
+    wizard_charcreation = new CreateCharWizard(this);
+    connect(wizard_charcreation->button(QWizard::FinishButton), SIGNAL(clicked()), this, SLOT(wizard_charcreation_completed()));
 }
 
 void PlayerWindow::media_open()
@@ -151,6 +158,11 @@ const char* sql_stmt__insert_into_tag2file = "INSERT INTO tag2file (file_id, tag
 #define len_lkfdigdlofjh 46
 const char* sql_stmt__select_from_tag2file = "SELECT id FROM tag2file WHERE (file_id, tag_id) = (";
 #define len_odfikjgdfigh 51
+
+const char* sql_stmt__insert_into_chars = "INSERT INTO chars (name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, wears_specs, franchise_id, profession_id) = (";
+#define len_sqlstmtinsertintochars 151
+const char* sql_stmt__select_from_chars = "SELECT id FROM chars WHERE name = \"";
+#define len_sqlstmtselectfromchars 35
 
 #define ASCII_OFFSET 48
 
@@ -327,11 +339,145 @@ void PlayerWindow::media_delete(){
     qDebug() << "Deleted: " << media_fp;
 }
 
+void PlayerWindow::create_character(char** statement, const char* name){
+    wizard_charcreation->show();
+    // This will call tag_as_char(char_id) through signal, i.e. waiting until form completed
+}
 
+int PlayerWindow::search_for_char(const char* name){
+    int i = 0;
+    int char_id = 0;
+    char statement[len_sqlstmtselectfromchars + 128 + 3];
+    
+    memcpy(statement + i, sql_stmt__select_from_chars, len_sqlstmtselectfromchars);
+    i += len_sqlstmtselectfromchars;
+    memcpy(statement + i, name, strlen(name));
+    i += strlen(name);
+    statement[i++] = '"';
+    statement[i++] = ';';
+    statement[i] = 0;
+    
+    qDebug() << statement;
+    sql_res = sql_stmt->executeQuery(statement);
+    
+    if (sql_res->next())
+        char_id = sql_res->getInt(1); // 1 is first column
+    
+    return char_id;
+}
 
+void PlayerWindow::add_character(){
+    qDebug() << "add_character()";
+    
+    bool ok;
+    const char* name = QInputDialog::getText(this, tr("Character Name"), tr("Name"), QLineEdit::Normal, "", &ok).toLocal8Bit().data();
+    if (!ok)
+        return;
+    
+    int i;
+    int char_id;
+    char statement[len_sqlstmtselectfromchars + 1024];
+    
+    if (name[0] == 0){
+        // i.e. isEmpty
+        qDebug() << "Empty name, so assumed to be character unique to this media";
+        goto goto__createchar;
+    }
+    
+    char_id = search_for_char(name);
+    
+    if (char_id == 0){
+        goto__createchar:
+        return create_character((char**)&statement, name);
+    }
+    return tag_as_char(char_id);
+}
 
+int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
+    int i;
+    char statement[1024] = "SELECT id FROM ";
+    
+    goto__select_from_table:
+    i = 0;
+    i += strlen(statement);
+    memcpy(statement + i,  table_name,  strlen(table_name));
+    i += strlen(table_name);
+    statement[i++] = ' ';
+    statement[i++] = ',';
+    statement[i++] = '"';
+    memcpy(statement + i,  entry_name,  strlen(entry_name));
+    i += strlen(entry_name);
+    statement[i++] = '"';
+    statement[i++] = ';';
+    statement[i] = 0;
+    
+    sql_stmt->executeQuery(statement);
+    
+    if (sql_res->next())
+        // Entry already existed in table
+        return sql_res->getInt(1);
+    
+    i = 0;
+    const char* statement2 = "INSERT INTO ";
+    memcpy(statement, statement2, strlen(statement2));
+    i += strlen(statement);
+    memcpy(statement + i,  table_name,  strlen(table_name));
+    i += strlen(table_name);
+    const char* fff = " (name) values(";
+    memcpy(statement + i,  fff,  strlen(fff));
+    i += strlen(fff);
+    memcpy(statement + i,  entry_name,  strlen(entry_name));
+    i += strlen(entry_name);
+    statement[i++] = ')';
+    statement[i++] = ';';
+    sql_stmt->execute(statement);
+    goto goto__select_from_table;
+}
 
+void PlayerWindow::wizard_charcreation_completed(){
+    const char* name        = wizard_charcreation->data->name;
+    const int gender_id     = wizard_charcreation->data->gender_id;
+    /*
+    1   Vagina
+    2   Penis/Ovipositor
+    4   Breasts
+    
+    So e.g.
+        0   Genderless
+        1   Bussy
+        2   Male
+        5   Female
+        6   Futa
+    */
+    // 1=F, 2=M  // Bits - so 0=Genderless, 3=Hermaphodite
+    const char* species     = wizard_charcreation->data->species;
+    const char* race        = wizard_charcreation->data->race;
+    const char* skincolour  = wizard_charcreation->data->skincolour;
+    const char* haircolour  = wizard_charcreation->data->haircolour;
+    const char* eyecolour   = wizard_charcreation->data->eyecolour;
+    const int age           = wizard_charcreation->data->age;
+    const char* franchise   = wizard_charcreation->data->franchise;
+    const char* profession  = wizard_charcreation->data->profession;
+    
+    int species_id      = get_id_from_table("species", species);
+    int race_id         = get_id_from_table("race", race);
+    int skincolour_id   = get_id_from_table("skincolour", skincolour);
+    int haircolour_id   = get_id_from_table("haircolour", haircolour);
+    int eyecolour_id    = get_id_from_table("eyecolour", eyecolour);
+    int franchise_id    = get_id_from_table("franchise", franchise);
+    int profession_id   = get_id_from_table("profession", profession);
+    
+    char statement[len_sqlstmtinsertintochars + 1024];
+    sprintf("INSERT INTO chars (name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, franchise_id, profession_id) = (\"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", statement, name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, franchise_id, profession_id);
+    
+    int char_id = search_for_char(name);
+    
+    return tag_as_char(char_id);
+}
 
+void PlayerWindow::tag_as_char(int char_id){
+    qDebug() << "tag_as_char(" << +char_id << ")";
+}
 
 
 
@@ -374,6 +520,12 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         switch(int keyval = key->key()){
             case Qt::Key_Enter:
             case Qt::Key_Return:
+            case Qt::Key_C:
+                if (state == state_clicked){
+                    window->add_character();
+                    state = state_default;
+                }
+                break;
             case Qt::Key_D:
                 window->media_open(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                 break;
@@ -424,6 +576,8 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             default: return QObject::eventFilter(obj, event);
         }
         return true;
+    } else if (event->type()==QEvent::MouseButtonRelease){
+        state = state_clicked;
     }
     return QObject::eventFilter(obj, event);
 }
