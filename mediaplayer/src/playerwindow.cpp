@@ -375,64 +375,64 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             /* Preset Tags */
             // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
             case Qt::Key_1:
-                window->media_tag(window->tag_preset[1]);   window->media_open();
+                window->media_tag(window->tag_preset[1]);
                 break;
             case Qt::Key_Exclam:
-                window->media_tag_new_preset(1);            window->media_open();
+                window->media_tag_new_preset(1);
                 break;
             case Qt::Key_2:
-                window->media_tag(window->tag_preset[2]);   window->media_open();
+                window->media_tag(window->tag_preset[2]);
                 break;
             case Qt::Key_QuoteDbl:
-                window->media_tag_new_preset(2);            window->media_open();
+                window->media_tag_new_preset(2);
                 break;
             case Qt::Key_3:
-                window->media_tag(window->tag_preset[3]);   window->media_open();
+                window->media_tag(window->tag_preset[3]);
                 break;
             case Qt::Key_sterling:
-                window->media_tag_new_preset(3);            window->media_open();
+                window->media_tag_new_preset(3);
                 break;
             case Qt::Key_4:
-                window->media_tag(window->tag_preset[4]);   window->media_open();
+                window->media_tag(window->tag_preset[4]);
                 break;
             case Qt::Key_Dollar:
-                window->media_tag_new_preset(4);            window->media_open();
+                window->media_tag_new_preset(4);
                 break;
             case Qt::Key_5:
-                window->media_tag(window->tag_preset[5]);   window->media_open();
+                window->media_tag(window->tag_preset[5]);
                 break;
             case Qt::Key_Percent:
-                window->media_tag_new_preset(5);            window->media_open();
+                window->media_tag_new_preset(5);
                 break;
             case Qt::Key_6:
-                window->media_tag(window->tag_preset[6]);   window->media_open();
+                window->media_tag(window->tag_preset[6]);
                 break;
             case Qt::Key_AsciiCircum:
-                window->media_tag_new_preset(6);            window->media_open();
+                window->media_tag_new_preset(6);
                 break;
             case Qt::Key_7:
-                window->media_tag(window->tag_preset[7]);   window->media_open();
+                window->media_tag(window->tag_preset[7]);
                 break;
             case Qt::Key_Ampersand:
-                window->media_tag_new_preset(7);            window->media_open();
+                window->media_tag_new_preset(7);
                 break;
             case Qt::Key_8:
-                window->media_tag(window->tag_preset[8]);   window->media_open();
+                window->media_tag(window->tag_preset[8]);
                 break;
             case Qt::Key_Asterisk:
-                window->media_tag_new_preset(8);            window->media_open();
+                window->media_tag_new_preset(8);
                 break;
             case Qt::Key_9:
-                window->media_tag(window->tag_preset[9]);   window->media_open();
+                window->media_tag(window->tag_preset[9]);
                 break;
             case Qt::Key_ParenLeft:
-                window->media_tag_new_preset(9);            window->media_open();
+                window->media_tag_new_preset(9);
                 break;
             case Qt::Key_0:
-                window->media_tag(window->tag_preset[0]);   window->media_open();
+                window->media_tag(window->tag_preset[0]);
                 break;
             case Qt::Key_ParenRight:
-                window->media_tag_new_preset(0);            window->media_open();
+                window->media_tag_new_preset(0);
                 break;
             
             default: return QObject::eventFilter(obj, event);
