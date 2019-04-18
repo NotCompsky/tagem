@@ -57,7 +57,6 @@ public Q_SLOTS:
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
-    void wizard_charcreation_completed(CreateCharWizardData* data);
 private Q_SLOTS:
     void updateSlider(qint64 value);
     void updateSlider();
@@ -76,7 +75,7 @@ private:
     sql::Statement* sql_stmt;
     sql::ResultSet* sql_res;
     
-    CreateCharWizard* wizard_charcreation;
+    CharCreationDialog* charcreation_dialog;
 };
 
 class keyReceiver : public QObject

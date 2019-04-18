@@ -83,8 +83,8 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     sql_con->setSchema("mytags");
     sql_stmt = sql_con->createStatement();
     
-    wizard_charcreation = new CreateCharWizard(this);
-    connect(wizard_charcreation, SIGNAL(forms_completed(CreateCharWizardData*)), SLOT(wizard_charcreation_completed(CreateCharWizardData*)));
+    charcreation_dialog = new CharCreationDialog();
+    charcreation_dialog->setModal(true);
 }
 
 void PlayerWindow::media_open()
@@ -159,8 +159,8 @@ const char* sql_stmt__insert_into_tag2file = "INSERT INTO tag2file (file_id, tag
 const char* sql_stmt__select_from_tag2file = "SELECT id FROM tag2file WHERE (file_id, tag_id) = (";
 #define len_odfikjgdfigh 51
 
-const char* sql_stmt__insert_into_chars = "INSERT INTO chars (name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, wears_specs, franchise_id, profession_id) = (";
-#define len_sqlstmtinsertintochars 151
+const char* sql_stmt__insert_into_chars = "INSERT INTO chars (name, sex_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, wears_specs, franchise_id, profession_id) = (";
+#define len_sqlstmtinsertintochars 148
 const char* sql_stmt__select_from_chars = "SELECT id FROM chars WHERE name = \"";
 #define len_sqlstmtselectfromchars 35
 
@@ -339,11 +339,6 @@ void PlayerWindow::media_delete(){
     qDebug() << "Deleted: " << media_fp;
 }
 
-void PlayerWindow::create_character(char** statement, const char* name){
-    wizard_charcreation->show();
-    // This will call tag_as_char(char_id) through signal, i.e. waiting until form completed
-}
-
 int PlayerWindow::search_for_char(const char* name){
     int i = 0;
     int char_id = 0;
@@ -375,25 +370,160 @@ void PlayerWindow::add_character(){
         return;
     
     int i;
-    int char_id;
+    int char_id = 0;
     char statement[len_sqlstmtselectfromchars + 1024];
     
-    if (name[0] == 0){
-        // i.e. isEmpty
-        qDebug() << "Empty name, so assumed to be character unique to this media";
-        goto goto__createchar;
-    }
-    
-    char_id = search_for_char(name);
+    if (name[0] != 0)
+        char_id = search_for_char(name);
     
     if (char_id == 0){
         goto__createchar:
-        return create_character((char**)&statement, name);
+        
+        if (charcreation_dialog->exec() == QDialog::Accepted){
+            Character data = charcreation_dialog->get_data();
+            const char* name        = data.name;
+            const int sex_id        = data.sex_id;
+            const char* species     = data.species;
+            const char* race        = data.race;
+            const int eyecolour     = data.eyecolour;
+            
+            const int skincolour    = data.skincolour;
+            const int haircolour    = data.haircolour;
+            const int thickness     = data.thickness;
+            const int height        = data.height;
+            const int age           = data.age;
+            
+            const char* franchise   = data.franchise;
+            const char* profession  = data.profession;
+            const char* nationality = data.nationality;
+            
+            const int attract_to_gender     = data.attract_to_gender;
+            const int attract_to_species    = data.attract_to_species;
+            const int attract_to_race       = data.attract_to_race;
+            
+            
+            const int species_id        = get_id_from_table("species", species);
+            const int race_id           = get_id_from_table("races", race);
+            const int franchise_id      = get_id_from_table("franchises", franchise);
+            const int profession_id     = get_id_from_table("professions", profession);
+            const int nationality_id    = get_id_from_table("nationalities", nationality);
+            
+            
+            char statement[4096];
+            
+            
+            sprintf("INSERT INTO chars (name, sex_id, species_id, race_id, eyecolour, franchise_id, thickness, height) = (\"%s\", %d, %d, %d, %d, %d)", statement, name, sex_id, species_id, race_id, eyecolour, franchise_id);
+            
+            qDebug() << statement;
+            sql_stmt->execute(statement);
+            
+            if (name[0] != 0)
+                char_id = search_for_char(name);
+            
+            
+            sprintf("INSERT INTO char_instances (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) = (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", statement, char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race);
+            
+            qDebug() << statement;
+            sql_stmt->execute(statement);
+            
+            /*
+CREATE TABLE species (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE races (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    species_id INT UNSIGNED,
+    name VARCHAR(128),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE franchises (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE professions (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE nationalities (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE chars (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    
+    name VARCHAR(128),
+    sex_id INT UNSIGNED,
+    species_id INT UNSIGNED,
+    race_id INT UNSIGNED,
+    eyecolour INT UNSIGNED,
+    
+    franchise_id INT UNSIGNED,
+    
+    created_on timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE char_instances (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    
+    char_id INT UNSIGNED,
+    
+    skincolour INT UNSIGNED,
+    haircolour INT UNSIGNED,
+    thickness INT UNSIGNED,
+    height INT UNSIGNED,
+    age INT UNSIGNED,
+    
+    profession_id INT UNSIGNED,
+    nationality_id INT UNSIGNED,
+    
+    attract_to_gender INT UNSIGNED,
+    attract_to_species INT UNSIGNED,
+    attract_to_race INT UNSIGNED,
+    
+    created_on timestamp DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+GRANT CREATE ON mytags.species TO marx@localhost;
+GRANT SELECT ON mytags.species TO marx@localhost;
+GRANT CREATE ON mytags.races TO marx@localhost;
+GRANT SELECT ON mytags.races TO marx@localhost;
+GRANT CREATE ON mytags.franchises TO marx@localhost;
+GRANT SELECT ON mytags.franchises TO marx@localhost;
+GRANT CREATE ON mytags.professions TO marx@localhost;
+GRANT SELECT ON mytags.professions TO marx@localhost;
+GRANT CREATE ON mytags.nationalities TO marx@localhost;
+GRANT SELECT ON mytags.nationalities TO marx@localhost;
+GRANT CREATE ON mytags.chars TO marx@localhost;
+GRANT SELECT ON mytags.chars TO marx@localhost;
+GRANT CREATE ON mytags.char_instances TO marx@localhost;
+GRANT SELECT ON mytags.char_instances TO marx@localhost;
+            */
+            
+            return tag_as_char(char_id);
+        } else {
+            qDebug() << "Cancelled";
+            return;
+        }
     }
     return tag_as_char(char_id);
 }
 
 int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
+    if (entry_name[0] == 0)
+        return 0;
+    
     int i;
     char statement[1024] = "SELECT id FROM ";
     
@@ -432,47 +562,6 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
     statement[i++] = ';';
     sql_stmt->execute(statement);
     goto goto__select_from_table;
-}
-
-void PlayerWindow::wizard_charcreation_completed(CreateCharWizardData* data){
-    const char* name        = data->name;
-    const int gender_id     = data->gender_id;
-    /*
-    1   Vagina
-    2   Penis/Ovipositor
-    4   Breasts
-    
-    So e.g.
-        0   Genderless
-        1   Bussy
-        2   Male
-        5   Female
-        6   Futa
-    */
-    // 1=F, 2=M  // Bits - so 0=Genderless, 3=Hermaphodite
-    const char* species     = data->species;
-    const char* race        = data->race;
-    const char* skincolour  = data->skincolour;
-    const char* haircolour  = data->haircolour;
-    const char* eyecolour   = data->eyecolour;
-    const int age           = data->age;
-    const char* franchise   = data->franchise;
-    const char* profession  = data->profession;
-    
-    int species_id      = get_id_from_table("species", species);
-    int race_id         = get_id_from_table("race", race);
-    int skincolour_id   = get_id_from_table("skincolour", skincolour);
-    int haircolour_id   = get_id_from_table("haircolour", haircolour);
-    int eyecolour_id    = get_id_from_table("eyecolour", eyecolour);
-    int franchise_id    = get_id_from_table("franchise", franchise);
-    int profession_id   = get_id_from_table("profession", profession);
-    
-    char statement[len_sqlstmtinsertintochars + 1024];
-    sprintf("INSERT INTO chars (name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, franchise_id, profession_id) = (\"%s\", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", statement, name, gender_id, species_id, race_id, skincolour_id, haircolour_id, eyecolour_id, age, franchise_id, profession_id);
-    
-    int char_id = search_for_char(name);
-    
-    return tag_as_char(char_id);
 }
 
 void PlayerWindow::tag_as_char(int char_id){
