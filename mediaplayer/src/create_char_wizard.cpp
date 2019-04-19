@@ -1,8 +1,28 @@
 #include "create_char_wizard.h"
 #include <cstring> // for stoi
-#include <QGroupBox>
+#include <QColorDialog>
 #include <QComboBox>
+#include <QGroupBox>
 #include <QDebug>
+
+
+
+SelectColourButton::SelectColourButton(const QString& name, QWidget* parent){
+    QPushButton(name, parent);
+    connect(this, SIGNAL(clicked()), this, SLOT(set_colour()));
+    this->setAutoFillBackground(true);
+    this->setFlat(true);
+    this->colour = QColor(0, 0, 0, 0);
+    // Important to zero, so it produces a null if not modified
+}
+
+void SelectColourButton::set_colour(){
+    this->colour = QColorDialog::getColor(this->colour, parentWidget());
+    QPalette pal = this->palette();
+    pal.setColor(QPalette::Button, this->colour);
+    this->setPalette(pal);
+    this->update();
+}
 
 
 CharCreationDialog::CharCreationDialog(QWidget* parent){
@@ -54,8 +74,7 @@ CharCreationInvariantsTab::CharCreationInvariantsTab(QWidget* parent) : QWidget(
     QLabel* raceLabel = new QLabel(tr("Race"));
     raceEdit = new QLineEdit("White");
     
-    QLabel* eyeColourLabel = new QLabel(tr("EyeColour"));
-    eyeColourEdit = new QLineEdit("Brown");
+    eyeColourButton = new SelectColourButton("EyeColour", this);
     
     
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -67,18 +86,14 @@ CharCreationInvariantsTab::CharCreationInvariantsTab(QWidget* parent) : QWidget(
     mainLayout->addWidget(speciesEdit);
     mainLayout->addWidget(raceLabel);
     mainLayout->addWidget(raceEdit);
-    mainLayout->addWidget(eyeColourLabel);
-    mainLayout->addWidget(eyeColourEdit);
+    mainLayout->addWidget(eyeColourButton);
     
     setLayout(mainLayout);
 }
 
 CharCreationVariantsTab::CharCreationVariantsTab(QWidget* parent) : QWidget(parent){
-    QLabel* skinColourLabel = new QLabel(tr("SkinColour"));
-    skinColourEdit = new QLineEdit(""); // TODO: Colour picker
-
-    QLabel* hairColourLabel = new QLabel(tr("HairColour"));
-    hairColourEdit = new QLineEdit("Brown"); // TODO: Colour picker
+    skinColourButton = new SelectColourButton("SkinColour", this);
+    hairColourButton = new SelectColourButton("HairColour", this);
     
     QLabel* thicknessLabel = new QLabel(tr("Thickness"));
     thicknessEdit = new QLineEdit("");
@@ -90,10 +105,8 @@ CharCreationVariantsTab::CharCreationVariantsTab(QWidget* parent) : QWidget(pare
     ageEdit = new QLineEdit("20");
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(skinColourLabel);
-    mainLayout->addWidget(skinColourEdit);
-    mainLayout->addWidget(hairColourLabel);
-    mainLayout->addWidget(hairColourEdit);
+    mainLayout->addWidget(skinColourButton);
+    mainLayout->addWidget(hairColourButton);
     mainLayout->addWidget(thicknessLabel);
     mainLayout->addWidget(thicknessEdit);
     mainLayout->addWidget(heightLabel);
@@ -167,27 +180,42 @@ int stoi_or_null__attract(const char* str){
     return (n << 1) | 1;
 }
 
+uint64_t to_uint64(QColor& colour){
+    // In format rgba
+    return (colour.red() << 24) | (colour.green() << 16) | (colour.blue() << 8) | colour.alpha();
+}
+
+char* get_charstr(const QString& qstr){
+    const QByteArray ba = qstr.toLocal8Bit();
+    const char* cstr_a = ba.data();
+    char* cstr = (char*)malloc(strlen(cstr_a) + 1);
+    memcpy(cstr, cstr_a, strlen(cstr_a)+1);
+    return cstr;
+}
+
 Character CharCreationDialog::get_data() const{
+    // WARNING: Must free all char* members
     Character data = {
-        invariantsTab->nameEdit->text().toLocal8Bit().data(),
-        stoi_or_null(invariantsTab->sexIDEdit->text().toLocal8Bit().data()),
-        invariantsTab->speciesEdit->text().toLocal8Bit().data(),
-        invariantsTab->raceEdit->text().toLocal8Bit().data(),
-        0, //invariantsTab->eyeColourEdit->text().toLocal8Bit().data(),
+        .name = get_charstr(invariantsTab->nameEdit->text()),
+        .sex_id = stoi_or_null(invariantsTab->sexIDEdit->text().toLocal8Bit().data()),
+        .species = get_charstr(invariantsTab->speciesEdit->text()),
+        .race = get_charstr(invariantsTab->raceEdit->text()),
+        .eyecolour = to_uint64(invariantsTab->eyeColourButton->colour),
         
-        0, //variantsTab->skinColourEdit->text().toLocal8Bit().data(),
-        0, //variantsTab->hairColourEdit->text().toLocal8Bit().data(),
-        stoi_or_null(variantsTab->thicknessEdit->text().toLocal8Bit().data()),
-        stoi_or_null(variantsTab->heightEdit->text().toLocal8Bit().data()),
-        stoi_or_null(variantsTab->ageEdit->text().toLocal8Bit().data()),
+        .skincolour = to_uint64(variantsTab->skinColourButton->colour),
+        .haircolour = to_uint64(variantsTab->hairColourButton->colour),
+        .thickness = stoi_or_null(variantsTab->thicknessEdit->text().toLocal8Bit().data()),
+        .height = stoi_or_null(variantsTab->heightEdit->text().toLocal8Bit().data()),
+        .age = stoi_or_null(variantsTab->ageEdit->text().toLocal8Bit().data()),
         
-        relationsTab->franchiseEdit->text().toLocal8Bit().data(),
-        relationsTab->professionEdit->text().toLocal8Bit().data(),
-        relationsTab->nationalityEdit->text().toLocal8Bit().data(),
+        .franchise = get_charstr(relationsTab->franchiseEdit->text()),
+        .profession = get_charstr(relationsTab->professionEdit->text()),
+        .nationality = get_charstr(relationsTab->nationalityEdit->text()),
         
-        stoi_or_null__attract(attractionsTab->attractToGenderEdit->text().toLocal8Bit().data()),
-        stoi_or_null__attract(attractionsTab->attractToSpeciesEdit->text().toLocal8Bit().data()),
-        stoi_or_null__attract(attractionsTab->attractToRaceEdit->text().toLocal8Bit().data())
+        .attract_to_gender = stoi_or_null__attract(attractionsTab->attractToGenderEdit->text().toLocal8Bit().data()),
+        .attract_to_species = stoi_or_null__attract(attractionsTab->attractToSpeciesEdit->text().toLocal8Bit().data()),
+        .attract_to_race = stoi_or_null__attract(attractionsTab->attractToRaceEdit->text().toLocal8Bit().data())
     };
+    
     return data;
 }

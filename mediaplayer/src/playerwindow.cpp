@@ -19,6 +19,8 @@
 ******************************************************************************/
 
 #include "playerwindow.h"
+#include <cstdio> // for remove
+#include <unistd.h> // for symlink
 #include <QPushButton>
 #include <QSlider>
 #include <QLayout>
@@ -85,6 +87,9 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     
     charcreation_dialog = new CharCreationDialog();
     charcreation_dialog->setModal(true);
+    
+    this->volume = 0.1;
+    this->m_player->audio()->setVolume(this->volume);
 }
 
 void PlayerWindow::media_open()
@@ -336,7 +341,9 @@ void PlayerWindow::media_overwrite(){
 }
 
 void PlayerWindow::media_delete(){
-    qDebug() << "Deleted: " << media_fp;
+    qDebug() << "Deleting: " << this->media_fp;
+    if (remove(this->media_fp) != 0)
+        qDebug() << "Failed to delete: " << this->media_fp;
 }
 
 int PlayerWindow::search_for_char(const char* name){
@@ -382,37 +389,30 @@ void PlayerWindow::add_character(){
         if (charcreation_dialog->exec() == QDialog::Accepted){
             Character data = charcreation_dialog->get_data();
             const char* name        = data.name;
-            const int sex_id        = data.sex_id;
-            const char* species     = data.species;
-            const char* race        = data.race;
-            const int eyecolour     = data.eyecolour;
+            //sex_id
+            const int species_id    = get_id_from_table("species", data.species);
+            const int race_id       = get_id_from_table("races", data.race);
+            //const int eyecolour
             
-            const int skincolour    = data.skincolour;
-            const int haircolour    = data.haircolour;
-            const int thickness     = data.thickness;
-            const int height        = data.height;
-            const int age           = data.age;
+            //const int skincolour
+            //const int haircolour
+            //const int thickness
+            //const int height
+            //const int age
             
-            const char* franchise   = data.franchise;
-            const char* profession  = data.profession;
-            const char* nationality = data.nationality;
+            const int franchise_id      = get_id_from_table("franchises", data.franchise);
+            const int profession_id     = get_id_from_table("professions", data.profession);
+            const int nationality_id    = get_id_from_table("nationalities", data.nationality);
             
-            const int attract_to_gender     = data.attract_to_gender;
-            const int attract_to_species    = data.attract_to_species;
-            const int attract_to_race       = data.attract_to_race;
-            
-            
-            const int species_id        = get_id_from_table("species", species);
-            const int race_id           = get_id_from_table("races", race);
-            const int franchise_id      = get_id_from_table("franchises", franchise);
-            const int profession_id     = get_id_from_table("professions", profession);
-            const int nationality_id    = get_id_from_table("nationalities", nationality);
+            //const int attract_to_gender
+            //const int attract_to_species
+            //const int attract_to_race
             
             
             char statement[4096];
             
             
-            sprintf("INSERT INTO chars (name, sex_id, species_id, race_id, eyecolour, franchise_id, thickness, height) = (\"%s\", %d, %d, %d, %d, %d)", statement, name, sex_id, species_id, race_id, eyecolour, franchise_id);
+            sprintf(statement, "INSERT INTO chars (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %d, %d, %d, %d, %d);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
             
             qDebug() << statement;
             sql_stmt->execute(statement);
@@ -421,10 +421,17 @@ void PlayerWindow::add_character(){
                 char_id = search_for_char(name);
             
             
-            sprintf("INSERT INTO char_instances (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) = (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", statement, char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race);
+            sprintf(statement, "INSERT INTO char_instances (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) values(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);", char_id, data.skincolour, data.haircolour, data.age, profession_id, nationality_id, data.thickness, data.height, data.attract_to_gender, data.attract_to_species, data.attract_to_race);
             
             qDebug() << statement;
             sql_stmt->execute(statement);
+            
+            free(data.name);
+            free(data.species);
+            free(data.race);
+            free(data.franchise);
+            free(data.profession);
+            free(data.nationality);
             
             /*
 CREATE TABLE species (
@@ -510,6 +517,10 @@ GRANT SELECT ON mytags.chars TO marx@localhost;
 GRANT CREATE ON mytags.char_instances TO marx@localhost;
 GRANT SELECT ON mytags.char_instances TO marx@localhost;
             */
+            /*
+NOTE
+We require 0 to be an allowed value for all optional secondary fields
+            */
             
             return tag_as_char(char_id);
         } else {
@@ -532,15 +543,16 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
     i += strlen(statement);
     memcpy(statement + i,  table_name,  strlen(table_name));
     i += strlen(table_name);
-    statement[i++] = ' ';
-    statement[i++] = ',';
-    statement[i++] = '"';
+    const char* dummy = " WHERE name = \"";
+    memcpy(statement + i,  dummy,  strlen(dummy));
+    i += strlen(dummy);
     memcpy(statement + i,  entry_name,  strlen(entry_name));
     i += strlen(entry_name);
     statement[i++] = '"';
     statement[i++] = ';';
     statement[i] = 0;
     
+    qDebug() << statement;
     sql_stmt->executeQuery(statement);
     
     if (sql_res->next())
@@ -549,18 +561,24 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
     
     i = 0;
     const char* statement2 = "INSERT INTO ";
-    memcpy(statement, statement2, strlen(statement2));
-    i += strlen(statement);
+    memcpy(statement + i,  statement2,  strlen(statement2));
+    i += strlen(statement2);
     memcpy(statement + i,  table_name,  strlen(table_name));
     i += strlen(table_name);
-    const char* fff = " (name) values(";
+    const char* fff = " (name) values(\"";
     memcpy(statement + i,  fff,  strlen(fff));
     i += strlen(fff);
     memcpy(statement + i,  entry_name,  strlen(entry_name));
     i += strlen(entry_name);
+    statement[i++] = '"';
     statement[i++] = ')';
     statement[i++] = ';';
+    statement[i] = 0;
+    
+    qDebug() << statement;
     sql_stmt->execute(statement);
+    
+    return 0;
     goto goto__select_from_table;
 }
 
@@ -634,7 +652,18 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             case Qt::Key_Space:
                 window->playPause();
                 break;
-            
+            case Qt::Key_BracketLeft:
+                if (window->volume > 0){
+                    window->volume -= 0.05;
+                    window->m_player->audio()->setVolume(window->volume);
+                }
+                break;
+            case Qt::Key_BracketRight:
+                if (window->volume < 1.25){
+                    window->volume += 0.05;
+                    window->m_player->audio()->setVolume(window->volume);
+                }
+                break;
             /* Preset Tags */
             // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
             case Qt::Key_1:

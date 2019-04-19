@@ -52,7 +52,10 @@ public:
     void tag_as_char(int char_id);
     int get_id_from_table(const char* table_name, const char* entry_name);
     int search_for_char(const char*);
+    double volume;
     QString tag_preset[10];
+    QtAV::VideoOutput* m_vo;
+    QtAV::AVPlayer* m_player;
 public Q_SLOTS:
     void seekBySlider(int value);
     void seekBySlider();
@@ -63,8 +66,6 @@ private Q_SLOTS:
     void updateSliderUnit();
 
 private:
-    QtAV::VideoOutput *m_vo;
-    QtAV::AVPlayer *m_player;
     QSlider *m_slider;
     int m_unit;
     char* media_fp;

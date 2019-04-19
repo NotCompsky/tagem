@@ -8,6 +8,9 @@
 #include <QWizard>
 #include <QTabWidget>
 #include <QDialogButtonBox>
+#include <QPushButton>
+
+typedef __uint64_t uint64_t;
 
 
 struct Character{
@@ -15,10 +18,10 @@ struct Character{
     int sex_id;
     char* species;
     char* race;
-    int eyecolour;
+    uint64_t eyecolour;
     
-    int skincolour;
-    int haircolour;
+    uint64_t skincolour;
+    uint64_t haircolour;
     int thickness;
     int height;
     int age;
@@ -32,6 +35,15 @@ struct Character{
     int attract_to_race;
 };
 
+class SelectColourButton : public QPushButton{
+    Q_OBJECT
+  public:
+    QColor colour;
+    explicit SelectColourButton(const QString& name, QWidget* parent);
+  public Q_SLOTS:
+    void set_colour();
+};
+
 class CharCreationInvariantsTab : public QWidget{
     Q_OBJECT
   public:
@@ -40,15 +52,15 @@ class CharCreationInvariantsTab : public QWidget{
     QLineEdit* sexIDEdit;
     QLineEdit* speciesEdit;
     QLineEdit* raceEdit;
-    QLineEdit* eyeColourEdit;
+    SelectColourButton* eyeColourButton;
 };
 
 class CharCreationVariantsTab : public QWidget{
     Q_OBJECT
   public:
     explicit CharCreationVariantsTab(QWidget* parent = 0);
-    QLineEdit* skinColourEdit; // TODO: Colour picker
-    QLineEdit* hairColourEdit; // TODO: Colour picker
+    SelectColourButton* skinColourButton;
+    SelectColourButton* hairColourButton;
     QLineEdit* thicknessEdit;
     QLineEdit* heightEdit;
     QLineEdit* ageEdit;
