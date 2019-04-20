@@ -1,8 +1,17 @@
 #include <dirent.h> // for opendir, readdir
-#include <string.h> // for strlen
-#include <stdio.h> // for printf
+#include <string.h> // for strlen, memcpy
+#include <stdio.h> // for write
+#include <stdlib.h> // for malloc, realloc
+#include <sys/stat.h> // for stat
 
 #define STDOUT_FILENO 1
+
+#ifdef PRINT_FSIZE
+#ifdef NEWLINES
+#error "Cannot print file sizes if printing in newline mode"
+#endif
+#include <unistd.h> // for stat
+#endif
 
 void find(const char* path, unsigned int depth){
     DIR* dir;
@@ -30,6 +39,7 @@ int media_exts(const char* str, int i){
 	switch(str[--i]){
 		case '.':
 			return 1; // .
+#ifdef FIND_MUSIC
 		case '3':
 			switch(str[--i]){
 				case 'p':
@@ -44,6 +54,7 @@ int media_exts(const char* str, int i){
 					}
 				default: return 0;
 			}
+#endif
 		case '4':
 			switch(str[--i]){
 				case 'p':
@@ -88,6 +99,7 @@ int media_exts(const char* str, int i){
 			}
 		case 'g':
 			switch(str[--i]){
+#ifdef FIND_IMG
 				case 'e':
 					switch(str[--i]){
 						case 'p':
@@ -128,14 +140,17 @@ int media_exts(const char* str, int i){
 							}
 						default: return 0;
 					}
+#endif
 				case 'p':
 					switch(str[--i]){
+#ifdef FIND_IMG
 						case 'j':
 							switch(str[--i]){
 								case '.':
 									return 1; // gpj.
 								default: return 0;
 							}
+#endif
 						case 'm':
 							switch(str[--i]){
 								case '.':
@@ -257,14 +272,26 @@ int media_exts(const char* str, int i){
 }
 
 
-const char* endline = "\n";
-void find_medias(const char* path){
+const int zero = 0;
+const char endline = '\n';
+int last_depth = 0;
+struct stat sb;
+
+
+void find_medias(const char* path, const int path_len, const int depth){
     DIR* dir;
     dir = opendir(path);
-    int path_len = strlen(path);
+    
+    last_depth = depth;
+    
     if (dir == 0)
         return;
     struct dirent* e;
+    
+#ifndef NEWLINES
+    goto goto__print_dirpath;
+#endif
+    
     while ((e=readdir(dir)) != 0){
         const char* ename = e->d_name;
         
@@ -279,8 +306,9 @@ void find_medias(const char* path){
         }
         
         const int ename_len = strlen(ename);
-        
-        const int epath_len = path_len + ename_len + 1;
+        const size_t epath_len = path_len + ename_len + 1;
+        {
+            // Scope to keep non-const 'epath' out of scope of goto jump destination
         char epath[epath_len + 1];
         memcpy(epath,  path,  path_len);
         epath[path_len] = '/';
@@ -288,19 +316,43 @@ void find_medias(const char* path){
         epath[path_len + 1 + ename_len] = 0;
         
         if (e->d_type == DT_DIR){
-            find_medias(epath);
+            find_medias(epath, epath_len, depth + 1);
             continue;
         }
         
         if (media_exts(ename, ename_len) == 0)
             continue;
+#ifdef NEWLINES
         write(STDOUT_FILENO, epath, epath_len);
-        write(STDOUT_FILENO, endline, 2);
+        write(STDOUT_FILENO, &endline, sizeof(char));
+#else
+        write(STDOUT_FILENO, &ename_len, sizeof(int));
+        write(STDOUT_FILENO, ename, ename_len);
+#endif
+#ifdef PRINT_FSIZE
+#pragma message("Print FSize")
+        if (stat(epath, &sb) != 0)
+            goto goto__end;
+        
+        write(STDOUT_FILENO, &sb.st_size, sizeof(size_t));
+#endif
+        }
+#ifndef NEWLINES
+        if (depth < last_depth){
+            // We've just come back up from a recursive find_medias down into a sibling directory
+            goto__print_dirpath:
+            last_depth = depth;
+            write(STDOUT_FILENO, &zero, sizeof(int));
+            write(STDOUT_FILENO, &path_len, sizeof(int));
+            write(STDOUT_FILENO, path, path_len);
+        }
+#endif
     }
+    goto__end:
     closedir(dir);
 }
 
 int main(const int argc, const char* argv[]){
     for (int i=1; i<argc; ++i)
-        find_medias(argv[i]);
+        find_medias(argv[i], strlen(argv[i]), 0);
 }

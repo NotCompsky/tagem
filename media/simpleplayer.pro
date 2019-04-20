@@ -14,3 +14,5 @@ LIBS += -lmysqlcppconn
 DISTFILES += \
     ui/UIForm.ui.qml \
     ui/UI.qml
+
+RC_ICONS = res/icon.ico

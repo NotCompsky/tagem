@@ -1,8 +1,7 @@
-debug-main:
-	g++-8 main.cpp -o /tmp/mytags -g -DDEBUG -I"${HOME}/bin/bpcs/src" -lpthread -lreadline
-
-release-main:
-	g++-8 main.cpp -o /tmp/mytags.min -Ofast -I"${HOME}/bin/bpcs/src" -lpthread -lreadline
-
 default:
-	debug-main
+	gcc findmedia.c -Ofast -o myfindvid
+	gcc findmedia.c -Ofast -o myfindmedia -DFIND_MUSIC -DFIND_IMG
+	gcc findmedia.c -Ofast -o myfindsvid -DPRINT_FSIZE
+	gcc findmedia.c -Ofast -o myfindsmedia -DFIND_MUSIC -DFIND_IMG -DPRINT_FSIZE
+	g++ mydefmt.cpp -o mydefmt -O3
+	g++ myfmt.cpp -o myfmt -O3

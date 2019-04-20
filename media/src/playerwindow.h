@@ -25,6 +25,7 @@
 #include <QtAV>
 #include <QTextEdit>
 
+/* MySQL */
 #include <cppconn/driver.h>
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
@@ -46,10 +47,13 @@ public:
     void media_tag_new_preset(int n);
     void media_overwrite();
     void media_open();
+    void media_replace_w_link(const char* src);
     void media_delete();
+    void media_linkfrom();
     void create_character(char** statement, const char* name);
     void add_character();
     void tag_as_char(int char_id);
+    void media_score();
     int get_id_from_table(const char* table_name, const char* entry_name);
     int search_for_char(const char*);
     int file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len);
@@ -65,11 +69,15 @@ private Q_SLOTS:
     void updateSlider(qint64 value);
     void updateSlider();
     void updateSliderUnit();
+    void set_player_options_for_img();
 
 private:
     QSlider *m_slider;
     int m_unit;
-    char* media_fp;
+    char media_fp[4096];
+    char media_dir[4096 - 1024];
+    char media_fname[1024];
+    int media_dir_len;
     int file_id_len;
     char file_id[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
     FILE* inf;
@@ -81,7 +89,8 @@ private:
     
     CharCreationDialog* charcreation_dialog;
     
-    void set_player_options_for_img();
+    void ensure_fileID_set();
+    void set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val);
 };
 
 class keyReceiver : public QObject

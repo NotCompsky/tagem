@@ -30,12 +30,7 @@
 #include <QInputDialog>
 #include <QKeyEvent>
 
-
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-
+#define STDIN_FILENO 0
 
 // TODO: Add character status (injuries, mood, wearing_glasses, etc.)
 
@@ -70,7 +65,7 @@ PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
     
     vl->addWidget(m_slider);
     
-    media_fp = NULL;
+    media_fp[0] = 0;
     
     keyReceiver* key_receiver = new keyReceiver();
     key_receiver->state = key_receiver->state_default;
@@ -103,17 +98,38 @@ void PlayerWindow::set_player_options_for_img(){
 void PlayerWindow::media_open()
 {
     // WARNING: fp MUST be initialised, unless called via signal button press
-    size_t fp_size;
-    if (getline(&media_fp, &fp_size, stdin) == -1)
-        close();
-    QString file = "";
-    auto strlen_fp = strlen(media_fp);
-    media_fp[strlen_fp-1] = 0; // Last char is \n
-    for (auto i=0; i<strlen_fp-1; ++i)
-        file += media_fp[i];
+    QString file;
+    int fp_size;
     
-    if (file.isEmpty())
-        return;
+    goto goto__readindfsd;
+    
+    while (fp_size == 0){
+        // Change of directory
+        // Might have multiple changes of directory before a filename is listed
+        read(STDIN_FILENO,  &this->media_dir_len,  sizeof(int));
+        read(STDIN_FILENO,  this->media_dir,  this->media_dir_len);
+        memcpy(this->media_fp,  this->media_dir,  this->media_dir_len);
+        this->media_fp[this->media_dir_len] = '/';
+        
+        goto__readindfsd:
+        read(STDIN_FILENO,  &fp_size,  sizeof(int));
+        
+        qDebug() << "fp_size: " << +fp_size;
+    }
+    
+    read(STDIN_FILENO,  this->media_fname,  fp_size);
+    memcpy(this->media_fp + this->media_dir_len + 1,  this->media_fname,  fp_size);
+    this->media_fp[this->media_dir_len + 1 + fp_size] = 0;
+    
+    qDebug() << "media_fp: " << media_fp;
+    
+    file = this->media_fp;
+    
+    
+    /* Set window title */
+    this->media_fname[fp_size] = 0;
+    QString fname = this->media_fname;
+    this->setWindowTitle(fname);
     
     this->file_id_len = 0; // Tells us that file_id hasn't been cached yet
     
@@ -163,6 +179,48 @@ void PlayerWindow::updateSliderUnit()
 
 #define ASCII_OFFSET 48
 
+void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
+    char stmt[1024];
+    int i;
+    
+    i = 0;
+    
+    const char* a = "UPDATE ";
+    memcpy(stmt + i,  a,  strlen(a));
+    i += strlen(a);
+    
+    memcpy(stmt + i,  tbl,  strlen(tbl));
+    i += strlen(tbl);
+    
+    const char* b = " SET ";
+    memcpy(stmt + i,  b,  strlen(b));
+    i += strlen(b);
+    
+    memcpy(stmt + i,  col,  strlen(col));
+    i += strlen(col);
+    
+    const char* c = " = ";
+    memcpy(stmt + i,  c,  strlen(c));
+    i += strlen(c);
+    
+    memcpy(stmt + i,  val,  strlen(val));
+    i += strlen(val);
+    
+    const char* d = " WHERE id = ";
+    memcpy(stmt + i,  d,  strlen(d));
+    i += strlen(d);
+    
+    memcpy(stmt + i,  id,  id_len);
+    i += id_len;
+    
+    stmt[i++] = ';';
+    stmt[i] = 0;
+    
+    
+    qDebug() << stmt;
+    sql_stmt->execute(stmt);
+}
+
 int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len){
     char stmt[1024];
     int i;
@@ -175,14 +233,14 @@ int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* fi
     goto__fileattridselect:
     i = 0;
     
-    const char* a = "SELECT id FROM ";
+    const char* a = "SELECT id FROM file2";
     memcpy(stmt + i,  a,  strlen(a));
     i += strlen(a);
     
     memcpy(stmt + i,  attr,  strlen(attr));
     i += strlen(attr);
     
-    const char* b = "2file WHERE (file_id, ";
+    const char* b = " WHERE (file_id, ";
     memcpy(stmt + i,  b,  strlen(b));
     i += strlen(b);
     
@@ -220,14 +278,14 @@ int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* fi
     
     i = 0;
     
-    const char* f = "INSERT INTO ";
+    const char* f = "INSERT INTO file2";
     memcpy(stmt + i,  f,  strlen(f));
     i += strlen(f);
     
     memcpy(stmt + i,  attr,  strlen(attr));
     i += strlen(attr);
     
-    const char* g = "2file (file_id, ";
+    const char* g = " (file_id, ";
     memcpy(stmt + i,  g,  strlen(g));
     i += strlen(g);
     
@@ -259,8 +317,37 @@ int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* fi
     goto goto__fileattridselect; // Return the table entry id
 }
 
+void PlayerWindow::ensure_fileID_set(){
+    if (this->file_id_len == 0){
+        int n = this->get_id_from_table("file", media_fp);
+        this->file_id_len = count_digits(n);
+        itoa_nonstandard(n, this->file_id_len, this->file_id);
+        qDebug() << "Set file_id[" << +this->file_id_len << "]: " << this->file_id;
+    }
+}
+
+void PlayerWindow::media_score(){
+    /*
+    Rating of the unique media object itself. Not aspects unique to the file (such as resolution, or compresssion quality).
+    
+    It is applied to the 'file' table because there is no sense in having multiple files for the same unique media object. These perceptual duplicates will be listed themselves elsewhere.
+    */
+    bool ok;
+    int score_int = QInputDialog::getInt(this, tr("Score"), tr("Score"), 0, -100, 100, 1, &ok);
+    if (!ok)
+        return;
+    
+    int n = count_digits(score_int);
+    char score[n];
+    itoa_nonstandard(score_int, n, score);
+    
+    this->ensure_fileID_set();
+    
+    this->set_table_attr_by_id("file", this->file_id, this->file_id_len, "score", score);
+}
+
 QString PlayerWindow::media_tag(QString str){
-    if (media_fp == NULL)
+    if (media_fp[0] == 0)
         return "";
     
     // Triggered on key press
@@ -272,12 +359,7 @@ QString PlayerWindow::media_tag(QString str){
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     
-    if (this->file_id_len == 0){
-        int n = this->get_id_from_table("file", media_fp);
-        this->file_id_len = count_digits(n);
-        itoa_nonstandard(n, this->file_id_len, this->file_id);
-        qDebug() << "Set file_id[" << +this->file_id_len << "]: " << this->file_id;
-    }
+    this->ensure_fileID_set();
     
     this->file_attr_id("tag",  this->get_id_from_table("tag", tagchars),  this->file_id,  this->file_id_len);
     
@@ -296,10 +378,28 @@ void PlayerWindow::media_overwrite(){
         qDebug() << "Overwritten with: " << str;
 }
 
-void PlayerWindow::media_delete(){
+void PlayerWindow::media_replace_w_link(const char* src){
     qDebug() << "Deleting: " << this->media_fp;
     if (remove(this->media_fp) != 0)
         qDebug() << "Failed to delete: " << this->media_fp;
+    if (symlink(src, this->media_fp) != 0)
+        qDebug() << "Failed to create ln2del symlink: " << src << " -> " << this->media_fp;
+}
+
+void PlayerWindow::media_delete(){
+    this->media_replace_w_link("/home/compsky/bin/ln2del_ln");
+}
+
+void PlayerWindow::media_linkfrom(){
+    bool ok;
+    QString str = QInputDialog::getText(this, tr("Overwrite with link"), tr("Source path"), QLineEdit::Normal, "", &ok);
+    if (!ok || str.isEmpty()){
+        qDebug() << "Cancelling media_linkfrom";
+        return;
+    }
+    
+    const char* src = str.toLocal8Bit().data();
+    this->media_replace_w_link(src);
 }
 
 int PlayerWindow::search_for_char(const char* name){
@@ -475,6 +575,18 @@ GRANT INSERT ON mytags.person TO marx@localhost;
 GRANT SELECT ON mytags.person TO marx@localhost;
 GRANT INSERT ON mytags.person_instance TO marx@localhost;
 GRANT SELECT ON mytags.person_instance TO marx@localhost;
+
+GRANT UPDATE ON mytags.species TO marx@localhost;
+GRANT UPDATE ON mytags.race TO marx@localhost;
+GRANT UPDATE ON mytags.franchise TO marx@localhost;
+GRANT UPDATE ON mytags.profession TO marx@localhost;
+GRANT UPDATE ON mytags.nationality TO marx@localhost;
+GRANT UPDATE ON mytags.person TO marx@localhost;
+
+
+GRANT UPDATE ON mytags.file TO marx@localhost;
+GRANT UPDATE ON mytags.tag TO marx@localhost;
+
             */
             /*
 NOTE
@@ -609,6 +721,12 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 break;
             case Qt::Key_D:
                 window->media_open(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
+                break;
+            case Qt::Key_L:
+                window->media_linkfrom();
+                break;
+            case Qt::Key_S:
+                window->media_score();
                 break;
             case Qt::Key_T:
                 window->media_tag("");
