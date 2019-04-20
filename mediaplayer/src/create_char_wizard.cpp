@@ -180,9 +180,13 @@ int stoi_or_null__attract(const char* str){
     return (n << 1) | 1;
 }
 
-uint64_t to_uint64(QColor& colour){
+uint32_t to_uint32(QColor& colour){
     // In format rgba
     return (colour.red() << 24) | (colour.green() << 16) | (colour.blue() << 8) | colour.alpha();
+}
+
+uint32_t to_uint24(QColor& colour){
+    return (colour.red() << 16) | (colour.green() << 8) | colour.blue();
 }
 
 char* get_charstr(const QString& qstr){
@@ -200,10 +204,10 @@ Character CharCreationDialog::get_data() const{
         .sex_id = stoi_or_null(invariantsTab->sexIDEdit->text().toLocal8Bit().data()),
         .species = get_charstr(invariantsTab->speciesEdit->text()),
         .race = get_charstr(invariantsTab->raceEdit->text()),
-        .eyecolour = to_uint64(invariantsTab->eyeColourButton->colour),
+        .eyecolour = to_uint24(invariantsTab->eyeColourButton->colour),
         
-        .skincolour = to_uint64(variantsTab->skinColourButton->colour),
-        .haircolour = to_uint64(variantsTab->hairColourButton->colour),
+        .skincolour = to_uint24(variantsTab->skinColourButton->colour),
+        .haircolour = to_uint24(variantsTab->hairColourButton->colour),
         .thickness = stoi_or_null(variantsTab->thicknessEdit->text().toLocal8Bit().data()),
         .height = stoi_or_null(variantsTab->heightEdit->text().toLocal8Bit().data()),
         .age = stoi_or_null(variantsTab->ageEdit->text().toLocal8Bit().data()),

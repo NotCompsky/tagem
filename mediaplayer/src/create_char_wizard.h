@@ -10,6 +10,7 @@
 #include <QDialogButtonBox>
 #include <QPushButton>
 
+typedef __uint32_t uint32_t;
 typedef __uint64_t uint64_t;
 
 
@@ -18,10 +19,10 @@ struct Character{
     int sex_id;
     char* species;
     char* race;
-    uint64_t eyecolour;
+    uint32_t eyecolour;
     
-    uint64_t skincolour;
-    uint64_t haircolour;
+    uint32_t skincolour;
+    uint32_t haircolour;
     int thickness;
     int height;
     int age;

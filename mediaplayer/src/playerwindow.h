@@ -52,6 +52,7 @@ public:
     void tag_as_char(int char_id);
     int get_id_from_table(const char* table_name, const char* entry_name);
     int search_for_char(const char*);
+    int file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len);
     double volume;
     QString tag_preset[10];
     QtAV::VideoOutput* m_vo;
@@ -69,6 +70,8 @@ private:
     QSlider *m_slider;
     int m_unit;
     char* media_fp;
+    int file_id_len;
+    char file_id[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
     FILE* inf;
     
     sql::Driver* sql_driver;
@@ -77,6 +80,8 @@ private:
     sql::ResultSet* sql_res;
     
     CharCreationDialog* charcreation_dialog;
+    
+    void set_player_options_for_img();
 };
 
 class keyReceiver : public QObject
