@@ -99,39 +99,18 @@ void PlayerWindow::media_open()
 {
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file;
-    int fp_size;
     
-    goto goto__readindfsd;
-    
-    while (fp_size == 0){
-        // Change of directory
-        // Might have multiple changes of directory before a filename is listed
-        read(STDIN_FILENO,  &this->media_dir_len,  sizeof(int));
-        read(STDIN_FILENO,  this->media_dir,  this->media_dir_len);
-        memcpy(this->media_fp,  this->media_dir,  this->media_dir_len);
-        this->media_fp[this->media_dir_len] = '/';
-        
-        goto__readindfsd:
-        read(STDIN_FILENO,  &fp_size,  sizeof(int));
-        
-        qDebug() << "fp_size: " << +fp_size;
-    }
-    
-    read(STDIN_FILENO,  this->media_fname,  fp_size);
-    memcpy(this->media_fp + this->media_dir_len + 1,  this->media_fname,  fp_size);
-    this->media_fp[this->media_dir_len + 1 + fp_size] = 0;
+    read_fp_from_diraggr(this->media_dir, this->media_dir_len, this->media_fname, this->media_fp);
     
     qDebug() << "media_fp: " << media_fp;
     
     file = this->media_fp;
     
-    
     /* Set window title */
-    this->media_fname[fp_size] = 0;
     QString fname = this->media_fname;
     this->setWindowTitle(fname);
     
-    this->file_id_len = 0; // Tells us that file_id hasn't been cached yet
+    this->file_id_str_len = 0; // Tells us that file_id hasn't been cached yet
     
     qDebug() << "media_open " << file; // SegFault without this line
     m_player->play(file);
@@ -222,107 +201,16 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
 }
 
 int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len){
-    char stmt[1024];
-    int i;
-    
-    int attr_id_len = count_digits(attr_id_int);
-    char attr_id[attr_id_len + 1];
-    itoa_nonstandard(attr_id_int, attr_id_len, attr_id);
-    
-    
-    goto__fileattridselect:
-    i = 0;
-    
-    const char* a = "SELECT id FROM file2";
-    memcpy(stmt + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    memcpy(stmt + i,  attr,  strlen(attr));
-    i += strlen(attr);
-    
-    const char* b = " WHERE (file_id, ";
-    memcpy(stmt + i,  b,  strlen(b));
-    i += strlen(b);
-    
-    memcpy(stmt + i,  attr,  strlen(attr));
-    i += strlen(attr);
-    
-    const char* c = "_id) = (\"";
-    memcpy(stmt + i,  c,  strlen(c));
-    i += strlen(c);
-    
-    memcpy(stmt + i,  file_id,  file_id_len);
-    i += file_id_len;
-    
-    const char* d = "\", \"";
-    memcpy(stmt + i,  d,  strlen(d));
-    i += strlen(d);
-    
-    memcpy(stmt + i,  attr_id,  strlen(attr_id));
-    i += strlen(attr_id);
-    
-    const char* e = "\");";
-    memcpy(stmt + i,  e,  strlen(e));
-    i += strlen(e);
-    
-    stmt[i] = 0;
-    
-    qDebug() << stmt;
-    sql_res = sql_stmt->executeQuery(stmt);
-    
-    if (sql_res->next())
-        return sql_res->getInt(1); // 1 is first column
-    else
-        qDebug() << "No prior tags of this value";
-    
-    
-    i = 0;
-    
-    const char* f = "INSERT INTO file2";
-    memcpy(stmt + i,  f,  strlen(f));
-    i += strlen(f);
-    
-    memcpy(stmt + i,  attr,  strlen(attr));
-    i += strlen(attr);
-    
-    const char* g = " (file_id, ";
-    memcpy(stmt + i,  g,  strlen(g));
-    i += strlen(g);
-    
-    memcpy(stmt + i,  attr,  strlen(attr));
-    i += strlen(attr);
-    
-    const char* h = "_id) values(\"";
-    memcpy(stmt + i,  h,  strlen(h));
-    i += strlen(h);
-    
-    memcpy(stmt + i,  file_id,  file_id_len);
-    i += file_id_len;
-    
-    // ", "
-    memcpy(stmt + i,  d,  strlen(d));
-    i += strlen(d);
-    
-    memcpy(stmt + i,  attr_id,  strlen(attr_id));
-    i += strlen(attr_id);
-    
-    memcpy(stmt + i,  e,  strlen(e));
-    i += strlen(e);
-    
-    stmt[i] = 0;
-    
-    qDebug() << stmt;
-    sql_stmt->execute(stmt);
-    
-    goto goto__fileattridselect; // Return the table entry id
+    return sql__file_attr_id(this->sql_stmt, this->sql_res, attr, attr_id_int, file_id, file_id_len);
 }
 
 void PlayerWindow::ensure_fileID_set(){
-    if (this->file_id_len == 0){
-        int n = this->get_id_from_table("file", media_fp);
-        this->file_id_len = count_digits(n);
-        itoa_nonstandard(n, this->file_id_len, this->file_id);
-        qDebug() << "Set file_id[" << +this->file_id_len << "]: " << this->file_id;
+    if (this->file_id_str_len == 0){
+        this->file_id = this->get_id_from_table("file", media_fp);
+        this->file_id_str_len = count_digits(this->file_id);
+        itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
+        this->file_id_str[this->file_id_str_len] = 0;
+        qDebug() << "Set file_id[" << +this->file_id_str_len << "]: " << this->file_id_str;
     }
 }
 
@@ -338,12 +226,24 @@ void PlayerWindow::media_score(){
         return;
     
     int n = count_digits(score_int);
-    char score[n];
+    char score[n+1];
     itoa_nonstandard(score_int, n, score);
+    score[n] = 0;
     
     this->ensure_fileID_set();
     
-    this->set_table_attr_by_id("file", this->file_id, this->file_id_len, "score", score);
+    this->set_table_attr_by_id("file", this->file_id_str, this->file_id_str_len, "score", score);
+}
+
+void PlayerWindow::media_note(){
+    bool ok;
+    // TODO: Replace prefilled text ("") with previous file note value
+    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), "", &ok);
+    if (!ok || str.isEmpty())
+        return;
+    QByteArray  bstr = str.toLocal8Bit();
+    const char* cstr = bstr.data();
+    sql__insert_value_into_table_at(this->sql_stmt, this->sql_res, "file", "note", cstr, this->file_id);
 }
 
 QString PlayerWindow::media_tag(QString str){
@@ -361,7 +261,7 @@ QString PlayerWindow::media_tag(QString str){
     
     this->ensure_fileID_set();
     
-    this->file_attr_id("tag",  this->get_id_from_table("tag", tagchars),  this->file_id,  this->file_id_len);
+    this->file_attr_id("tag",  this->get_id_from_table("tag", tagchars),  this->file_id_str,  this->file_id_str_len);
     
     return tagstr;
 }
@@ -603,69 +503,7 @@ We require 0 to be an allowed value for all optional secondary fields
 }
 
 int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
-    if (entry_name[0] == 0)
-        return 0;
-    
-    int i;
-    char statement[2048];
-    
-    goto__select_from_table:
-    
-    i = 0;
-    
-    const char* a = "SELECT id FROM ";
-    memcpy(statement + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    memcpy(statement + i,  table_name,  strlen(table_name));
-    i += strlen(table_name);
-    
-    const char* dummy = " WHERE name = \"";
-    memcpy(statement + i,  dummy,  strlen(dummy));
-    i += strlen(dummy);
-    
-    memcpy(statement + i,  entry_name,  strlen(entry_name));
-    i += strlen(entry_name);
-    
-    statement[i++] = '"';
-    statement[i++] = ';';
-    statement[i] = 0;
-    
-    qDebug() << statement;
-    sql_res = sql_stmt->executeQuery(statement);
-    
-    if (sql_res->next()){
-        // Entry already existed in table
-        qDebug() << "SQL ID: " << +sql_res->getInt(1);
-        return sql_res->getInt(1);
-    }
-    
-    qDebug() << "Creating new entry in " << table_name << " for: " << entry_name;
-    
-    i = 0;
-    const char* statement2 = "INSERT INTO ";
-    memcpy(statement + i,  statement2,  strlen(statement2));
-    i += strlen(statement2);
-    
-    memcpy(statement + i,  table_name,  strlen(table_name));
-    i += strlen(table_name);
-    
-    const char* fff = " (name) values(\"";
-    memcpy(statement + i,  fff,  strlen(fff));
-    i += strlen(fff);
-    
-    memcpy(statement + i,  entry_name,  strlen(entry_name));
-    i += strlen(entry_name);
-    
-    statement[i++] = '"';
-    statement[i++] = ')';
-    statement[i++] = ';';
-    statement[i] = 0;
-    
-    qDebug() << statement;
-    sql_stmt->execute(statement);
-    
-    goto goto__select_from_table;
+    return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name);
 }
 
 void PlayerWindow::tag_as_char(int char_id){
@@ -727,6 +565,9 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 break;
             case Qt::Key_S:
                 window->media_score();
+                break;
+            case Qt::Key_N:
+                window->media_note();
                 break;
             case Qt::Key_T:
                 window->media_tag("");

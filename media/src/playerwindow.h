@@ -54,9 +54,10 @@ public:
     void add_character();
     void tag_as_char(int char_id);
     void media_score();
+    void media_note();
     int get_id_from_table(const char* table_name, const char* entry_name);
     int search_for_char(const char*);
-    int file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len);
+    int file_attr_id(const char* attr, int attr_id_int, const char* file_id_str, const int file_id_str_len);
     double volume;
     QString tag_preset[10];
     QtAV::VideoOutput* m_vo;
@@ -78,8 +79,9 @@ private:
     char media_dir[4096 - 1024];
     char media_fname[1024];
     int media_dir_len;
-    int file_id_len;
-    char file_id[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
+    int file_id_str_len;
+    char file_id_str[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
+    int file_id;
     FILE* inf;
     
     sql::Driver* sql_driver;
