@@ -126,9 +126,9 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
 }
 
 void PlayerWindow::set_player_options_for_img(){
-    qDebug() << "Duration " << +this->m_player->duration();
+    PRINTF("Duration: %d\n", this->m_player->duration());
     if (this->m_player->duration() == 40){
-        qDebug() << "Auto paused";
+        PRINTF("Auto paused\n");
         this->m_player->pause(true);
     }
 }
@@ -163,15 +163,13 @@ void PlayerWindow::media_open()
     if (this->ignore_tagged){
         this->ensure_fileID_set();
         if (sql__get_first_file2attr_id(this->sql_stmt, this->sql_res, "tag", this->file_id_str, this->file_id_str_len) != 0){
-            printf("Skipped previously tagged: %s\n", this->media_fp);
+            PRINTF("Skipped previously tagged: %s\n", this->media_fp);
             return this->media_next();
         }
     }
     
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file;
-    
-    qDebug() << "media_fp: " << media_fp;
     
     file = this->media_fp;
     
@@ -181,7 +179,7 @@ void PlayerWindow::media_open()
     
     qDebug() << "media_open " << file; // SegFault without this line
     m_player->play(file);
-    qDebug() << "m_player->duration(): " << +m_player->duration();
+    PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
 }
 
@@ -378,15 +376,15 @@ void PlayerWindow::media_overwrite(){
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite"), tr("Value"), QLineEdit::Normal, "Manually deleted", &ok);
     if (ok && !str.isEmpty())
-        qDebug() << "Overwritten with: " << str;
+        PRINTF("Overwritten with: %s\n", str);
 }
 
 void PlayerWindow::media_replace_w_link(const char* src){
-    qDebug() << "Deleting: " << this->media_fp;
+    PRINTF("Deleting: %s\n". this->media_fp);
     if (remove(this->media_fp) != 0)
-        qDebug() << "Failed to delete: " << this->media_fp;
+        fprintf(stderr, "Failed to delete: %s\n", this->media_fp);
     if (symlink(src, this->media_fp) != 0)
-        qDebug() << "Failed to create ln2del symlink: " << src << " -> " << this->media_fp;
+        fprintf(stderr, "Failed to create ln2del symlink: %s\n", this->media_fp);
 }
 
 void PlayerWindow::media_delete(){
@@ -397,7 +395,7 @@ void PlayerWindow::media_linkfrom(){
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite with link"), tr("Source path"), QLineEdit::Normal, "", &ok);
     if (!ok || str.isEmpty()){
-        qDebug() << "Cancelling media_linkfrom";
+        PRINTF("Cancelling media_linkfrom\n");
         return;
     }
     
@@ -420,7 +418,7 @@ int PlayerWindow::search_for_char(const char* name){
     STMT[i++] = ';';
     STMT[i] = 0;
     
-    qDebug() << STMT;
+    PRINTF("%s\n", STMT);
     sql_res = sql_stmt->executeQuery(STMT);
     
     if (sql_res->next())
@@ -430,8 +428,6 @@ int PlayerWindow::search_for_char(const char* name){
 }
 
 void PlayerWindow::add_character(){
-    qDebug() << "add_character()";
-    
     bool ok;
     const char* name = QInputDialog::getText(this, tr("Character Name"), tr("Name"), QLineEdit::Normal, "", &ok).toLocal8Bit().data();
     if (!ok)
@@ -593,7 +589,7 @@ We require 0 to be an allowed value for all optional secondary fields
             
             return tag_as_char(char_id);
         } else {
-            qDebug() << "Cancelled";
+            PRINTF("Cancelled\n");
             return;
         }
     }
@@ -605,8 +601,7 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
 }
 
 void PlayerWindow::tag_as_char(int char_id){
-    
-    qDebug() << "tag_as_char(" << +char_id << ")";
+    PRINTF("tag_as_char(%d)\n", char_id);
 }
 
 
