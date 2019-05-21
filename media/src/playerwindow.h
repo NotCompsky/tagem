@@ -67,11 +67,9 @@ public:
     void media_replace_w_link(const char* src);
     void media_delete();
     void media_linkfrom();
-    void tag_as_char(int char_id);
     void media_score();
     void media_note();
     int get_id_from_table(const char* table_name, const char* entry_name);
-    int search_for_char(const char*);
     int file_attr_id(const char* attr, int attr_id_int, const char* file_id_str, const int file_id_str_len);
     double volume;
     QString tag_preset[10];

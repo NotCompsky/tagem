@@ -463,36 +463,8 @@ void PlayerWindow::media_linkfrom(){
     this->media_replace_w_link(src);
 }
 
-int PlayerWindow::search_for_char(const char* name){
-    int i = 0;
-    int char_id = 0;
-    
-    constexpr const char* a = "SELECT id FROM person WHERE name = \"";
-    memcpy(STMT + i, a, strlen(a));
-    i += strlen(a);
-    
-    memcpy(STMT + i, name, strlen(name));
-    i += strlen(name);
-    
-    STMT[i++] = '"';
-    STMT[i++] = ';';
-    STMT[i] = 0;
-    
-    PRINTF("%s\n", STMT);
-    sql_res = sql_stmt->executeQuery(STMT);
-    
-    if (sql_res->next())
-        char_id = sql_res->getInt(1); // 1 is first column
-    
-    return char_id;
-}
-
 int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
     return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name);
-}
-
-void PlayerWindow::tag_as_char(int char_id){
-    PRINTF("tag_as_char(%d)\n", char_id);
 }
 
 
