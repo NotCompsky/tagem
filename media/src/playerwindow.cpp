@@ -58,13 +58,13 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     }
     
     m_unit = 1000;
-    setWindowTitle(QString::fromLatin1("QtAV simple player example"));
+    setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new AVPlayer(this);
     QVBoxLayout *vl = new QVBoxLayout();
     setLayout(vl);
     m_vo = new VideoOutput(this);
     if (!m_vo->widget()) {
-        QMessageBox::warning(0, QString::fromLatin1("QtAV error"), tr("Can not create video renderer"));
+        fprintf(stderr, "Cannot create QtAV renderer\n");
         return;
     }
     m_player->setRenderer(m_vo);
