@@ -44,6 +44,20 @@ char NOTE[30000];
 
 using namespace QtAV;
 
+TagDialog::TagDialog(QString str,  QWidget *parent) : QDialog(parent){
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(buttonBox);
+    nameEdit = new QLineEdit(str);
+    mainLayout->addWidget(nameEdit);
+    this->setLayout(mainLayout);
+    this->setWindowTitle(tr("Tag"));
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+}
+
 PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
 {
     this->ignore_tagged = false;
@@ -56,6 +70,18 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
             }
         } else exit(3);
     }
+    
+    this->sql_driver = get_driver_instance();
+    this->sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
+    this->sql_con->setSchema("mytags");
+    this->sql_stmt = sql_con->createStatement();
+    
+    this->tagslist;
+    this->sql_res = this->sql_stmt->executeQuery("SELECT name FROM tag");
+    while (this->sql_res->next()){
+        this->tagslist << QString::fromStdString(this->sql_res->getString(1));
+    }
+    this->tagcompleter = new QCompleter(tagslist);
     
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
@@ -89,11 +115,6 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     
     for (auto i=0; i<10; ++i)
         tag_preset[i] = "";
-    
-    sql_driver = get_driver_instance();
-    sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
-    sql_con->setSchema("mytags");
-    sql_stmt = sql_con->createStatement();
     
     charcreation_dialog = new CharCreationDialog();
     charcreation_dialog->setModal(true);
@@ -320,10 +341,12 @@ QString PlayerWindow::media_tag(QString str){
     
     // Triggered on key press
     bool ok;
-    QString tagstr = QInputDialog::getText(this, tr("Get Tag"), tr("Tag"), QLineEdit::Normal, str, &ok);
-    if (!ok || tagstr.isEmpty())
+    TagDialog* tagdialog = new TagDialog(str);
+    tagdialog->nameEdit->setCompleter(this->tagcompleter);
+    if (tagdialog->exec() != QDialog::Accepted)
         return "";
     
+    QString tagstr = tagdialog->nameEdit->text();
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     

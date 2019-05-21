@@ -21,9 +21,11 @@
 #ifndef PLAYERWINDOW_H
 #define PLAYERWINDOW_H
 
+#include <QCompleter>
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
+#include <QStringListModel>
 
 /* MySQL */
 #include <cppconn/driver.h>
@@ -38,6 +40,18 @@ QT_BEGIN_NAMESPACE
 class QSlider;
 class QPushButton;
 QT_END_NAMESPACE
+
+
+class TagDialog : public QDialog{
+    Q_OBJECT
+  public:
+    explicit TagDialog(QString str,  QWidget* parent = 0);
+    QLineEdit* nameEdit;
+  private:
+    QDialogButtonBox* buttonBox;
+};
+
+
 class PlayerWindow : public QWidget
 {
     Q_OBJECT
@@ -85,6 +99,9 @@ private:
     char file_id_str[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
     int file_id;
     FILE* inf;
+    
+    QStringList tagslist;
+    QCompleter* tagcompleter;
     
     sql::Driver* sql_driver;
     sql::Connection* sql_con;
