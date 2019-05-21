@@ -42,10 +42,11 @@ class PlayerWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PlayerWindow(QWidget *parent = 0);
+    explicit PlayerWindow(int argc,  char** argv,  QWidget *parent = 0);
     QString media_tag(QString str);
     void media_tag_new_preset(int n);
     void media_overwrite();
+    void media_next();
     void media_open();
     void media_replace_w_link(const char* src);
     void media_delete();
@@ -75,6 +76,7 @@ private Q_SLOTS:
 private:
     QSlider *m_slider;
     int m_unit;
+    bool ignore_tagged;
     char media_fp[4096];
     char media_dir[4096 - 1024];
     char media_fname[1024];

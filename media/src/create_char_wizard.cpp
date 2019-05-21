@@ -74,6 +74,7 @@ CharCreationInvariantsTab::CharCreationInvariantsTab(QWidget* parent) : QWidget(
     QLabel* raceLabel = new QLabel(tr("Race"));
     raceEdit = new QLineEdit("White");
     
+    QLabel* eyeColourLabel = new QLabel(tr("Eye Colour"));
     eyeColourButton = new SelectColourButton("EyeColour", this);
     
     
@@ -86,26 +87,32 @@ CharCreationInvariantsTab::CharCreationInvariantsTab(QWidget* parent) : QWidget(
     mainLayout->addWidget(speciesEdit);
     mainLayout->addWidget(raceLabel);
     mainLayout->addWidget(raceEdit);
+    mainLayout->addWidget(eyeColourLabel);
     mainLayout->addWidget(eyeColourButton);
     
     setLayout(mainLayout);
 }
 
 CharCreationVariantsTab::CharCreationVariantsTab(QWidget* parent) : QWidget(parent){
+    QLabel* skinColourLabel = new QLabel(tr("Skin Colour"));
     skinColourButton = new SelectColourButton("SkinColour", this);
+    
+    QLabel* hairColourLabel = new QLabel(tr("Hair Colour"));
     hairColourButton = new SelectColourButton("HairColour", this);
     
     QLabel* thicknessLabel = new QLabel(tr("Thickness"));
     thicknessEdit = new QLineEdit("");
     
-    QLabel* heightLabel = new QLabel(tr("Height"));
-    heightEdit = new QLineEdit("1.8");
+    QLabel* heightLabel = new QLabel(tr("Height (cm)"));
+    heightEdit = new QLineEdit("180");
     
-    QLabel* ageLabel = new QLabel(tr("Age"));
+    QLabel* ageLabel = new QLabel(tr("Age (y)"));
     ageEdit = new QLineEdit("20");
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(skinColourLabel);
     mainLayout->addWidget(skinColourButton);
+    mainLayout->addWidget(hairColourLabel);
     mainLayout->addWidget(hairColourButton);
     mainLayout->addWidget(thicknessLabel);
     mainLayout->addWidget(thicknessEdit);

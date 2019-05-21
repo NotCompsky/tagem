@@ -21,11 +21,11 @@
 #include "playerwindow.h"
 #include <QtAVWidgets>
 
-int main(int argc, char *argv[])
+int main(int argc,  char** argv)
 {
     QtAV::Widgets::registerRenderers();
     QApplication a(argc, argv);
-    PlayerWindow player;
+    PlayerWindow player(argc, argv);
     player.show();
     player.resize(1920/2, 1080);
     return a.exec();

@@ -40,8 +40,19 @@
 
 using namespace QtAV;
 
-PlayerWindow::PlayerWindow(QWidget *parent) : QWidget(parent)
+PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
 {
+    this->ignore_tagged = false;
+    for (auto i = 1;  i < argc;  ++i){
+        const char* arg = argv[i];
+        if (arg[1] == 0){
+            switch(arg[0]){
+                case 't': this->ignore_tagged = true; break;
+                default: exit(2);
+            }
+        } else exit(3);
+    }
+    
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("QtAV simple player example"));
     m_player = new AVPlayer(this);
@@ -95,12 +106,43 @@ void PlayerWindow::set_player_options_for_img(){
     }
 }
 
+void PlayerWindow::media_next(){
+    // TODO: Do not have different strings, but one fp string and lengths of dir and fname
+    size_t size;
+    char* dummy = nullptr;
+    getline(&dummy, &size, stdin);
+    memcpy(this->media_fp,  dummy,  strlen(dummy)-1); // Remove trailing newline
+    this->media_fp[strlen(dummy)-1] = 0;
+    
+    this->media_dir_len = 0;
+    for (auto i = 0;  this->media_fp[i] != 0;  ++i)
+        if (this->media_fp[i] == '/')
+            this->media_dir_len = i;
+    
+    memcpy(this->media_dir,  this->media_fp,  this->media_dir_len);
+    this->media_dir[this->media_dir_len] = 0;
+    
+    auto media_fname_len = strlen(dummy)-1 - this->media_dir_len - 1;
+    memcpy(this->media_fname,  this->media_fp + this->media_dir_len + 1,  media_fname_len);
+    this->media_fname[media_fname_len] = 0;
+    
+    this->file_id_str_len = 0; // Tells us that file_id hasn't been cached yet
+    
+    this->media_open();
+}
+
 void PlayerWindow::media_open()
 {
+    if (this->ignore_tagged){
+        this->ensure_fileID_set();
+        if (sql__get_first_file2attr_id(this->sql_stmt, this->sql_res, "tag", this->file_id_str, this->file_id_str_len) != 0){
+            printf("Skipped previously tagged: %s\n", this->media_fp);
+            return this->media_next();
+        }
+    }
+    
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file;
-    
-    read_fp_from_diraggr(this->media_dir, this->media_dir_len, this->media_fname, this->media_fp);
     
     qDebug() << "media_fp: " << media_fp;
     
@@ -109,8 +151,6 @@ void PlayerWindow::media_open()
     /* Set window title */
     QString fname = this->media_fname;
     this->setWindowTitle(fname);
-    
-    this->file_id_str_len = 0; // Tells us that file_id hasn't been cached yet
     
     qDebug() << "media_open " << file; // SegFault without this line
     m_player->play(file);
@@ -210,7 +250,6 @@ void PlayerWindow::ensure_fileID_set(){
         this->file_id_str_len = count_digits(this->file_id);
         itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
         this->file_id_str[this->file_id_str_len] = 0;
-        qDebug() << "Set file_id[" << +this->file_id_str_len << "]: " << this->file_id_str;
     }
 }
 
@@ -243,7 +282,16 @@ void PlayerWindow::media_note(){
         return;
     QByteArray  bstr = str.toLocal8Bit();
     const char* cstr = bstr.data();
-    sql__insert_value_into_table_at(this->sql_stmt, this->sql_res, "file", "note", cstr, this->file_id);
+    char cstr_escpd[strlen(cstr)*2 + 1];
+    auto j = 0;
+    for (auto i = 0;  i < strlen(cstr);  ++i){
+        if (cstr[i] == '"'  ||  cstr[i] == '\\')
+            cstr_escpd[j++] = '\\';
+        cstr_escpd[j++] = cstr[i];
+    }
+    cstr_escpd[j] = 0;
+    this->ensure_fileID_set();
+    sql__update(this->sql_stmt, this->sql_res, "file", "note", cstr_escpd, this->file_id);
 }
 
 QString PlayerWindow::media_tag(QString str){
@@ -558,7 +606,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 }
                 break;
             case Qt::Key_D:
-                window->media_open(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
+                window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                 break;
             case Qt::Key_L:
                 window->media_linkfrom();
@@ -580,7 +628,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 break;
             case Qt::Key_X:
                 window->media_delete();
-                window->media_open();
+                window->media_next();
                 break;
             case Qt::Key_Space:
                 window->playPause();
