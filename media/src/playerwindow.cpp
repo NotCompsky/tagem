@@ -38,6 +38,10 @@
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
 
 
+char STMT[4096];
+
+
+
 using namespace QtAV;
 
 PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
@@ -199,45 +203,44 @@ void PlayerWindow::updateSliderUnit()
 #define ASCII_OFFSET 48
 
 void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
-    char stmt[1024];
     int i;
     
     i = 0;
     
     const char* a = "UPDATE ";
-    memcpy(stmt + i,  a,  strlen(a));
+    memcpy(STMT + i,  a,  strlen(a));
     i += strlen(a);
     
-    memcpy(stmt + i,  tbl,  strlen(tbl));
+    memcpy(STMT + i,  tbl,  strlen(tbl));
     i += strlen(tbl);
     
     const char* b = " SET ";
-    memcpy(stmt + i,  b,  strlen(b));
+    memcpy(STMT + i,  b,  strlen(b));
     i += strlen(b);
     
-    memcpy(stmt + i,  col,  strlen(col));
+    memcpy(STMT + i,  col,  strlen(col));
     i += strlen(col);
     
     const char* c = " = ";
-    memcpy(stmt + i,  c,  strlen(c));
+    memcpy(STMT + i,  c,  strlen(c));
     i += strlen(c);
     
-    memcpy(stmt + i,  val,  strlen(val));
+    memcpy(STMT + i,  val,  strlen(val));
     i += strlen(val);
     
     const char* d = " WHERE id = ";
-    memcpy(stmt + i,  d,  strlen(d));
+    memcpy(STMT + i,  d,  strlen(d));
     i += strlen(d);
     
-    memcpy(stmt + i,  id,  id_len);
+    memcpy(STMT + i,  id,  id_len);
     i += id_len;
     
-    stmt[i++] = ';';
-    stmt[i] = 0;
+    STMT[i++] = ';';
+    STMT[i] = 0;
     
     
-    qDebug() << stmt;
-    sql_stmt->execute(stmt);
+    qDebug() << STMT;
+    sql_stmt->execute(STMT);
 }
 
 int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len){
@@ -280,16 +283,15 @@ void PlayerWindow::media_note(){
     this->ensure_fileID_set();
     
     constexpr const char* a = "SELECT note FROM file WHERE id=";
-    char stmt[strlen(a) + 20 + 1];
     int i = 0;
-    memcpy(stmt,  a,  strlen(a));
+    memcpy(STMT,  a,  strlen(a));
     i += strlen(a);
-    memcpy(stmt + i,  this->file_id_str,  this->file_id_str_len);
+    memcpy(STMT + i,  this->file_id_str,  this->file_id_str_len);
     i += this->file_id_str_len;
-    stmt[i] = 0;
+    STMT[i] = 0;
     
-    PRINTF("%s\n", stmt);
-    this->sql_res = this->sql_stmt->executeQuery(stmt);
+    PRINTF("%s\n", STMT);
+    this->sql_res = this->sql_stmt->executeQuery(STMT);
     
     if (this->sql_res->next()){
         std::string s = this->sql_res->getString(1);
@@ -373,21 +375,20 @@ void PlayerWindow::media_linkfrom(){
 int PlayerWindow::search_for_char(const char* name){
     int i = 0;
     int char_id = 0;
-    char statement[1024];
     
     const char* a = "SELECT id FROM person WHERE name = \"";
-    memcpy(statement + i, a, strlen(a));
+    memcpy(STMT + i, a, strlen(a));
     i += strlen(a);
     
-    memcpy(statement + i, name, strlen(name));
+    memcpy(STMT + i, name, strlen(name));
     i += strlen(name);
     
-    statement[i++] = '"';
-    statement[i++] = ';';
-    statement[i] = 0;
+    STMT[i++] = '"';
+    STMT[i++] = ';';
+    STMT[i] = 0;
     
     qDebug() << statement;
-    sql_res = sql_stmt->executeQuery(statement);
+    sql_res = sql_stmt->executeQuery(STMT);
     
     if (sql_res->next())
         char_id = sql_res->getInt(1); // 1 is first column
@@ -405,7 +406,6 @@ void PlayerWindow::add_character(){
     
     int i;
     int char_id = 0;
-    char statement[2048];
     
     if (name[0] != 0)
         char_id = search_for_char(name);
@@ -436,22 +436,22 @@ void PlayerWindow::add_character(){
             //const int attract_to_race
             
             
-            char statement[4096];
+            char STMT[4096];
             
             
-            sprintf(statement, "INSERT INTO person (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %u, %u, %u, %u, %u);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
+            sprintf(STMT, "INSERT INTO person (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %u, %u, %u, %u, %u);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
             
-            qDebug() << statement;
-            sql_stmt->execute(statement);
+            qDebug() << STMT;
+            sql_stmt->execute(STMT);
             
             if (name[0] != 0)
                 char_id = search_for_char(name);
             
             
-            sprintf(statement, "INSERT INTO person_instance (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) values(%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u);", char_id, data.skincolour, data.haircolour, data.age, profession_id, nationality_id, data.thickness, data.height, data.attract_to_gender, data.attract_to_species, data.attract_to_race);
+            sprintf(STMT, "INSERT INTO person_instance (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) values(%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u);", char_id, data.skincolour, data.haircolour, data.age, profession_id, nationality_id, data.thickness, data.height, data.attract_to_gender, data.attract_to_species, data.attract_to_race);
             
-            qDebug() << statement;
-            sql_stmt->execute(statement);
+            qDebug() << STMT;
+            sql_stmt->execute(STMT);
             
             free(data.name);
             free(data.species);
