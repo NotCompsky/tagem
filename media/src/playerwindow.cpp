@@ -169,15 +169,12 @@ void PlayerWindow::media_open()
     }
     
     // WARNING: fp MUST be initialised, unless called via signal button press
-    QString file;
-    
-    file = this->media_fp;
+    QString file = this->media_fp;
     
     /* Set window title */
     QString fname = this->media_fname;
     this->setWindowTitle(fname);
     
-    qDebug() << "media_open " << file; // SegFault without this line
     m_player->play(file);
     PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
