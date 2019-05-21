@@ -29,6 +29,7 @@
 #include <QDebug>
 #include <QInputDialog>
 #include <QKeyEvent>
+#include <QTimer>
 
 #define STDIN_FILENO 0
 
@@ -56,6 +57,7 @@ TagDialog::TagDialog(QString str,  QWidget *parent) : QDialog(parent){
     this->setWindowTitle(tr("Tag"));
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
 }
 
 PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
