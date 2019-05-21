@@ -35,6 +35,15 @@ void find(const char* path, unsigned int depth){
     closedir(dir);
 }
 
+#ifdef FIND_NOEXT
+int has_ext(const char* str, int len){
+    for (auto i = 0;  i < len;  ++i)
+        if (str[i] == '.')
+            return 1;
+    return 0;
+}
+#endif
+
 int media_exts(const char* str, int i){
 	switch(str[--i]){
 		case '.':
@@ -55,6 +64,7 @@ int media_exts(const char* str, int i){
 				default: return 0;
 			}
 #endif
+#ifdef FIND_VID
 		case '4':
 			switch(str[--i]){
 				case 'p':
@@ -83,6 +93,16 @@ int media_exts(const char* str, int i){
 					}
 				default: return 0;
 			}
+#endif
+#ifdef FIND_TXT
+		case 'c':
+			switch(str[--i]){
+				case '.':
+					return 1; // c.
+				default: return 0;
+			}
+#endif
+#ifdef FIND_VID
 		case 'f':
 			switch(str[--i]){
 				case 'i':
@@ -97,6 +117,7 @@ int media_exts(const char* str, int i){
 					}
 				default: return 0;
 			}
+#endif
 		case 'g':
 			switch(str[--i]){
 #ifdef FIND_IMG
@@ -141,6 +162,7 @@ int media_exts(const char* str, int i){
 						default: return 0;
 					}
 #endif
+#if defined (FIND_IMG) || defined (FIND_VID)
 				case 'p':
 					switch(str[--i]){
 #ifdef FIND_IMG
@@ -159,8 +181,18 @@ int media_exts(const char* str, int i){
 							}
 						default: return 0;
 					}
+#endif
 				default: return 0;
 			}
+#ifdef FIND_TXT
+		case 'h':
+			switch(str[--i]){
+				case '.':
+					return 1; // h.
+				default: return 0;
+			}
+#endif
+#ifdef FIND_VID
 		case 'i':
 			switch(str[--i]){
 				case 'v':
@@ -193,6 +225,40 @@ int media_exts(const char* str, int i){
 					}
 				default: return 0;
 			}
+#ifdef FIND_TXT
+		case 'p':
+			switch(str[--i]){
+				case 'p':
+					switch(str[--i]){
+						case 'c':
+							switch(str[--i]){
+								case '.':
+									return 1; // ppc.
+								default: return 0;
+							}
+						case 'h':
+							switch(str[--i]){
+								case '.':
+									return 1; // pph.
+								default: return 0;
+							}
+						default: return 0;
+					}
+			}
+		case 't':
+			switch(str[--i]){
+				case 'x':
+					switch(str[--i]){
+						case 't':
+							switch(str[--i]){
+								case '.':
+									return 1; // txt.
+								default: return 0;
+							}
+						default: return 0;
+					}
+			}
+#endif
 		case 'v':
 			switch(str[--i]){
 				case '2':
@@ -267,6 +333,7 @@ int media_exts(const char* str, int i){
 					}
 				default: return 0;
 			}
+#endif
 		default: return 0;
 	}
 }
@@ -320,6 +387,10 @@ void find_medias(const char* path, const int path_len, const int depth){
             continue;
         }
         
+#ifdef FIND_NOEXT
+        if (!has_ext(ename, ename_len));
+        else
+#endif
         if (media_exts(ename, ename_len) == 0)
             continue;
 #ifdef NEWLINES
