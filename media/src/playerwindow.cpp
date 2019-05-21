@@ -350,6 +350,9 @@ QString PlayerWindow::media_tag(QString str){
     
     QString tagstr = tagdialog->nameEdit->text();
     
+    if (tagstr.isEmpty())
+        return "";
+    
     if (!this->tagslist.contains(tagstr)){
         this->tagslist.append(tagstr);
         delete this->tagcompleter;
