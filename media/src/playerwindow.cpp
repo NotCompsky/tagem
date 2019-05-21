@@ -239,7 +239,7 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
     STMT[i] = 0;
     
     
-    qDebug() << STMT;
+    PRINTF("%s\n", STMT);
     sql_stmt->execute(STMT);
 }
 
@@ -387,7 +387,7 @@ int PlayerWindow::search_for_char(const char* name){
     STMT[i++] = ';';
     STMT[i] = 0;
     
-    qDebug() << statement;
+    qDebug() << STMT;
     sql_res = sql_stmt->executeQuery(STMT);
     
     if (sql_res->next())
@@ -441,7 +441,7 @@ void PlayerWindow::add_character(){
             
             sprintf(STMT, "INSERT INTO person (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %u, %u, %u, %u, %u);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
             
-            qDebug() << STMT;
+            PRINTF("%s\n", STMT);
             sql_stmt->execute(STMT);
             
             if (name[0] != 0)
@@ -450,7 +450,7 @@ void PlayerWindow::add_character(){
             
             sprintf(STMT, "INSERT INTO person_instance (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) values(%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u);", char_id, data.skincolour, data.haircolour, data.age, profession_id, nationality_id, data.thickness, data.height, data.attract_to_gender, data.attract_to_species, data.attract_to_race);
             
-            qDebug() << STMT;
+            PRINTF("%s\n", STMT);
             sql_stmt->execute(STMT);
             
             free(data.name);
