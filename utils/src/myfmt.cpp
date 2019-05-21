@@ -20,9 +20,8 @@ void write_dir(const char* fp, const int dir_len){
 }
 
 int main(const int argc, const char* argv[]){
-    size_t fp_len;
     int dir_len;
-    char* fp = (char*)malloc(0);
+    char fp[4096];
     char olddir[1024];
     int olddir_len = 0;
     int dir_match;
@@ -30,13 +29,13 @@ int main(const int argc, const char* argv[]){
     olddir[0] = 0;
     
     while (true){
-        if (getline(&fp, &fp_len, stdin) == -1)
+        if (getline(&fp, 4096, stdin) == -1)
             break;
         
-        fp_len = strlen(fp) - 1;
+        int fp_len = strlen(fp) - 1;
         
         dir_match = 0;
-        for (int i = 0;  i < fp_len;  ++i){
+        for (auto i = 0;  i < fp_len;  ++i){
             if (fp[i] == '/')
                 dir_len = i;
             if (i < olddir_len && fp[i] == olddir[i])
