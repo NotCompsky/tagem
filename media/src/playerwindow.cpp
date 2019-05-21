@@ -39,7 +39,7 @@
 
 
 char STMT[4096];
-
+char NOTE[30000];
 
 
 using namespace QtAV;
@@ -277,8 +277,6 @@ void PlayerWindow::media_score(){
     this->set_table_attr_by_id("file", this->file_id_str, this->file_id_str_len, "score", score);
 }
 
-char NOTE[30000];
-
 void PlayerWindow::media_note(){
     this->ensure_fileID_set();
     
@@ -434,9 +432,6 @@ void PlayerWindow::add_character(){
             //const int attract_to_gender
             //const int attract_to_species
             //const int attract_to_race
-            
-            
-            char STMT[4096];
             
             
             sprintf(STMT, "INSERT INTO person (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %u, %u, %u, %u, %u);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
