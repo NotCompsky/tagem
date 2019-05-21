@@ -225,28 +225,28 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
     
     i = 0;
     
-    const char* a = "UPDATE ";
+    constexpr const char* a = "UPDATE ";
     memcpy(STMT + i,  a,  strlen(a));
     i += strlen(a);
     
     memcpy(STMT + i,  tbl,  strlen(tbl));
     i += strlen(tbl);
     
-    const char* b = " SET ";
+    constexpr const char* b = " SET ";
     memcpy(STMT + i,  b,  strlen(b));
     i += strlen(b);
     
     memcpy(STMT + i,  col,  strlen(col));
     i += strlen(col);
     
-    const char* c = " = ";
+    constexpr const char* c = " = ";
     memcpy(STMT + i,  c,  strlen(c));
     i += strlen(c);
     
     memcpy(STMT + i,  val,  strlen(val));
     i += strlen(val);
     
-    const char* d = " WHERE id = ";
+    constexpr const char* d = " WHERE id = ";
     memcpy(STMT + i,  d,  strlen(d));
     i += strlen(d);
     
@@ -404,7 +404,7 @@ int PlayerWindow::search_for_char(const char* name){
     int i = 0;
     int char_id = 0;
     
-    const char* a = "SELECT id FROM person WHERE name = \"";
+    constexpr const char* a = "SELECT id FROM person WHERE name = \"";
     memcpy(STMT + i, a, strlen(a));
     i += strlen(a);
     
