@@ -4,7 +4,6 @@
 #include <stdio.h> // for printf
 
 #define STDIN_FILENO 0
-#define ASCII_OFFSET 48
 
 
 const char NEWLINE = '\n';
@@ -58,24 +57,23 @@ int main(const int argc, const char* argv[]){
         
         fp[fp_len] = 0;
         
+        int i = 0;
+
+#ifdef SORT_FSIZE
         size_t fsize;
         read(STDIN_FILENO,  &fsize,  sizeof(size_t));
         
-        int i;
-        
         int n_digits = count_digits(fsize);
-        i = n_digits;
+        i += n_digits;
         while (i != 0){
-            writebuf[--i] = ASCII_OFFSET + (fsize % 10);
+            writebuf[--i] = '0' + (fsize % 10);
             fsize /= 10;
         }
         i = n_digits;
         
         writebuf[i++] = '\t';
-        
-        memcpy(writebuf + i,  &fp_len,  sizeof(int));
-        i += sizeof(int);
-        
+#endif
+
         memcpy(writebuf + i,  fp,  fp_len);
         i += fp_len;
         
