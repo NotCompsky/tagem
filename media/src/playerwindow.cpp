@@ -45,7 +45,7 @@ char NOTE[30000];
 
 using namespace QtAV;
 
-TagDialog::TagDialog(QString str,  QWidget *parent) : QDialog(parent){
+TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(parent){
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
@@ -53,8 +53,10 @@ TagDialog::TagDialog(QString str,  QWidget *parent) : QDialog(parent){
     mainLayout->addWidget(buttonBox);
     nameEdit = new QLineEdit(str);
     mainLayout->addWidget(nameEdit);
+    QLabel* guide = new QLabel(tr("Enter blank tag to designate as root tag"));
+    mainLayout->addWidget(guide);
     this->setLayout(mainLayout);
-    this->setWindowTitle(tr("Tag"));
+    this->setWindowTitle(title);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
@@ -332,13 +334,82 @@ void PlayerWindow::media_note(){
     sql__update(this->sql_stmt, this->sql_res, "file", "note", NOTE, this->file_id);
 }
 
+void PlayerWindow::tag2parent(unsigned int tagid,  unsigned int parid){
+    constexpr const char* a = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
+    int i = 0;
+    memcpy(STMT,  a,  strlen(a));
+    i += strlen(a);
+    i += itoa_nonstandard(tagid,  STMT + i);
+    STMT[i++] = ',';
+    i += itoa_nonstandard(parid,  STMT + i);
+    STMT[i++] = ')';
+    STMT[i] = 0;
+    
+    printf("%s\n", STMT);
+    this->sql_stmt->execute(STMT);
+}
+
+unsigned int PlayerWindow::add_new_tag(QString tagstr,  unsigned int tagid){
+    QByteArray tagstr_ba = tagstr.toLocal8Bit();
+    const char* tagchars = tagstr_ba.data();
+    
+    this->tagslist.append(tagstr);
+    delete this->tagcompleter;
+    this->tagcompleter = new QCompleter(this->tagslist);
+    
+    if (tagid == 0)
+        tagid = this->get_id_from_table("tag", tagchars);
+    
+    
+    /* Get parent tag */
+    TagDialog* tagdialog = new TagDialog("Parent Tag of", tagstr);
+    tagdialog->nameEdit->setCompleter(this->tagcompleter);
+    goto__cannotcancelparenttag:
+    if (tagdialog->exec() != QDialog::Accepted)
+        goto goto__cannotcancelparenttag;
+    
+    QString parent_tagstr = tagdialog->nameEdit->text();
+    
+    if (parent_tagstr.isEmpty()){
+        this->tag2parent(tagid, 0);
+        return tagid;
+    }
+    
+    QByteArray parent_tagstr_ba = parent_tagstr.toLocal8Bit();
+    char* parent_tagchars = parent_tagstr_ba.data();
+    
+    /* Insert parent-child relations */
+    int lastindx = 0;
+    for (auto i = 0;  ;  ++i)
+        if (parent_tagchars[i] == '|'  ||  parent_tagchars[i] == 0){
+            char iszero = parent_tagchars[i];
+            parent_tagchars[i] = 0;
+            
+            printf("parent_tagchars: %s\n",  parent_tagchars + lastindx);
+            auto parid = this->get_id_from_table("tag",  parent_tagchars + lastindx);
+            
+            this->tag2parent(tagid, parid);
+            
+            QString parstr = QString::fromLocal8Bit(parent_tagchars + lastindx);
+            if (!this->tagslist.contains(parstr))
+                this->add_new_tag(parstr, parid);
+            
+            if (iszero == 0)
+                break;
+            
+            lastindx = i + 1;
+        }
+    
+    return tagid;
+}
+
 QString PlayerWindow::media_tag(QString str){
     if (media_fp[0] == 0)
         return "";
     
     // Triggered on key press
     bool ok;
-    TagDialog* tagdialog = new TagDialog(str);
+    TagDialog* tagdialog = new TagDialog("Tag", str);
     tagdialog->nameEdit->setCompleter(this->tagcompleter);
     if (tagdialog->exec() != QDialog::Accepted)
         return "";
@@ -348,18 +419,16 @@ QString PlayerWindow::media_tag(QString str){
     if (tagstr.isEmpty())
         return "";
     
-    if (!this->tagslist.contains(tagstr)){
-        this->tagslist.append(tagstr);
-        delete this->tagcompleter;
-        this->tagcompleter = new QCompleter(this->tagslist);
-    }
-    
+    unsigned int tagid;
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
+    if (!this->tagslist.contains(tagstr)){
+        tagid = this->add_new_tag(tagstr);
+    } else tagid = this->get_id_from_table("tag", tagchars);
     
     this->ensure_fileID_set();
     
-    this->file_attr_id("tag",  this->get_id_from_table("tag", tagchars),  this->file_id_str,  this->file_id_str_len);
+    this->file_attr_id("tag",  tagid,  this->file_id_str,  this->file_id_str_len);
     
     return tagstr;
 }
@@ -377,7 +446,7 @@ void PlayerWindow::media_overwrite(){
 }
 
 void PlayerWindow::media_replace_w_link(const char* src){
-    PRINTF("Deleting: %s\n". this->media_fp);
+    PRINTF("Deleting: %s\n", this->media_fp);
     if (remove(this->media_fp) != 0)
         fprintf(stderr, "Failed to delete: %s\n", this->media_fp);
     if (symlink(src, this->media_fp) != 0)

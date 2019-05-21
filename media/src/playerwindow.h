@@ -45,7 +45,7 @@ QT_END_NAMESPACE
 class TagDialog : public QDialog{
     Q_OBJECT
   public:
-    explicit TagDialog(QString str,  QWidget* parent = 0);
+    explicit TagDialog(QString title,  QString str,  QWidget* parent = 0);
     QLineEdit* nameEdit;
   private:
     QDialogButtonBox* buttonBox;
@@ -112,6 +112,8 @@ private:
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val);
+    void tag2parent(unsigned int,  unsigned int);
+    unsigned int add_new_tag(QString tagstr,  unsigned int tagid = 0);
 };
 
 class keyReceiver : public QObject
