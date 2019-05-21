@@ -22,6 +22,10 @@
 #define PLAYERWINDOW_H
 
 #include <QCompleter>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
@@ -32,8 +36,6 @@
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
-
-#include "create_char_wizard.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -65,8 +67,6 @@ public:
     void media_replace_w_link(const char* src);
     void media_delete();
     void media_linkfrom();
-    void create_character(char** statement, const char* name);
-    void add_character();
     void tag_as_char(int char_id);
     void media_score();
     void media_note();
@@ -107,8 +107,6 @@ private:
     sql::Connection* sql_con;
     sql::Statement* sql_stmt;
     sql::ResultSet* sql_res;
-    
-    CharCreationDialog* charcreation_dialog;
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val);

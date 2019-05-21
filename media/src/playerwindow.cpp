@@ -33,9 +33,6 @@
 
 #define STDIN_FILENO 0
 
-// TODO: Add character status (injuries, mood, wearing_glasses, etc.)
-
-
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
 
 
@@ -119,9 +116,6 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     
     for (auto i=0; i<10; ++i)
         tag_preset[i] = "";
-    
-    charcreation_dialog = new CharCreationDialog();
-    charcreation_dialog->setModal(true);
     
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
@@ -493,175 +487,6 @@ int PlayerWindow::search_for_char(const char* name){
     return char_id;
 }
 
-void PlayerWindow::add_character(){
-    bool ok;
-    const char* name = QInputDialog::getText(this, tr("Character Name"), tr("Name"), QLineEdit::Normal, "", &ok).toLocal8Bit().data();
-    if (!ok)
-        return;
-    
-    int i;
-    int char_id = 0;
-    
-    if (name[0] != 0)
-        char_id = search_for_char(name);
-    
-    if (char_id == 0){
-        goto__createchar:
-        
-        if (charcreation_dialog->exec() == QDialog::Accepted){
-            Character data = charcreation_dialog->get_data();
-            const char* name        = data.name;
-            //sex_id
-            const int species_id    = get_id_from_table("species", data.species);
-            const int race_id       = get_id_from_table("race", data.race);
-            //const int eyecolour
-            
-            //const int skincolour
-            //const int haircolour
-            //const int thickness
-            //const int height
-            //const int age
-            
-            const int franchise_id      = get_id_from_table("franchise", data.franchise);
-            const int profession_id     = get_id_from_table("profession", data.profession);
-            const int nationality_id    = get_id_from_table("nationality", data.nationality);
-            
-            //const int attract_to_gender
-            //const int attract_to_species
-            //const int attract_to_race
-            
-            
-            sprintf(STMT, "INSERT INTO person (name, sex_id, species_id, race_id, eyecolour, franchise_id) values(\"%s\", %u, %u, %u, %u, %u);", name, data.sex_id, species_id, race_id, data.eyecolour, franchise_id);
-            
-            PRINTF("%s\n", STMT);
-            sql_stmt->execute(STMT);
-            
-            if (name[0] != 0)
-                char_id = search_for_char(name);
-            
-            
-            sprintf(STMT, "INSERT INTO person_instance (char_id, skincolour, haircolour, age, profession_id, nationality_id, thickness, height, attract_to_gender, attract_to_species, attract_to_race) values(%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u);", char_id, data.skincolour, data.haircolour, data.age, profession_id, nationality_id, data.thickness, data.height, data.attract_to_gender, data.attract_to_species, data.attract_to_race);
-            
-            PRINTF("%s\n", STMT);
-            sql_stmt->execute(STMT);
-            
-            free(data.name);
-            free(data.species);
-            free(data.race);
-            free(data.franchise);
-            free(data.profession);
-            free(data.nationality);
-            
-            /*
-CREATE TABLE species (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(128),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE races (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    species_id INT UNSIGNED,
-    name VARCHAR(128),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE franchises (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(128),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE professions (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(128),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE nationalities (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(128),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE person (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    
-    name VARCHAR(128),
-    sex_id INT UNSIGNED,
-    species_id INT UNSIGNED,
-    race_id INT UNSIGNED,
-    eyecolour INT UNSIGNED,
-    
-    franchise_id INT UNSIGNED,
-    
-    created_on timestamp DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE person_instance (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    
-    char_id INT UNSIGNED,
-    
-    skincolour INT UNSIGNED,
-    haircolour INT UNSIGNED,
-    thickness INT UNSIGNED,
-    height INT UNSIGNED,
-    age INT UNSIGNED,
-    
-    profession_id INT UNSIGNED,
-    nationality_id INT UNSIGNED,
-    
-    attract_to_gender INT UNSIGNED,
-    attract_to_species INT UNSIGNED,
-    attract_to_race INT UNSIGNED,
-    
-    created_on timestamp DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-
-GRANT INSERT ON mytags.species TO marx@localhost;
-GRANT SELECT ON mytags.species TO marx@localhost;
-GRANT INSERT ON mytags.race TO marx@localhost;
-GRANT SELECT ON mytags.race TO marx@localhost;
-GRANT INSERT ON mytags.franchise TO marx@localhost;
-GRANT SELECT ON mytags.franchise TO marx@localhost;
-GRANT INSERT ON mytags.profession TO marx@localhost;
-GRANT SELECT ON mytags.profession TO marx@localhost;
-GRANT INSERT ON mytags.nationality TO marx@localhost;
-GRANT SELECT ON mytags.nationality TO marx@localhost;
-GRANT INSERT ON mytags.person TO marx@localhost;
-GRANT SELECT ON mytags.person TO marx@localhost;
-GRANT INSERT ON mytags.person_instance TO marx@localhost;
-GRANT SELECT ON mytags.person_instance TO marx@localhost;
-
-GRANT UPDATE ON mytags.species TO marx@localhost;
-GRANT UPDATE ON mytags.race TO marx@localhost;
-GRANT UPDATE ON mytags.franchise TO marx@localhost;
-GRANT UPDATE ON mytags.profession TO marx@localhost;
-GRANT UPDATE ON mytags.nationality TO marx@localhost;
-GRANT UPDATE ON mytags.person TO marx@localhost;
-
-
-GRANT UPDATE ON mytags.file TO marx@localhost;
-GRANT UPDATE ON mytags.tag TO marx@localhost;
-
-            */
-            /*
-NOTE
-We require 0 to be an allowed value for all optional secondary fields
-            */
-            
-            return tag_as_char(char_id);
-        } else {
-            PRINTF("Cancelled\n");
-            return;
-        }
-    }
-    return tag_as_char(char_id);
-}
-
 int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
     return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name);
 }
@@ -711,12 +536,6 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         switch(int keyval = key->key()){
             case Qt::Key_Enter:
             case Qt::Key_Return:
-            case Qt::Key_C:
-                if (state == state_clicked){
-                    window->add_character();
-                    state = state_default;
-                }
-                break;
             case Qt::Key_D:
                 window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                 break;
