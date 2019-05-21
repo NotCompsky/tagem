@@ -274,24 +274,44 @@ void PlayerWindow::media_score(){
     this->set_table_attr_by_id("file", this->file_id_str, this->file_id_str_len, "score", score);
 }
 
+char NOTE[30000];
+
 void PlayerWindow::media_note(){
+    this->ensure_fileID_set();
+    
+    constexpr const char* a = "SELECT note FROM file WHERE id=";
+    char stmt[strlen(a) + 20 + 1];
+    int i = 0;
+    memcpy(stmt,  a,  strlen(a));
+    i += strlen(a);
+    memcpy(stmt + i,  this->file_id_str,  this->file_id_str_len);
+    i += this->file_id_str_len;
+    stmt[i] = 0;
+    
+    PRINTF("%s\n", stmt);
+    this->sql_res = this->sql_stmt->executeQuery(stmt);
+    
+    if (this->sql_res->next()){
+        std::string s = this->sql_res->getString(1);
+        memcpy(NOTE,  s.c_str(),  strlen(s.c_str()));
+        NOTE[strlen(s.c_str())] = 0;
+    } else NOTE[0] = 0;
+    
+    
     bool ok;
-    // TODO: Replace prefilled text ("") with previous file note value
-    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), "", &ok);
+    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
     if (!ok || str.isEmpty())
         return;
     QByteArray  bstr = str.toLocal8Bit();
     const char* cstr = bstr.data();
-    char cstr_escpd[strlen(cstr)*2 + 1];
     auto j = 0;
     for (auto i = 0;  i < strlen(cstr);  ++i){
         if (cstr[i] == '"'  ||  cstr[i] == '\\')
-            cstr_escpd[j++] = '\\';
-        cstr_escpd[j++] = cstr[i];
+            NOTE[j++] = '\\';
+        NOTE[j++] = cstr[i];
     }
-    cstr_escpd[j] = 0;
-    this->ensure_fileID_set();
-    sql__update(this->sql_stmt, this->sql_res, "file", "note", cstr_escpd, this->file_id);
+    NOTE[j] = 0;
+    sql__update(this->sql_stmt, this->sql_res, "file", "note", NOTE, this->file_id);
 }
 
 QString PlayerWindow::media_tag(QString str){
@@ -555,6 +575,7 @@ int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_na
 }
 
 void PlayerWindow::tag_as_char(int char_id){
+    
     qDebug() << "tag_as_char(" << +char_id << ")";
 }
 
