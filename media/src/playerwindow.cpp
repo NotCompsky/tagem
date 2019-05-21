@@ -81,7 +81,7 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     while (this->sql_res->next()){
         this->tagslist << QString::fromStdString(this->sql_res->getString(1));
     }
-    this->tagcompleter = new QCompleter(tagslist);
+    this->tagcompleter = new QCompleter(this->tagslist);
     
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
@@ -347,6 +347,13 @@ QString PlayerWindow::media_tag(QString str){
         return "";
     
     QString tagstr = tagdialog->nameEdit->text();
+    
+    if (!this->tagslist.contains(tagstr)){
+        this->tagslist.append(tagstr);
+        delete this->tagcompleter;
+        this->tagcompleter = new QCompleter(this->tagslist);
+    }
+    
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     
