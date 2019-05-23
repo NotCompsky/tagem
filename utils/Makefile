@@ -21,3 +21,6 @@ build/mytagged_score:
 
 build/tagtree:
 	g++ src/tagtree.cpp -O3 -o build/tagtree -I ~/bin/rscraper++/src -lmysqlcppconn
+
+build/bulk-tag:
+	g++ src/bulk-tag.cpp -o build/bulk-tag -O3 -lmysqlcppconn -I../include
