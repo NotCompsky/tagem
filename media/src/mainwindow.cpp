@@ -83,11 +83,12 @@ MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(paren
     }
     this->tagcompleter = new QCompleter(this->tagslist);
     
+    QVBoxLayout* vl = new QVBoxLayout();
+    
+  #if (_FILE_TYPE_ == 0)
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new AVPlayer(this);
-    QVBoxLayout *vl = new QVBoxLayout();
-    setLayout(vl);
     m_vo = new VideoOutput(this);
     if (!m_vo->widget()) {
         fprintf(stderr, "Cannot create QtAV renderer\n");
@@ -106,6 +107,33 @@ MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(paren
     
     vl->addWidget(m_slider);
     
+    this->volume = 0.1;
+    this->m_player->audio()->setVolume(this->volume);
+  #elif (_FILE_TYPE_ == 1)
+    this->plainTextEdit = new CustomPlainTextEdit(this);
+    QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    sizePolicy1.setHorizontalStretch(0);
+    sizePolicy1.setVerticalStretch(0);
+    sizePolicy1.setHeightForWidth(this->plainTextEdit->sizePolicy().hasHeightForWidth());
+    this->plainTextEdit->setSizePolicy(sizePolicy1);
+    this->plainTextEdit->viewport()->setProperty("cursor", QVariant(QCursor(Qt::IBeamCursor)));
+    this->plainTextEdit->setContextMenuPolicy(Qt::DefaultContextMenu);
+    this->plainTextEdit->setFrameShape(QFrame::NoFrame);
+    this->plainTextEdit->setFrameShadow(QFrame::Plain);
+    this->plainTextEdit->setLineWidth(1);
+    this->plainTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
+    this->plainTextEdit->setTabStopWidth(40);
+    this->is_read_only = true;
+    this->plainTextEdit->setReadOnly(true);
+
+    vl->addWidget(this->plainTextEdit);
+    
+    this->connect(this->plainTextEdit, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
+    this->is_file_modified = false;
+  #endif
+    
+    setLayout(vl);
+    
     media_fp[0] = 0;
     
     keyReceiver* key_receiver = new keyReceiver();
@@ -115,11 +143,9 @@ MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(paren
     
     for (auto i=0; i<10; ++i)
         tag_preset[i] = "";
-    
-    this->volume = 0.1;
-    this->m_player->audio()->setVolume(this->volume);
 }
 
+#if (_FILE_TYPE_ == 0)
 void MainWindow::set_player_options_for_img(){
     PRINTF("Duration: %d\n", this->m_player->duration());
     if (this->m_player->duration() == 40){
@@ -127,6 +153,7 @@ void MainWindow::set_player_options_for_img(){
         this->m_player->pause(true);
     }
 }
+#endif
 
 void MainWindow::media_next(){
     // TODO: Do not have different strings, but one fp string and lengths of dir and fname
@@ -153,16 +180,36 @@ void MainWindow::media_next(){
     this->media_open();
 }
 
+bool is_file_in_db(char* fp){
+    constexpr const char* a = "SELECT id FROM file WHERE name=\"";
+    int i = 0;
+    
+    memcpy(STMT + i,  a,  strlen(a));
+    i += strlen(a);
+    
+    while (*fp != 0){
+        if (*fp == '"'  ||  *fp == '\\')
+            STMT[i++] = '\\';
+        STMT[i++] = *fp;
+        ++fp;
+    }
+    
+    STMT[i++] = '"';
+    
+    STMT[i] = 0;
+    
+    
+    SQL_RES = SQL_STMT->executeQuery(STMT);
+    
+    
+    return (SQL_RES->next());
+}
+
 void MainWindow::media_open()
 {
-    if (this->ignore_tagged){
-        this->ensure_fileID_set();
-        uint64_t id;
-        id = sql__get_first_file2attr_id(SQL_STMT, SQL_RES, "tag", this->file_id_str, this->file_id_str_len, id);
-        if (id != 0){
-            PRINTF("Skipped previously tagged: %s\n", this->media_fp);
-            return this->media_next();
-        }
+    if (this->ignore_tagged  &&  is_file_in_db(this->media_fp)){
+        PRINTF("Skipped previously tagged: %s\n", this->media_fp);
+        return this->media_next();
     }
     
     // WARNING: fp MUST be initialised, unless called via signal button press
@@ -172,11 +219,28 @@ void MainWindow::media_open()
     QString fname = this->media_fname;
     this->setWindowTitle(fname);
     
+  #if (_FILE_TYPE_ == 0)
     m_player->play(file);
     PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
+  #elif (_FILE_TYPE_ == 1)
+    QFile f(file);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return;
+    }
+
+    // Read from the file
+    QTextStream in(&f);
+    QTextDocument* document = this->plainTextEdit->document();
+    document->setPlainText(in.readAll());
+    f.close();
+
+    // Scroll to top
+    this->plainTextEdit->scroll(0, 0);
+  #endif
 }
 
+#if (_FILE_TYPE_ == 0)
 void MainWindow::seekBySlider(int value)
 {
     if (!m_player->isPlaying())
@@ -214,8 +278,8 @@ void MainWindow::updateSliderUnit()
     m_unit = m_player->notifyInterval();
     updateSlider();
 }
+#endif
 
-#define ASCII_OFFSET 48
 
 void MainWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
     int i;
@@ -278,7 +342,7 @@ void MainWindow::media_score(){
     It is applied to the 'file' table because there is no sense in having multiple files for the same unique media object. These perceptual duplicates will be listed themselves elsewhere.
     */
     bool ok;
-    int score_int = QInputDialog::getInt(this, tr("Score"), tr("Score"), 0, -100, 100, 1, &ok);
+    int score_int = QInputDialog::getInt(this, tr("Rating"), tr("Rating"), 0, -100, 100, 1, &ok);
     if (!ok)
         return;
     
@@ -469,7 +533,39 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
 }
 
+#if (_FILE_TYPE_ == 1)
+void MainWindow::unset_read_only(){
+    this->is_read_only = false;
+    this->plainTextEdit->setReadOnly(this->is_read_only);
+}
 
+void MainWindow::set_read_only(){
+    this->is_read_only = true; //!(this->plainTextEdit->isReadOnly());
+    this->plainTextEdit->setReadOnly(this->is_read_only);
+}
+
+void MainWindow::file_modified(){
+    this->is_file_modified = true;
+}
+
+void MainWindow::media_save(){
+    if (!this->is_file_modified)
+        return;
+    
+    QString filename = this->media_fname;
+    
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+    
+    QTextStream out(&file);
+    out << this->plainTextEdit->document()->toPlainText();
+    out.flush();
+    file.close();
+    
+    this->is_file_modified = false;
+}
+#endif
 
 
 
@@ -516,8 +612,23 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             case Qt::Key_L:
                 window->media_linkfrom();
                 break;
-            case Qt::Key_S:
+            case Qt::Key_R: // Rate
                 window->media_score();
+                break;
+            case Qt::Key_I:
+              #if (_FILE_TYPE_ == 1)
+                window->unset_read_only();
+              #endif
+                break;
+            case Qt::Key_Escape:
+              #if (_FILE_TYPE_ == 1)
+                window->set_read_only();
+              #endif
+                break;
+            case Qt::Key_S: // Save
+              #if (_FILE_TYPE_ == 1)
+                window->media_save();
+              #endif
                 break;
             case Qt::Key_N:
                 window->media_note();
@@ -536,19 +647,25 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 window->media_next();
                 break;
             case Qt::Key_Space:
+              #if (_FILE_TYPE_ == 0)
                 window->playPause();
+              #endif
                 break;
             case Qt::Key_BracketLeft:
+              #if (_FILE_TYPE_ == 0)
                 if (window->volume > 0){
                     window->volume -= 0.05;
                     window->m_player->audio()->setVolume(window->volume);
                 }
+              #endif
                 break;
             case Qt::Key_BracketRight:
+              #if (_FILE_TYPE_ == 0)
                 if (window->volume < 1.25){
                     window->volume += 0.05;
                     window->m_player->audio()->setVolume(window->volume);
                 }
+              #endif
                 break;
             /* Preset Tags */
             // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset

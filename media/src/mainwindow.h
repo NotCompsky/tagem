@@ -31,6 +31,10 @@
 #include <QTextEdit>
 #include <QStringListModel>
 
+#if (_FILE_TYPE_ == 1)
+  #include "customplaintextedit.h"
+#endif
+
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -67,21 +71,37 @@ public:
     uint64_t file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id_str, const int file_id_str_len);
     double volume;
     QString tag_preset[10];
+  #if (_FILE_TYPE_ == 0)
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
+  #elif (_FILE_TYPE_ == 1)
+    CustomPlainTextEdit* plainTextEdit;
+    void media_save();
+    void set_read_only();
+    void unset_read_only();
+    bool is_file_modified;
+    bool is_read_only;
+  #endif
 public Q_SLOTS:
+  #if (_FILE_TYPE_ == 0)
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
+  #endif
 private Q_SLOTS:
+  #if (_FILE_TYPE_ == 0)
     void updateSlider(qint64 value);
     void updateSlider();
     void updateSliderUnit();
     void set_player_options_for_img();
-
+  #elif (_FILE_TYPE_ == 1)
+    void file_modified();
+  #endif
 private:
+  #if (_FILE_TYPE_ == 0)
     QSlider *m_slider;
     int m_unit;
+  #endif
     bool ignore_tagged;
     char media_fp[4096];
     char media_dir[4096 - 1024];
