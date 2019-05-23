@@ -18,8 +18,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef PLAYERWINDOW_H
-#define PLAYERWINDOW_H
+#ifndef MAINRWINDOW_H
+#define MAINRWINDOW_H
 
 #include <QCompleter>
 #include <QDialog>
@@ -113,4 +113,4 @@ protected:
     bool eventFilter(QObject* obj, QEvent* event);
 };
 
-#endif // PLAYERWINDOW_H
+#endif // MAINRWINDOW_H
