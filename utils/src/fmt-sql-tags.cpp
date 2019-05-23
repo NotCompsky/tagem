@@ -55,11 +55,7 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 #include <unistd.h> // for write
 #include <string.h> // for strlen, memcpy?
 
-/* MySQL */
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
+#include "sql_utils.hpp" // for mysu::*, SQL_*
 
 
 int add_union_start(char* stmt, int i){
@@ -86,7 +82,7 @@ int add_union_unionness(char* stmt, int i){
     return i;
 }
 
-int construct_stmt(char* stmt, const int argc, const char* argv[]){
+int construct_stmt(char* stmt, const char** argv){
     // returns final strlen(stmt)
     int i;
     bool add_comma = false;
@@ -100,10 +96,10 @@ int construct_stmt(char* stmt, const int argc, const char* argv[]){
     
     i = add_union_start(stmt, i);
     
-    const char* count_str = argv[1];
+    const char* count_str = *(argv++);
     
-    for (int j=2;  j<argc;  ++j){
-        const char* arg = argv[j];
+    while (*argv != 0){
+        const char* arg = *(argv++);
         
         if (arg[1] == 0){
             switch(arg[0]){
@@ -165,19 +161,17 @@ const char endline = '\n';
 
 int main(const int argc, const char* argv[]){
     char stmt[1 << 20];
-    int i = construct_stmt(stmt, argc, argv);
-    //write(1, stmt, i);
     
-    sql::Driver* sql_driver = get_driver_instance();
-    sql::Connection* sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
-    sql_con->setSchema("mytags");
-    sql::Statement* sql_stmt = sql_con->createStatement();
-    sql::ResultSet* sql_res;
+    mysu::init(argv[1], "mytag");
     
-    sql_res = sql_stmt->executeQuery(stmt);
+    int i = construct_stmt(stmt, argv + 2);
     
-    while (sql_res->next()){
-        std::string res = sql_res->getString(1);
+    write(2, stmt, strlen(stmt));
+    
+    SQL_RES = SQL_STMT->executeQuery(stmt);
+    
+    while (SQL_RES->next()){
+        std::string res = SQL_RES->getString(1);
         const char* res_cstr = res.c_str();
         write(1,  res_cstr,  strlen(res_cstr));
         write(1,  &endline,  1);
