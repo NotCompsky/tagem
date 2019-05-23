@@ -48,11 +48,11 @@ class TagDialog : public QDialog{
 };
 
 
-class PlayerWindow : public QWidget
+class MainWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PlayerWindow(int argc,  char** argv,  QWidget *parent = 0);
+    explicit MainWindow(int argc,  char** argv,  QWidget *parent = 0);
     QString media_tag(QString str);
     void media_tag_new_preset(int n);
     void media_overwrite();
@@ -106,7 +106,7 @@ class keyReceiver : public QObject
 {
     Q_OBJECT
 public:
-    PlayerWindow* window;
+    MainWindow* window;
     int state;
     enum { state_default, state_clicked };
 protected:

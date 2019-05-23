@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include "playerwindow.h"
+#include "mainwindow.h"
 #include "utils.h" // for count_digits, itoa_nonstandard
 #include <cstdio> // for remove
 #include <unistd.h> // for symlink
@@ -61,7 +61,7 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
     QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
 }
 
-PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
+MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
 {
     this->ignore_tagged = false;
     for (auto i = 2;  i < argc;  ++i){
@@ -120,7 +120,7 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     this->m_player->audio()->setVolume(this->volume);
 }
 
-void PlayerWindow::set_player_options_for_img(){
+void MainWindow::set_player_options_for_img(){
     PRINTF("Duration: %d\n", this->m_player->duration());
     if (this->m_player->duration() == 40){
         PRINTF("Auto paused\n");
@@ -128,7 +128,7 @@ void PlayerWindow::set_player_options_for_img(){
     }
 }
 
-void PlayerWindow::media_next(){
+void MainWindow::media_next(){
     // TODO: Do not have different strings, but one fp string and lengths of dir and fname
     size_t size;
     char* dummy = nullptr;
@@ -153,7 +153,7 @@ void PlayerWindow::media_next(){
     this->media_open();
 }
 
-void PlayerWindow::media_open()
+void MainWindow::media_open()
 {
     if (this->ignore_tagged){
         this->ensure_fileID_set();
@@ -177,19 +177,19 @@ void PlayerWindow::media_open()
     m_player->setRepeat(-1); // Repeat infinitely
 }
 
-void PlayerWindow::seekBySlider(int value)
+void MainWindow::seekBySlider(int value)
 {
     if (!m_player->isPlaying())
         return;
     m_player->seek(qint64(value*m_unit));
 }
 
-void PlayerWindow::seekBySlider()
+void MainWindow::seekBySlider()
 {
     seekBySlider(m_slider->value());
 }
 
-void PlayerWindow::playPause()
+void MainWindow::playPause()
 {
     if (!m_player->isPlaying()) {
         m_player->play();
@@ -198,18 +198,18 @@ void PlayerWindow::playPause()
     m_player->pause(!m_player->isPaused());
 }
 
-void PlayerWindow::updateSlider(qint64 value)
+void MainWindow::updateSlider(qint64 value)
 {
     m_slider->setRange(0, int(m_player->duration()/m_unit));
     m_slider->setValue(int(value/m_unit));
 }
 
-void PlayerWindow::updateSlider()
+void MainWindow::updateSlider()
 {
     updateSlider(m_player->position());
 }
 
-void PlayerWindow::updateSliderUnit()
+void MainWindow::updateSliderUnit()
 {
     m_unit = m_player->notifyInterval();
     updateSlider();
@@ -217,7 +217,7 @@ void PlayerWindow::updateSliderUnit()
 
 #define ASCII_OFFSET 48
 
-void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
+void MainWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
     int i;
     
     i = 0;
@@ -258,11 +258,11 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
     SQL_STMT->execute(STMT);
 }
 
-uint64_t PlayerWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id, const int file_id_len){
+uint64_t MainWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id, const int file_id_len){
     return sql__file_attr_id(SQL_STMT, SQL_RES, attr, attr_id_int, file_id, file_id_len);
 }
 
-void PlayerWindow::ensure_fileID_set(){
+void MainWindow::ensure_fileID_set(){
     if (this->file_id_str_len == 0){
         this->file_id = this->get_id_from_table("file", media_fp);
         this->file_id_str_len = count_digits(this->file_id);
@@ -271,7 +271,7 @@ void PlayerWindow::ensure_fileID_set(){
     }
 }
 
-void PlayerWindow::media_score(){
+void MainWindow::media_score(){
     /*
     Rating of the unique media object itself. Not aspects unique to the file (such as resolution, or compresssion quality).
     
@@ -292,7 +292,7 @@ void PlayerWindow::media_score(){
     this->set_table_attr_by_id("file", this->file_id_str, this->file_id_str_len, "score", score);
 }
 
-void PlayerWindow::media_note(){
+void MainWindow::media_note(){
     this->ensure_fileID_set();
     
     constexpr const char* a = "SELECT note FROM file WHERE id=";
@@ -329,7 +329,7 @@ void PlayerWindow::media_note(){
     sql__update(SQL_STMT, SQL_RES, "file", "note", NOTE, this->file_id);
 }
 
-void PlayerWindow::tag2parent(uint64_t tagid,  uint64_t parid){
+void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     constexpr const char* a = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
     int i = 0;
     memcpy(STMT,  a,  strlen(a));
@@ -344,7 +344,7 @@ void PlayerWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     SQL_STMT->execute(STMT);
 }
 
-uint64_t PlayerWindow::add_new_tag(QString tagstr,  uint64_t tagid){
+uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     
@@ -398,7 +398,7 @@ uint64_t PlayerWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     return tagid;
 }
 
-QString PlayerWindow::media_tag(QString str){
+QString MainWindow::media_tag(QString str){
     if (media_fp[0] == 0)
         return "";
     
@@ -428,11 +428,11 @@ QString PlayerWindow::media_tag(QString str){
     return tagstr;
 }
 
-void PlayerWindow::media_tag_new_preset(int n){
+void MainWindow::media_tag_new_preset(int n){
     tag_preset[n] = media_tag(tag_preset[n]);
 }
 
-void PlayerWindow::media_overwrite(){
+void MainWindow::media_overwrite(){
     // Triggered on key press
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite"), tr("Value"), QLineEdit::Normal, "Manually deleted", &ok);
@@ -440,7 +440,7 @@ void PlayerWindow::media_overwrite(){
         PRINTF("Overwritten with: %s\n", str);
 }
 
-void PlayerWindow::media_replace_w_link(const char* src){
+void MainWindow::media_replace_w_link(const char* src){
     PRINTF("Deleting: %s\n", this->media_fp);
     if (remove(this->media_fp) != 0)
         fprintf(stderr, "Failed to delete: %s\n", this->media_fp);
@@ -448,11 +448,11 @@ void PlayerWindow::media_replace_w_link(const char* src){
         fprintf(stderr, "Failed to create ln2del symlink: %s\n", this->media_fp);
 }
 
-void PlayerWindow::media_delete(){
+void MainWindow::media_delete(){
     this->media_replace_w_link("/home/compsky/bin/ln2del_ln");
 }
 
-void PlayerWindow::media_linkfrom(){
+void MainWindow::media_linkfrom(){
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite with link"), tr("Source path"), QLineEdit::Normal, "", &ok);
     if (!ok || str.isEmpty()){
@@ -464,7 +464,7 @@ void PlayerWindow::media_linkfrom(){
     this->media_replace_w_link(src);
 }
 
-uint64_t PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
+uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry_name){
     uint64_t value;
     return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
 }

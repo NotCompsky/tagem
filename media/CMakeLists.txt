@@ -3,7 +3,7 @@ find_package(QtAV REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
-add_executable(mytagmedia src/main.cpp src/playerwindow.cpp src/playerwindow.h)
+add_executable(mytagmedia src/main.cpp src/mainwindow.cpp src/mainwindow.h)
 target_include_directories(mytagmedia PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
 target_include_directories(mytagmedia PRIVATE "../include")
 target_link_libraries(mytagmedia ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)

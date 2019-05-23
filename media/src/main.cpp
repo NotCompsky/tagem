@@ -18,14 +18,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 #include <QApplication>
-#include "playerwindow.h"
 #include <QtAVWidgets>
+
+#include "mainwindow.h"
+
 
 int main(int argc,  char** argv)
 {
     QtAV::Widgets::registerRenderers();
     QApplication a(argc, argv);
-    PlayerWindow player(argc, argv);
+    MainWindow player(argc, argv);
     player.show();
     player.resize(1920/2, 1080);
     return a.exec();
