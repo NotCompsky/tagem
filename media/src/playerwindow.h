@@ -31,12 +31,6 @@
 #include <QTextEdit>
 #include <QStringListModel>
 
-/* MySQL */
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-
 
 QT_BEGIN_NAMESPACE
 class QSlider;
@@ -100,11 +94,6 @@ private:
     
     QStringList tagslist;
     QCompleter* tagcompleter;
-    
-    sql::Driver* sql_driver;
-    sql::Connection* sql_con;
-    sql::Statement* sql_stmt;
-    sql::ResultSet* sql_res;
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val);

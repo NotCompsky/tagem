@@ -31,6 +31,8 @@
 #include <QKeyEvent>
 #include <QTimer>
 
+#include "sql_utils.hpp" // for mysu::*, SQL_*
+
 #define STDIN_FILENO 0
 
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
@@ -62,7 +64,7 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
 PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
 {
     this->ignore_tagged = false;
-    for (auto i = 1;  i < argc;  ++i){
+    for (auto i = 2;  i < argc;  ++i){
         const char* arg = argv[i];
         if (arg[1] == 0){
             switch(arg[0]){
@@ -72,15 +74,12 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
         } else exit(3);
     }
     
-    this->sql_driver = get_driver_instance();
-    this->sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
-    this->sql_con->setSchema("mytag");
-    this->sql_stmt = sql_con->createStatement();
+    mysu::init(argv[1], "mytag");
     
     this->tagslist;
-    this->sql_res = this->sql_stmt->executeQuery("SELECT name FROM tag");
-    while (this->sql_res->next()){
-        this->tagslist << QString::fromStdString(this->sql_res->getString(1));
+    SQL_RES = SQL_STMT->executeQuery("SELECT name FROM tag");
+    while (SQL_RES->next()){
+        this->tagslist << QString::fromStdString(SQL_RES->getString(1));
     }
     this->tagcompleter = new QCompleter(this->tagslist);
     
@@ -159,7 +158,7 @@ void PlayerWindow::media_open()
     if (this->ignore_tagged){
         this->ensure_fileID_set();
         uint64_t id;
-        id = sql__get_first_file2attr_id(this->sql_stmt, this->sql_res, "tag", this->file_id_str, this->file_id_str_len, id);
+        id = sql__get_first_file2attr_id(SQL_STMT, SQL_RES, "tag", this->file_id_str, this->file_id_str_len, id);
         if (id != 0){
             PRINTF("Skipped previously tagged: %s\n", this->media_fp);
             return this->media_next();
@@ -256,11 +255,11 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
     
     
     PRINTF("%s\n", STMT);
-    sql_stmt->execute(STMT);
+    SQL_STMT->execute(STMT);
 }
 
 uint64_t PlayerWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id, const int file_id_len){
-    return sql__file_attr_id(this->sql_stmt, this->sql_res, attr, attr_id_int, file_id, file_id_len);
+    return sql__file_attr_id(SQL_STMT, SQL_RES, attr, attr_id_int, file_id, file_id_len);
 }
 
 void PlayerWindow::ensure_fileID_set(){
@@ -305,10 +304,10 @@ void PlayerWindow::media_note(){
     STMT[i] = 0;
     
     PRINTF("%s\n", STMT);
-    this->sql_res = this->sql_stmt->executeQuery(STMT);
+    SQL_RES = SQL_STMT->executeQuery(STMT);
     
-    if (this->sql_res->next()){
-        std::string s = this->sql_res->getString(1);
+    if (SQL_RES->next()){
+        std::string s = SQL_RES->getString(1);
         memcpy(NOTE,  s.c_str(),  strlen(s.c_str()));
         NOTE[strlen(s.c_str())] = 0;
     } else NOTE[0] = 0;
@@ -327,7 +326,7 @@ void PlayerWindow::media_note(){
         NOTE[j++] = cstr[i];
     }
     NOTE[j] = 0;
-    sql__update(this->sql_stmt, this->sql_res, "file", "note", NOTE, this->file_id);
+    sql__update(SQL_STMT, SQL_RES, "file", "note", NOTE, this->file_id);
 }
 
 void PlayerWindow::tag2parent(uint64_t tagid,  uint64_t parid){
@@ -342,7 +341,7 @@ void PlayerWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     STMT[i] = 0;
     
     printf("%s\n", STMT);
-    this->sql_stmt->execute(STMT);
+    SQL_STMT->execute(STMT);
 }
 
 uint64_t PlayerWindow::add_new_tag(QString tagstr,  uint64_t tagid){
@@ -467,7 +466,7 @@ void PlayerWindow::media_linkfrom(){
 
 uint64_t PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
     uint64_t value;
-    return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name, value);
+    return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
 }
 
 
