@@ -69,8 +69,8 @@ public:
     void media_linkfrom();
     void media_score();
     void media_note();
-    int get_id_from_table(const char* table_name, const char* entry_name);
-    int file_attr_id(const char* attr, int attr_id_int, const char* file_id_str, const int file_id_str_len);
+    uint64_t get_id_from_table(const char* table_name, const char* entry_name);
+    uint64_t file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id_str, const int file_id_str_len);
     double volume;
     QString tag_preset[10];
     QtAV::VideoOutput* m_vo;
@@ -95,7 +95,7 @@ private:
     int media_dir_len;
     int file_id_str_len;
     char file_id_str[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
-    int file_id;
+    uint64_t file_id;
     FILE* inf;
     
     QStringList tagslist;
@@ -108,8 +108,8 @@ private:
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val);
-    void tag2parent(unsigned int,  unsigned int);
-    unsigned int add_new_tag(QString tagstr,  unsigned int tagid = 0);
+    void tag2parent(uint64_t tag_id,  uint64_t parent_id);
+    uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
 };
 
 class keyReceiver : public QObject

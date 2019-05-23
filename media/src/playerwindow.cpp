@@ -74,7 +74,7 @@ PlayerWindow::PlayerWindow(int argc,  char** argv,  QWidget *parent) : QWidget(p
     
     this->sql_driver = get_driver_instance();
     this->sql_con = sql_driver->connect("unix:///var/run/mysqld/mysqld.sock", USERNAME, PASSWORD);
-    this->sql_con->setSchema("mytags");
+    this->sql_con->setSchema("mytag");
     this->sql_stmt = sql_con->createStatement();
     
     this->tagslist;
@@ -158,7 +158,9 @@ void PlayerWindow::media_open()
 {
     if (this->ignore_tagged){
         this->ensure_fileID_set();
-        if (sql__get_first_file2attr_id(this->sql_stmt, this->sql_res, "tag", this->file_id_str, this->file_id_str_len) != 0){
+        uint64_t id;
+        id = sql__get_first_file2attr_id(this->sql_stmt, this->sql_res, "tag", this->file_id_str, this->file_id_str_len, id);
+        if (id != 0){
             PRINTF("Skipped previously tagged: %s\n", this->media_fp);
             return this->media_next();
         }
@@ -257,7 +259,7 @@ void PlayerWindow::set_table_attr_by_id(const char* tbl, const char* id, const i
     sql_stmt->execute(STMT);
 }
 
-int PlayerWindow::file_attr_id(const char* attr, int attr_id_int, const char* file_id, const int file_id_len){
+uint64_t PlayerWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id, const int file_id_len){
     return sql__file_attr_id(this->sql_stmt, this->sql_res, attr, attr_id_int, file_id, file_id_len);
 }
 
@@ -328,7 +330,7 @@ void PlayerWindow::media_note(){
     sql__update(this->sql_stmt, this->sql_res, "file", "note", NOTE, this->file_id);
 }
 
-void PlayerWindow::tag2parent(unsigned int tagid,  unsigned int parid){
+void PlayerWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     constexpr const char* a = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
     int i = 0;
     memcpy(STMT,  a,  strlen(a));
@@ -343,7 +345,7 @@ void PlayerWindow::tag2parent(unsigned int tagid,  unsigned int parid){
     this->sql_stmt->execute(STMT);
 }
 
-unsigned int PlayerWindow::add_new_tag(QString tagstr,  unsigned int tagid){
+uint64_t PlayerWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     
@@ -413,7 +415,7 @@ QString PlayerWindow::media_tag(QString str){
     if (tagstr.isEmpty())
         return "";
     
-    unsigned int tagid;
+    uint64_t tagid;
     QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* tagchars = tagstr_ba.data();
     if (!this->tagslist.contains(tagstr)){
@@ -463,8 +465,9 @@ void PlayerWindow::media_linkfrom(){
     this->media_replace_w_link(src);
 }
 
-int PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
-    return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name);
+uint64_t PlayerWindow::get_id_from_table(const char* table_name, const char* entry_name){
+    uint64_t value;
+    return sql__get_id_from_table(this->sql_stmt, this->sql_res, table_name, entry_name, value);
 }
 
 
