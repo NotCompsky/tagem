@@ -3,6 +3,10 @@ Convert    ./fmt-sql-tags 2 foo bar '&' ree gee dee '&' chi phi khi
 
 To
 
+CALL descendant_tags_id_from("_tmp_tagids_a",  "'foo', 'bar'");
+CALL descendant_tags_id_from("_tmp_tagids_b",  "'ree', 'gee', 'dee'");
+CALL descendant_tags_id_from("_tmp_tagids_c",  "'chi', 'phi', 'khi'");
+
 SELECT f.name
 FROM file f
 JOIN (
@@ -11,34 +15,19 @@ JOIN (
         (
             SELECT DISTINCT f2t.file_id
             FROM file2tag f2t
-            JOIN (
-                SELECT t.id
-                FROM tag t
-                WHERE t.name
-                IN ('foo','bar')
-            ) T ON f2t.tag_id = T.id
+            WHERE f2t.tag_id IN (SELECT node FROM _tmp_tagids_a)
         )
         UNION ALL
         (
             SELECT DISTINCT f2t.file_id
             FROM file2tag f2t
-            JOIN (
-                SELECT t.id
-                FROM tag t
-                WHERE t.name
-                IN ('ree', 'gee', 'dee')
-            ) T ON f2t.tag_id = T.id
+            WHERE f2t.tag_id IN (SELECT node FROM _tmp_tagids_b)
         )
         UNION ALL
         (
             SELECT DISTINCT f2t.file_id
             FROM file2tag f2t
-            JOIN (
-                SELECT t.id
-                FROM tag t
-                WHERE t.name
-                IN ('chi', 'phi', 'khi')
-            ) T ON f2t.tag_id = T.id
+            WHERE f2t.tag_id IN (SELECT node FROM _tmp_tagids_c)
         )
     )
     AS u
@@ -58,16 +47,52 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 #include "sql_utils.hpp" // for mysu::*, SQL_*
 
 
+char TMPTBL_POSTFIX = '0'; // Lazy placeholder - supports a mere 62 tables. // TODO: Replace with arbitray string or integer thing
+char SQL__CALL_DESC_TAGS_FROM[1024] = "CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"";
+int SQL__CALL_DESC_TAGS_FROM__INDX = strlen("CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"");
+
+
+void increment_tmptbl_postfix(){
+    if (TMPTBL_POSTFIX == '9')
+        TMPTBL_POSTFIX = 'a';
+    else if (TMPTBL_POSTFIX == 'z')
+        TMPTBL_POSTFIX = 'A';
+    else if (TMPTBL_POSTFIX == 'Z')
+        exit(2);
+    else
+        ++TMPTBL_POSTFIX;
+}
+
 int add_union_start(char* stmt, int i){
-    const char* a = "\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tJOIN (\n\t\t\t\tSELECT t.id\n\t\t\t\tFROM tag t\n\t\t\t\tWHERE t.name\n\t\t\t\tIN (";
+    SQL__CALL_DESC_TAGS_FROM[strlen("CALL descendant_tags_id_from(\"_tmp_tagids_")] = TMPTBL_POSTFIX;
+    
+    const char* a = "\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_";
     memcpy(stmt + i,  a,  strlen(a));
     i += strlen(a);
+    
+    stmt[i++] = TMPTBL_POSTFIX;
+    
+    stmt[i++] = ')';
+    
+    increment_tmptbl_postfix();
+    
     
     return i;
 }
 
 int add_union_end(char* stmt, int i){
-    const char* a = ")\n\t\t\t) T ON f2t.tag_id = T.id\n\t\t)\n\t";
+    SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = '"';
+    SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = ')';
+    SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX] = 0;
+    
+    write(2, SQL__CALL_DESC_TAGS_FROM, SQL__CALL_DESC_TAGS_FROM__INDX);
+    write(2, "\n", 1);
+    SQL_STMT->execute(SQL__CALL_DESC_TAGS_FROM);
+    
+    SQL__CALL_DESC_TAGS_FROM__INDX = strlen("CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"");
+    
+    
+    const char* a = "\n\t\t)\n\t";
     memcpy(stmt + i,  a,  strlen(a));
     i += strlen(a);
     
@@ -115,16 +140,16 @@ int construct_stmt(char* stmt, const char** argv){
         }
         
         if (add_comma)
-            stmt[i++] = ',';
+            SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = ',';
         else
             add_comma = true;
         
-        stmt[i++] = '"';
+        SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = '\'';
         
-        memcpy(stmt + i,  arg,  strlen(arg));
-        i += strlen(arg);
+        memcpy(SQL__CALL_DESC_TAGS_FROM + SQL__CALL_DESC_TAGS_FROM__INDX,  arg,  strlen(arg));
+        SQL__CALL_DESC_TAGS_FROM__INDX += strlen(arg);
         
-        stmt[i++] = '"';
+        SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = '\'';
         
         
         

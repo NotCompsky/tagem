@@ -8,8 +8,10 @@ default: build/mydefmt
 	g++ src/myfmt.cpp   -O3 -o build/myfmt
 
 misc:
-	g++ src/fmt-sql-tags.cpp -O3 -o build/fmt-sql-tags -lmysqlcppconn
 	gcc src/mystrlen.c       -O3 -o build/mystrlen
+
+build/fmt-sql-tags:
+	g++ src/fmt-sql-tags.cpp -O3 -o build/fmt-sql-tags -I ~/bin/rscraper++/src -lmysqlcppconn
 
 build/mydefmt:
 	g++ src/mydefmt.cpp -O3 -o build/mydefmt
