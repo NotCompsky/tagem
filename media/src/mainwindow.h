@@ -26,14 +26,11 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
 #include <QStringListModel>
-
-#if (_FILE_TYPE_ == 1)
-  #include "customplaintextedit.h"
-#endif
 
 
 QT_BEGIN_NAMESPACE
@@ -75,7 +72,7 @@ public:
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
   #elif (_FILE_TYPE_ == 1)
-    CustomPlainTextEdit* plainTextEdit;
+    QPlainTextEdit* plainTextEdit;
     void media_save();
     void set_read_only();
     void unset_read_only();
@@ -101,6 +98,10 @@ private:
   #if (_FILE_TYPE_ == 0)
     QSlider *m_slider;
     int m_unit;
+  #elif (_FILE_TYPE_ == 2)
+    QImage image;
+    QScrollArea* scrollArea;
+    double scaleFactor;
   #endif
     bool ignore_tagged;
     char media_fp[4096];

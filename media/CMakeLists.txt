@@ -4,7 +4,7 @@ find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
 add_executable(mytagmedia src/main.cpp src/mainwindow.cpp src/mainwindow.h)
-add_executable(mytagtxt   src/main.cpp src/mainwindow.cpp src/mainwindow.h src/customplaintextedit.cpp src/customplaintextedit.h)
+add_executable(mytagtxt   src/main.cpp src/mainwindow.cpp src/mainwindow.h)
 
 # The only difference
 target_compile_definitions(mytagmedia PRIVATE _FILE_TYPE_=0)

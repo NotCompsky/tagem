@@ -22,6 +22,7 @@
 #include "utils.h" // for count_digits, itoa_nonstandard
 #include <cstdio> // for remove
 #include <unistd.h> // for symlink
+#include <QApplication> // for QApplication::queryKeyboardModifiers
 #include <QPushButton>
 #include <QSlider>
 #include <QLayout>
@@ -36,6 +37,10 @@
 #define STDIN_FILENO 0
 
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
+
+
+constexpr int MIN_FONT_SIZE = 8;
+constexpr int SCROLL_INTERVAL = 1;
 
 
 char STMT[4096];
@@ -110,7 +115,7 @@ MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(paren
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
   #elif (_FILE_TYPE_ == 1)
-    this->plainTextEdit = new CustomPlainTextEdit(this);
+    this->plainTextEdit = new QPlainTextEdit(this);
     QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
     sizePolicy1.setHorizontalStretch(0);
     sizePolicy1.setVerticalStretch(0);
@@ -596,12 +601,30 @@ std::map<const int, const int> key2n = {
 };
 
 
-
-
 bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
 // src: https://wiki.qt.io/How_to_catch_enter_key
 {
-    if (event->type()==QEvent::KeyPress) {
+    Qt::KeyboardModifiers kb_mods = QApplication::queryKeyboardModifiers();
+    switch(event->type()){
+      case QEvent::Wheel:{ // Mouse wheel rolled
+        // Based on NoFrillsTextEditor
+        QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
+        short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
+      #if (_FILE_TYPE_ == 1)
+        /*if ((kb_mods & Qt::ControlModifier) == 0){
+            // Scroll unless CTRL key is down
+            window->plainTextEdit->wheel_event(wheel_event);
+            return true;
+        }
+        QFont font = QFont(window->plainTextEdit->font());
+        auto font_size = font.pointSize() + direction;
+        font_size = (font_size >= MIN_FONT_SIZE) ? MIN_FONT_SIZE : 8;
+        font.setPointSize(font_size);
+        window->plainTextEdit->setFont(font);*/
+        return true;
+      #endif
+      }
+      case QEvent::KeyPress:{
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
         switch(int keyval = key->key()){
             case Qt::Key_Enter:
@@ -697,8 +720,10 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             default: return QObject::eventFilter(obj, event);
         }
         return true;
-    } else if (event->type()==QEvent::MouseButtonRelease){
+      }
+      case QEvent::MouseButtonRelease:
         state = state_clicked;
+      default: break;
     }
     return QObject::eventFilter(obj, event);
 }
