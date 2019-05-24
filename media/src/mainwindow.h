@@ -26,7 +26,12 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPlainTextEdit>
+#if (_FILE_TYPE_ == 1)
+  #include <QPlainTextEdit>
+#elif (_FILE_TYPE_ == 2)
+  #include <QScrollArea>
+  #include <QImageReader>
+#endif
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
@@ -78,6 +83,11 @@ public:
     void unset_read_only();
     bool is_file_modified;
     bool is_read_only;
+  #elif (_FILE_TYPE_ == 2)
+    double scaleFactor;
+    QScrollArea* scrollArea;
+    QLabel* imageLabel;
+    void adjustScrollBar(QScrollBar* scrollBar,  double factor);
   #endif
 public Q_SLOTS:
   #if (_FILE_TYPE_ == 0)
@@ -100,8 +110,6 @@ private:
     int m_unit;
   #elif (_FILE_TYPE_ == 2)
     QImage image;
-    QScrollArea* scrollArea;
-    double scaleFactor;
   #endif
     bool ignore_tagged;
     char media_fp[4096];

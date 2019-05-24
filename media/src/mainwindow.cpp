@@ -31,6 +31,9 @@
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QTimer>
+#if (_FILE_TYPE_ == 2)
+  #include <QScrollBar>
+#endif
 
 #include "sql_utils.hpp" // for mysu::*, SQL_*
 
@@ -135,6 +138,16 @@ MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(paren
     
     this->connect(this->plainTextEdit, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
     this->is_file_modified = false;
+  #elif (_FILE_TYPE_ == 2)
+    this->scaleFactor = 1.0;
+    this->imageLabel = new QLabel;
+    this->scrollArea = new QScrollArea;
+    this->imageLabel->setBackgroundRole(QPalette::Base);
+    this->imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    this->imageLabel->setScaledContents(true);
+    this->scrollArea->setBackgroundRole(QPalette::Dark);
+    this->scrollArea->setWidget(this->imageLabel);
+    vl->addWidget(this->scrollArea);
   #endif
     
     setLayout(vl);
@@ -231,6 +244,8 @@ void MainWindow::media_open()
   #elif (_FILE_TYPE_ == 1)
     QFile f(file);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Error: while loading " << file;
+        this->media_next();
         return;
     }
 
@@ -242,6 +257,17 @@ void MainWindow::media_open()
 
     // Scroll to top
     this->plainTextEdit->scroll(0, 0);
+  #elif (_FILE_TYPE_ == 2)
+    QImageReader imgreader(file);
+    imgreader.setAutoTransform(true);
+    this->image = imgreader.read();
+    if (this->image.isNull()) {
+        qDebug() << "Error: " << imgreader.errorString() << " while loading " << file;
+        this->media_next();
+        return;
+    }
+    this->imageLabel->setPixmap(QPixmap::fromImage(this->image));
+    this->imageLabel->adjustSize();
   #endif
 }
 
@@ -572,7 +598,12 @@ void MainWindow::media_save(){
 }
 #endif
 
-
+#if (_FILE_TYPE_ == 2)
+void MainWindow::adjustScrollBar(QScrollBar* scrollBar,  double factor){
+    // src: https://doc.qt.io/qt-5/qtwidgets-widgets-imageviewer-example.html
+    scrollBar->setValue(int(factor * scrollBar->value() + ((factor - 1) * scrollBar->pageStep()/2)));
+}
+#endif
 
 
 
@@ -609,8 +640,8 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
       case QEvent::Wheel:{ // Mouse wheel rolled
         // Based on NoFrillsTextEditor
         QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
-        short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
       #if (_FILE_TYPE_ == 1)
+        short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
         /*if ((kb_mods & Qt::ControlModifier) == 0){
             // Scroll unless CTRL key is down
             window->plainTextEdit->wheel_event(wheel_event);
@@ -622,6 +653,17 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         font.setPointSize(font_size);
         window->plainTextEdit->setFont(font);*/
         return true;
+      #endif
+      #if (_FILE_TYPE_ == 2)
+        if ((kb_mods & Qt::ControlModifier) == 0)
+            // Scroll (default) unless CTRL key is down
+            return true;
+        double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
+        Q_ASSERT(window->imageLabel->pixmap());
+        window->scaleFactor *= factor;
+        window->imageLabel->resize(window->scaleFactor * window->imageLabel->pixmap()->size());
+        //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
+        //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
       #endif
       }
       case QEvent::KeyPress:{
