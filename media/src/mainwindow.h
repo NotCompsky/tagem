@@ -1,7 +1,7 @@
 #ifndef MAINRWINDOW_H
 #define MAINRWINDOW_H
 
-#include <map> // for std::map
+#include <vector> // for std::vector
 
 #include <QCompleter>
 #include <QDialog>
@@ -19,19 +19,35 @@
 #include <QtAV>
 #include <QTextEdit>
 #include <QStringListModel>
-
+#if (_FILE_TYPE_ != 1)
+  #include <QVBoxLayout>
+#endif
 
 QT_BEGIN_NAMESPACE
 class QSlider;
-class QPushButton;
 QT_END_NAMESPACE
 
 
-struct Instance{
+#if (_FILE_TYPE_ != 1)
+class InstanceWidget : public QRubberBand{
+ public:
+    InstanceWidget(QRubberBand::Shape shape,  QWidget* parent)  :  QRubberBand(shape, parent){
+        this->layout = new QVBoxLayout;
+        this->setLayout(layout);
+    };
+    void set_name(QString& name){
+        this->name = name;
+        QLabel* name_label = new QLabel(name);
+        this->layout->addWidget(name_label);
+        this->setLayout(this->layout);
+    };
+    QVBoxLayout* layout;
     std::vector<QString> tags;
-    QRect geometry;
+    QString name;
     uint64_t frame_n;
+    const QRect geometry;
 };
+#endif
 
 
 class TagDialog : public QDialog{
@@ -42,6 +58,11 @@ class TagDialog : public QDialog{
  private:
     QDialogButtonBox* buttonBox;
 };
+
+
+#if (_FILE_TYPE_ != 1)
+bool operator<(const QRect& a, const QRect& b);
+#endif
 
 
 class MainWindow : public QWidget{
@@ -62,14 +83,17 @@ class MainWindow : public QWidget{
     uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
     double volume;
     QString tag_preset[10];
-    QRubberBand* rubberBand; // Selection box
+  #if (_FILE_TYPE_ != 1)
+    InstanceWidget* instance_widget; // Selection box
     bool is_mouse_down;
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
-  #if (_FILE_TYPE_ != 1)
-    std::map<QRubberBand*, Instance> boundingbox2instance;
+    std::vector<InstanceWidget*> instance_widgets;
     QRect boundingbox_geometry;
+    void display_instance_mouseover();
     void create_instance();
+    QScrollArea* scrollArea;
+    void adjustScrollBar(QScrollBar* scrollBar,  double factor);
   #endif
   #if (_FILE_TYPE_ == 0)
     QtAV::VideoOutput* m_vo;
@@ -83,9 +107,7 @@ class MainWindow : public QWidget{
     bool is_read_only;
   #elif (_FILE_TYPE_ == 2)
     double scaleFactor;
-    QScrollArea* scrollArea;
     QLabel* imageLabel;
-    void adjustScrollBar(QScrollBar* scrollBar,  double factor);
   #endif
  public Q_SLOTS:
   #if (_FILE_TYPE_ == 0)
@@ -108,6 +130,9 @@ class MainWindow : public QWidget{
     int m_unit;
   #elif (_FILE_TYPE_ == 2)
     QImage image;
+  #endif
+  #if (_FILE_TYPE_ != 1)
+    void clear_instances();
   #endif
     bool ignore_tagged;
     char media_fp[4096];

@@ -31,6 +31,7 @@
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QToolTip>
 #if (_FILE_TYPE_ == 2)
   #include <QScrollBar>
 #endif
@@ -152,7 +153,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
   #endif
     
   #if (_FILE_TYPE_ != 1)
-    this->rubberBand = nullptr;
+    this->instance_widget = nullptr;
   #endif
     
     setLayout(vl);
@@ -179,6 +180,9 @@ void MainWindow::set_player_options_for_img(){
 
 void MainWindow::media_next(){
     // TODO: Do not have different strings, but one fp string and lengths of dir and fname
+  #if (_FILE_TYPE_ != 1)
+    this->clear_instances();
+  #endif
     size_t size;
     char* dummy = nullptr;
     getline(&dummy, &size, stdin);
@@ -601,16 +605,48 @@ void MainWindow::media_save(){
     this->is_file_modified = false;
 }
 #else
+bool operator<(const QRect& a, const QRect& b){
+    // To allow their use as keys
+    return (&a < &b);
+}
+
+void MainWindow::display_instance_mouseover(){
+}
+
 void MainWindow::create_instance(){
-    this->boundingbox2instance[this->rubberBand] = {};
-    this->boundingbox2instance[this->rubberBand].geometry = this->boundingbox_geometry;
-    this->boundingbox2instance[this->rubberBand].frame_n = 
+    bool ok;
+    QString qname = QInputDialog::getText(this, tr("Name"), tr("Name"), QLineEdit::Normal, "", &ok);
+    if (!ok || qname.isEmpty()){
+        delete this->instance_widget;
+        goto goto__clearrubberband;
+    }
+    
+    {
+    this->instance_widget->set_name(qname);
+    
+    this->instance_widget->frame_n = 
   #if (_FILE_TYPE_ == 0)
     this->m_player->duration();
   #else
     0;
   #endif
-    this->rubberBand = nullptr; // Disassociate rubberBand, so it is retained in the map and not deleted
+    
+    QColor colour(255, 0, 255, 100);
+    QPalette palette;
+    palette.setBrush(QPalette::Highlight, QBrush(colour));
+    this->instance_widget->setPalette(palette);
+
+    this->instance_widgets.push_back(this->instance_widget);
+    }
+    
+    goto__clearrubberband:
+    this->instance_widget = nullptr;
+}
+
+void MainWindow::clear_instances(){
+    for (auto i = 0;  i < this->instance_widgets.size();  ++i)
+        delete this->instance_widgets[i];
+    this->instance_widgets.clear();
 }
 #endif
 
@@ -683,19 +719,20 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
           #endif
             return true;
         }
+      #if (_FILE_TYPE_ != 1)
         case QEvent::MouseButtonPress:{
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_from = mouse_event->pos();
             window->is_mouse_down = true;
-            if (window->rubberBand != nullptr){
-                delete window->rubberBand;
-                window->rubberBand = nullptr;
+            if (window->instance_widget != nullptr){
+                delete window->instance_widget;
+                window->instance_widget = nullptr;
                 return true;
             }
-            window->rubberBand = new QRubberBand(QRubberBand::Rectangle, window);
+            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
-            window->rubberBand->setGeometry(window->boundingbox_geometry);
-            window->rubberBand->show();
+            window->instance_widget->setGeometry(window->boundingbox_geometry);
+            window->instance_widget->show();
             return true;
         }
         case QEvent::MouseButtonRelease:{
@@ -703,15 +740,16 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             return true;
         }
         case QEvent::MouseMove:{
-            if (!window->is_mouse_down)
+            if (!window->is_mouse_down  ||  window->instance_widget == nullptr){
+                window->display_instance_mouseover();
                 return true;
+            }
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_to = mouse_event->pos();
-            if (window->rubberBand == nullptr)
-                return true;
-            window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
+            window->instance_widget->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
             return true;
         }
+      #endif
         case QEvent::KeyPress:{
             QKeyEvent* key = static_cast<QKeyEvent*>(event);
             switch(int keyval = key->key()){
