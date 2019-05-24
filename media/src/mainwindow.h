@@ -8,10 +8,13 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
-#if (_FILE_TYPE_ == 1)
+#ifdef TXT
   #include <QPlainTextEdit>
-#elif (_FILE_TYPE_ == 2)
+#else
   #include <QScrollArea>
+  #include <QVBoxLayout>
+#endif
+#ifdef IMG
   #include <QImageReader>
 #endif
 #include <QRubberBand>
@@ -19,16 +22,14 @@
 #include <QtAV>
 #include <QTextEdit>
 #include <QStringListModel>
-#if (_FILE_TYPE_ != 1)
-  #include <QVBoxLayout>
-#endif
+
 
 QT_BEGIN_NAMESPACE
 class QSlider;
 QT_END_NAMESPACE
 
 
-#if (_FILE_TYPE_ != 1)
+#ifdef BOXABLE
 class InstanceWidget : public QRubberBand{
  public:
     InstanceWidget(QRubberBand::Shape shape,  QWidget* parent)  :  QRubberBand(shape, parent){
@@ -64,7 +65,7 @@ class TagDialog : public QDialog{
 };
 
 
-#if (_FILE_TYPE_ != 1)
+#ifdef BOXABLE
 bool operator<(const QRect& a, const QRect& b);
 #endif
 
@@ -87,7 +88,7 @@ class MainWindow : public QWidget{
     uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
     double volume;
     QString tag_preset[10];
-  #if (_FILE_TYPE_ != 1)
+  #ifdef BOXABLE
     InstanceWidget* instance_widget; // Selection box
     bool is_mouse_down;
     QPoint mouse_dragged_from;
@@ -99,43 +100,45 @@ class MainWindow : public QWidget{
     QScrollArea* scrollArea;
     void rescale_main(double factor);
   #endif
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
-  #elif (_FILE_TYPE_ == 1)
-    QPlainTextEdit* plainTextEdit;
+    QWidget* main_widget;
+  #elif (defined TXT)
+    QPlainTextEdit* main_widget;
     void media_save();
     void set_read_only();
     void unset_read_only();
     bool is_file_modified;
     bool is_read_only;
-  #elif (_FILE_TYPE_ == 2)
-    double scaleFactor;
-    QLabel* imageLabel;
+  #elif (defined SCROLLABLE)
+    QLabel* main_widget;
+  #else
+    #error "main_widget not defined"
   #endif
  public Q_SLOTS:
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     void seekBySlider(int value);
     void seekBySlider();
     void playPause();
   #endif
  private Q_SLOTS:
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     void updateSlider(qint64 value);
     void updateSlider();
     void updateSliderUnit();
     void set_player_options_for_img();
-  #elif (_FILE_TYPE_ == 1)
+  #elif (defined TXT)
     void file_modified();
   #endif
  private:
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     QSlider *m_slider;
     int m_unit;
-  #elif (_FILE_TYPE_ == 2)
+  #elif (defined IMG)
     QImage image;
   #endif
-  #if (_FILE_TYPE_ != 1)
+  #ifdef BOXABLE
     void clear_instances();
   #endif
     bool ignore_tagged;

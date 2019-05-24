@@ -32,7 +32,7 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QToolTip>
-#if (_FILE_TYPE_ == 2)
+#ifdef IMG
   #include <QScrollBar>
 #endif
 
@@ -72,7 +72,9 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
 
 MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : QWidget(parent)
 {
+  #ifdef BOXABLE
     this->is_mouse_down = false;
+  #endif
     this->ignore_tagged = false;
     for (auto i = 2;  i < argc;  ++i){
         const char* arg = argv[i];
@@ -96,17 +98,18 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     QVBoxLayout* vl = new QVBoxLayout();
     vl->setContentsMargins(0, 0, 0, 0); // Makes calculating offset easier
     
-  #if (_FILE_TYPE_ == 0)
+    /* Define this->main_widget */
+  #ifdef VID
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new AVPlayer(this);
     m_vo = new VideoOutput(this);
-    if (!m_vo->widget()) {
+    this->main_widget = this->m_vo->widget();
+    if (!this->main_widget){
         fprintf(stderr, "Cannot create QtAV renderer\n");
         return;
     }
     m_player->setRenderer(m_vo);
-    vl->addWidget(m_vo->widget());
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
     connect(m_slider, SIGNAL(sliderMoved(int)), SLOT(seekBySlider(int)));
@@ -116,45 +119,49 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     connect(m_player, SIGNAL(notifyIntervalChanged()), SLOT(updateSliderUnit()));
     connect(m_player, SIGNAL(started()), SLOT(set_player_options_for_img()));
     
-    vl->addWidget(m_slider);
-    
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
-  #elif (_FILE_TYPE_ == 1)
-    this->plainTextEdit = new QPlainTextEdit(this);
+  #elif (defined TXT)
+    this->main_widget = new QPlainTextEdit(this);
     QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
     sizePolicy1.setHorizontalStretch(0);
     sizePolicy1.setVerticalStretch(0);
-    sizePolicy1.setHeightForWidth(this->plainTextEdit->sizePolicy().hasHeightForWidth());
-    this->plainTextEdit->setSizePolicy(sizePolicy1);
-    this->plainTextEdit->viewport()->setProperty("cursor", QVariant(QCursor(Qt::IBeamCursor)));
-    this->plainTextEdit->setContextMenuPolicy(Qt::DefaultContextMenu);
-    this->plainTextEdit->setFrameShape(QFrame::NoFrame);
-    this->plainTextEdit->setFrameShadow(QFrame::Plain);
-    this->plainTextEdit->setLineWidth(1);
-    this->plainTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
-    this->plainTextEdit->setTabStopWidth(40);
+    sizePolicy1.setHeightForWidth(this->main_widget->sizePolicy().hasHeightForWidth());
+    this->main_widget->setSizePolicy(sizePolicy1);
+    this->main_widget->viewport()->setProperty("cursor", QVariant(QCursor(Qt::IBeamCursor)));
+    this->main_widget->setContextMenuPolicy(Qt::DefaultContextMenu);
+    this->main_widget->setFrameShape(QFrame::NoFrame);
+    this->main_widget->setFrameShadow(QFrame::Plain);
+    this->main_widget->setLineWidth(1);
+    this->main_widget->setLineWrapMode(QPlainTextEdit::NoWrap);
+    this->main_widget->setTabStopWidth(40);
     this->is_read_only = true;
-    this->plainTextEdit->setReadOnly(true);
-
-    vl->addWidget(this->plainTextEdit);
+    this->main_widget->setReadOnly(true);
     
-    this->connect(this->plainTextEdit, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
+    this->connect(this->main_widget, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
     this->is_file_modified = false;
-  #elif (_FILE_TYPE_ == 2)
-    this->scaleFactor = 1.0;
-    this->imageLabel = new QLabel;
-    this->scrollArea = new QScrollArea;
-    this->imageLabel->setBackgroundRole(QPalette::Base);
-    this->imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    this->imageLabel->setScaledContents(true);
-    this->scrollArea->setBackgroundRole(QPalette::Dark);
-    this->scrollArea->setWidget(this->imageLabel);
-    vl->addWidget(this->scrollArea);
+  #elif (defined IMG)
+    this->main_widget = new QLabel;
+    this->main_widget->setBackgroundRole(QPalette::Base);
+    this->main_widget->setScaledContents(true);
+    this->main_widget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   #endif
     
-  #if (_FILE_TYPE_ != 1)
+    
+  #ifdef SCROLLABLE
+    this->scrollArea = new QScrollArea;
+    this->scrollArea->setBackgroundRole(QPalette::Dark);
+    this->scrollArea->setWidget(this->main_widget);
+    vl->addWidget(this->scrollArea);
+  #else
+    vl->addWidget(this->main_widget);
+  #endif
+    
+  #ifdef BOXABLE
     this->instance_widget = nullptr;
+  #endif
+  #ifdef VID
+    vl->addWidget(m_slider);
   #endif
     
     setLayout(vl);
@@ -169,7 +176,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
         tag_preset[i] = "";
 }
 
-#if (_FILE_TYPE_ == 0)
+#ifdef VID
 void MainWindow::set_player_options_for_img(){
     PRINTF("Duration: %d\n", this->m_player->duration());
     if (this->m_player->duration() == 40){
@@ -181,7 +188,7 @@ void MainWindow::set_player_options_for_img(){
 
 void MainWindow::media_next(){
     // TODO: Do not have different strings, but one fp string and lengths of dir and fname
-  #if (_FILE_TYPE_ != 1)
+  #ifdef BOXABLE
     this->clear_instances();
   #endif
     size_t size;
@@ -246,11 +253,11 @@ void MainWindow::media_open()
     QString fname = this->media_fname;
     this->setWindowTitle(fname);
     
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     m_player->play(file);
     PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
-  #elif (_FILE_TYPE_ == 1)
+  #elif (defined TXT)
     QFile f(file);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Error: while loading " << file;
@@ -260,13 +267,13 @@ void MainWindow::media_open()
 
     // Read from the file
     QTextStream in(&f);
-    QTextDocument* document = this->plainTextEdit->document();
+    QTextDocument* document = this->main_widget->document();
     document->setPlainText(in.readAll());
     f.close();
 
     // Scroll to top
-    this->plainTextEdit->scroll(0, 0);
-  #elif (_FILE_TYPE_ == 2)
+    this->main_widget->scroll(0, 0);
+  #elif (defined IMG)
     QImageReader imgreader(file);
     imgreader.setAutoTransform(true);
     this->image = imgreader.read();
@@ -275,12 +282,12 @@ void MainWindow::media_open()
         this->media_next();
         return;
     }
-    this->imageLabel->setPixmap(QPixmap::fromImage(this->image));
-    this->imageLabel->adjustSize();
+    this->main_widget->setPixmap(QPixmap::fromImage(this->image));
+    this->main_widget->adjustSize();
   #endif
 }
 
-#if (_FILE_TYPE_ == 0)
+#ifdef VID
 void MainWindow::seekBySlider(int value)
 {
     if (!m_player->isPlaying())
@@ -573,15 +580,15 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
 }
 
-#if (_FILE_TYPE_ == 1)
+#ifdef TXT
 void MainWindow::unset_read_only(){
     this->is_read_only = false;
-    this->plainTextEdit->setReadOnly(this->is_read_only);
+    this->main_widget->setReadOnly(this->is_read_only);
 }
 
 void MainWindow::set_read_only(){
-    this->is_read_only = true; //!(this->plainTextEdit->isReadOnly());
-    this->plainTextEdit->setReadOnly(this->is_read_only);
+    this->is_read_only = true; //!(this->main_widget->isReadOnly());
+    this->main_widget->setReadOnly(this->is_read_only);
 }
 
 void MainWindow::file_modified(){
@@ -599,7 +606,7 @@ void MainWindow::media_save(){
         return;
     
     QTextStream out(&file);
-    out << this->plainTextEdit->document()->toPlainText();
+    out << this->main_widget->document()->toPlainText();
     out.flush();
     file.close();
     
@@ -621,9 +628,10 @@ void scale(QRect& rect,  T scale){
 };
 
 void MainWindow::rescale_main(double factor){
-    Q_ASSERT(this->imageLabel->pixmap());
-    this->imageLabel->resize(this->imageLabel->size() * factor);
-    
+  #ifdef IMG
+    Q_ASSERT(this->main_widget->pixmap());
+  #endif
+    this->main_widget->resize(this->main_widget->size() * factor);
     foreach(InstanceWidget* iw,  instance_widgets){
         QRect g = iw->geometry;
         scale(g, factor);
@@ -646,7 +654,7 @@ void MainWindow::create_instance(){
     this->instance_widget->set_name(qname);
     
     this->instance_widget->frame_n = 
-  #if (_FILE_TYPE_ == 0)
+  #ifdef VID
     this->m_player->duration();
   #else
     0;
@@ -706,21 +714,21 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         case QEvent::Wheel:{ // Mouse wheel rolled
             // Based on NoFrillsTextEditor
             QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
-          #if (_FILE_TYPE_ == 1)
+          #ifdef TXT
             short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
             /*if ((kb_mods & Qt::ControlModifier) == 0){
                 // Scroll unless CTRL key is down
-                window->plainTextEdit->wheel_event(wheel_event);
+                window->main_widget->wheel_event(wheel_event);
                 return true;
             }
-            QFont font = QFont(window->plainTextEdit->font());
+            QFont font = QFont(window->main_widget->font());
             auto font_size = font.pointSize() + direction;
             font_size = (font_size >= MIN_FONT_SIZE) ? MIN_FONT_SIZE : 8;
             font.setPointSize(font_size);
-            window->plainTextEdit->setFont(font);*/
+            window->main_widget->setFont(font);*/
             return true;
           #endif
-          #if (_FILE_TYPE_ == 2)
+          #ifdef IMG
             if ((kb_mods & Qt::ControlModifier) == 0)
                 // Scroll (default) unless CTRL key is down
                 return true;
@@ -729,7 +737,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
           #endif
             return true;
         }
-      #if (_FILE_TYPE_ != 1)
+      #ifdef BOXABLE
         case QEvent::MouseButtonPress:{
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_from = mouse_event->pos();
@@ -739,10 +747,12 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 window->instance_widget = nullptr;
                 return true;
             }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->imageLabel);
+            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->main_widget);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
             QRect r = window->boundingbox_geometry;
+          #ifdef SCROLLABLE
             r.translate(-window->scrollArea->pos());
+          #endif
             window->instance_widget->setGeometry(r);
             window->instance_widget->show();
             return true;
@@ -777,19 +787,19 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_score();
                     break;
                 case Qt::Key_I:
-                  #if (_FILE_TYPE_ == 1) // No need for text editor to select rectangles
+                  #ifdef TXT // No need for text editor to select rectangles
                     window->unset_read_only();
                   #else
                     window->create_instance();
                   #endif
                     break;
                 case Qt::Key_Escape:
-                  #if (_FILE_TYPE_ == 1)
+                  #ifdef TXT
                     window->set_read_only();
                   #endif
                     break;
                 case Qt::Key_S: // Save
-                  #if (_FILE_TYPE_ == 1)
+                  #ifdef TXT
                     window->media_save();
                   #endif
                     break;
@@ -810,12 +820,12 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_next();
                     break;
                 case Qt::Key_Space:
-                  #if (_FILE_TYPE_ == 0)
+                  #ifdef VID
                     window->playPause();
                   #endif
                     break;
                 case Qt::Key_BracketLeft:
-                  #if (_FILE_TYPE_ == 0)
+                  #ifdef VID
                     if (window->volume > 0){
                         window->volume -= 0.05;
                         window->m_player->audio()->setVolume(window->volume);
@@ -823,7 +833,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
                 case Qt::Key_BracketRight:
-                  #if (_FILE_TYPE_ == 0)
+                  #ifdef VID
                     if (window->volume < 1.25){
                         window->volume += 0.05;
                         window->m_player->audio()->setVolume(window->volume);

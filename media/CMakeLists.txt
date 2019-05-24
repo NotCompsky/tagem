@@ -8,9 +8,10 @@ add_executable(mytagimg   src/main.cpp src/mainwindow.cpp src/mainwindow.h)
 add_executable(mytagtxt   src/main.cpp src/mainwindow.cpp src/mainwindow.h)
 
 # The only difference
-target_compile_definitions(mytagmedia PRIVATE _FILE_TYPE_=0)
-target_compile_definitions(mytagimg   PRIVATE _FILE_TYPE_=2)
-target_compile_definitions(mytagtxt   PRIVATE _FILE_TYPE_=1)
+target_compile_definitions(mytagmedia PRIVATE VID BOXABLE)
+target_compile_definitions(mytagimg   PRIVATE IMG BOXABLE SCROLLABLE)
+target_compile_definitions(mytagtxt   PRIVATE TXT)
+
 
 target_include_directories(mytagmedia PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
 target_include_directories(mytagimg   PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
