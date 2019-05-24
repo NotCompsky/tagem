@@ -704,19 +704,19 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_score();
                     break;
                 case Qt::Key_I:
-                #if (_FILE_TYPE_ == 1)
+                  #if (_FILE_TYPE_ == 1)
                     window->unset_read_only();
-                #endif
+                  #endif
                     break;
                 case Qt::Key_Escape:
-                #if (_FILE_TYPE_ == 1)
+                  #if (_FILE_TYPE_ == 1)
                     window->set_read_only();
-                #endif
+                  #endif
                     break;
                 case Qt::Key_S: // Save
-                #if (_FILE_TYPE_ == 1)
+                  #if (_FILE_TYPE_ == 1)
                     window->media_save();
-                #endif
+                  #endif
                     break;
                 case Qt::Key_N:
                     window->media_note();
@@ -735,25 +735,25 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_next();
                     break;
                 case Qt::Key_Space:
-                #if (_FILE_TYPE_ == 0)
+                  #if (_FILE_TYPE_ == 0)
                     window->playPause();
-                #endif
+                  #endif
                     break;
                 case Qt::Key_BracketLeft:
-                #if (_FILE_TYPE_ == 0)
+                  #if (_FILE_TYPE_ == 0)
                     if (window->volume > 0){
                         window->volume -= 0.05;
                         window->m_player->audio()->setVolume(window->volume);
                     }
-                #endif
+                  #endif
                     break;
                 case Qt::Key_BracketRight:
-                #if (_FILE_TYPE_ == 0)
+                  #if (_FILE_TYPE_ == 0)
                     if (window->volume < 1.25){
                         window->volume += 0.05;
                         window->m_player->audio()->setVolume(window->volume);
                     }
-                #endif
+                  #endif
                     break;
                 /* Preset Tags */
                 // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
