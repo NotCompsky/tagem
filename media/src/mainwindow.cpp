@@ -637,135 +637,135 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
 {
     Qt::KeyboardModifiers kb_mods = QApplication::queryKeyboardModifiers();
     switch(event->type()){
-      case QEvent::Wheel:{ // Mouse wheel rolled
-        // Based on NoFrillsTextEditor
-        QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
-      #if (_FILE_TYPE_ == 1)
-        short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
-        /*if ((kb_mods & Qt::ControlModifier) == 0){
-            // Scroll unless CTRL key is down
-            window->plainTextEdit->wheel_event(wheel_event);
+        case QEvent::Wheel:{ // Mouse wheel rolled
+            // Based on NoFrillsTextEditor
+            QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
+          #if (_FILE_TYPE_ == 1)
+            short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
+            /*if ((kb_mods & Qt::ControlModifier) == 0){
+                // Scroll unless CTRL key is down
+                window->plainTextEdit->wheel_event(wheel_event);
+                return true;
+            }
+            QFont font = QFont(window->plainTextEdit->font());
+            auto font_size = font.pointSize() + direction;
+            font_size = (font_size >= MIN_FONT_SIZE) ? MIN_FONT_SIZE : 8;
+            font.setPointSize(font_size);
+            window->plainTextEdit->setFont(font);*/
+            return true;
+          #endif
+          #if (_FILE_TYPE_ == 2)
+            if ((kb_mods & Qt::ControlModifier) == 0)
+                // Scroll (default) unless CTRL key is down
+                return true;
+            double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
+            Q_ASSERT(window->imageLabel->pixmap());
+            window->scaleFactor *= factor;
+            window->imageLabel->resize(window->scaleFactor * window->imageLabel->pixmap()->size());
+            //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
+            //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
+          #endif
+        }
+        case QEvent::KeyPress:{
+            QKeyEvent* key = static_cast<QKeyEvent*>(event);
+            switch(int keyval = key->key()){
+                case Qt::Key_Enter:
+                case Qt::Key_Return:
+                case Qt::Key_D:
+                    window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
+                    break;
+                case Qt::Key_L:
+                    window->media_linkfrom();
+                    break;
+                case Qt::Key_R: // Rate
+                    window->media_score();
+                    break;
+                case Qt::Key_I:
+                #if (_FILE_TYPE_ == 1)
+                    window->unset_read_only();
+                #endif
+                    break;
+                case Qt::Key_Escape:
+                #if (_FILE_TYPE_ == 1)
+                    window->set_read_only();
+                #endif
+                    break;
+                case Qt::Key_S: // Save
+                #if (_FILE_TYPE_ == 1)
+                    window->media_save();
+                #endif
+                    break;
+                case Qt::Key_N:
+                    window->media_note();
+                    break;
+                case Qt::Key_T:
+                    window->media_tag("");
+                    break;
+                case Qt::Key_O:
+                    window->media_overwrite();
+                    break;
+                case Qt::Key_Q:
+                    window->close();
+                    break;
+                case Qt::Key_X:
+                    window->media_delete();
+                    window->media_next();
+                    break;
+                case Qt::Key_Space:
+                #if (_FILE_TYPE_ == 0)
+                    window->playPause();
+                #endif
+                    break;
+                case Qt::Key_BracketLeft:
+                #if (_FILE_TYPE_ == 0)
+                    if (window->volume > 0){
+                        window->volume -= 0.05;
+                        window->m_player->audio()->setVolume(window->volume);
+                    }
+                #endif
+                    break;
+                case Qt::Key_BracketRight:
+                #if (_FILE_TYPE_ == 0)
+                    if (window->volume < 1.25){
+                        window->volume += 0.05;
+                        window->m_player->audio()->setVolume(window->volume);
+                    }
+                #endif
+                    break;
+                /* Preset Tags */
+                // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
+                case Qt::Key_1:
+                case Qt::Key_2:
+                case Qt::Key_3:
+                case Qt::Key_4:
+                case Qt::Key_5:
+                case Qt::Key_6:
+                case Qt::Key_7:
+                case Qt::Key_8:
+                case Qt::Key_9:
+                case Qt::Key_0:
+                    window->media_tag(window->tag_preset[key2n[keyval]]);
+                    break;
+                case Qt::Key_Exclam:
+                case Qt::Key_QuoteDbl:
+                case Qt::Key_sterling:
+                case Qt::Key_Dollar:
+                case Qt::Key_Percent:
+                case Qt::Key_AsciiCircum:
+                case Qt::Key_Ampersand:
+                case Qt::Key_Asterisk:
+                case Qt::Key_ParenLeft:
+                case Qt::Key_ParenRight:
+                    window->media_tag_new_preset(key2n[keyval]);
+                    break;
+                
+                default: return QObject::eventFilter(obj, event);
+            }
             return true;
         }
-        QFont font = QFont(window->plainTextEdit->font());
-        auto font_size = font.pointSize() + direction;
-        font_size = (font_size >= MIN_FONT_SIZE) ? MIN_FONT_SIZE : 8;
-        font.setPointSize(font_size);
-        window->plainTextEdit->setFont(font);*/
-        return true;
-      #endif
-      #if (_FILE_TYPE_ == 2)
-        if ((kb_mods & Qt::ControlModifier) == 0)
-            // Scroll (default) unless CTRL key is down
-            return true;
-        double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
-        Q_ASSERT(window->imageLabel->pixmap());
-        window->scaleFactor *= factor;
-        window->imageLabel->resize(window->scaleFactor * window->imageLabel->pixmap()->size());
-        //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
-        //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
-      #endif
-      }
-      case QEvent::KeyPress:{
-        QKeyEvent* key = static_cast<QKeyEvent*>(event);
-        switch(int keyval = key->key()){
-            case Qt::Key_Enter:
-            case Qt::Key_Return:
-            case Qt::Key_D:
-                window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
-                break;
-            case Qt::Key_L:
-                window->media_linkfrom();
-                break;
-            case Qt::Key_R: // Rate
-                window->media_score();
-                break;
-            case Qt::Key_I:
-              #if (_FILE_TYPE_ == 1)
-                window->unset_read_only();
-              #endif
-                break;
-            case Qt::Key_Escape:
-              #if (_FILE_TYPE_ == 1)
-                window->set_read_only();
-              #endif
-                break;
-            case Qt::Key_S: // Save
-              #if (_FILE_TYPE_ == 1)
-                window->media_save();
-              #endif
-                break;
-            case Qt::Key_N:
-                window->media_note();
-                break;
-            case Qt::Key_T:
-                window->media_tag("");
-                break;
-            case Qt::Key_O:
-                window->media_overwrite();
-                break;
-            case Qt::Key_Q:
-                window->close();
-                break;
-            case Qt::Key_X:
-                window->media_delete();
-                window->media_next();
-                break;
-            case Qt::Key_Space:
-              #if (_FILE_TYPE_ == 0)
-                window->playPause();
-              #endif
-                break;
-            case Qt::Key_BracketLeft:
-              #if (_FILE_TYPE_ == 0)
-                if (window->volume > 0){
-                    window->volume -= 0.05;
-                    window->m_player->audio()->setVolume(window->volume);
-                }
-              #endif
-                break;
-            case Qt::Key_BracketRight:
-              #if (_FILE_TYPE_ == 0)
-                if (window->volume < 1.25){
-                    window->volume += 0.05;
-                    window->m_player->audio()->setVolume(window->volume);
-                }
-              #endif
-                break;
-            /* Preset Tags */
-            // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
-            case Qt::Key_1:
-            case Qt::Key_2:
-            case Qt::Key_3:
-            case Qt::Key_4:
-            case Qt::Key_5:
-            case Qt::Key_6:
-            case Qt::Key_7:
-            case Qt::Key_8:
-            case Qt::Key_9:
-            case Qt::Key_0:
-                window->media_tag(window->tag_preset[key2n[keyval]]);
-                break;
-            case Qt::Key_Exclam:
-            case Qt::Key_QuoteDbl:
-            case Qt::Key_sterling:
-            case Qt::Key_Dollar:
-            case Qt::Key_Percent:
-            case Qt::Key_AsciiCircum:
-            case Qt::Key_Ampersand:
-            case Qt::Key_Asterisk:
-            case Qt::Key_ParenLeft:
-            case Qt::Key_ParenRight:
-                window->media_tag_new_preset(key2n[keyval]);
-                break;
-            
-            default: return QObject::eventFilter(obj, event);
-        }
-        return true;
-      }
-      case QEvent::MouseButtonRelease:
-        state = state_clicked;
-      default: break;
+        case QEvent::MouseButtonRelease:
+            state = state_clicked;
+        default: break;
     }
     return QObject::eventFilter(obj, event);
 }
