@@ -10,8 +10,10 @@
 #include <QLineEdit>
 #if (_FILE_TYPE_ == 1)
   #include <QPlainTextEdit>
-#elif (_FILE_TYPE_ == 2)
+#else
   #include <QScrollArea>
+#endif
+#if (_FILE_TYPE_ == 2)
   #include <QImageReader>
 #endif
 #include <QRubberBand>
@@ -41,11 +43,23 @@ class InstanceWidget : public QRubberBand{
         this->layout->addWidget(name_label);
         this->setLayout(this->layout);
     };
+    void setGeometry(QRect r){
+        QRubberBand::setGeometry(r);
+        this->geometry = r;
+    }
     QVBoxLayout* layout;
     std::vector<QString> tags;
     QString name;
     uint64_t frame_n;
-    const QRect geometry;
+    QRect geometry;
+};
+
+class ScrollLayoutWidget : public QWidget{
+ public:
+    explicit ScrollLayoutWidget(QWidget *parent) : QWidget(parent){
+        this->layout = new QVBoxLayout();
+    };
+    QVBoxLayout* layout;
 };
 #endif
 
@@ -85,6 +99,7 @@ class MainWindow : public QWidget{
     QString tag_preset[10];
   #if (_FILE_TYPE_ != 1)
     InstanceWidget* instance_widget; // Selection box
+    double scaleFactor;
     bool is_mouse_down;
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
@@ -93,6 +108,7 @@ class MainWindow : public QWidget{
     void display_instance_mouseover();
     void create_instance();
     QScrollArea* scrollArea;
+    ScrollLayoutWidget* scroll_layout_widget;
     void adjustScrollBar(QScrollBar* scrollBar,  double factor);
   #endif
   #if (_FILE_TYPE_ == 0)
@@ -106,7 +122,6 @@ class MainWindow : public QWidget{
     bool is_file_modified;
     bool is_read_only;
   #elif (_FILE_TYPE_ == 2)
-    double scaleFactor;
     QLabel* imageLabel;
   #endif
  public Q_SLOTS:
@@ -132,6 +147,7 @@ class MainWindow : public QWidget{
     QImage image;
   #endif
   #if (_FILE_TYPE_ != 1)
+    QRect geography;
     void clear_instances();
   #endif
     bool ignore_tagged;

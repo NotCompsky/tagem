@@ -32,7 +32,7 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QToolTip>
-#if (_FILE_TYPE_ == 2)
+#if (_FILE_TYPE_ != 1)
   #include <QScrollBar>
 #endif
 
@@ -95,17 +95,29 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     QVBoxLayout* vl = new QVBoxLayout();
     
+  #if (_FILE_TYPE_ != 1)
+    this->instance_widget = nullptr;
+    this->scaleFactor = 1.0;
+    this->scrollArea = new QScrollArea;
+    this->scrollArea->setBackgroundRole(QPalette::Dark);
+    this->scroll_layout_widget = new ScrollLayoutWidget(this);
+  #endif
+    
   #if (_FILE_TYPE_ == 0)
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new AVPlayer(this);
     m_vo = new VideoOutput(this);
-    if (!m_vo->widget()) {
+    QWidget* video_widget = m_vo->widget();
+    if (!video_widget){
         fprintf(stderr, "Cannot create QtAV renderer\n");
         return;
     }
+    
+    video_widget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    
     m_player->setRenderer(m_vo);
-    vl->addWidget(m_vo->widget());
+    this->scroll_layout_widget->layout->addWidget(video_widget);
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
     connect(m_slider, SIGNAL(sliderMoved(int)), SLOT(seekBySlider(int)));
@@ -141,22 +153,20 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     this->connect(this->plainTextEdit, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
     this->is_file_modified = false;
   #elif (_FILE_TYPE_ == 2)
-    this->scaleFactor = 1.0;
     this->imageLabel = new QLabel;
-    this->scrollArea = new QScrollArea;
     this->imageLabel->setBackgroundRole(QPalette::Base);
     this->imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     this->imageLabel->setScaledContents(true);
-    this->scrollArea->setBackgroundRole(QPalette::Dark);
-    this->scrollArea->setWidget(this->imageLabel);
-    vl->addWidget(this->scrollArea);
+    this->scroll_layout_widget->layout->addWidget(this->imageLabel);
   #endif
     
   #if (_FILE_TYPE_ != 1)
-    this->instance_widget = nullptr;
+    this->scroll_layout_widget->show();
+    this->scrollArea->setWidget(this->scroll_layout_widget);
+    vl->addWidget(this->scrollArea);
   #endif
     
-    setLayout(vl);
+    this->setLayout(vl);
     
     media_fp[0] = 0;
     
@@ -609,7 +619,6 @@ bool operator<(const QRect& a, const QRect& b){
     // To allow their use as keys
     return (&a < &b);
 }
-
 void MainWindow::display_instance_mouseover(){
 }
 
@@ -635,7 +644,6 @@ void MainWindow::create_instance(){
     QPalette palette;
     palette.setBrush(QPalette::Highlight, QBrush(colour));
     this->instance_widget->setPalette(palette);
-
     this->instance_widgets.push_back(this->instance_widget);
     }
     
@@ -647,13 +655,6 @@ void MainWindow::clear_instances(){
     for (auto i = 0;  i < this->instance_widgets.size();  ++i)
         delete this->instance_widgets[i];
     this->instance_widgets.clear();
-}
-#endif
-
-#if (_FILE_TYPE_ == 2)
-void MainWindow::adjustScrollBar(QScrollBar* scrollBar,  double factor){
-    // src: https://doc.qt.io/qt-5/qtwidgets-widgets-imageviewer-example.html
-    scrollBar->setValue(int(factor * scrollBar->value() + ((factor - 1) * scrollBar->pageStep()/2)));
 }
 #endif
 
@@ -706,16 +707,16 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             window->plainTextEdit->setFont(font);*/
             return true;
           #endif
-          #if (_FILE_TYPE_ == 2)
+          #if (_FILE_TYPE_ != 1)
             if ((kb_mods & Qt::ControlModifier) == 0)
                 // Scroll (default) unless CTRL key is down
                 return true;
             double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
-            Q_ASSERT(window->imageLabel->pixmap());
             window->scaleFactor *= factor;
+           #if (_FILE_TYPE_ == 2)
+            Q_ASSERT(window->imageLabel->pixmap());
             window->imageLabel->resize(window->scaleFactor * window->imageLabel->pixmap()->size());
-            //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
-            //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
+           #endif
           #endif
             return true;
         }
@@ -729,7 +730,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 window->instance_widget = nullptr;
                 return true;
             }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window);
+            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->scroll_layout_widget);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
             window->instance_widget->setGeometry(window->boundingbox_geometry);
             window->instance_widget->show();
