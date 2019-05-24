@@ -12,6 +12,7 @@
   #include <QScrollArea>
   #include <QImageReader>
 #endif
+#include <QRubberBand>
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
@@ -52,6 +53,10 @@ class MainWindow : public QWidget{
     uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
     double volume;
     QString tag_preset[10];
+    QRubberBand* rubberBand; // Selection box
+    bool is_mouse_down;
+    QPoint mouse_dragged_from;
+    QPoint mouse_dragged_to;
   #if (_FILE_TYPE_ == 0)
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
@@ -114,8 +119,6 @@ class keyReceiver : public QObject{
     Q_OBJECT
  public:
     MainWindow* window;
-    int state;
-    enum { state_default, state_clicked };
  protected:
     bool eventFilter(QObject* obj,  QEvent* event);
 };

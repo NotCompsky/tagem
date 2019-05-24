@@ -71,6 +71,7 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
 
 MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : QWidget(parent)
 {
+    this->is_mouse_down = false;
     this->ignore_tagged = false;
     for (auto i = 2;  i < argc;  ++i){
         const char* arg = argv[i];
@@ -155,7 +156,6 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     media_fp[0] = 0;
     
     keyReceiver* key_receiver = new keyReceiver();
-    key_receiver->state = key_receiver->state_default;
     key_receiver->window = this;
     this->installEventFilter(key_receiver);
     
@@ -665,6 +665,29 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
             //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
           #endif
+            return true;
+        }
+        case QEvent::MouseButtonPress:{
+            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+            window->mouse_dragged_from = mouse_event->pos();
+            window->is_mouse_down = true;
+            window->rubberBand = new QRubberBand(QRubberBand::Rectangle, window);
+            window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, QSize()));
+            window->rubberBand->show();
+            return true;
+        }
+        case QEvent::MouseButtonRelease:{
+            window->is_mouse_down = false;
+            window->rubberBand->hide();
+            return true;
+        }
+        case QEvent::MouseMove:{
+            if (!window->is_mouse_down)
+                return true;
+            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+            window->mouse_dragged_to = mouse_event->pos();
+            window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
+            return true;
         }
         case QEvent::KeyPress:{
             QKeyEvent* key = static_cast<QKeyEvent*>(event);
@@ -763,8 +786,6 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             }
             return true;
         }
-        case QEvent::MouseButtonRelease:
-            state = state_clicked;
         default: break;
     }
     return QObject::eventFilter(obj, event);
