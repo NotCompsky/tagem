@@ -1,6 +1,8 @@
 #ifndef MAINRWINDOW_H
 #define MAINRWINDOW_H
 
+#include <map> // for std::map
+
 #include <QCompleter>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -23,6 +25,13 @@ QT_BEGIN_NAMESPACE
 class QSlider;
 class QPushButton;
 QT_END_NAMESPACE
+
+
+struct Instance{
+    std::vector<QString> tags;
+    QRect geometry;
+    uint64_t frame_n;
+};
 
 
 class TagDialog : public QDialog{
@@ -58,6 +67,8 @@ class MainWindow : public QWidget{
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
   #if (_FILE_TYPE_ != 1)
+    std::map<QRubberBand*, Instance> boundingbox2instance;
+    QRect boundingbox_geometry;
     void create_instance();
   #endif
   #if (_FILE_TYPE_ == 0)

@@ -602,7 +602,15 @@ void MainWindow::media_save(){
 }
 #else
 void MainWindow::create_instance(){
-    //this->boundingbox2instance[this->rubberBand] = instance;
+    this->boundingbox2instance[this->rubberBand] = {};
+    this->boundingbox2instance[this->rubberBand].geometry = this->boundingbox_geometry;
+    this->boundingbox2instance[this->rubberBand].frame_n = 
+  #if (_FILE_TYPE_ == 0)
+    this->m_player->duration();
+  #else
+    0;
+  #endif
+    this->rubberBand = nullptr; // Disassociate rubberBand, so it is retained in the map and not deleted
 }
 #endif
 
@@ -685,7 +693,8 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 return true;
             }
             window->rubberBand = new QRubberBand(QRubberBand::Rectangle, window);
-            window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, QSize()));
+            window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
+            window->rubberBand->setGeometry(window->boundingbox_geometry);
             window->rubberBand->show();
             return true;
         }
