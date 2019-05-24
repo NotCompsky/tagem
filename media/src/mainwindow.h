@@ -35,17 +35,21 @@ class InstanceWidget : public QRubberBand{
         this->layout = new QVBoxLayout;
         this->setLayout(layout);
     };
-    void set_name(QString& name){
+    void set_name(const QString& name){
         this->name = name;
         QLabel* name_label = new QLabel(name);
         this->layout->addWidget(name_label);
         this->setLayout(this->layout);
     };
+    void setGeometry(const QRect& r){
+        this->geometry = r;
+        QRubberBand::setGeometry(r);
+    };
     QVBoxLayout* layout;
     std::vector<QString> tags;
     QString name;
     uint64_t frame_n;
-    const QRect geometry;
+    QRect geometry;
 };
 #endif
 
@@ -93,7 +97,7 @@ class MainWindow : public QWidget{
     void display_instance_mouseover();
     void create_instance();
     QScrollArea* scrollArea;
-    void adjustScrollBar(QScrollBar* scrollBar,  double factor);
+    void rescale_main(double factor);
   #endif
   #if (_FILE_TYPE_ == 0)
     QtAV::VideoOutput* m_vo;

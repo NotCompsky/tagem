@@ -94,6 +94,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     this->tagcompleter = new QCompleter(this->tagslist);
     
     QVBoxLayout* vl = new QVBoxLayout();
+    vl->setContentsMargins(0, 0, 0, 0); // Makes calculating offset easier
     
   #if (_FILE_TYPE_ == 0)
     m_unit = 1000;
@@ -610,6 +611,26 @@ bool operator<(const QRect& a, const QRect& b){
     return (&a < &b);
 }
 
+template<typename T>
+void scale(QRect& rect,  T scale){
+    const QPoint d = (rect.bottomRight() - rect.topLeft())  *  scale;
+    const QPoint p = rect.topLeft() * scale;
+    const QPoint q = QPoint(p.x() + d.x(),  p.y() + d.y());
+    rect.setTopLeft(p);
+    rect.setBottomRight(q);
+};
+
+void MainWindow::rescale_main(double factor){
+    Q_ASSERT(this->imageLabel->pixmap());
+    this->imageLabel->resize(this->imageLabel->size() * factor);
+    
+    foreach(InstanceWidget* iw,  instance_widgets){
+        QRect g = iw->geometry;
+        scale(g, factor);
+        iw->setGeometry(g);
+    }
+}
+
 void MainWindow::display_instance_mouseover(){
 }
 
@@ -647,13 +668,6 @@ void MainWindow::clear_instances(){
     for (auto i = 0;  i < this->instance_widgets.size();  ++i)
         delete this->instance_widgets[i];
     this->instance_widgets.clear();
-}
-#endif
-
-#if (_FILE_TYPE_ == 2)
-void MainWindow::adjustScrollBar(QScrollBar* scrollBar,  double factor){
-    // src: https://doc.qt.io/qt-5/qtwidgets-widgets-imageviewer-example.html
-    scrollBar->setValue(int(factor * scrollBar->value() + ((factor - 1) * scrollBar->pageStep()/2)));
 }
 #endif
 
@@ -711,11 +725,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 // Scroll (default) unless CTRL key is down
                 return true;
             double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
-            Q_ASSERT(window->imageLabel->pixmap());
-            window->scaleFactor *= factor;
-            window->imageLabel->resize(window->scaleFactor * window->imageLabel->pixmap()->size());
-            //window->adjustScrollBar(window->scrollArea->horizontalScrollBar(), factor);
-            //window->adjustScrollBar(window->scrollArea->verticalScrollBar(), factor);
+            window->rescale_main(factor);
           #endif
             return true;
         }
@@ -729,9 +739,11 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 window->instance_widget = nullptr;
                 return true;
             }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window);
+            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->imageLabel);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
-            window->instance_widget->setGeometry(window->boundingbox_geometry);
+            QRect r = window->boundingbox_geometry;
+            r.translate(-window->scrollArea->pos());
+            window->instance_widget->setGeometry(r);
             window->instance_widget->show();
             return true;
         }
