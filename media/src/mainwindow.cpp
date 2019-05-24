@@ -69,7 +69,7 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
     QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
 }
 
-MainWindow::MainWindow(int argc,  char** argv,  QWidget *parent) : QWidget(parent)
+MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : QWidget(parent)
 {
     this->ignore_tagged = false;
     for (auto i = 2;  i < argc;  ++i){

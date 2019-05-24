@@ -18,6 +18,12 @@
 #include <QStringListModel>
 
 
+QT_BEGIN_NAMESPACE
+class QSlider;
+class QPushButton;
+QT_END_NAMESPACE
+
+
 class TagDialog : public QDialog{
     Q_OBJECT
  public:
@@ -31,7 +37,7 @@ class TagDialog : public QDialog{
 class MainWindow : public QWidget{
     Q_OBJECT
  public:
-    explicit MainWindow(int argc,  char** argv,  QWidget *parent = 0);
+    explicit MainWindow(const int argc,  const char** argv,  QWidget *parent = 0);
     QString media_tag(QString str);
     void media_tag_new_preset(int n);
     void media_overwrite();
