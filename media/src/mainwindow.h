@@ -57,6 +57,9 @@ class MainWindow : public QWidget{
     bool is_mouse_down;
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
+  #if (_FILE_TYPE_ != 1)
+    void create_instance();
+  #endif
   #if (_FILE_TYPE_ == 0)
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;

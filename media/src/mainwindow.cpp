@@ -151,6 +151,10 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     vl->addWidget(this->scrollArea);
   #endif
     
+  #if (_FILE_TYPE_ != 1)
+    this->rubberBand = nullptr;
+  #endif
+    
     setLayout(vl);
     
     media_fp[0] = 0;
@@ -596,6 +600,10 @@ void MainWindow::media_save(){
     
     this->is_file_modified = false;
 }
+#else
+void MainWindow::create_instance(){
+    //this->boundingbox2instance[this->rubberBand] = instance;
+}
 #endif
 
 #if (_FILE_TYPE_ == 2)
@@ -671,6 +679,11 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_from = mouse_event->pos();
             window->is_mouse_down = true;
+            if (window->rubberBand != nullptr){
+                delete window->rubberBand;
+                window->rubberBand = nullptr;
+                return true;
+            }
             window->rubberBand = new QRubberBand(QRubberBand::Rectangle, window);
             window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, QSize()));
             window->rubberBand->show();
@@ -678,7 +691,6 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         }
         case QEvent::MouseButtonRelease:{
             window->is_mouse_down = false;
-            window->rubberBand->hide();
             return true;
         }
         case QEvent::MouseMove:{
@@ -686,6 +698,8 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 return true;
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_to = mouse_event->pos();
+            if (window->rubberBand == nullptr)
+                return true;
             window->rubberBand->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
             return true;
         }
@@ -704,8 +718,10 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_score();
                     break;
                 case Qt::Key_I:
-                  #if (_FILE_TYPE_ == 1)
+                  #if (_FILE_TYPE_ == 1) // No need for text editor to select rectangles
                     window->unset_read_only();
+                  #else
+                    window->create_instance();
                   #endif
                     break;
                 case Qt::Key_Escape:
