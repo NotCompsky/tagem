@@ -75,7 +75,9 @@ void InstanceWidget::start_relation_line(){
 void InstanceWidget::add_relation_line(InstanceWidget* iw){
     if (!this->relations[iw])
         return;
-    this->relations[iw] = new InstanceRelation;
+    QPoint middle = (this->geometry.topRight() + iw->geometry.topLeft()) / 2;
+    InstanceRelation* ir = new InstanceRelation(middle, this->parent);
+    this->relations[iw] = ir;
     this->win->main_widget_overlay->update();
 }
 
@@ -90,7 +92,9 @@ void Overlay::paintEvent(QPaintEvent* e){
     foreach(InstanceWidget* iw,  this->win->instance_widgets){
         for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
             // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
-            QPoint master, slave;
+            QPoint master;
+            QPoint slave;
+            /*
             const QPoint a1 = iw->geometry.topLeft();
             const QPoint a2 = iw->geometry.topRight();
             const QPoint a3 = iw->geometry.bottomRight();
@@ -110,6 +114,9 @@ void Overlay::paintEvent(QPaintEvent* e){
                 master = a1;
                 slave = b1;
             }
+            */
+            master = iw->geometry.topRight();
+            slave  = iter->first->geometry.topLeft();
             painter.drawLine(master, slave);
         }
     }

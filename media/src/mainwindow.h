@@ -47,14 +47,24 @@ class InstanceWidgetButton : public QPushButton{
     const InstanceWidget* shouldBparent;
 };
 
-struct InstanceRelation{
+class InstanceRelation{
+ public:
+    InstanceRelation(QPoint middle,  QWidget* parent){
+        this->btn = new QPushButton("Relation", parent);
+        this->btn->setGeometry(QRect(middle,  QSize(9*10, 10)));
+        this->btn->show();
+    };
+    ~InstanceRelation(){
+        delete this->btn;
+    };
+    QPushButton* btn;
     std::vector<QString> tags;
 };
 
 class InstanceWidget : public QRubberBand{
     Q_OBJECT
  public:
-    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)  :  QRubberBand(shape, parent),  win(win){
+    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)  :  QRubberBand(shape, parent),  win(win),  parent(parent){
         this->btn = new InstanceWidgetButton(this, parent);
         this->btn->hide();
         connect(this->btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
@@ -93,6 +103,7 @@ class InstanceWidget : public QRubberBand{
     InstanceWidgetButton* btn;
     QString name;
     QColor colour;
+    QWidget* parent;
     uint64_t frame_n;
  private:
     MainWindow* win;
