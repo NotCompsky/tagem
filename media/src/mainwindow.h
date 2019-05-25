@@ -15,6 +15,7 @@
   #include <QScrollArea>
   #include <QGridLayout>
   #include <QPushButton>
+  #include <QPaintEvent>
 #endif
 #ifdef IMG
   #include <QImageReader>
@@ -37,6 +38,8 @@ QT_END_NAMESPACE
 
 #ifdef BOXABLE
 class InstanceWidget;
+class MainWindow;
+class Overlay;
 
 class InstanceWidgetButton : public QPushButton{
  public:
@@ -44,10 +47,23 @@ class InstanceWidgetButton : public QPushButton{
     const InstanceWidget* shouldBparent;
 };
 
+struct InstanceRelation{
+    std::vector<QString> tags;
+};
+
 class InstanceWidget : public QRubberBand{
+    Q_OBJECT
  public:
-    InstanceWidget(QRubberBand::Shape shape,  QWidget* parent)  :  QRubberBand(shape, parent){
+    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)  :  QRubberBand(shape, parent),  win(win){
         this->btn = new InstanceWidgetButton(this, parent);
+        this->btn->hide();
+        connect(this->btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
+    };
+    ~InstanceWidget(){
+        for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
+            delete iter->second;
+        }
+        delete this->btn;
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
@@ -68,7 +84,9 @@ class InstanceWidget : public QRubberBand{
         this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->name.length()*10, 10)));
         QRubberBand::setGeometry(r);
     };
+    void add_relation_line(InstanceWidget* iw);
     std::vector<QString> tags;
+    std::map<InstanceWidget*, InstanceRelation*> relations;
     QRect geometry;
     double orig_scale_factor;
     QRect orig_geometry;
@@ -76,6 +94,29 @@ class InstanceWidget : public QRubberBand{
     QString name;
     QColor colour;
     uint64_t frame_n;
+ private:
+    MainWindow* win;
+ private Q_SLOTS:
+    void start_relation_line();
+};
+
+
+
+
+
+
+
+class Overlay : public QWidget{
+    Q_OBJECT
+ public:
+    Overlay(MainWindow* win,  QWidget* parent)  :  win(win), QWidget(parent){
+        this->setAttribute(Qt::WA_NoSystemBackground);
+        this->setAttribute(Qt::WA_TransparentForMouseEvents);
+    };
+ protected:
+    void paintEvent(QPaintEvent* e) override;
+ private:
+    MainWindow* win;
 };
 #endif
 
@@ -125,6 +166,8 @@ class MainWindow : public QWidget{
     QScrollArea* scrollArea;
     void rescale_main(double factor);
     QPoint get_scroll_offset();
+    Overlay* main_widget_overlay;
+    void start_relation_line(InstanceWidget* iw);
   #endif
   #ifdef VID
     QtAV::VideoOutput* m_vo;
@@ -169,7 +212,9 @@ class MainWindow : public QWidget{
     QImage image;
   #endif
   #ifdef BOXABLE
+    void create_relation_line_to(InstanceWidget* iw);
     void clear_instances();
+    InstanceWidget* relation_line_from;
   #endif
   #ifdef SCROLLABLE
     template<typename T>

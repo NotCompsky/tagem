@@ -50,6 +50,7 @@ char NOTE[30000];
 
 using namespace QtAV;
 
+
 TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(parent){
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
@@ -66,6 +67,55 @@ TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(pa
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
     QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
 }
+
+#ifdef BOXABLE
+void InstanceWidget::start_relation_line(){
+    this->win->start_relation_line(this);
+}
+void InstanceWidget::add_relation_line(InstanceWidget* iw){
+    if (!this->relations[iw])
+        return;
+    this->relations[iw] = new InstanceRelation;
+    this->win->main_widget_overlay->update();
+}
+
+void Overlay::paintEvent(QPaintEvent* e){
+    QPainter painter(this);
+    QPen pen;
+    pen.setStyle(Qt::DashLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum
+    pen.setWidth(3);
+    pen.setBrush(Qt::green);
+    painter.setPen(pen);
+    painter.save();
+    foreach(InstanceWidget* iw,  this->win->instance_widgets){
+        for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
+            // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
+            QPoint master, slave;
+            const QPoint a1 = iw->geometry.topLeft();
+            const QPoint a2 = iw->geometry.topRight();
+            const QPoint a3 = iw->geometry.bottomRight();
+            const QPoint a4 = iw->geometry.bottomLeft();
+            const QPoint b1 = iter->first->geometry.topLeft();
+            const QPoint b2 = iter->first->geometry.topRight();
+            const QPoint b3 = iter->first->geometry.bottomRight();
+            const QPoint b4 = iter->first->geometry.bottomLeft();
+            if (b4.y() < a1.y()){
+                master = a1;
+                slave = b4;
+            } else if (b4.y() > a4.y()){
+                master = a4;
+                slave = b4;
+            } else {
+                // ??
+                master = a1;
+                slave = b1;
+            }
+            painter.drawLine(master, slave);
+        }
+    }
+    painter.restore();
+}
+#endif
 
 MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : QWidget(parent)
 {
@@ -146,7 +196,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     
   #ifdef SCROLLABLE
-    this->scrollArea = new QScrollArea;
+    this->scrollArea = new QScrollArea(this);
     this->scrollArea->setBackgroundRole(QPalette::Dark);
     this->scrollArea->setWidget(this->main_widget);
     vl->addWidget(this->scrollArea);
@@ -155,6 +205,9 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
   #endif
     
   #ifdef BOXABLE
+    this->main_widget_overlay = new Overlay(this, this->main_widget);
+    this->main_widget_overlay->show();
+    
     this->instance_widget = nullptr;
   #endif
   #ifdef VID
@@ -186,9 +239,6 @@ void MainWindow::set_player_options_for_img(){
 
 void MainWindow::media_next(){
     // TODO: Do not have different strings, but one fp string and lengths of dir and fname
-  #ifdef BOXABLE
-    this->clear_instances();
-  #endif
     size_t size;
     char* dummy = nullptr;
     getline(&dummy, &size, stdin);
@@ -237,8 +287,11 @@ bool is_file_in_db(char* fp){
     return (SQL_RES->next());
 }
 
-void MainWindow::media_open()
-{
+void MainWindow::media_open(){
+  #ifdef BOXABLE
+    this->clear_instances();
+  #endif
+    
     if (this->ignore_tagged  &&  is_file_in_db(this->media_fp)){
         PRINTF("Skipped previously tagged: %s\n", this->media_fp);
         return this->media_next();
@@ -284,6 +337,9 @@ void MainWindow::media_open()
     this->main_widget->adjustSize();
     this->main_widget_orig_size = this->main_widget->size();
     this->scale_factor = 1.0d;
+  #endif
+  #ifdef BOXABLE
+    this->main_widget_overlay->setGeometry(this->main_widget->geometry());
   #endif
 }
 
@@ -691,6 +747,22 @@ void MainWindow::clear_instances(){
     for (auto i = 0;  i < this->instance_widgets.size();  ++i)
         delete this->instance_widgets[i];
     this->instance_widgets.clear();
+    this->relation_line_from = nullptr;
+}
+
+void MainWindow::start_relation_line(InstanceWidget* iw){
+    if (this->relation_line_from == nullptr){
+        this->relation_line_from = iw;
+        return;
+    }
+    this->create_relation_line_to(iw);
+    this->relation_line_from = nullptr;
+}
+
+void MainWindow::create_relation_line_to(InstanceWidget* iw){
+    if (iw == this->relation_line_from)
+        return;
+    this->relation_line_from->add_relation_line(iw);
 }
 #endif
 
@@ -763,7 +835,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 window->instance_widget = nullptr;
                 return true;
             }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->main_widget);
+            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window, window->main_widget);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
             QRect r = window->boundingbox_geometry;
             window->instance_widget->setGeometry(r);
