@@ -23,15 +23,12 @@
 #include <cstdio> // for remove
 #include <unistd.h> // for symlink
 #include <QApplication> // for QApplication::queryKeyboardModifiers
-#include <QPushButton>
 #include <QSlider>
 #include <QLayout>
-#include <QMessageBox>
 #include <QDebug>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QTimer>
-#include <QToolTip>
 #ifdef IMG
   #include <QScrollBar>
 #endif
@@ -170,6 +167,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     keyReceiver* key_receiver = new keyReceiver();
     key_receiver->window = this;
+    
     this->installEventFilter(key_receiver);
     
     for (auto i=0; i<10; ++i)
@@ -580,6 +578,7 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
 }
 
+
 #ifdef TXT
 void MainWindow::unset_read_only(){
     this->is_read_only = false;
@@ -612,7 +611,10 @@ void MainWindow::media_save(){
     
     this->is_file_modified = false;
 }
-#else
+#endif
+
+
+#ifdef BOXABLE
 bool operator<(const QRect& a, const QRect& b){
     // To allow their use as keys
     return (&a < &b);
@@ -627,6 +629,7 @@ void scale(QRect& rect,  T scale){
     rect.setBottomRight(q);
 };
 
+#ifdef SCROLLABLE
 void MainWindow::rescale_main(double factor){
   #ifdef IMG
     Q_ASSERT(this->main_widget->pixmap());
@@ -638,6 +641,16 @@ void MainWindow::rescale_main(double factor){
         iw->setGeometry(g);
     }
 }
+#endif
+
+
+QPoint MainWindow::get_scroll_offset(){
+  #ifdef SCROLLABLE
+    return QPoint(this->scrollArea->horizontalScrollBar()->value(), this->scrollArea->verticalScrollBar()->value());
+  #endif
+    return QPoint(0, 0);
+}
+
 
 void MainWindow::display_instance_mouseover(){
 }
@@ -651,6 +664,8 @@ void MainWindow::create_instance(){
     }
     
     {
+    this->instance_widget->set_colour(QColor(255,0,255,100));
+    this->instance_widgets.push_back(this->instance_widget);
     this->instance_widget->set_name(qname);
     
     this->instance_widget->frame_n = 
@@ -659,13 +674,6 @@ void MainWindow::create_instance(){
   #else
     0;
   #endif
-    
-    QColor colour(255, 0, 255, 100);
-    QPalette palette;
-    palette.setBrush(QPalette::Highlight, QBrush(colour));
-    this->instance_widget->setPalette(palette);
-
-    this->instance_widgets.push_back(this->instance_widget);
     }
     
     goto__clearrubberband:
@@ -728,7 +736,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             window->main_widget->setFont(font);*/
             return true;
           #endif
-          #ifdef IMG
+          #ifdef SCROLLABLE
             if ((kb_mods & Qt::ControlModifier) == 0)
                 // Scroll (default) unless CTRL key is down
                 return true;
@@ -741,6 +749,7 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         case QEvent::MouseButtonPress:{
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_from = mouse_event->pos();
+            window->mouse_dragged_from += window->get_scroll_offset();
             window->is_mouse_down = true;
             if (window->instance_widget != nullptr){
                 delete window->instance_widget;
@@ -750,9 +759,6 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window->main_widget);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
             QRect r = window->boundingbox_geometry;
-          #ifdef SCROLLABLE
-            r.translate(-window->scrollArea->pos());
-          #endif
             window->instance_widget->setGeometry(r);
             window->instance_widget->show();
             return true;
@@ -762,12 +768,13 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             return true;
         }
         case QEvent::MouseMove:{
+            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+            window->mouse_dragged_to = mouse_event->pos();
+            window->mouse_dragged_to += window->get_scroll_offset();
             if (!window->is_mouse_down  ||  window->instance_widget == nullptr){
                 window->display_instance_mouseover();
                 return true;
             }
-            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-            window->mouse_dragged_to = mouse_event->pos();
             window->instance_widget->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
             return true;
         }

@@ -10,18 +10,24 @@
 #include <QLineEdit>
 #ifdef TXT
   #include <QPlainTextEdit>
-#else
+#endif
+#ifdef BOXABLE
   #include <QScrollArea>
-  #include <QVBoxLayout>
+  #include <QGridLayout>
+  #include <QPushButton>
 #endif
 #ifdef IMG
   #include <QImageReader>
+#endif
+#ifdef SCROLLABLE
+  #include <QScrollBar>
 #endif
 #include <QRubberBand>
 #include <QWidget>
 #include <QtAV>
 #include <QTextEdit>
 #include <QStringListModel>
+#include <QPainter>
 
 
 QT_BEGIN_NAMESPACE
@@ -30,27 +36,43 @@ QT_END_NAMESPACE
 
 
 #ifdef BOXABLE
+typedef QPushButton InstanceWidgetButton;
+/*class InstanceWidgetButton : public QPushButton{
+ public:
+    InstanceWidgetButton(QString& name,  QWidget* parent)  :  QPushButton(name, parent), name(name){};
+    
+};*/
+
 class InstanceWidget : public QRubberBand{
  public:
     InstanceWidget(QRubberBand::Shape shape,  QWidget* parent)  :  QRubberBand(shape, parent){
-        this->layout = new QVBoxLayout;
-        this->setLayout(layout);
+        this->btn = new InstanceWidgetButton("btn", parent);
     };
-    void set_name(const QString& name){
-        this->name = name;
-        QLabel* name_label = new QLabel(name);
-        this->layout->addWidget(name_label);
-        this->setLayout(this->layout);
+    void set_colour(const QColor& cl){
+        this->colour = cl;
+        QPalette palette;
+        palette.setBrush(QPalette::Highlight, QBrush(cl));
+        this->setPalette(palette);
+        this->update();
+    };
+    void set_name(const QString& s){
+        this->name = s;
+        //connect(iwb, SIGNAL(clicked()), qApp, SLOT(quit()));
+        this->btn->setText(s);
+        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->name.length()*10, 10)));
+        this->btn->show();
     };
     void setGeometry(const QRect& r){
         this->geometry = r;
+        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->name.length()*10, 10)));
         QRubberBand::setGeometry(r);
     };
-    QVBoxLayout* layout;
     std::vector<QString> tags;
-    QString name;
-    uint64_t frame_n;
     QRect geometry;
+    InstanceWidgetButton* btn;
+    QString name;
+    QColor colour;
+    uint64_t frame_n;
 };
 #endif
 
@@ -116,6 +138,9 @@ class MainWindow : public QWidget{
   #else
     #error "main_widget not defined"
   #endif
+  #ifdef SCROLLABLE
+    QPoint get_scroll_offset();
+  #endif
  public Q_SLOTS:
   #ifdef VID
     void seekBySlider(int value);
@@ -140,6 +165,16 @@ class MainWindow : public QWidget{
   #endif
   #ifdef BOXABLE
     void clear_instances();
+  #endif
+  #ifdef SCROLLABLE
+    template<typename T>
+    void scale__correcting_for_offset(QRect& rect,  T scale){
+        const QPoint d = (rect.bottomRight() - rect.topLeft())  *  scale;
+        const QPoint p = ((rect.topLeft()) * scale);
+        const QPoint q = QPoint(p.x() + d.x(),  p.y() + d.y());
+        rect.setTopLeft(p);
+        rect.setBottomRight(q);
+    };
   #endif
     bool ignore_tagged;
     char media_fp[4096];
