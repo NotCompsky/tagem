@@ -36,17 +36,18 @@ QT_END_NAMESPACE
 
 
 #ifdef BOXABLE
-typedef QPushButton InstanceWidgetButton;
-/*class InstanceWidgetButton : public QPushButton{
+class InstanceWidget;
+
+class InstanceWidgetButton : public QPushButton{
  public:
-    InstanceWidgetButton(QString& name,  QWidget* parent)  :  QPushButton(name, parent), name(name){};
-    
-};*/
+    InstanceWidgetButton(const InstanceWidget* shouldBparent,  QWidget* parent)  :  QPushButton("", parent), shouldBparent(shouldBparent){};
+    const InstanceWidget* shouldBparent;
+};
 
 class InstanceWidget : public QRubberBand{
  public:
     InstanceWidget(QRubberBand::Shape shape,  QWidget* parent)  :  QRubberBand(shape, parent){
-        this->btn = new InstanceWidgetButton("btn", parent);
+        this->btn = new InstanceWidgetButton(this, parent);
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
