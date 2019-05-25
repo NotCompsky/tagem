@@ -282,6 +282,8 @@ void MainWindow::media_open()
     }
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
     this->main_widget->adjustSize();
+    this->main_widget_orig_size = this->main_widget->size();
+    this->scale_factor = 1.0d;
   #endif
 }
 
@@ -631,13 +633,14 @@ void scale(QRect& rect,  T scale){
 
 #ifdef SCROLLABLE
 void MainWindow::rescale_main(double factor){
+    this->scale_factor *= factor;
   #ifdef IMG
     Q_ASSERT(this->main_widget->pixmap());
   #endif
-    this->main_widget->resize(this->main_widget->size() * factor);
+    this->main_widget->resize(this->main_widget_orig_size * this->scale_factor);
     foreach(InstanceWidget* iw,  instance_widgets){
-        QRect g = iw->geometry;
-        scale(g, factor);
+        QRect g = iw->orig_geometry;
+        scale(g,  this->scale_factor / iw->orig_scale_factor);
         iw->setGeometry(g);
     }
 }
@@ -665,6 +668,10 @@ void MainWindow::create_instance(){
     
     {
     this->instance_widget->set_colour(QColor(255,0,255,100));
+  #ifdef SCROLLABLE
+    this->instance_widget->orig_scale_factor = this->scale_factor;
+  #endif
+    this->instance_widget->orig_geometry = this->instance_widget->geometry;
     this->instance_widgets.push_back(this->instance_widget);
     this->instance_widget->set_name(qname);
     

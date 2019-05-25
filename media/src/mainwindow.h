@@ -69,6 +69,8 @@ class InstanceWidget : public QRubberBand{
     };
     std::vector<QString> tags;
     QRect geometry;
+    double orig_scale_factor;
+    QRect orig_geometry;
     InstanceWidgetButton* btn;
     QString name;
     QColor colour;
@@ -121,6 +123,7 @@ class MainWindow : public QWidget{
     void create_instance();
     QScrollArea* scrollArea;
     void rescale_main(double factor);
+    QPoint get_scroll_offset();
   #endif
   #ifdef VID
     QtAV::VideoOutput* m_vo;
@@ -139,7 +142,8 @@ class MainWindow : public QWidget{
     #error "main_widget not defined"
   #endif
   #ifdef SCROLLABLE
-    QPoint get_scroll_offset();
+    double scale_factor;
+    QSize main_widget_orig_size;
   #endif
  public Q_SLOTS:
   #ifdef VID
