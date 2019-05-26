@@ -4,7 +4,7 @@ find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
 
-if (CMAKE_BUILD_TYPE STREQUAL Debug)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug  &&  make clean  &&  VERBOSE=1 make
     set(MY_DEFINITIONS "DEBUG")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -17,9 +17,12 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 
-set(MY_TARGETS "mytagtxt" "mytagimg" "mytagvid")
+if (MY_TARGETS STREQUAL "")
+    set(MY_TARGETS "mytagtxt" "mytagimg" "mytagvid")
+endif()
 
-foreach(tgt ${MY_TARGETS})
+foreach(file_type ${MY_TARGETS})
+    set(tgt "mytag${file_type}")
     add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" mysqlcppconn)
@@ -28,11 +31,18 @@ foreach(tgt ${MY_TARGETS})
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
     endforeach(dfn)
-endforeach(tgt)
+endforeach(file_type)
+
 
 # The only difference between these three targets
-target_compile_definitions(mytagvid PRIVATE VID BOXABLE)
-target_compile_definitions(mytagimg   PRIVATE IMG BOXABLE SCROLLABLE)
-target_compile_definitions(mytagtxt   PRIVATE TXT)
-target_include_directories(mytagvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
-target_link_libraries(mytagvid ${QTAVWIDGETS_LIBRARIES})
+if ("txt" IN_LIST MY_TARGETS)
+    target_compile_definitions(mytagtxt PRIVATE TXT)
+endif()
+if ("img" IN_LIST MY_TARGETS)
+    target_compile_definitions(mytagimg PRIVATE IMG BOXABLE SCROLLABLE)
+endif()
+if ("vid" IN_LIST MY_TARGETS)
+    target_compile_definitions(mytagvid PRIVATE VID BOXABLE)
+    target_include_directories(mytagvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
+    target_link_libraries(mytagvid ${QTAVWIDGETS_LIBRARIES})
+endif()
