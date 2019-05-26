@@ -1,4 +1,3 @@
-Makefile
 .qmake.stash
 build/*
-moc_*
+man/*
