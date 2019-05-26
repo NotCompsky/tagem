@@ -686,6 +686,7 @@ void MainWindow::rescale_main(double factor){
         scale(g,  this->scale_factor / iw->orig_scale_factor);
         iw->setGeometry(g);
     }
+    this->main_widget_overlay->setGeometry(this->main_widget->geometry());
 }
 #endif
 
