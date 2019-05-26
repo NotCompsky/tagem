@@ -19,13 +19,13 @@
 ******************************************************************************/
 
 #include "mainwindow.h"
-#include "utils.h" // for count_digits, itoa_nonstandard
+
 #include <cstdio> // for remove
 #include <unistd.h> // for symlink
+
 #include <QApplication> // for QApplication::queryKeyboardModifiers
 #include <QSlider>
 #include <QLayout>
-#include <QDebug>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QTimer>
@@ -38,6 +38,7 @@
 #endif
 
 #include "sql_utils.hpp" // for mysu::*, SQL_*
+#include "utils.h" // for count_digits, itoa_nonstandard
 
 #define STDIN_FILENO 0
 
@@ -325,8 +326,8 @@ void MainWindow::media_open(){
     m_player->setRepeat(-1); // Repeat infinitely
   #elif (defined TXT)
     QFile f(file);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Error: while loading " << file;
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
+        fprintf(stderr,  "Cannot load file: %s\n",  file);
         this->media_next();
         return;
     }
@@ -343,8 +344,9 @@ void MainWindow::media_open(){
     QImageReader imgreader(file);
     imgreader.setAutoTransform(true);
     this->image = imgreader.read();
-    if (this->image.isNull()) {
-        qDebug() << "Error: " << imgreader.errorString() << " while loading " << file;
+    if (this->image.isNull()){
+        QByteArray bstr = imgreader.errorString().toLocal8Bit();
+        fprintf(stderr,  "%s while loading %s\n",  bstr.data(),  file);
         this->media_next();
         return;
     }
