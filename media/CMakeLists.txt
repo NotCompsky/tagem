@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug  &&  make clean  &&  VERBOSE=1 make
+    # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug
     set(MY_DEFINITIONS "DEBUG")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
@@ -18,6 +18,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 
 if (MY_TARGETS STREQUAL "")
+    # e.g. cmake .. -DMY_TARGETS=txt;img
     set(MY_TARGETS "mytagtxt" "mytagimg" "mytagvid")
 endif()
 
