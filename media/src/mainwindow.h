@@ -47,6 +47,16 @@ class InstanceWidgetButton : public QPushButton{
 };
 
 class InstanceRelation{
+ public:
+    InstanceRelation(QPoint middle,  QWidget* parent){
+        this->btn = new QPushButton("Relation", parent);
+        this->btn->setGeometry(QRect(middle,  QSize(9*10, 10)));
+        this->btn->show();
+    };
+    ~InstanceRelation(){
+        delete this->btn;
+    };
+    QPushButton* btn;
     std::vector<QString> tags;
 };
 
@@ -86,7 +96,6 @@ class InstanceWidget : public QRubberBand{
     void add_relation_line(InstanceWidget* iw);
     std::vector<QString> tags;
     std::map<InstanceWidget*, InstanceRelation*> relations;
-    std::map<InstanceWidget*, QPushButton*> relation_btns;
     QRect geometry;
     double orig_scale_factor;
     QRect orig_geometry;

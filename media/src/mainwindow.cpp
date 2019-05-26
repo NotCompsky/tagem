@@ -57,16 +57,9 @@ void InstanceWidget::start_relation_line(){
 void InstanceWidget::add_relation_line(InstanceWidget* iw){
     if (!this->relations[iw])
         return;
-    
-    InstanceRelation* ir = new InstanceRelation;
-    this->relations[iw] = ir;
-    
     QPoint middle = (this->geometry.topRight() + iw->geometry.topLeft()) / 2;
-    QPushButton* rbtn = new QPushButton("Relation", this->parent);
-    rbtn->setGeometry(QRect(this->geometry.topRight(),  QSize(9*10, 10)));
-    rbtn->show();
-    this->relation_btns[iw] = rbtn;
-    
+    InstanceRelation* ir = new InstanceRelation(middle, this->parent);
+    this->relations[iw] = ir;
     this->win->main_widget_overlay->update();
 }
 
