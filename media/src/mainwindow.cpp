@@ -184,7 +184,14 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
-  #elif (defined TXT)
+   #ifdef TXT
+    #error "TXT and VID are mutually exclusive"
+   #endif
+   #ifdef IMG
+    #error "IMG and VID are mutually exclusive"
+   #endif
+  #endif
+  #ifdef TXT
     this->main_widget = new QPlainTextEdit(this);
     QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
     sizePolicy1.setHorizontalStretch(0);
@@ -203,7 +210,11 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     this->connect(this->main_widget, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
     this->is_file_modified = false;
-  #elif (defined IMG)
+   #ifdef IMG
+    #error "IMG and TXT are mutually exclusive"
+   #endif
+  #endif
+  #ifdef IMG
     this->main_widget = new QLabel;
     this->main_widget->setBackgroundRole(QPalette::Base);
     this->main_widget->setScaledContents(true);
@@ -895,7 +906,11 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_I:
                   #ifdef TXT // No need for text editor to select rectangles
                     window->unset_read_only();
-                  #else
+                   #ifdef BOXABLE
+                    #error "TXT and BOXABLE are mutually exclusive"
+                   #endif
+                  #endif
+                  #ifdef BOXABLE
                     window->create_instance();
                   #endif
                     break;
