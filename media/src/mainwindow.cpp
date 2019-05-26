@@ -1,23 +1,3 @@
-/******************************************************************************
-    Simple Player:  this file is part of QtAV examples
-    Copyright (C) 2012-2016 Wang Bin <wbsecg1@gmail.com>
-
-*   This file is part of QtAV
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************/
-
 #include "mainwindow.h"
 
 #include <cstdio> // for remove
@@ -103,27 +83,6 @@ void Overlay::paintEvent(QPaintEvent* e){
             // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
             QPoint master;
             QPoint slave;
-            /*
-            const QPoint a1 = iw->geometry.topLeft();
-            const QPoint a2 = iw->geometry.topRight();
-            const QPoint a3 = iw->geometry.bottomRight();
-            const QPoint a4 = iw->geometry.bottomLeft();
-            const QPoint b1 = iter->first->geometry.topLeft();
-            const QPoint b2 = iter->first->geometry.topRight();
-            const QPoint b3 = iter->first->geometry.bottomRight();
-            const QPoint b4 = iter->first->geometry.bottomLeft();
-            if (b4.y() < a1.y()){
-                master = a1;
-                slave = b4;
-            } else if (b4.y() > a4.y()){
-                master = a4;
-                slave = b4;
-            } else {
-                // ??
-                master = a1;
-                slave = b1;
-            }
-            */
             master = iw->geometry.topRight();
             slave  = iter->first->geometry.topLeft();
             painter.drawLine(master, slave);
@@ -826,20 +785,9 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
     Qt::KeyboardModifiers kb_mods = QApplication::queryKeyboardModifiers();
     switch(event->type()){
         case QEvent::Wheel:{ // Mouse wheel rolled
-            // Based on NoFrillsTextEditor
             QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
           #ifdef TXT
             short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
-            /*if ((kb_mods & Qt::ControlModifier) == 0){
-                // Scroll unless CTRL key is down
-                window->main_widget->wheel_event(wheel_event);
-                return true;
-            }
-            QFont font = QFont(window->main_widget->font());
-            auto font_size = font.pointSize() + direction;
-            font_size = (font_size >= MIN_FONT_SIZE) ? MIN_FONT_SIZE : 8;
-            font.setPointSize(font_size);
-            window->main_widget->setFont(font);*/
             return true;
           #endif
           #ifdef SCROLLABLE
