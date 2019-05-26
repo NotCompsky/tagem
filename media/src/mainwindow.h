@@ -1,34 +1,33 @@
 #ifndef MAINRWINDOW_H
 #define MAINRWINDOW_H
 
-#include <vector> // for std::vector
-
 #include <QCompleter>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QWidget>
+
 #ifdef TXT
   #include <QPlainTextEdit>
-#endif
-#ifdef BOXABLE
-  #include <QScrollArea>
-  #include <QGridLayout>
-  #include <QPushButton>
-  #include <QPaintEvent>
 #endif
 #ifdef IMG
   #include <QImageReader>
 #endif
-#ifdef SCROLLABLE
-  #include <QScrollBar>
+#ifdef VID
+  #include <QtAV>
 #endif
-#include <QRubberBand>
-#include <QWidget>
-#include <QtAV>
-#include <QTextEdit>
-#include <QStringListModel>
-#include <QPainter>
+
+#ifdef BOXABLE
+  #include <vector> // for std::vector
+  #include <QGridLayout>
+  #include <QPaintEvent>
+  #include <QPushButton>
+  #include <QRubberBand>
+#endif
+#ifdef SCROLLABLE
+  #include <QScrollArea>
+#endif
 
 
 QT_BEGIN_NAMESPACE
@@ -165,9 +164,6 @@ class MainWindow : public QWidget{
     QRect boundingbox_geometry;
     void display_instance_mouseover();
     void create_instance();
-    QScrollArea* scrollArea;
-    void rescale_main(double factor);
-    QPoint get_scroll_offset();
     Overlay* main_widget_overlay;
     void start_relation_line(InstanceWidget* iw);
   #endif
@@ -175,19 +171,20 @@ class MainWindow : public QWidget{
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
     QWidget* main_widget;
-  #elif (defined TXT)
+  #endif
+  #ifdef TXT
     QPlainTextEdit* main_widget;
     void media_save();
     void set_read_only();
     void unset_read_only();
     bool is_file_modified;
     bool is_read_only;
-  #elif (defined SCROLLABLE)
-    QLabel* main_widget;
-  #else
-    #error "main_widget not defined"
   #endif
   #ifdef SCROLLABLE
+    void rescale_main(double factor);
+    QPoint get_scroll_offset();
+    QScrollArea* scrollArea;
+    QLabel* main_widget;
     double scale_factor;
     QSize main_widget_orig_size;
   #endif
@@ -203,7 +200,8 @@ class MainWindow : public QWidget{
     void updateSlider();
     void updateSliderUnit();
     void set_player_options_for_img();
-  #elif (defined TXT)
+  #endif
+  #ifdef TXT
     void file_modified();
   #endif
  private:

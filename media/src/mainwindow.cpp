@@ -29,7 +29,11 @@
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QTimer>
-#ifdef IMG
+
+#ifdef BOXABLE
+  #include <QPainter>
+#endif
+#ifdef SCROLLABLE
   #include <QScrollBar>
 #endif
 
@@ -46,9 +50,6 @@ constexpr int SCROLL_INTERVAL = 1;
 
 char STMT[4096];
 char NOTE[30000];
-
-
-using namespace QtAV;
 
 
 TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(parent){
@@ -163,8 +164,8 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
   #ifdef VID
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
-    m_player = new AVPlayer(this);
-    m_vo = new VideoOutput(this);
+    m_player = new QtAV::AVPlayer(this);
+    m_vo = new QtAV::VideoOutput(this);
     this->main_widget = this->m_vo->widget();
     if (!this->main_widget){
         fprintf(stderr, "Cannot create QtAV renderer\n");
@@ -717,12 +718,11 @@ void MainWindow::rescale_main(double factor){
 #endif
 
 
+#ifdef SCROLLABLE
 QPoint MainWindow::get_scroll_offset(){
-  #ifdef SCROLLABLE
     return QPoint(this->scrollArea->horizontalScrollBar()->value(), this->scrollArea->verticalScrollBar()->value());
-  #endif
-    return QPoint(0, 0);
 }
+#endif
 
 
 void MainWindow::display_instance_mouseover(){
@@ -842,7 +842,9 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         case QEvent::MouseButtonPress:{
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_from = mouse_event->pos();
+          #ifdef SCROLLABLE
             window->mouse_dragged_from += window->get_scroll_offset();
+          #endif
             window->is_mouse_down = true;
             if (window->instance_widget != nullptr){
                 delete window->instance_widget;
@@ -863,7 +865,9 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
         case QEvent::MouseMove:{
             QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
             window->mouse_dragged_to = mouse_event->pos();
+          #ifdef SCROLLABLE
             window->mouse_dragged_to += window->get_scroll_offset();
+          #endif
             if (!window->is_mouse_down  ||  window->instance_widget == nullptr){
                 window->display_instance_mouseover();
                 return true;
