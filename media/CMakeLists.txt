@@ -1,47 +1,37 @@
-cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14.1 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 find_package(QtAV REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
-add_executable(mytagmedia src/main.cpp src/mainwindow.cpp src/mainwindow.h)
-add_executable(mytagimg   src/main.cpp src/mainwindow.cpp src/mainwindow.h)
-add_executable(mytagtxt   src/main.cpp src/mainwindow.cpp src/mainwindow.h)
-
-# The only difference
-target_compile_definitions(mytagmedia PRIVATE VID BOXABLE)
-target_compile_definitions(mytagimg   PRIVATE IMG BOXABLE SCROLLABLE)
-target_compile_definitions(mytagtxt   PRIVATE TXT)
-
-
-target_include_directories(mytagmedia PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
-target_include_directories(mytagimg   PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
-target_include_directories(mytagtxt   PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
-target_include_directories(mytagmedia PRIVATE "../include")
-target_include_directories(mytagimg   PRIVATE "../include")
-target_include_directories(mytagtxt   PRIVATE "../include")
-target_link_libraries(mytagmedia ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)
-target_link_libraries(mytagimg   ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)
-target_link_libraries(mytagtxt   ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)
-target_link_libraries(mytagmedia mysqlcppconn)
-target_link_libraries(mytagimg   mysqlcppconn)
-target_link_libraries(mytagtxt   mysqlcppconn)
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_compile_definitions(mytagmedia PRIVATE DEBUG)
-    target_compile_definitions(mytagimg   PRIVATE DEBUG)
-    target_compile_definitions(mytagtxt   PRIVATE DEBUG)
-else(CMAKE_BUILD_TYPE STREQUAL Release)
+    # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug  &&  make clean  &&  VERBOSE=1 make
+    set(MY_DEFINITIONS "DEBUG")
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+    endif()
+else()
     set(CMAKE_BUILD_TYPE "Release")
-    target_compile_definitions(mytagmedia PRIVATE QT_NO_DEBUG_OUTPUT)
-    target_compile_definitions(mytagimg   PRIVATE QT_NO_DEBUG_OUTPUT)
-    target_compile_definitions(mytagtxt   PRIVATE QT_NO_DEBUG_OUTPUT)
-    target_compile_definitions(mytagmedia PRIVATE QT_NO_DEBUG)
-    target_compile_definitions(mytagimg   PRIVATE QT_NO_DEBUG)
-    target_compile_definitions(mytagtxt   PRIVATE QT_NO_DEBUG)
-    target_compile_definitions(mytagmedia PRIVATE O3)
-    target_compile_definitions(mytagimg   PRIVATE O3)
-    target_compile_definitions(mytagtxt   PRIVATE O3)
+    set(MY_DEFINITIONS "QT_NO_DEBUG" "QT_NO_DEBUG_OUTPUT")
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-# e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug  &&  make clean  &&  VERBOSE=1 make
+
+set(MY_TARGETS "mytagtxt" "mytagimg" "mytagmedia")
+
+foreach(tgt ${MY_TARGETS})
+    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h)
+    target_include_directories("${tgt}" PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
+    target_include_directories("${tgt}" PRIVATE "../include")
+    target_link_libraries("${tgt}" ${QTAVWIDGETS_LIBRARIES} Qt5::Widgets)
+    target_link_libraries("${tgt}" mysqlcppconn)
+    #target_compile_features("${tgt}" PRIVATE cxx_std_98) # CONTRIBUTIONS WELCOME: Tests
+    foreach(dfn ${MY_DEFINITIONS})
+        target_compile_definitions("${tgt}" PRIVATE "${dfn}")
+    endforeach(dfn)
+endforeach(tgt)
+
+# The only difference between these three targets
+target_compile_definitions(mytagmedia PRIVATE VID BOXABLE)
+target_compile_definitions(mytagimg   PRIVATE IMG BOXABLE SCROLLABLE)
+target_compile_definitions(mytagtxt   PRIVATE TXT)
