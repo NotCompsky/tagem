@@ -205,7 +205,8 @@ class MainWindow : public QWidget{
     bool is_mouse_down;
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
-    std::vector<InstanceWidget*> instance_widgets;
+    std::vector<InstanceWidget*> instance_widgets; // TODO: Replace this with instanceid2pointer
+    std::map<uint64_t, InstanceWidget*> instanceid2pointer;
     QRect boundingbox_geometry;
     void display_instance_mouseover();
     void create_instance();

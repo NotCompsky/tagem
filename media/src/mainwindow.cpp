@@ -325,6 +325,8 @@ void MainWindow::init_file_from_db(){
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
     
+    sql::ResultSet* sql_res;
+    
     SQL_RES = SQL_STMT->executeQuery(a);
     while(SQL_RES->next()){
         const uint64_t instance_id = SQL_RES->getUInt64(1);
@@ -334,21 +336,23 @@ void MainWindow::init_file_from_db(){
         const double w = SQL_RES->getDouble(5);
         const double h = SQL_RES->getDouble(6);
         
-        printf("%lfx%lf\t%lf,%lf  %lf,%lf\n",  W,H,  x,y,  w,h);
-        
         InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
         iw->id = instance_id;
         iw->setGeometry(QRect(QPoint(x*W, y*H),  QSize(w*W, h*H)));
+        
+        
+        this->instanceid2pointer[instance_id] = iw;
+        
         
         constexpr const int prelen_b = strlen("SELECT tag_id FROM instance2tag WHERE instance_id=");
         char b[prelen_b + 20 + 1] = "SELECT tag_id FROM instance2tag WHERE instance_id=";
         b[prelen_b  +  itoa_nonstandard(instance_id,  b + prelen_b)] = 0;
         
-        printf("%s\n", b);
-        sql::ResultSet* sql_res = SQL_STMT->executeQuery(b);
+        sql_res = SQL_STMT->executeQuery(b);
         
         while(sql_res->next())
             iw->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
+        
         
         iw->set_colour(QColor(255,0,255,100));
       #ifdef SCROLLABLE
@@ -360,6 +364,40 @@ void MainWindow::init_file_from_db(){
         iw->frame_n = frame_n;
         
         iw->show();
+    }
+    
+    for (auto iter = this->instanceid2pointer.begin();  iter != this->instanceid2pointer.end();  iter++){
+        InstanceWidget* master = iter->second;
+        
+        
+        constexpr const int prelen_c = strlen("SELECT id, slave_id FROM relation WHERE master_id=");
+        char c[prelen_c + 20 + 1] = "SELECT id, slave_id FROM relation WHERE master_id=";
+        c[prelen_c  +  itoa_nonstandard(master->id,  c + prelen_c)] = 0;
+        
+        sql_res = SQL_STMT->executeQuery(c);
+        
+        while(sql_res->next()){
+            const uint64_t relation_id = sql_res->getUInt64(1);
+            const uint64_t slave_id    = sql_res->getUInt64(2);
+            InstanceWidget* slave  = this->instanceid2pointer[slave_id];
+            
+            QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
+            InstanceRelation* ir = new InstanceRelation(middle, this->main_widget);
+            
+            ir->id = relation_id;
+            master->relations[slave] = ir;
+            
+            constexpr const int prelen_d = strlen("SELECT tag_id FROM relation2tag WHERE relation_id=");
+            char d[prelen_d + 20 + 1] = "SELECT tag_id FROM relation2tag WHERE relation_id=";
+            d[prelen_d  +  itoa_nonstandard(master->id,  d + prelen_d)] = 0;
+            
+            sql_res = SQL_STMT->executeQuery(d);
+            
+            while(sql_res->next()){
+                const uint64_t tag_id = sql_res->getUInt64(1);
+                ir->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
+            }
+        }
     }
   #endif
 }
