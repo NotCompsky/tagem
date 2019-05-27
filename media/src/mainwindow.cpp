@@ -963,6 +963,7 @@ void MainWindow::clear_instances(){
         delete this->instance_widgets[i];
     this->instance_widgets.clear();
     this->relation_line_from = nullptr;
+    this->instanceid2pointer.clear();
 }
 
 void MainWindow::start_relation_line(InstanceWidget* iw){
