@@ -635,7 +635,7 @@ void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     STMT[i++] = ')';
     STMT[i] = 0;
     
-    printf("%s\n", STMT);
+    PRINTF("%s\n", STMT);
     SQL_STMT->execute(STMT);
 }
 
@@ -676,7 +676,7 @@ uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
             char iszero = parent_tagchars[i];
             parent_tagchars[i] = 0;
             
-            printf("parent_tagchars: %s\n",  parent_tagchars + lastindx);
+            PRINTF("parent_tagchars: %s\n",  parent_tagchars + lastindx);
             auto parid = this->get_id_from_table("tag",  parent_tagchars + lastindx);
             
             this->tag2parent(tagid, parid);
@@ -900,7 +900,7 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     STMT[i++] = ')';
     STMT[i] = 0;
     
-    printf("%s\n", STMT);
+    PRINTF("%s\n", STMT);
     SQL_STMT->execute(STMT);
 }
 
