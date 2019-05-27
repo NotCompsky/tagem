@@ -46,18 +46,35 @@ class InstanceWidgetButton : public QPushButton{
     const InstanceWidget* shouldBparent;
 };
 
-class InstanceRelation{
+class InstanceRelation : public QObject{
+    Q_OBJECT
  public:
-    InstanceRelation(QPoint middle,  QWidget* parent){
+    InstanceRelation(QPoint middle,  QWidget* parent) : is_expanded(true){
         this->btn = new QPushButton("Relation", parent);
-        this->btn->setGeometry(QRect(middle,  QSize(9*10, 10)));
-        this->btn->show();
+        this->btn->move(middle);
+        this->toggle_expand();
+        connect(this->btn, SIGNAL(clicked()), this, SLOT(toggle_expand()));
     };
     ~InstanceRelation(){
         delete this->btn;
     };
     QPushButton* btn;
-    std::vector<QString> tags;
+    QStringList tags;
+ public Q_SLOTS:
+    void toggle_expand(){
+        if (this->is_expanded)
+            this->btn->setText("Relation");
+        else
+            this->btn->setText(this->tags.join("\n"));
+        this->show_text();
+        this->is_expanded = !this->is_expanded;
+    };
+ private:
+    void show_text(){
+        this->btn->resize(QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height()));
+        this->btn->show();
+    };
+    bool is_expanded;
 };
 
 class InstanceWidget : public QRubberBand{
@@ -85,12 +102,12 @@ class InstanceWidget : public QRubberBand{
         this->name = s;
         //connect(iwb, SIGNAL(clicked()), qApp, SLOT(quit()));
         this->btn->setText(s);
-        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->name.length()*10, 10)));
+        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height())));
         this->btn->show();
     };
     void setGeometry(const QRect& r){
         this->geometry = r;
-        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->name.length()*10, 10)));
+        this->btn->move(this->geometry.topLeft());
         QRubberBand::setGeometry(r);
     };
     void add_relation_line(InstanceWidget* iw);
@@ -123,6 +140,7 @@ class Overlay : public QWidget{
         this->setAttribute(Qt::WA_NoSystemBackground);
         this->setAttribute(Qt::WA_TransparentForMouseEvents);
     };
+    bool do_not_update_instances;
  protected:
     void paintEvent(QPaintEvent* e) override;
  private:
@@ -197,6 +215,9 @@ class MainWindow : public QWidget{
     double scale_factor;
     QSize main_widget_orig_size;
   #endif
+    uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
+    QStringList tagslist;
+    QCompleter* tagcompleter;
  public Q_SLOTS:
   #ifdef VID
     void seekBySlider(int value);
@@ -245,13 +266,9 @@ class MainWindow : public QWidget{
     uint64_t file_id;
     FILE* inf;
     
-    QStringList tagslist;
-    QCompleter* tagcompleter;
-    
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
     void tag2parent(uint64_t tag_id,  uint64_t parent_id);
-    uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
 };
 
 class keyReceiver : public QObject{

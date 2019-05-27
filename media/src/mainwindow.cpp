@@ -55,15 +55,34 @@ void InstanceWidget::start_relation_line(){
     this->win->start_relation_line(this);
 }
 void InstanceWidget::add_relation_line(InstanceWidget* iw){
-    if (!this->relations[iw])
+    if (this->relations[iw])
         return;
     QPoint middle = (this->geometry.topRight() + iw->geometry.topLeft()) / 2;
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
+    this->win->main_widget_overlay->do_not_update_instances = true;
+    // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
+    while(true){
+        bool ok;
+        TagDialog* tagdialog = new TagDialog("Tag", "");
+        tagdialog->nameEdit->setCompleter(win->tagcompleter);
+        if (tagdialog->exec() != QDialog::Accepted)
+            break;
+        QString tagstr = tagdialog->nameEdit->text();
+        if (tagstr.isEmpty())
+            break;
+        uint64_t tagid;
+        if (!win->tagslist.contains(tagstr))
+            tagid = win->add_new_tag(tagstr);
+        ir->tags.append(tagstr);
+    }
+    this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;
     this->win->main_widget_overlay->update();
 }
 
 void Overlay::paintEvent(QPaintEvent* e){
+    if (this->do_not_update_instances)
+        return;
     QPainter painter(this);
     QPen pen;
     pen.setStyle(Qt::DashLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum
@@ -79,6 +98,8 @@ void Overlay::paintEvent(QPaintEvent* e){
             master = iw->geometry.topRight();
             slave  = iter->first->geometry.topLeft();
             painter.drawLine(master, slave);
+            QPoint p = (master + slave) / 2;
+            iter->second->btn->move(p);
         }
     }
     painter.restore();
