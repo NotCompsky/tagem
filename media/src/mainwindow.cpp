@@ -133,7 +133,10 @@ void Overlay::paintEvent(QPaintEvent* e){
 }
 #endif
 
-MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : QWidget(parent)
+MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
+:
+    QWidget(parent),
+    media_fp_indx(MEDIA_FP_SZ)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;
@@ -245,8 +248,6 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     
     setLayout(vl);
     
-    media_fp[0] = 0;
-    
     keyReceiver* key_receiver = new keyReceiver();
     key_receiver->window = this;
     
@@ -267,42 +268,46 @@ void MainWindow::set_player_options_for_img(){
 #endif
 
 void MainWindow::media_next(){
-    // TODO: Do not have different strings, but one fp string and lengths of dir and fname
-    size_t size;
-    char* dummy = nullptr;
-    getline(&dummy, &size, stdin);
-    memcpy(this->media_fp,  dummy,  strlen(dummy)-1); // Remove trailing newline
-    this->media_fp[strlen(dummy)-1] = 0;
+    auto i = this->media_fp_indx;
+    this->media_fp_len = 0;
+    while(true){
+        if (i == MEDIA_FP_SZ){
+            read(0,  this->media_fp_buf,  MEDIA_FP_SZ);
+            i = 0;
+        }
+        if (this->media_fp_buf[i] == '/')
+            this->media_dir_len = this->media_fp_len;
+        else if (this->media_fp_buf[i] == '\n')
+            break;
+        this->media_fp[this->media_fp_len] = this->media_fp_buf[i];
+        ++i;
+        ++this->media_fp_len;
+    }
+    ++this->media_dir_len; // Include the trailing slash
+    this->media_fp_indx = i + 1;
+    this->media_fp[this->media_fp_len] = 0;
     
-    this->media_dir_len = 0;
-    for (auto i = 0;  this->media_fp[i] != 0;  ++i)
-        if (this->media_fp[i] == '/')
-            this->media_dir_len = i;
-    
-    memcpy(this->media_dir,  this->media_fp,  this->media_dir_len);
-    this->media_dir[this->media_dir_len] = 0;
-    
-    auto media_fname_len = strlen(dummy)-1 - this->media_dir_len - 1;
-    memcpy(this->media_fname,  this->media_fp + this->media_dir_len + 1,  media_fname_len);
-    this->media_fname[media_fname_len] = 0;
+    write(1,  this->media_fp,  this->media_fp_len);
+    write(1,  "\n",  1);
     
     this->file_id_str_len = 0; // Tells us that file_id hasn't been cached yet
     
     this->media_open();
 }
 
-bool is_file_in_db(char* fp){
+bool is_file_in_db(const char* fp){
     constexpr const char* a = "SELECT id FROM file WHERE name=\"";
     int i = 0;
     
     memcpy(STMT + i,  a,  strlen(a));
     i += strlen(a);
     
-    while (*fp != 0){
-        if (*fp == '"'  ||  *fp == '\\')
+    char* itr = (char*)fp;
+    while (*itr != 0){
+        if (*itr == '"'  ||  *itr == '\\')
             STMT[i++] = '\\';
-        STMT[i++] = *fp;
-        ++fp;
+        STMT[i++] = *itr;
+        ++itr;
     }
     
     STMT[i++] = '"';
@@ -404,28 +409,32 @@ void MainWindow::init_file_from_db(){
   #endif
 }
 
+const char* MainWindow::get_media_fp(){
+    return this->media_fp;
+}
+
 void MainWindow::media_open(){
   #ifdef BOXABLE
     this->clear_instances();
   #endif
     
-    if (is_file_in_db(this->media_fp)){
+    if (is_file_in_db(this->get_media_fp())){
         this->file_id = SQL_RES->getUInt64(1);
         this->file_id_str_len = count_digits(this->file_id);
         itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
         this->file_id_str[this->file_id_str_len] = 0;
     } else {
         if (this->ignore_tagged){
-            PRINTF("Skipped previously tagged: %s\n", this->media_fp);
+            PRINTF("Skipped previously tagged: %s\n", this->get_media_fp());
             return this->media_next();
         }
     }
     
     // WARNING: fp MUST be initialised, unless called via signal button press
-    QString file = this->media_fp;
+    QString file = this->get_media_fp();
     
     /* Set window title */
-    QString fname = this->media_fname;
+    QString fname = this->get_media_fp() + this->media_dir_len;
     this->setWindowTitle(fname);
     
   #ifdef VID
@@ -454,7 +463,7 @@ void MainWindow::media_open(){
     this->image = imgreader.read();
     if (this->image.isNull()){
         QByteArray bstr = imgreader.errorString().toLocal8Bit();
-        fprintf(stderr,  "%s while loading %s\n",  bstr.data(),  file);
+        fprintf(stderr,  "%s while loading %s\n",  bstr.data(),  this->get_media_fp());
         this->media_next();
         return;
     }
@@ -559,7 +568,7 @@ uint64_t MainWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const 
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id_str_len == 0){
-        this->file_id = this->get_id_from_table("file", this->media_fp);
+        this->file_id = this->get_id_from_table("file", this->get_media_fp());
         this->file_id_str_len = count_digits(this->file_id);
         itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
         this->file_id_str[this->file_id_str_len] = 0;
@@ -737,11 +746,11 @@ void MainWindow::media_overwrite(){
 }
 
 void MainWindow::media_replace_w_link(const char* src){
-    PRINTF("Deleting: %s\n", this->media_fp);
-    if (remove(this->media_fp) != 0)
-        fprintf(stderr, "Failed to delete: %s\n", this->media_fp);
-    if (symlink(src, this->media_fp) != 0)
-        fprintf(stderr, "Failed to create ln2del symlink: %s\n", this->media_fp);
+    PRINTF("Deleting: %s\n", this->get_media_fp());
+    if (remove(this->get_media_fp()) != 0)
+        fprintf(stderr, "Failed to delete: %s\n", this->get_media_fp());
+    if (symlink(src, this->get_media_fp()) != 0)
+        fprintf(stderr, "Failed to create ln2del symlink: %s\n", this->get_media_fp());
 }
 
 void MainWindow::media_delete(){
@@ -785,7 +794,7 @@ void MainWindow::media_save(){
     if (!this->is_file_modified)
         return;
     
-    QString filename = this->media_fname;
+    QString filename = this->get_media_fp();
     
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -920,7 +929,7 @@ void MainWindow::create_instance(){
         TagDialog* tagdialog = new TagDialog("Instance Tag", "");
         tagdialog->nameEdit->setCompleter(this->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
-            break;
+            break; // TODO: Create a way to cancel ALL past operations on this instance_widget if the cancel button is pressed for any one of the tags
         QString tagstr = tagdialog->nameEdit->text();
         if (tagstr.isEmpty())
             break;

@@ -30,6 +30,9 @@
 #endif
 
 
+constexpr const int MEDIA_FP_SZ = 4096;
+
+
 QT_BEGIN_NAMESPACE
 class QSlider;
 QT_END_NAMESPACE
@@ -280,9 +283,12 @@ class MainWindow : public QWidget{
         rect.setBottomRight(q);
     };
   #endif
+    const char* get_media_fp();
     bool ignore_tagged;
-    char media_fp[4096];
-    char media_dir[4096 - 1024];
+    char media_fp[MEDIA_FP_SZ];
+    char media_fp_buf[MEDIA_FP_SZ];
+    int media_fp_indx;
+    int media_fp_len;
     char media_fname[1024];
     int media_dir_len;
     int file_id_str_len;
