@@ -129,51 +129,41 @@ class Converter {
 
       label_->set_int32_data(0, pair.second);
 
+      cv::Mat img = cv::imread(input_folder + pair.first,  FLAGS_color ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE);
+
       // Add raw file contents to DB if !raw
       if (!FLAGS_raw) {
-        std::ifstream image_file_stream(input_folder + pair.first);
-        if (!image_file_stream) {
-          LOG(ERROR) << "Cannot open " << input_folder << pair.first
-                     << ". Skipping.";
-        } else {
-          data_->mutable_string_data(0)->assign(
-              std::istreambuf_iterator<char>(image_file_stream),
-              std::istreambuf_iterator<char>());
-        }
+        data_->set_dims(0, img.rows);
+        data_->set_dims(1, img.cols);
       } else {
-        // Load image
-        cv::Mat img = cv::imread(
-            input_folder + pair.first,
-            FLAGS_color ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE);
-
         // Resize image
-        cv::Mat resized_img;
+        cv::Mat orig_img = img;
         int scaled_width, scaled_height;
         if (FLAGS_warp) {
           scaled_width = FLAGS_scale;
           scaled_height = FLAGS_scale;
-        } else if (img.rows > img.cols) {
+        } else if (orig_img.rows > orig_img.cols) {
           scaled_width = FLAGS_scale;
-          scaled_height = static_cast<float>(img.rows) * FLAGS_scale / img.cols;
+          scaled_height = static_cast<float>(orig_img.rows) * FLAGS_scale / orig_img.cols;
         } else {
           scaled_height = FLAGS_scale;
-          scaled_width = static_cast<float>(img.cols) * FLAGS_scale / img.rows;
+          scaled_width = static_cast<float>(orig_img.cols) * FLAGS_scale / orig_img.rows;
         }
         cv::resize(
+            orig_img,
             img,
-            resized_img,
             cv::Size(scaled_width, scaled_height),
             0,
             0,
             cv::INTER_LINEAR);
         data_->set_dims(0, scaled_height);
         data_->set_dims(1, scaled_width);
-
-        // Assert we don't have to deal with alignment
-        DCHECK(resized_img.isContinuous());
-        auto nbytes = resized_img.total() * resized_img.elemSize();
-        data_->set_byte_data(resized_img.ptr(), nbytes);
       }
+
+      // Assert we don't have to deal with alignment
+      DCHECK(img.isContinuous());
+      auto nbytes = img.total() * img.elemSize();
+      data_->set_byte_data(img.ptr(), nbytes);
 
       protos_.SerializeToString(&value);
 
