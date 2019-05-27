@@ -272,7 +272,7 @@ void MainWindow::media_next(){
     this->media_fp_len = 0;
     while(true){
         if (i == MEDIA_FP_SZ){
-            read(0,  this->media_fp_buf,  MEDIA_FP_SZ);
+            fread(this->media_fp_buf, 1, MEDIA_FP_SZ, stdin);
             i = 0;
         }
         if (this->media_fp_buf[i] == '/')
