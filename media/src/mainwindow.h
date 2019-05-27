@@ -190,6 +190,7 @@ class MainWindow : public QWidget{
     void media_overwrite();
     void media_next();
     void media_open();
+    void init_file_from_db();
     void media_replace_w_link(const char* src);
     void media_delete();
     void media_linkfrom();
@@ -235,6 +236,7 @@ class MainWindow : public QWidget{
   #endif
     uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
     QStringList tagslist;
+    std::map<uint64_t, QString> tag_id2name;
     QCompleter* tagcompleter;
  public Q_SLOTS:
   #ifdef VID

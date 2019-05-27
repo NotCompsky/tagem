@@ -152,9 +152,11 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent) : Q
     mysu::init(argv[1], "mytag");
     
     this->tagslist;
-    SQL_RES = SQL_STMT->executeQuery("SELECT name FROM tag");
+    SQL_RES = SQL_STMT->executeQuery("SELECT id, name FROM tag");
     while (SQL_RES->next()){
-        this->tagslist << QString::fromStdString(SQL_RES->getString(1));
+        const QString s = QString::fromStdString(SQL_RES->getString(2));
+        this->tag_id2name[SQL_RES->getUInt64(1)] = s;
+        this->tagslist << s;
     }
     this->tagcompleter = new QCompleter(this->tagslist);
     
@@ -314,14 +316,69 @@ bool is_file_in_db(char* fp){
     return (SQL_RES->next());
 }
 
+void MainWindow::init_file_from_db(){
+  #ifdef BOXABLE
+    constexpr const int prelen_a = strlen("SELECT id, frame_n, x, y, w, h FROM instance WHERE file_id=");
+    char a[prelen_a + 20 + 1]  =  "SELECT id, frame_n, x, y, w, h FROM instance WHERE file_id=";
+    a[prelen_a  +  itoa_nonstandard(this->file_id,  a + prelen_a)] = 0;
+    
+    const double W = this->main_widget_orig_size.width();
+    const double H = this->main_widget_orig_size.height();
+    
+    SQL_RES = SQL_STMT->executeQuery(a);
+    while(SQL_RES->next()){
+        const uint64_t instance_id = SQL_RES->getUInt64(1);
+        const uint64_t frame_n     = SQL_RES->getUInt64(2);
+        const double x = SQL_RES->getDouble(3);
+        const double y = SQL_RES->getDouble(4);
+        const double w = SQL_RES->getDouble(5);
+        const double h = SQL_RES->getDouble(6);
+        
+        printf("%lfx%lf\t%lf,%lf  %lf,%lf\n",  W,H,  x,y,  w,h);
+        
+        InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
+        iw->id = instance_id;
+        iw->setGeometry(QRect(QPoint(x*W, y*H),  QSize(w*W, h*H)));
+        
+        constexpr const int prelen_b = strlen("SELECT tag_id FROM instance2tag WHERE instance_id=");
+        char b[prelen_b + 20 + 1] = "SELECT tag_id FROM instance2tag WHERE instance_id=";
+        b[prelen_b  +  itoa_nonstandard(instance_id,  b + prelen_b)] = 0;
+        
+        printf("%s\n", b);
+        sql::ResultSet* sql_res = SQL_STMT->executeQuery(b);
+        
+        while(sql_res->next())
+            iw->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
+        
+        iw->set_colour(QColor(255,0,255,100));
+      #ifdef SCROLLABLE
+        iw->orig_scale_factor = this->scale_factor;
+      #endif
+        iw->orig_geometry = iw->geometry;
+        this->instance_widgets.push_back(iw);
+        
+        iw->frame_n = frame_n;
+        
+        iw->show();
+    }
+  #endif
+}
+
 void MainWindow::media_open(){
   #ifdef BOXABLE
     this->clear_instances();
   #endif
     
-    if (this->ignore_tagged  &&  is_file_in_db(this->media_fp)){
-        PRINTF("Skipped previously tagged: %s\n", this->media_fp);
-        return this->media_next();
+    if (is_file_in_db(this->media_fp)){
+        this->file_id = SQL_RES->getUInt64(1);
+        this->file_id_str_len = count_digits(this->file_id);
+        itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
+        this->file_id_str[this->file_id_str_len] = 0;
+    } else {
+        if (this->ignore_tagged){
+            PRINTF("Skipped previously tagged: %s\n", this->media_fp);
+            return this->media_next();
+        }
     }
     
     // WARNING: fp MUST be initialised, unless called via signal button press
@@ -369,6 +426,9 @@ void MainWindow::media_open(){
   #ifdef BOXABLE
     this->main_widget_overlay->setGeometry(this->main_widget->geometry());
   #endif
+    
+    if (this->file_id_str_len != 0)
+        this->init_file_from_db();
 }
 
 #ifdef VID
@@ -550,6 +610,7 @@ uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     if (tagid == 0)
         tagid = this->get_id_from_table("tag", tagchars);
     
+    this->tag_id2name[tagid] = tagstr;
     
     /* Get parent tag */
     TagDialog* tagdialog = new TagDialog("Parent Tag of", tagstr);
