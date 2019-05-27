@@ -81,7 +81,10 @@ class InstanceRelation : public QObject{
 class InstanceWidget : public QRubberBand{
     Q_OBJECT
  public:
-    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)  :  QRubberBand(shape, parent),  win(win),  parent(parent){
+    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)
+    :
+        QRubberBand(shape, parent),  win(win),  parent(parent),  is_expanded(true)
+    {
         this->relation_btn = new InstanceWidgetButton(this, parent, "+Relation");
         this->relation_btn->show();
         connect(this->relation_btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
