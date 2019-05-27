@@ -42,7 +42,7 @@ class Overlay;
 
 class InstanceWidgetButton : public QPushButton{
  public:
-    InstanceWidgetButton(const InstanceWidget* shouldBparent,  QWidget* parent)  :  QPushButton("", parent), shouldBparent(shouldBparent){};
+    InstanceWidgetButton(const InstanceWidget* shouldBparent,  QWidget* parent,  QString txt = "")  :  QPushButton(txt, parent), shouldBparent(shouldBparent){};
     const InstanceWidget* shouldBparent;
 };
 
@@ -54,12 +54,14 @@ class InstanceRelation : public QObject{
         this->btn->move(middle);
         this->toggle_expand();
         connect(this->btn, SIGNAL(clicked()), this, SLOT(toggle_expand()));
+        this->btn->show();
     };
     ~InstanceRelation(){
         delete this->btn;
     };
     QPushButton* btn;
     QStringList tags;
+    uint64_t id;
  public Q_SLOTS:
     void toggle_expand(){
         if (this->is_expanded)
@@ -72,7 +74,6 @@ class InstanceRelation : public QObject{
  private:
     void show_text(){
         this->btn->resize(QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height()));
-        this->btn->show();
     };
     bool is_expanded;
 };
@@ -81,15 +82,22 @@ class InstanceWidget : public QRubberBand{
     Q_OBJECT
  public:
     InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)  :  QRubberBand(shape, parent),  win(win),  parent(parent){
-        this->btn = new InstanceWidgetButton(this, parent);
-        this->btn->hide();
-        connect(this->btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
+        this->relation_btn = new InstanceWidgetButton(this, parent, "+Relation");
+        this->relation_btn->show();
+        connect(this->relation_btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
+        this->relation_btn->show();
+        
+        this->btn = new InstanceWidgetButton(this, parent, "Instance");
+        this->toggle_expand();
+        connect(this->btn, SIGNAL(clicked()), this, SLOT(toggle_expand()));
+        this->btn->show();
     };
     ~InstanceWidget(){
         for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
             delete iter->second;
         }
         delete this->btn;
+        delete this->relation_btn;
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
@@ -98,31 +106,40 @@ class InstanceWidget : public QRubberBand{
         this->setPalette(palette);
         this->update();
     };
-    void set_name(const QString& s){
-        this->name = s;
-        //connect(iwb, SIGNAL(clicked()), qApp, SLOT(quit()));
-        this->btn->setText(s);
-        this->btn->setGeometry(QRect(this->geometry.topLeft(),  QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height())));
+    void show_text(){
+        this->btn->resize(QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height()));
         this->btn->show();
     };
     void setGeometry(const QRect& r){
         this->geometry = r;
         this->btn->move(this->geometry.topLeft());
+        this->relation_btn->move(this->geometry.topRight());
         QRubberBand::setGeometry(r);
     };
     void add_relation_line(InstanceWidget* iw);
-    std::vector<QString> tags;
+    QStringList tags;
     std::map<InstanceWidget*, InstanceRelation*> relations;
     QRect geometry;
     double orig_scale_factor;
     QRect orig_geometry;
     InstanceWidgetButton* btn;
-    QString name;
+    InstanceWidgetButton* relation_btn;
     QColor colour;
     QWidget* parent;
+    uint64_t id;
     uint64_t frame_n;
+ public Q_SLOTS:
+    void toggle_expand(){
+        if (this->is_expanded)
+            this->btn->setText("Instance");
+        else
+            this->btn->setText(this->tags.join("\n"));
+        this->show_text();
+        this->is_expanded = !this->is_expanded;
+    };
  private:
     MainWindow* win;
+    bool is_expanded;
  private Q_SLOTS:
     void start_relation_line();
 };
@@ -193,6 +210,7 @@ class MainWindow : public QWidget{
     void create_instance();
     Overlay* main_widget_overlay;
     void start_relation_line(InstanceWidget* iw);
+    void add_instance_to_table(const uint64_t frame_n);
   #endif
   #ifdef VID
     QtAV::VideoOutput* m_vo;

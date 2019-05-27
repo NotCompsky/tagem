@@ -33,6 +33,13 @@ char STMT[4096];
 char NOTE[30000];
 
 
+uint64_t get_last_insert_id(){
+    SQL_RES = SQL_STMT->executeQuery("SELECT LAST_INSERT_ID() as ''");
+    SQL_RES->next();
+    return SQL_RES->getUInt64(1);
+}
+
+
 TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(parent){
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
@@ -60,11 +67,25 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     QPoint middle = (this->geometry.topRight() + iw->geometry.topLeft()) / 2;
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
+    
+    constexpr const char* a = "INSERT INTO relation (master_id, slave_id) VALUES(";
+    int i = 0;
+    memcpy(STMT + i,  a,  strlen(a));
+    i += strlen(a);
+    i += itoa_nonstandard(this->id,  STMT + i);
+    STMT[i++] = ',';
+    i += itoa_nonstandard(iw->id,    STMT + i);
+    STMT[i++] = ')';
+    STMT[i] = 0;
+    SQL_STMT->execute(STMT);
+    
+    ir->id = get_last_insert_id();
+    
     // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
     while(true){
         bool ok;
-        TagDialog* tagdialog = new TagDialog("Tag", "");
-        tagdialog->nameEdit->setCompleter(win->tagcompleter);
+        TagDialog* tagdialog = new TagDialog("Relation Tag", "");
+        tagdialog->nameEdit->setCompleter(this->win->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
             break;
         QString tagstr = tagdialog->nameEdit->text();
@@ -73,7 +94,13 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
         uint64_t tagid;
         if (!win->tagslist.contains(tagstr))
             tagid = win->add_new_tag(tagstr);
+        else {
+            QByteArray tagstr_ba = tagstr.toLocal8Bit();
+            const char* tagchars = tagstr_ba.data();
+            tagid = win->get_id_from_table("tag", tagchars);
+        }
         ir->tags.append(tagstr);
+        sql__add_many2many(SQL_STMT, "relation", ir->id, "tag", tagid);
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;
@@ -432,7 +459,7 @@ uint64_t MainWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const 
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id_str_len == 0){
-        this->file_id = this->get_id_from_table("file", media_fp);
+        this->file_id = this->get_id_from_table("file", this->media_fp);
         this->file_id_str_len = count_digits(this->file_id);
         itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
         this->file_id_str[this->file_id_str_len] = 0;
@@ -715,30 +742,107 @@ QPoint MainWindow::get_scroll_offset(){
 void MainWindow::display_instance_mouseover(){
 }
 
-void MainWindow::create_instance(){
-    bool ok;
-    QString qname = QInputDialog::getText(this, tr("Name"), tr("Name"), QLineEdit::Normal, "", &ok);
-    if (!ok || qname.isEmpty()){
-        delete this->instance_widget;
-        goto goto__clearrubberband;
+
+void MainWindow::add_instance_to_table(const uint64_t frame_n){
+    const QPoint topL = this->instance_widget->geometry.topLeft();
+    const QPoint botR = this->instance_widget->geometry.bottomRight();
+    const double W = this->main_widget_orig_size.width();
+    const double H = this->main_widget_orig_size.height();
+    const double x  =  (topL.x() / W)   /  this->scale_factor;
+    const double y  =  (topL.y() / H)   /  this->scale_factor;
+    const double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
+    const double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
+    const double xywh[4] = {x, y, w, h};
+    
+    
+    this->ensure_fileID_set(); // Modifies STMT, so must be done first
+    
+    int i = 0;
+    
+    constexpr const char* a = "INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(";
+    
+    memcpy(STMT + i,  a,  strlen(a));
+    i += strlen(a);
+    
+    /*
+    const QByteArray bname = qname.toLocal8Bit();
+    const char* cname = bname.data();
+    
+    STMT[i++] = '"';
+    while (*cname != 0){
+        if (*cname == '\\'  ||  *cname == '"')
+            STMT[i++] = '\\';
+        STMT[i++] = *cname;
+        ++cname;
+    }
+    STMT[i++] = '"';
+    STMT[i++] = ',';
+    */
+    
+    itoa_nonstandard(this->file_id,  this->file_id_str_len,  STMT + i);
+    i += this->file_id_str_len;
+    STMT[i++] = ',';
+    
+    for (auto j = 0;  j < 4;  ++j){
+        if (xywh[j] == 1.0d){
+            STMT[i++] = '1';
+        } else {
+            STMT[i++] = '0';
+            STMT[i++] = '.';
+            ftoa_nonstandard__gt_zero__lt_one(xywh[j],  16,  STMT + i);
+            i += 16;
+        }
+        STMT[i++] = ',';
     }
     
-    {
+    i += itoa_nonstandard(frame_n,  STMT + i);
+    STMT[i++] = ')';
+    STMT[i] = 0;
+    
+    printf("%s\n", STMT);
+    SQL_STMT->execute(STMT);
+}
+
+void MainWindow::create_instance(){
+    const uint64_t frame_n = 
+  #ifdef VID
+    this->m_player->duration();
+  #else
+    0;
+  #endif
+    
+    this->add_instance_to_table(frame_n);
+    this->instance_widget->id = get_last_insert_id();
+    
+    while(true){
+        bool ok;
+        TagDialog* tagdialog = new TagDialog("Instance Tag", "");
+        tagdialog->nameEdit->setCompleter(this->tagcompleter);
+        if (tagdialog->exec() != QDialog::Accepted)
+            break;
+        QString tagstr = tagdialog->nameEdit->text();
+        if (tagstr.isEmpty())
+            break;
+        uint64_t tagid;
+        if (!this->tagslist.contains(tagstr))
+            tagid = this->add_new_tag(tagstr);
+        else {
+            QByteArray tagstr_ba = tagstr.toLocal8Bit();
+            const char* tagchars = tagstr_ba.data();
+            tagid = this->get_id_from_table("tag", tagchars);
+        }
+        this->instance_widget->tags.append(tagstr);
+        sql__add_many2many(SQL_STMT, "instance", this->instance_widget->id, "tag", tagid);
+    }
+    
     this->instance_widget->set_colour(QColor(255,0,255,100));
   #ifdef SCROLLABLE
     this->instance_widget->orig_scale_factor = this->scale_factor;
   #endif
     this->instance_widget->orig_geometry = this->instance_widget->geometry;
     this->instance_widgets.push_back(this->instance_widget);
-    this->instance_widget->set_name(qname);
     
-    this->instance_widget->frame_n = 
-  #ifdef VID
-    this->m_player->duration();
-  #else
-    0;
-  #endif
-    }
+    this->instance_widget->frame_n = frame_n;
     
     goto__clearrubberband:
     this->instance_widget = nullptr;

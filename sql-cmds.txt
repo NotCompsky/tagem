@@ -34,12 +34,46 @@ CREATE TABLE file2tag (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE instance (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARBINARY(128),
+    file_id BIGINT UNSIGNED NOT NULL,
+    frame_n BIGINT UNSIGNED NOT NULL,
+    x DOUBLE NOT NULL,  # As proportion of (image|frame)'s width
+    y DOUBLE NOT NULL,
+    w DOUBLE NOT NULL,
+    h DOUBLE NOT NULL,
+    PRIMARY KEY (id)
+);
 
-#CREATE TABLE language (
-#    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-#    name VARBINARY(128),
-#    PRIMARY KEY (id)
-#);
+CREATE TABLE instance2tag (
+    instance_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
+    UNIQUE KEY `instance2tag` (`instance_id`, `tag_id`)
+);
+
+CREATE TABLE relation (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    master_id BIGINT UNSIGNED NOT NULL,  # ID of master instance
+    slave_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE relation2tag (
+    relation_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
+    UNIQUE KEY `instance2tag` (`relation_id`, `tag_id`)
+);
+
+CREATE TABLE relationtag2tag (
+    # Decides on the tags a relation automatically gives rise to, given the tags of the master and slave object instances
+    relation_id BIGINT UNSIGNED NOT NULL,
+    master_id BIGINT UNSIGNED NOT NULL,  # Tag ID of one of the master's tags
+    slave_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,  # Resulting Tag ID
+    PRIMARY KEY `relation2mst` (relation_id, master_id, slave_id, tag_id)
+);
+
 
 
 GRANT SELECT, INSERT, UPDATE, EXECUTE ON mytag.* TO 'ME'@'localhost';
