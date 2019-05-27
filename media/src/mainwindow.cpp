@@ -383,22 +383,24 @@ void MainWindow::init_file_from_db(){
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
             InstanceRelation* ir = new InstanceRelation(middle, this->main_widget);
+            // NOTE: master destruction destroys ir
             
             ir->id = relation_id;
-            master->relations[slave] = ir;
             
             constexpr const int prelen_d = strlen("SELECT tag_id FROM relation2tag WHERE relation_id=");
             char d[prelen_d + 20 + 1] = "SELECT tag_id FROM relation2tag WHERE relation_id=";
-            d[prelen_d  +  itoa_nonstandard(master->id,  d + prelen_d)] = 0;
+            d[prelen_d  +  itoa_nonstandard(relation_id,  d + prelen_d)] = 0;
             
             sql_res = SQL_STMT->executeQuery(d);
             
-            while(sql_res->next()){
-                const uint64_t tag_id = sql_res->getUInt64(1);
+            while(sql_res->next())
                 ir->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
-            }
+            
+            master->relations[slave] = ir;
         }
     }
+    this->main_widget_overlay->do_not_update_instances = false;
+    this->main_widget_overlay->update();
   #endif
 }
 
