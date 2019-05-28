@@ -1,5 +1,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
+#include <stdio.h> // for printf
 
 #include "sql_utils.hpp" // for mysu::*
 
@@ -20,12 +21,14 @@ void view_img(){
     
     const int newX = x*W;
     const int newY = y*H;
-    const int newW = w*W;
-    const int newH = h*H;
+    const int newW = (x + w > 1.0d) ? W - newX : w*W;
+    const int newH = (y + h > 1.0d) ? H - newY : h*H;
     
-    //printf("%s at %d,%d,%d,%d\tfrom %dx%d %s\n", tag.c_str(), newX, newY, newW, newH, orig_img.cols, orig_img.rows, fp.c_str());
+    printf("%lf %lf  %lf %lf\n", x, y, w, h);
+    printf("%d %d\n", orig_img.cols, orig_img.rows);
+    printf("%s at %d,%d,%d,%d\tfrom %dx%d %s\n", tag.c_str(), newX, newY, newW, newH, orig_img.cols, orig_img.rows, fp.c_str());
     
-    cv::Rect rect(x*W, y*H, w*W, h*H);
+    cv::Rect rect(newX, newY, newW, newH);
     cv::Mat img = orig_img(rect);
     
     cv::imshow("Cropped Section", img); // Window name is constant so that it is reused (rather than spawning a new window for each image)
