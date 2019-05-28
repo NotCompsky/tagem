@@ -894,8 +894,10 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     STMT[i++] = ',';
     
     for (auto j = 0;  j < 4;  ++j){
-        if (xywh[j] == 1.0d){
+        if (xywh[j] >= 1.0d){
             STMT[i++] = '1';
+        } else if (xywh[j] <= 0.0d){
+            STMT[i++] = '0';
         } else {
             STMT[i++] = '0';
             STMT[i++] = '.';
@@ -1035,6 +1037,16 @@ bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
             window->mouse_dragged_from = mouse_event->pos();
           #ifdef SCROLLABLE
             window->mouse_dragged_from += window->get_scroll_offset();
+            /*
+            if (window->mouse_dragged_from.x() < 0)
+                window->mouse_dragged_from.setX(0);
+            else if (window->mouse_dragged_from.x() > window->main_widget->size().width())
+                window->mouse_dragged_from.setX(window->main_widget->size().width());
+            if (window->mouse_dragged_from.y() < 0)
+                window->mouse_dragged_from.setY(0);
+            else if (window->mouse_dragged_from.y() > window->main_widget->size().height())
+                window->mouse_dragged_from.setY(window->main_widget->size().height());
+            */
           #endif
             window->is_mouse_down = true;
             if (window->instance_widget != nullptr){

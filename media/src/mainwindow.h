@@ -89,7 +89,7 @@ class InstanceWidget : public QRubberBand{
         QRubberBand(shape, parent),  win(win),  parent(parent),  is_expanded(true)
     {
         this->relation_btn = new InstanceWidgetButton(this, parent, "+Relation");
-        this->relation_btn->show();
+        this->relation_btn_sz = QSize(this->relation_btn->sizeHint().width(), this->relation_btn->sizeHint().height());
         connect(this->relation_btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
         this->relation_btn->show();
         
@@ -102,8 +102,8 @@ class InstanceWidget : public QRubberBand{
         for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
             delete iter->second;
         }
-        delete this->btn;
         delete this->relation_btn;
+        delete this->btn;
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
@@ -119,7 +119,8 @@ class InstanceWidget : public QRubberBand{
     void setGeometry(const QRect& r){
         this->geometry = r;
         this->btn->move(this->geometry.topLeft());
-        this->relation_btn->move(this->geometry.topRight());
+        this->relation_btn->move(this->geometry.topRight()  -  QPoint(this->relation_btn_sz.width() - 1,  0));
+        // Keep button entirely inside this widget - not only visually nicer, but avoids issue when widget borders the right edge of the window's main_widget.
         QRubberBand::setGeometry(r);
     };
     void add_relation_line(InstanceWidget* iw);
@@ -145,6 +146,7 @@ class InstanceWidget : public QRubberBand{
     };
  private:
     MainWindow* win;
+    QSize relation_btn_sz;
     bool is_expanded;
  private Q_SLOTS:
     void start_relation_line();
