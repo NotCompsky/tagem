@@ -36,15 +36,32 @@ void view_img(){
 }
 
 int main(int argc, char** argv) {
-    /* USAGE
+    /*
+    USAGE
       Non-rooted:
         ./make_image_db TAG1 TAG2 ... TAGN
       Rooted:
         ./make_image_db -r TAG1 TAG2 ... TAGN
+      
+    OPTIONS
+        -r
+            Descendant tags count as their heirarchical root tag
+        -D [TAG]
+            Ignore all instances of the following descendant tag
+        -f [TAG]
+            Only include files tagged with the following
+        -F [TAG]
+            Ignore files tagged with the following
     */
     int arg_n = 0;
     
     bool root_tags = false;
+    
+    char not_subtags[2048] = "DELETE FROM tmp_tagids WHERE node IN (SELECT id FROM tag WHERE name IN (";
+    constexpr const int not_subtags__prelen = strlen("DELETE FROM tmp_tagids WHERE node IN (SELECT id FROM tag WHERE name IN (");
+    int not_subtags__indx = not_subtags__prelen;
+    constexpr const char* not_subtags__end = "))";
+    
     while (true){
         const char* arg = argv[++arg_n];
         if (arg[0] != '-')
@@ -52,10 +69,26 @@ int main(int argc, char** argv) {
         
         switch(arg[1]){
             case 'r': root_tags = true; break;
+            case 'D':
+                not_subtags[not_subtags__indx++] = '"';
+                memcpy(not_subtags + not_subtags__indx,  arg,  strlen(arg));
+                not_subtags__indx += strlen(arg);
+                not_subtags[not_subtags__indx++] = '"';
+                not_subtags[not_subtags__indx++] = ',';
+                break;
             default: break;
         }
     }
     --arg_n; // For consistency.
+    
+    if (not_subtags__indx != not_subtags__prelen){
+        --not_subtags__indx; // Remove trailing comma
+        memcpy(not_subtags + not_subtags__indx,  not_subtags__end,  strlen(not_subtags__end));
+        not_subtags__indx += strlen(not_subtags__end);
+        not_subtags[not_subtags__indx] = 0;
+        
+        SQL_STMT->execute(not_subtags);
+    }
     
     mysu::init(argv[++arg_n], "mytag");
     
