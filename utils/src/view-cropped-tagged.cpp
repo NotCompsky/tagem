@@ -39,15 +39,17 @@ int main(int argc, char** argv) {
     /*
     USAGE
       Non-rooted:
-        ./make_image_db TAG1 TAG2 ... TAGN
+        ./view-cropped-tagged TAG1 TAG2 ... TAGN
       Rooted:
-        ./make_image_db -r TAG1 TAG2 ... TAGN
+        ./view-cropped-tagged -r TAG1 TAG2 ... TAGN
       
     OPTIONS
         -r
             Descendant tags count as their heirarchical root tag
         -D [TAG]
-            Ignore all instances of the following descendant tag
+            Ignore the following descendant tag of one of the specified tags
+            NOTE: Does not ignore instances tagged with this tag, but ensures that, if this subtag is the only subtag of a specified tag, the instance is not added.
+            E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-cropped-tagged -D Oak "${MYSQL_CFG_FILE}" Tree`, it would display the first and third instances only.
         -f [TAG]
             Only include files tagged with the following
         -F [TAG]
