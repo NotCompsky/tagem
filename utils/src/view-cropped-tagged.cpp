@@ -15,8 +15,8 @@ void view_img(){
     
     cv::Mat orig_img = cv::imread(fp.c_str());
     
-    const double W = orig_img.cols;
-    const double H = orig_img.rows;
+    const double W = orig_img.cols - 0.5d;
+    const double H = orig_img.rows - 0.5d;
     
     const int newX = x*W;
     const int newY = y*H;
@@ -25,7 +25,7 @@ void view_img(){
     
     //printf("%s at %d,%d,%d,%d\tfrom %dx%d %s\n", tag.c_str(), newX, newY, newW, newH, orig_img.cols, orig_img.rows, fp.c_str());
     
-    cv::Rect rect(x*W, y*H, w*W-1, h*H-1);
+    cv::Rect rect(x*W, y*H, w*W, h*H);
     cv::Mat img = orig_img(rect);
     
     cv::imshow("Cropped Section", img); // Window name is constant so that it is reused (rather than spawning a new window for each image)
