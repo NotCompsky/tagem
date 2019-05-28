@@ -4,7 +4,7 @@
 
 #include "sql_utils.hpp" // for mysu::*
 
-char STMT[4096];
+char STMT[strlen("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"") + 1024 + strlen("\")") + 1];
 
 void view_img(){
     std::string tag = SQL_RES->getString(1);
@@ -56,11 +56,8 @@ int main(int argc, char** argv) {
     int arg_n = 0;
     
     bool root_tags = false;
-    
-    char not_subtags[2048] = "DELETE FROM tmp_tagids WHERE node IN (SELECT id FROM tag WHERE name IN (";
-    constexpr const int not_subtags__prelen = strlen("DELETE FROM tmp_tagids WHERE node IN (SELECT id FROM tag WHERE name IN (");
-    int not_subtags__indx = not_subtags__prelen;
-    constexpr const char* not_subtags__end = "))";
+    std::vector<const char*> not_subtags;
+    not_subtags.reserve(10);
     
     while (true){
         const char* arg = argv[++arg_n];
@@ -69,26 +66,11 @@ int main(int argc, char** argv) {
         
         switch(arg[1]){
             case 'r': root_tags = true; break;
-            case 'D':
-                not_subtags[not_subtags__indx++] = '"';
-                memcpy(not_subtags + not_subtags__indx,  arg,  strlen(arg));
-                not_subtags__indx += strlen(arg);
-                not_subtags[not_subtags__indx++] = '"';
-                not_subtags[not_subtags__indx++] = ',';
-                break;
+            case 'D': not_subtags.push_back(argv[++arg_n]); break;
             default: break;
         }
     }
     --arg_n; // For consistency.
-    
-    if (not_subtags__indx != not_subtags__prelen){
-        --not_subtags__indx; // Remove trailing comma
-        memcpy(not_subtags + not_subtags__indx,  not_subtags__end,  strlen(not_subtags__end));
-        not_subtags__indx += strlen(not_subtags__end);
-        not_subtags[not_subtags__indx] = 0;
-        
-        SQL_STMT->execute(not_subtags);
-    }
     
     mysu::init(argv[++arg_n], "mytag");
     
@@ -115,6 +97,36 @@ int main(int argc, char** argv) {
     STMT[i] = 0;
     
     SQL_STMT->execute(STMT);
+    
+    
+    if (not_subtags.size() != 0){
+        i = 0;
+        
+        memcpy(STMT + i,  a,  strlen(a));
+        i += strlen(a);
+        
+        STMT[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D'
+        
+        for (auto j = 0;  j < not_subtags.size();  ++j){
+            const char* arg = not_subtags[j];
+            STMT[i++] = '\'';
+            memcpy(STMT + i,  arg,  strlen(arg));
+            i += strlen(arg);
+            STMT[i++] = '\'';
+            STMT[i++] = ',';
+        }
+        --i; // Overwrite trailing comma
+        
+        memcpy(STMT + i,  b,  strlen(b));
+        i += strlen(b);
+        
+        STMT[i] = 0;
+        
+        SQL_STMT->execute(STMT);
+        
+        SQL_STMT->execute("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+    }
+    
     
     if (root_tags)
         SQL_RES = SQL_STMT->executeQuery("SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
