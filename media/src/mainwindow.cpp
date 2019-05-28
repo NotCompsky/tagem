@@ -916,6 +916,9 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
 }
 
 void MainWindow::create_instance(){
+    if (this->instance_widget == nullptr)
+        return;
+    
     const uint64_t frame_n = 
   #ifdef VID
     this->m_player->duration();
