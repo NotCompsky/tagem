@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+'''
+TODO
+
+Rewrite in C++
+Capture key events for some shortcuts (such as DELETE key to delete all instances and relationships of a tag) (already written in C++)
+Utility to add tags immediately with multiple parents (already written in C++)
+'''
+
 
 from   itertools import chain
 import mysql.connector
@@ -35,6 +43,8 @@ class PrimaryItem(QStandardItem):
             self.model.removeRow(self.row())
         else:
             parent.removeRow(self.row())
+    def add_subtag(self):
+        pass
 
 
 class TagTreeModel(QStandardItemModel):
@@ -189,7 +199,7 @@ class TagTreeView(QTreeView):
                 addchild_btn = QToolButton(text="+")
                 addchild_btn.setMaximumSize(addchild_btn.sizeHint())
                 self.setIndexWidget(entry__addchild.index(), addchild_btn)
-                #addchild_btn.clicked.connect(entry__id.delete_self)
+                addchild_btn.clicked.connect(entry__id.add_subtag)
                 
                 delete_btn = QToolButton(text="X")
                 delete_btn.setMaximumSize(delete_btn.sizeHint())
