@@ -111,17 +111,19 @@ class TagTreeModel(QStandardItemModel):
 
 
 class TagTreeView(QTreeView):
-    ID, NAME, COUNT, DLT_BTN = range(4)
+    ID, NAME, COUNT, DLT_BTN, ADDCHLD = range(5)
+    editable = False
     
-    def __init__(self, use_tagtreemodel:bool, parent:QWidget):
+    def __init__(self, editable:bool, parent:QWidget):
         super().__init__(parent)
         self.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         
-        if (use_tagtreemodel):
-            self.model = TagTreeModel(0, 4, parent)
+        if (editable):
+            self.model = TagTreeModel(0, 5, parent)
             self.model.itemChanged.connect(self.model.item_changed)
+            self.editable = True
         else:
-            self.model = QStandardItemModel(0, 4, parent)
+            self.model = QStandardItemModel(0, 3, parent)
         
         self.setModel(self.model)
         
@@ -131,7 +133,9 @@ class TagTreeView(QTreeView):
         self.model.setHeaderData(self.ID,        Qt.Horizontal, "ID")
         self.model.setHeaderData(self.NAME,      Qt.Horizontal, "Name")
         self.model.setHeaderData(self.COUNT,     Qt.Horizontal, "Occurances") # Either direct - i.e. does not include the count of tags inheriting from it - or inherited
-        self.model.setHeaderData(self.DLT_BTN,   Qt.Horizontal, "Unchild")
+        if (self.editable):
+            self.model.setHeaderData(self.DLT_BTN,   Qt.Horizontal, "Unchild")
+            self.model.setHeaderData(self.ADDCHLD,   Qt.Horizontal, "+Child")
         
     def place_tags(self, root:int, expand:bool):
         self.model.tagid2entry = {root: self.model}
@@ -162,20 +166,36 @@ class TagTreeView(QTreeView):
             entry__count.setEditable(False)
             entry__count.setDropEnabled(False)
             
-            entry__delete:QStandardItem = QStandardItem()
-            entry__delete.setEditable(False)
-            entry__delete.setDropEnabled(False)
+            ls:list = [entry__id, entry__name, entry__count]
+            
+            if (self.editable):
+                entry__addchild:QStandardItem = QStandardItem()
+                entry__addchild.setEditable(False)
+                entry__addchild.setDropEnabled(False)
+                ls.append(entry__addchild)
+                
+                entry__delete:QStandardItem = QStandardItem()
+                entry__delete.setEditable(False)
+                entry__delete.setDropEnabled(False)
+                ls.append(entry__delete)
             
             try:
-                self.model.tagid2entry[parent_id].appendRow([entry__id, entry__name, entry__count, entry__delete])
+                self.model.tagid2entry[parent_id].appendRow(ls)
             except KeyError:
                 queue.append((parent_id, tag_id, name, count))
                 continue
             
-            delete_btn = QToolButton(text="X")
-            delete_btn.setMaximumSize(delete_btn.sizeHint())
-            self.setIndexWidget(entry__delete.index(), delete_btn)
-            delete_btn.clicked.connect(entry__id.delete_self)
+            if (self.editable):
+                addchild_btn = QToolButton(text="+")
+                addchild_btn.setMaximumSize(addchild_btn.sizeHint())
+                self.setIndexWidget(entry__addchild.index(), addchild_btn)
+                #addchild_btn.clicked.connect(entry__id.delete_self)
+                
+                delete_btn = QToolButton(text="X")
+                delete_btn.setMaximumSize(delete_btn.sizeHint())
+                self.setIndexWidget(entry__delete.index(), delete_btn)
+                delete_btn.clicked.connect(entry__id.delete_self)
+            
             if (expand):
                 self.expand(entry__id.index())
             
