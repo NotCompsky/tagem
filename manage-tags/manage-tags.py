@@ -4,7 +4,7 @@
 from   itertools import chain
 import mysql.connector
 from   PyQt5.QtCore import QMimeData, QModelIndex, Qt
-from   PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QWidget
+from   PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QWidget, QVBoxLayout, QPushButton
 from   PyQt5.QtGui import QStandardItem, QStandardItemModel
 import sys
 
@@ -12,11 +12,25 @@ import sys
 class TagTreeModel(QStandardItemModel):
     def dropMimeData(self, data:QMimeData, action, row:int, col:int, parent:QModelIndex):
         # Dropped items by default can be dropped onto any column; this is nonsensical for our purposes
-        return super().dropMimeData(data, action, row, 0, parent)
-    def insertRows(self, row:int, count:int, parent:QModelIndex):
-        return super().insertRows(row, count, parent)
+        # NOTE: Probably platform dependant. See available formats with data.formats()
+        if (not super().dropMimeData(data, action, row, 0, parent)):
+            return False
+        parent_tag_id:str = parent.data() or "0"
+        tag_id:str = self.index(self.rowCount(parent)-1, 0, parent).data()
+        s:str = f"INSERT INTO tag2parent (parent_id, tag_id) VALUES ({parent_tag_id}, {tag_id})"
+        print(s)
+        cursor.execute(s, multi=False)
+        return True
     def removeRows(self, row:int, count:int, parent:QModelIndex):
-        return super().removeRows(row, count, parent)
+        tag_id:str = self.index(row, 0, parent).data()
+        if (not super().removeRows(row, count, parent)):
+            return False
+        parent_tag_id:str = parent.data() or "0"
+        s:str = f"DELETE FROM tag2parent WHERE parent_id={parent_tag_id} AND tag_id={tag_id}"
+        print(s)
+        cursor.execute(s, multi=False)
+        return True
+    # NOTE: moveRows is not called when moving a row between two parents
 
 
 class TagTreeView(QTreeView):
@@ -35,7 +49,7 @@ class TagTreeView(QTreeView):
         self.model.setHeaderData(self.COUNT, Qt.Horizontal, "Direct Occurances") # i.e. does not include the count of tags inheriting from it
         self.setModel(self.model)
         
-        cursor.execute("SELECT parent_id, B.id, B.name, B.c FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC")
+        cursor.execute("SELECT parent_id, B.id, B.name, B.c FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC", multi=False)
         
         self.tagid2entry:dict = {0: self.model}
         queue:list = []
@@ -67,9 +81,19 @@ class TagTreeView(QTreeView):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setCentralWidget(TagTreeView(self))
         self.setWindowTitle("MyTag Tag Manager")
+        w = QWidget()
+        l:QVBoxLayout = QVBoxLayout()
+        commit_btn = QPushButton("Commit")
+        l.addWidget(TagTreeView(self))
+        commit_btn.clicked.connect(self.commit)
+        l.addWidget(commit_btn)
+        w.setLayout(l)
+        self.setCentralWidget(w)
         self.show()
+    def commit(self, unknown):
+        print(unknown)
+        cnx.commit()
 
 
 if __name__ == "__main__":
@@ -77,6 +101,10 @@ if __name__ == "__main__":
     credentials:list = open(fp).read().split("\n")
     
     kwargs:dict = {"user": credentials[1],  "password": credentials[2],  "database": "mytag"}
+    
+    kwargs["get_warnings"] = True
+    kwargs["raise_on_warnings"] = True
+    kwargs["buffered"] = True
     
     mysql_url:str = credentials[0]
     if (mysql_url.startswith("unix://")):
