@@ -111,6 +111,8 @@ class TagParentTreeView(TagTreeView):
         self.setModel(self.model)
     
     def set_root(self):
+        self.model.clear(); #removeRows(0, self.countRows())
+        
         tag_id:str = self.tag_child_tree_view.selectionModel().currentIndex().siblingAtColumn(0).data()
         cursor.execute(f"CALL ancestor_tags_id_rooted_from_id(\"tmp_tag_parents\", {tag_id})", multi=False)
         cursor.execute("SELECT parent, node, name, 0 FROM tmp_tag_parents JOIN tag ON id=node")
