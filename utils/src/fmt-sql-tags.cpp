@@ -1,5 +1,5 @@
 /*
-Convert    ./fmt-sql-tags 2 foo bar '&' ree gee dee '&' chi phi khi
+Convert    ./fmt-sql-tags [MYSQL_CFG] 2 foo bar '&' ree gee dee '&' chi phi khi
 
 To
 
@@ -41,10 +41,22 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 */
 
 
-#include <unistd.h> // for write
+#include <stdio.h> // for fwrite
 #include <string.h> // for strlen, memcpy?
 
-#include "sql_utils.hpp" // for mysu::*, SQL_*
+#include "mymysql.hpp" // for mymysql::*
+
+namespace res1 {
+    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
+
+
+
+constexpr const int BUF_SZ_INIT = 4096;
+const int BUF_SZ = BUF_SZ_INIT;
+char* BUF = (char*)malloc(BUF_SZ_INIT);
+int BUF_INDX;
+
 
 
 char TMPTBL_POSTFIX = '0'; // Lazy placeholder - supports a mere 62 tables. // TODO: Replace with arbitray string or integer thing
@@ -63,63 +75,42 @@ void increment_tmptbl_postfix(){
         ++TMPTBL_POSTFIX;
 }
 
-int add_union_start(char* stmt, int i){
+void add_union_start(){
+    asciify("\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_", TMPTBL_POSTFIX, ')');
+    
     SQL__CALL_DESC_TAGS_FROM[strlen("CALL descendant_tags_id_from(\"_tmp_tagids_")] = TMPTBL_POSTFIX;
     
-    const char* a = "\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_";
-    memcpy(stmt + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    stmt[i++] = TMPTBL_POSTFIX;
-    
-    stmt[i++] = ')';
-    
     increment_tmptbl_postfix();
-    
-    
-    return i;
 }
 
-int add_union_end(char* stmt, int i){
+void add_union_end(){
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = '"';
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = ')';
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX] = 0;
     
-    write(2, SQL__CALL_DESC_TAGS_FROM, SQL__CALL_DESC_TAGS_FROM__INDX);
-    write(2, "\n", 1);
-    SQL_STMT->execute(SQL__CALL_DESC_TAGS_FROM);
+    fwrite(SQL__CALL_DESC_TAGS_FROM, 1, SQL__CALL_DESC_TAGS_FROM__INDX, stderr);
+    fwrite("\n", 1, 1, stderr);
+    
+    mymysql::exec((const char*)SQL__CALL_DESC_TAGS_FROM);
     
     SQL__CALL_DESC_TAGS_FROM__INDX = strlen("CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"");
     
-    
-    const char* a = "\n\t\t)\n\t";
-    memcpy(stmt + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    return i;
+    asciify("\n\t\t)\n\t");
 }
 
-int add_union_unionness(char* stmt, int i){
-    const char* a = "\n\t\t\tUNION ALL";
-    memcpy(stmt + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    return i;
+void add_union_unionness(){
+    asciify("\n\t\t\tUNION ALL");
 }
 
-int construct_stmt(char* stmt, const char** argv){
-    // returns final strlen(stmt)
-    int i;
+void construct_stmt(const char** argv){
+    BUF_INDX = 0;
+    
     bool add_comma = false;
-    int n_unions = 0;
     
-    i = 0;
     
-    const char* a = "SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t";
-    memcpy(stmt + i,  a,  strlen(a));
-    i += strlen(a);
+    asciify("SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t"); 
     
-    i = add_union_start(stmt, i);
+    add_union_start();
     
     const char* count_str = *(argv++);
     
@@ -129,11 +120,10 @@ int construct_stmt(char* stmt, const char** argv){
         if (arg[1] == 0){
             switch(arg[0]){
                 case '&':
-                    ++n_unions;
-                    i = add_union_end(stmt, i);
-                    i = add_union_unionness(stmt, i);
+                    add_union_end();
+                    add_union_unionness();
                     add_comma = false;
-                    i = add_union_start(stmt, i);
+                    add_union_start();
                     goto goto__next_arg;
                 default: break;
             }
@@ -159,46 +149,36 @@ int construct_stmt(char* stmt, const char** argv){
         ; // Dummy statement
     }
     
-    //if (n_unions != 0)
-    //    i -= strlen("UNION ALL ");
+    add_union_end();
     
-    i = add_union_end(stmt, i);
-    
-    const char* b = ") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ";
-    memcpy(stmt + i,  b,  strlen(b));
-    i += strlen(b);
-    
-    memcpy(stmt + i,  count_str,  strlen(count_str));
-    i += strlen(count_str);
-    
-    const char* c = "\n) F ON f.id = F.file_id";
-    memcpy(stmt + i,  c,  strlen(c));
-    i += strlen(c);
-    
-    stmt[i++] = ';';
-    stmt[i++] = '\n';
-    stmt[i] = 0;
-    
-    return i;
+    asciify(") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
 }
 
-const char endline = '\n';
 
 int main(const int argc, const char* argv[]){
-    char stmt[1 << 20];
+    mymysql::init(argv[1]);
     
-    mysu::init(argv[1], "mytag");
+    construct_stmt(argv + 2);
     
-    int i = construct_stmt(stmt, argv + 2);
+    BUF[BUF_INDX] = '\n';
+    fwrite(BUF, 1, BUF_INDX+1, stderr);
+    BUF[BUF_INDX] = 0;
     
-    write(2, stmt, strlen(stmt));
+    res1::query();
     
-    SQL_RES = SQL_STMT->executeQuery(stmt);
+    BUF_INDX = 0;
     
-    while (SQL_RES->next()){
-        std::string res = SQL_RES->getString(1);
-        const char* res_cstr = res.c_str();
-        write(1,  res_cstr,  strlen(res_cstr));
-        write(1,  &endline,  1);
+    char* fp;
+    while (res1::assign_next_result(&fp)){
+        const int i = strlen(fp);
+        if (BUF_INDX + i + 1  >  BUF_SZ){
+            fwrite(BUF, 1, BUF_INDX, stderr);
+            BUF_INDX = 0;
+        }
+        memcpy(BUF + BUF_INDX,  fp,  i);
+        BUF_INDX += i;
+        BUF[BUF_INDX++] = '\n';
     }
+    
+    fwrite(BUF, 1, BUF_INDX, stderr);
 }
