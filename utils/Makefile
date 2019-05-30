@@ -18,16 +18,13 @@ build/myfindimg:
 	gcc src/myfind.c    -O3 -o build/myfindimg -DFIND_IMG
 
 build/fmt-sql-tags:
-	g++ src/fmt-sql-tags.cpp -O3 -o build/fmt-sql-tags -I ~/bin/rscraper++/src -lmysqlcppconn
+	g++ src/fmt-sql-tags.cpp -O3 -o build/fmt-sql-tags -I../include -lmysqlclient
 
 build/mytagged_score:
-	g++ src/mytagged_score.cpp -O3 -o build/mytagged_score -I ~/bin/rscraper++/src -lmysqlcppconn
-
-build/tagtree:
-	g++ src/tagtree.cpp -O3 -o build/tagtree -I ~/bin/rscraper++/src -lmysqlcppconn
+	g++ src/mytagged_score.cpp -O3 -o build/mytagged_score -I../include -lmysqlclient
 
 build/bulk-tag:
-	g++ src/bulk-tag.cpp -o build/bulk-tag -O3 -lmysqlcppconn -I../include
+	g++ src/bulk-tag.cpp -o build/bulk-tag -O3 -lmysqlclient -I../include
 
 build/view-cropped-tagged:
-	g++ src/view-cropped-tagged.cpp -o build/view-cropped-tagged -O3 -I../include -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lmysqlcppconn
+	g++ src/view-cropped-tagged.cpp -o build/view-cropped-tagged -O3 -I../include -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lmysqlclient
