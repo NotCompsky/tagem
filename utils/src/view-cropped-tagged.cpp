@@ -2,19 +2,20 @@
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
 #include <stdio.h> // for printf
 
-#include "sql_utils.hpp" // for mysu::*
+#include "utils.hpp" // for asciify
+#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
 
-char STMT[strlen("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"") + 1024 + strlen("\")") + 1];
+namespace res1 {
+    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
 
-void view_img(){
-    std::string tag = SQL_RES->getString(1);
-    std::string fp = SQL_RES->getString(2);
-    const double x = SQL_RES->getDouble(3);
-    const double y = SQL_RES->getDouble(4);
-    const double w = SQL_RES->getDouble(5);
-    const double h = SQL_RES->getDouble(6);
+
+void view_img(const char* tag,  const char* fp,  const double x,  const double y,  const double w,  const double h){
+    cv::Mat orig_img = cv::imread(fp);
     
-    cv::Mat orig_img = cv::imread(fp.c_str());
+    if (orig_img.cols == 0)
+        // File does not exist
+        return;
     
     const double W = orig_img.cols - 0.5d;
     const double H = orig_img.rows - 0.5d;
@@ -24,9 +25,11 @@ void view_img(){
     const int newW = (x + w > 1.0d) ? W - newX : w*W;
     const int newH = (y + h > 1.0d) ? H - newY : h*H;
     
-    printf("%lf %lf  %lf %lf\n", x, y, w, h);
-    printf("%d %d\n", orig_img.cols, orig_img.rows);
-    printf("%s at %d,%d,%d,%d\tfrom %dx%d %s\n", tag.c_str(), newX, newY, newW, newH, orig_img.cols, orig_img.rows, fp.c_str());
+    /* Debugging */
+    BUF_INDX = 0;
+    int u2fz = 2;
+    asciify(tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, 'x', newW, ',', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, fp, '\n', '\0');
+    printf("%s", BUF);
     
     cv::Rect rect(newX, newY, newW, newH);
     cv::Mat img = orig_img(rect);
@@ -35,13 +38,13 @@ void view_img(){
     cv::waitKey(0);
 }
 
-int main(int argc, char** argv) {
+int main(const int argc, const char** argv) {
     /*
     USAGE
       Non-rooted:
-        ./view-cropped-tagged TAG1 TAG2 ... TAGN
+        ./view-cropped-tagged [MYSQL_CFG_FILE] TAG1 TAG2 ... TAGN
       Rooted:
-        ./view-cropped-tagged -r TAG1 TAG2 ... TAGN
+        ./view-cropped-tagged [MYSQL_CFG_FILE] -r TAG1 TAG2 ... TAGN
       
     OPTIONS
         -r
@@ -74,70 +77,37 @@ int main(int argc, char** argv) {
     }
     --arg_n; // For consistency.
     
-    mysu::init(argv[++arg_n], "mytag");
+    mymysql::init(argv[++arg_n]);
     
-    int i = 0;
+    StartConcatWithApostrapheAndCommaFlag start_cwaacf;
+    EndConcatWithApostrapheAndCommaFlag end_cwaacf;
+    
     constexpr const char* a = "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"";
-    constexpr const char* b = "\")";
-    
-    memcpy(STMT + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    while(++arg_n < argc){
-        const char* arg = argv[arg_n];
-        STMT[i++] = '\'';
-        memcpy(STMT + i,  arg,  strlen(arg));
-        i += strlen(arg);
-        STMT[i++] = '\'';
-        STMT[i++] = ',';
-    }
-    --i; // Overwrite trailing comma
-    
-    memcpy(STMT + i,  b,  strlen(b));
-    i += strlen(b);
-    
-    STMT[i] = 0;
-    
-    SQL_STMT->execute(STMT);
+    mymysql::exec(a, start_cwaacf, argv+2, argc-2, end_cwaacf, "\")");
     
     
     if (not_subtags.size() != 0){
-        i = 0;
+        BUF_INDX = strlen(a);
         
-        memcpy(STMT + i,  a,  strlen(a));
-        i += strlen(a);
+        BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
         
-        STMT[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D'
+        mymysql::exec(/* a already included in BUF */ start_cwaacf, not_subtags, not_subtags.size(), end_cwaacf, ')');
         
-        for (auto j = 0;  j < not_subtags.size();  ++j){
-            const char* arg = not_subtags[j];
-            STMT[i++] = '\'';
-            memcpy(STMT + i,  arg,  strlen(arg));
-            i += strlen(arg);
-            STMT[i++] = '\'';
-            STMT[i++] = ',';
-        }
-        --i; // Overwrite trailing comma
-        
-        memcpy(STMT + i,  b,  strlen(b));
-        i += strlen(b);
-        
-        STMT[i] = 0;
-        
-        SQL_STMT->execute(STMT);
-        
-        SQL_STMT->execute("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+        mymysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
     }
     
     
     if (root_tags)
-        SQL_RES = SQL_STMT->executeQuery("SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
+        res1::query("SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
     else
         // NOTE: This query will include duplicates, if an instance is tagged with multiple distinct tags in tmp_tagids (i.e. multiple tags inheriting from the tags we asked for)
-        SQL_RES = SQL_STMT->executeQuery("SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id = id) B ON B.file_id=id)C ON C.tag_id = id");
+        res1::query("SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id = id) B ON B.file_id=id)C ON C.tag_id = id");
     
-    while (SQL_RES->next())
-        view_img();
+    char* name;
+    char* fp;
+    DoubleBetweenZeroAndOne zao_x(0.0), zao_y(0.0), zao_w(0.0), zao_h(0.0);
+    while(res1::assign_next_result(&name, &fp, &zao_x, &zao_y, &zao_w, &zao_h))
+        view_img(name, fp, zao_x.value, zao_y.value, zao_w.value, zao_h.value);
     
     return 0;
 }
