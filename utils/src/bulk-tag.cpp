@@ -3,13 +3,12 @@ Usage:
     myttag {MYSQL_CONFIG_FILE} {{OPTIONS}} {RELATIVE_PATH} {{TAGS}}
 */
 
-#include "sql_utils.hpp" // for mysu::*, SQL_*
-
-#include <cstdlib> // for atoi
 #include <string.h> // for strlen, memcpy
 #include <unistd.h> // for getcwd
 
-#include "utils.h" // for count_digits, sql__file_attr_id
+#include <vector>
+#include "utils.hpp"
+#include "mymysql.hpp" // for mymysql::*
 
 
 namespace ERR {
@@ -20,7 +19,16 @@ namespace ERR {
     };
 }
 
-char STMT[4096];
+
+int ascii2n(const char* s){
+    int n = 0;
+    while (*s != 0){
+        n *= 10;
+        n += *s - '0';
+        ++s;
+    }
+    return n;
+};
 
 
 int main(const int argc, const char** argv){
@@ -33,7 +41,7 @@ int main(const int argc, const char** argv){
     
     int i = 0;
     
-    mysu::init(argv[++i], "mytag");
+    mymysql::init(argv[++i]);
     
     while (i < argc){
         const char* arg = argv[++i];
@@ -43,8 +51,7 @@ int main(const int argc, const char** argv){
         }
         switch(arg[1]){
             case 's':
-                // Score
-                score = atoi(argv[++i]);
+                score = ascii2n(argv[++i]);
                 break;
         }
     }
@@ -55,16 +62,31 @@ int main(const int argc, const char** argv){
     memcpy(fullpath + CWD_len,  argv[i],  strlen(argv[i]));
     fullpath[CWD_len + strlen(argv[i])] = 0;
     
-    uint64_t file_id;
-    file_id = sql__get_id_from_table(SQL_STMT, SQL_RES, "file", fullpath, file_id);
-    auto file_id_str_len = count_digits(file_id);
-    char file_id_str[file_id_str_len + 1];
-    itoa_nonstandard(file_id, file_id_str_len, file_id_str);
-    file_id_str[file_id_str_len] = 0;
     
-    while (++i < argc){
-        uint64_t tag_id;
-        tag_id = sql__get_id_from_table(SQL_STMT, SQL_RES, "tag", argv[i], tag_id);
-        sql__file_attr_id(SQL_STMT, SQL_RES, "tag", tag_id, file_id_str, file_id_str_len);
-    }
+    StartConcatWithApostrapheAndCommaFlag start_ap;
+    EndConcatWithApostrapheAndCommaFlag end_ap;
+    
+    mymysql::exec(
+        // If tags do not already exist in table, register them
+        "INSERT IGNORE into tag (name) "
+        "VALUES (",
+            start_ap,
+            argv+i+1, argc-i-1,
+            end_ap,
+        ")"
+    );
+    mymysql::exec(
+        "INSERT IGNORE into file2tag (tag_id, file_id) "
+        "SELECT t.id, f.id "
+        "FROM tag t, file f "
+        "WHERE t.name IN (",
+            start_ap,
+            argv+i+1, argc-i-1,
+            end_ap,
+        ") AND f.name IN (",
+            start_ap,
+            fullpath,
+            end_ap,
+        ")"
+    );
 }
