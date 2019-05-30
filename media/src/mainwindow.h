@@ -102,8 +102,8 @@ class InstanceWidget : public QRubberBand{
         for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
             delete iter->second;
         }
-        delete this->relation_btn;
-        delete this->btn;
+        //delete this->relation_btn;  // runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+        //delete this->btn;  runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
@@ -192,6 +192,7 @@ bool operator<(const QRect& a, const QRect& b);
 class MainWindow : public QWidget{
     Q_OBJECT
  public:
+    ~MainWindow();
     explicit MainWindow(const int argc,  const char** argv,  QWidget *parent = 0);
     QString media_tag(QString str);
     void media_tag_new_preset(int n);

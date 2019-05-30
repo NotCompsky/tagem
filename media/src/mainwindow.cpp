@@ -39,6 +39,12 @@ constexpr int MIN_FONT_SIZE = 8;
 constexpr int SCROLL_INTERVAL = 1;
 
 
+constexpr const int BUF_SZ_INIT = 4096;
+char* BUF = (char*)malloc(BUF_SZ_INIT);
+int BUF_SZ = BUF_SZ_INIT;
+int BUF_INDX = 0;
+
+
 char* NOTE = (char*)malloc(30000);
 
 
@@ -134,6 +140,30 @@ void Overlay::paintEvent(QPaintEvent* e){
     painter.restore();
 }
 #endif
+
+MainWindow::~MainWindow(){
+    mymysql::exit();
+    //delete key_receiver;
+  #ifdef BOXABLE
+    delete this->main_widget_overlay;
+  #endif
+  #ifdef SCROLLABLE
+    delete this->scrollArea;
+  #endif
+  #ifdef IMG
+    //delete this->main_widget;  // runtime error: member call on address  which does not point to an object of type 'QLabel'
+  #endif
+  #ifdef TXT
+    delete this->main_widget;
+  #endif
+  #ifdef VID
+    delete this->m_slider;
+    delete this->m_vo;
+    delete this->m_player;
+  #endif
+    delete this->layout();
+    delete this->tagcompleter;
+}
 
 MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
 :
