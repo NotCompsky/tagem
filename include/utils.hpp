@@ -58,6 +58,21 @@ struct StartPrefixFlag{
 
 
 
+typedef void* (*memset_t)(void*, int, size_t);
+static volatile memset_t memset_fnct = &memset;
+void memzero_secure(void* ptr, size_t len){
+    // Same as OPENSSL_cleanse - security described in https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-yang.pdf (page 6)
+    // Basically just a trick to confuse the compiler into not optimising the memset call away
+    memset_fnct(ptr, 0, len);
+}
+
+
+
+
+
+
+
+
 template<typename T>
 int count_digits(T m){
     int i = 0;

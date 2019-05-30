@@ -4,7 +4,7 @@
 #include <stdio.h> // for fopen, fread
 #include <mysql/mysql.h>
 
-#include "utils.hpp" // for asciify
+#include "utils.hpp" // for asciify, memzero_secure
 
 
 
@@ -26,7 +26,7 @@ SOME_EXTRA_LINE_HERE_THAT_ISNT_PARSED_BUT_JUST_TO_KEEP_NEWLINE
 
 namespace mymysql {
 
-
+char* MYSQL_AUTH[6] ; // Declared as volatile to forbid compiler from optimising overwrites away
 
 MYSQL OBJ;
 
@@ -62,21 +62,20 @@ void init(const char* fp){
     fread(BUF, 1, BUF_SZ, f);
     
     int n_lines = 0;
-    char* ptrs[6];
     char* itr;
-    ptrs[0] = BUF + 6;
-    for (itr = ptrs[0];  n_lines < 5;  ++itr)
+    MYSQL_AUTH[0] = BUF + 6;
+    for (itr = MYSQL_AUTH[0];  n_lines < 5;  ++itr)
         if (*itr == '\n'){
             *itr = 0;
             itr += 7; // To skip "ABCD: "
-            ptrs[++n_lines] = itr;
+            MYSQL_AUTH[++n_lines] = itr;
         }
     
-    const char* host = ptrs[0];
-    const char* path = ptrs[1];
-    const char* user = ptrs[2];
-    const char* pwrd = ptrs[3];
-    const char* dbnm = ptrs[4];
+    const char* host = MYSQL_AUTH[0];
+    const char* path = MYSQL_AUTH[1];
+    const char* user = MYSQL_AUTH[2];
+    const char* pwrd = MYSQL_AUTH[3];
+    const char* dbnm = MYSQL_AUTH[4];
     
     int port_n = 0;
     while (*itr != '\n'){
@@ -97,6 +96,10 @@ void init(const char* fp){
 
 void exit(){
     mysql_close(&OBJ);
+    
+    memzero_secure(MYSQL_AUTH[0],  MYSQL_AUTH[5] - MYSQL_AUTH[0]); // Overwrite MySQL authorisation data 
+    // memset may be optimised away by compilers. This optimisation is prohibited for memset_s
+    // Might only be available in C11 standard - GCC (C++) is happy with it though
 }
 
 } // END namespace mymysql
