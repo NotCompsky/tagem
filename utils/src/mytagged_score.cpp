@@ -1,25 +1,31 @@
 #include <iostream> // for std::cout, std::endl
-#include <string> // for std::string
-#include <vector> // for std::vector
-#include "sql_utils.hpp" // for mysu::*
+#include "mymysql.hpp" // for mymysql::*
 
-std::map<uint64_t, std::string> TAG2NAME;
-std::map<uint64_t, std::vector<uint64_t>> TAG2CHILDREN;
+namespace res1 {
+    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
+
 
 constexpr const int SQL__SELECT_FILE_SIZE = strlen("SELECT name FROM file WHERE score IS NOT NULL ORDER BY score desc");
 char SQL__SELECT_FILE[SQL__SELECT_FILE_SIZE + 4 + 1] = "SELECT name FROM file WHERE score IS NOT NULL ORDER BY score ";
 
 
-int main(const int argc,  const char** argv){
-    mysu::init(argv[1], "mytag");
+int main(const int argc,  char** argv){
+    mymysql::init(argv[1]);
     
+    {
+    char* sort;
     if (argc == 3){
-        memcpy(SQL__SELECT_FILE + SQL__SELECT_FILE_SIZE,  argv[2],  4);
-        // NOTE: Both "asc\0" and "desc\0" have 4 characters
-        SQL__SELECT_FILE[SQL__SELECT_FILE_SIZE + 4] = 0;
+        sort = argv[2];
+    } else {
+        sort = "DESC";
     }
     
-    SQL_RES = SQL_STMT->executeQuery(SQL__SELECT_FILE);
-    while (SQL_RES->next())
-        std::cout << SQL_RES->getString(1) << std::endl;
+    res1::query("SELECT name FROM file WHERE score IS NOT NULL ORDER BY score ", sort);
+    }
+    
+    
+    char* s;
+    while (res1::assign_next_result(&s))
+        std::cout << s << std::endl;
 }
