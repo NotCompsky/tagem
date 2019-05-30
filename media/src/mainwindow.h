@@ -241,8 +241,8 @@ class MainWindow : public QWidget{
     QPoint get_scroll_offset();
     QScrollArea* scrollArea;
     QLabel* main_widget;
-    double scale_factor;
     QSize main_widget_orig_size;
+    double scale_factor;
   #endif
     uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
     QStringList tagslist;

@@ -10,6 +10,9 @@
 #include <QKeyEvent>
 #include <QTimer>
 
+#ifdef TXT
+  #include <QTextStream>
+#endif
 #ifdef BOXABLE
   #include <QPainter>
 #endif
@@ -27,8 +30,12 @@ namespace res2 {
     #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
 }
 
-#define PRINTF printf
-
+#ifdef DEBUG
+  #define PRINTF printf
+#else
+  template<typename... Args>
+  void PRINTF(Args... args){};
+#endif
 
 #define STDIN_FILENO 0
 
@@ -296,7 +303,6 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
 
 #ifdef VID
 void MainWindow::set_player_options_for_img(){
-    PRINTF("Duration: %d\n", this->m_player->duration());
     if (this->m_player->duration() == 40){
         PRINTF("Auto paused\n");
         this->m_player->pause(true);
@@ -346,10 +352,14 @@ uint64_t is_file_in_db(const char* fp){
 }
 
 void MainWindow::init_file_from_db(){
-  #ifdef BOXABLE
+  #ifdef SCROLLABLE
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
-    
+  #else
+    const double W = this->main_widget->size().width();
+    const double H = this->main_widget->size().height();
+  #endif
+  #ifdef BOXABLE
     res1::query("SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
     {
     uint64_t instance_id;
@@ -435,7 +445,7 @@ void MainWindow::media_open(){
     this->file_id = is_file_in_db(this->get_media_fp());
     if (!this->file_id){
         if (this->ignore_tagged){
-            //PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
+            PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
             return this->media_next();
         }
     }
@@ -479,6 +489,8 @@ void MainWindow::media_open(){
     }
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
     this->main_widget->adjustSize();
+  #endif
+  #ifdef SCROLLABLE
     this->main_widget_orig_size = this->main_widget->size();
     this->scale_factor = 1.0;
   #endif
@@ -800,12 +812,23 @@ void MainWindow::display_instance_mouseover(){
 void MainWindow::add_instance_to_table(const uint64_t frame_n){
     const QPoint topL = this->instance_widget->geometry.topLeft();
     const QPoint botR = this->instance_widget->geometry.bottomRight();
+  #ifdef SCROLLABLE
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
     double x  =  (topL.x() / W)   /  this->scale_factor;
     double y  =  (topL.y() / H)   /  this->scale_factor;
     double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
     double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
+  #elif (defined BOXABLE)
+    const QPoint p = this->m_vo->widget()->pos();
+    const double W = this->m_vo->widget()->size().width();
+    const double H = this->m_vo->widget()->size().height();
+    double x  =  (topL.x() / W) + p.x();
+    double y  =  (topL.y() / H) + p.y();
+    double w  =  (botR.x() / W);
+    double h  =  (botR.y() / H);
+  #endif
+    
     
     
     EnsureDoubleBetweenZeroAndOne a(x);
