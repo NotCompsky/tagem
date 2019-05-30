@@ -6,10 +6,8 @@ int COL;
 MYSQL_RES* RES;
 
 
-template<typename... Args>
-void query_noclearbuf(Args... args){
+void query_noclearbuf(){
     COL = 0;
-    asciify(args...);
     BUF[BUF_INDX] = 0;
     if (mysql_real_query(&mymysql::OBJ, BUF, BUF_INDX) == 0){
         RES = mysql_store_result(&mymysql::OBJ);
@@ -17,6 +15,14 @@ void query_noclearbuf(Args... args){
     }
     fprintf(stderr, "Error executing query %s\n", BUF);
     exit(1);
+};
+
+
+template<typename... Args>
+void query_noclearbuf(Args... args){
+    COL = 0;
+    asciify(args...);
+    query_noclearbuf();
 };
 
 template<typename... Args>
@@ -36,7 +42,7 @@ void assign_next_column(DoubleBetweenZeroAndOne*& dd,  Args... args);
 
 
 template<typename T>
-T assign_next_column__integer(T m){
+T ascii2n(T m){
     T n = 0;
     char* s = ROW[COL++];
     while (*s != 0){
@@ -48,7 +54,7 @@ T assign_next_column__integer(T m){
 };
 
 void assign_next_column(uint64_t*& n){
-    *n = assign_next_column__integer(*n);
+    *n = ascii2n(*n);
 }
 void assign_next_column(char**& s){
     *s = ROW[COL++];
@@ -82,7 +88,7 @@ void assign_next_column(char*& s){
 
 template<typename... Args>
 void assign_next_column(uint64_t*& n,  Args... args){
-    *n = assign_next_column__integer(*n);
+    *n = ascii2n(*n);
     assign_next_column(args...);
 };
 /*
