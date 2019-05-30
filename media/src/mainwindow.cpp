@@ -17,7 +17,6 @@
   #include <QScrollBar>
 #endif
 
-#include <mysql/mysql.h>
 #include "utils.hpp" // for asciify
 #include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
 
