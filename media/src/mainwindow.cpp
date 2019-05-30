@@ -17,8 +17,19 @@
   #include <QScrollBar>
 #endif
 
-#include "sql_utils.hpp" // for mysu::*, SQL_*
-#include "utils.h" // for count_digits, itoa_nonstandard
+#include <mysql/mysql.h>
+#include "utils.hpp" // for asciify
+#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
+
+namespace res1 {
+    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
+namespace res2 {
+    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
+
+#define PRINTF printf
+
 
 #define STDIN_FILENO 0
 
@@ -29,14 +40,15 @@ constexpr int MIN_FONT_SIZE = 8;
 constexpr int SCROLL_INTERVAL = 1;
 
 
-char STMT[4096];
-char NOTE[30000];
+char* NOTE = (char*)malloc(30000);
 
 
 uint64_t get_last_insert_id(){
-    SQL_RES = SQL_STMT->executeQuery("SELECT LAST_INSERT_ID() as ''");
-    SQL_RES->next();
-    return SQL_RES->getUInt64(1);
+    uint64_t n = 0;
+    res1::query("SELECT LAST_INSERT_ID() as ''");
+    res1::assign_next_result(&n);
+    res1::free_result();
+    return n;
 }
 
 
@@ -68,16 +80,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
     
-    constexpr const char* a = "INSERT INTO relation (master_id, slave_id) VALUES(";
-    int i = 0;
-    memcpy(STMT + i,  a,  strlen(a));
-    i += strlen(a);
-    i += itoa_nonstandard(this->id,  STMT + i);
-    STMT[i++] = ',';
-    i += itoa_nonstandard(iw->id,    STMT + i);
-    STMT[i++] = ')';
-    STMT[i] = 0;
-    SQL_STMT->execute(STMT);
+    mymysql::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ",",  iw->id,  ")");
     
     ir->id = get_last_insert_id();
     
@@ -100,7 +103,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
             tagid = win->get_id_from_table("tag", tagchars);
         }
         ir->tags.append(tagstr);
-        sql__add_many2many(SQL_STMT, "relation", ir->id, "tag", tagid);
+        mymysql::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ",", tagid, ")");
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;
@@ -152,15 +155,20 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
         } else exit(3);
     }
     
-    mysu::init(argv[1], "mytag");
+    mymysql::init(argv[1]);
     
-    this->tagslist;
-    SQL_RES = SQL_STMT->executeQuery("SELECT id, name FROM tag");
-    while (SQL_RES->next()){
-        const QString s = QString::fromStdString(SQL_RES->getString(2));
-        this->tag_id2name[SQL_RES->getUInt64(1)] = s;
+    res1::query("SELECT id, name FROM tag");
+    {
+    uint64_t id;
+    char* name;
+    while (res1::assign_next_result(&id, &name)){
+        const QString s = name;
+        this->tag_id2name[id] = s;
         this->tagslist << s;
     }
+    res1::free_result();
+    }
+    BUF_INDX = 0;
     this->tagcompleter = new QCompleter(this->tagslist);
     
     QVBoxLayout* vl = new QVBoxLayout();
@@ -285,79 +293,60 @@ void MainWindow::media_next(){
     }
     ++this->media_dir_len; // Include the trailing slash
     this->media_fp_indx = i + 1;
+    this->media_fp[this->media_fp_len] = '\n';
+    
+    write(1,  this->media_fp,  this->media_fp_len + 1);
+    
     this->media_fp[this->media_fp_len] = 0;
-    
-    write(1,  this->media_fp,  this->media_fp_len);
-    write(1,  "\n",  1);
-    
-    this->file_id_str_len = 0; // Tells us that file_id hasn't been cached yet
     
     this->media_open();
 }
 
-bool is_file_in_db(const char* fp){
+uint64_t is_file_in_db(const char* fp){
     constexpr const char* a = "SELECT id FROM file WHERE name=\"";
-    int i = 0;
+    StartConcatWithCommaFlag c;
+    EndConcatWithCommaFlag d;
     
-    memcpy(STMT + i,  a,  strlen(a));
-    i += strlen(a);
+    res1::query("SELECT id FROM file WHERE name='", c, fp, d, "'");
     
-    char* itr = (char*)fp;
-    while (*itr != 0){
-        if (*itr == '"'  ||  *itr == '\\')
-            STMT[i++] = '\\';
-        STMT[i++] = *itr;
-        ++itr;
-    }
+    uint64_t id = 0;
+    res1::assign_next_result(&id);
+    res1::free_result();
     
-    STMT[i++] = '"';
-    
-    STMT[i] = 0;
-    
-    
-    SQL_RES = SQL_STMT->executeQuery(STMT);
-    
-    
-    return (SQL_RES->next());
+    return id;
 }
 
 void MainWindow::init_file_from_db(){
   #ifdef BOXABLE
-    constexpr const int prelen_a = strlen("SELECT id, frame_n, x, y, w, h FROM instance WHERE file_id=");
-    char a[prelen_a + 20 + 1]  =  "SELECT id, frame_n, x, y, w, h FROM instance WHERE file_id=";
-    a[prelen_a  +  itoa_nonstandard(this->file_id,  a + prelen_a)] = 0;
-    
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
     
-    sql::ResultSet* sql_res;
-    
-    SQL_RES = SQL_STMT->executeQuery(a);
-    while(SQL_RES->next()){
-        const uint64_t instance_id = SQL_RES->getUInt64(1);
-        const uint64_t frame_n     = SQL_RES->getUInt64(2);
-        const double x = SQL_RES->getDouble(3);
-        const double y = SQL_RES->getDouble(4);
-        const double w = SQL_RES->getDouble(5);
-        const double h = SQL_RES->getDouble(6);
-        
+    res1::query("SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
+    {
+    uint64_t instance_id;
+    uint64_t frame_n;
+    DoubleBetweenZeroAndOne zao_x(0.0), zao_y(0.0), zao_w(0.0), zao_h(0.0);
+    while(res1::assign_next_result(&instance_id, &frame_n, &zao_x, &zao_y, &zao_w, &zao_h)){
         InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
         iw->id = instance_id;
+        
+        const double x = zao_x.value;
+        const double y = zao_y.value;
+        const double w = zao_w.value;
+        const double h = zao_h.value;
+        
         iw->setGeometry(QRect(QPoint(x*W, y*H),  QSize(w*W, h*H)));
         
         
         this->instanceid2pointer[instance_id] = iw;
         
         
-        constexpr const int prelen_b = strlen("SELECT tag_id FROM instance2tag WHERE instance_id=");
-        char b[prelen_b + 20 + 1] = "SELECT tag_id FROM instance2tag WHERE instance_id=";
-        b[prelen_b  +  itoa_nonstandard(instance_id,  b + prelen_b)] = 0;
+        res2::query("SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
         
-        sql_res = SQL_STMT->executeQuery(b);
-        
-        while(sql_res->next())
-            iw->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
-        
+        uint64_t tag_id;
+        while(res2::assign_next_result(&tag_id))
+            iw->tags.append(this->tag_id2name[tag_id]);
+        res2::free_result();
         
         iw->set_colour(QColor(255,0,255,100));
       #ifdef SCROLLABLE
@@ -370,20 +359,18 @@ void MainWindow::init_file_from_db(){
         
         iw->show();
     }
+    res1::free_result();
+    }
     
     for (auto iter = this->instanceid2pointer.begin();  iter != this->instanceid2pointer.end();  iter++){
         InstanceWidget* master = iter->second;
         
         
-        constexpr const int prelen_c = strlen("SELECT id, slave_id FROM relation WHERE master_id=");
-        char c[prelen_c + 20 + 1] = "SELECT id, slave_id FROM relation WHERE master_id=";
-        c[prelen_c  +  itoa_nonstandard(master->id,  c + prelen_c)] = 0;
+        res1::query("SELECT id, slave_id FROM relation WHERE master_id=", master->id);
         
-        sql_res = SQL_STMT->executeQuery(c);
-        
-        while(sql_res->next()){
-            const uint64_t relation_id = sql_res->getUInt64(1);
-            const uint64_t slave_id    = sql_res->getUInt64(2);
+        uint64_t relation_id;
+        uint64_t slave_id;
+        while(res1::assign_next_result(&relation_id, &slave_id)){
             InstanceWidget* slave  = this->instanceid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
@@ -392,17 +379,15 @@ void MainWindow::init_file_from_db(){
             
             ir->id = relation_id;
             
-            constexpr const int prelen_d = strlen("SELECT tag_id FROM relation2tag WHERE relation_id=");
-            char d[prelen_d + 20 + 1] = "SELECT tag_id FROM relation2tag WHERE relation_id=";
-            d[prelen_d  +  itoa_nonstandard(relation_id,  d + prelen_d)] = 0;
-            
-            sql_res = SQL_STMT->executeQuery(d);
-            
-            while(sql_res->next())
-                ir->tags.append(this->tag_id2name[sql_res->getUInt64(1)]);
+            res2::query("SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
+            uint64_t tag_id;
+            while(res2::assign_next_result(&tag_id))
+                ir->tags.append(this->tag_id2name[tag_id]);
+            res2::free_result();
             
             master->relations[slave] = ir;
         }
+        res1::free_result();
     }
     this->main_widget_overlay->do_not_update_instances = false;
     this->main_widget_overlay->update();
@@ -418,14 +403,10 @@ void MainWindow::media_open(){
     this->clear_instances();
   #endif
     
-    if (is_file_in_db(this->get_media_fp())){
-        this->file_id = SQL_RES->getUInt64(1);
-        this->file_id_str_len = count_digits(this->file_id);
-        itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
-        this->file_id_str[this->file_id_str_len] = 0;
-    } else {
+    this->file_id = is_file_in_db(this->get_media_fp());
+    if (!this->file_id){
         if (this->ignore_tagged){
-            PRINTF("Skipped previously tagged: %s\n", this->get_media_fp());
+            //PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
             return this->media_next();
         }
     }
@@ -470,13 +451,13 @@ void MainWindow::media_open(){
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
     this->main_widget->adjustSize();
     this->main_widget_orig_size = this->main_widget->size();
-    this->scale_factor = 1.0d;
+    this->scale_factor = 1.0;
   #endif
   #ifdef BOXABLE
     this->main_widget_overlay->setGeometry(this->main_widget->geometry());
   #endif
     
-    if (this->file_id_str_len != 0)
+    if (this->file_id != 0)
         this->init_file_from_db();
 }
 
@@ -521,60 +502,6 @@ void MainWindow::updateSliderUnit()
 #endif
 
 
-void MainWindow::set_table_attr_by_id(const char* tbl, const char* id, const int id_len, const char* col, const char* val){
-    int i;
-    
-    i = 0;
-    
-    constexpr const char* a = "UPDATE ";
-    memcpy(STMT + i,  a,  strlen(a));
-    i += strlen(a);
-    
-    memcpy(STMT + i,  tbl,  strlen(tbl));
-    i += strlen(tbl);
-    
-    constexpr const char* b = " SET ";
-    memcpy(STMT + i,  b,  strlen(b));
-    i += strlen(b);
-    
-    memcpy(STMT + i,  col,  strlen(col));
-    i += strlen(col);
-    
-    constexpr const char* c = " = ";
-    memcpy(STMT + i,  c,  strlen(c));
-    i += strlen(c);
-    
-    memcpy(STMT + i,  val,  strlen(val));
-    i += strlen(val);
-    
-    constexpr const char* d = " WHERE id = ";
-    memcpy(STMT + i,  d,  strlen(d));
-    i += strlen(d);
-    
-    memcpy(STMT + i,  id,  id_len);
-    i += id_len;
-    
-    STMT[i++] = ';';
-    STMT[i] = 0;
-    
-    
-    PRINTF("%s\n", STMT);
-    SQL_STMT->execute(STMT);
-}
-
-uint64_t MainWindow::file_attr_id(const char* attr, uint64_t attr_id_int, const char* file_id, const int file_id_len){
-    return sql__file_attr_id(SQL_STMT, SQL_RES, attr, attr_id_int, file_id, file_id_len);
-}
-
-void MainWindow::ensure_fileID_set(){
-    if (this->file_id_str_len == 0){
-        this->file_id = this->get_id_from_table("file", this->get_media_fp());
-        this->file_id_str_len = count_digits(this->file_id);
-        itoa_nonstandard(this->file_id, this->file_id_str_len, this->file_id_str);
-        this->file_id_str[this->file_id_str_len] = 0;
-    }
-}
-
 void MainWindow::media_score(){
     /*
     Rating of the unique media object itself. Not aspects unique to the file (such as resolution, or compresssion quality).
@@ -586,36 +513,27 @@ void MainWindow::media_score(){
     if (!ok)
         return;
     
-    int n = count_digits(score_int);
-    char score[n+1];
-    itoa_nonstandard(score_int, n, score);
-    score[n] = 0;
-    
     this->ensure_fileID_set();
     
-    this->set_table_attr_by_id("file", this->file_id_str, this->file_id_str_len, "score", score);
+    mymysql::exec("UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
+}
+
+void MainWindow::ensure_fileID_set(){
+    if (this->file_id == 0){
+        StartConcatWithApostrapheAndCommaFlag c;
+        EndConcatWithApostrapheAndCommaFlag d;
+        mymysql::exec("INSERT INTO file (name) VALUES(", c, this->get_media_fp(), d, ")");
+        this->file_id = get_last_insert_id();
+    }
 }
 
 void MainWindow::media_note(){
     this->ensure_fileID_set();
     
-    constexpr const char* a = "SELECT note FROM file WHERE id=";
-    int i = 0;
-    memcpy(STMT,  a,  strlen(a));
-    i += strlen(a);
-    memcpy(STMT + i,  this->file_id_str,  this->file_id_str_len);
-    i += this->file_id_str_len;
-    STMT[i] = 0;
+    res1::query("SELECT note FROM file WHERE id=", this->file_id);
     
-    PRINTF("%s\n", STMT);
-    SQL_RES = SQL_STMT->executeQuery(STMT);
-    
-    if (SQL_RES->next()){
-        std::string s = SQL_RES->getString(1);
-        memcpy(NOTE,  s.c_str(),  strlen(s.c_str()));
-        NOTE[strlen(s.c_str())] = 0;
-    } else NOTE[0] = 0;
-    
+    NOTE[0] = 0;
+    res1::assign_next_result(&NOTE);
     
     bool ok;
     QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
@@ -624,28 +542,20 @@ void MainWindow::media_note(){
     QByteArray  bstr = str.toLocal8Bit();
     const char* cstr = bstr.data();
     auto j = 0;
-    for (auto i = 0;  i < strlen(cstr);  ++i){
+    for (auto i = 0;  i < cstr[i] != 0;  ++i){
         if (cstr[i] == '"'  ||  cstr[i] == '\\')
             NOTE[j++] = '\\';
         NOTE[j++] = cstr[i];
     }
     NOTE[j] = 0;
-    sql__update(SQL_STMT, SQL_RES, "file", "note", NOTE, this->file_id);
+    StartConcatWithCommaFlag c;
+    EndConcatWithCommaFlag d;
+    mymysql::exec("UPDATE file SET note=", c, NOTE, d, " WHERE id=", this->file_id);
+    res1::free_result();
 }
 
 void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
-    constexpr const char* a = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
-    int i = 0;
-    memcpy(STMT,  a,  strlen(a));
-    i += strlen(a);
-    i += itoa_nonstandard(tagid,  STMT + i);
-    STMT[i++] = ',';
-    i += itoa_nonstandard(parid,  STMT + i);
-    STMT[i++] = ')';
-    STMT[i] = 0;
-    
-    PRINTF("%s\n", STMT);
-    SQL_STMT->execute(STMT);
+    mymysql::exec("INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
 }
 
 uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
@@ -728,7 +638,7 @@ QString MainWindow::media_tag(QString str){
     
     this->ensure_fileID_set();
     
-    this->file_attr_id("tag",  tagid,  this->file_id_str,  this->file_id_str_len);
+    mymysql::exec("INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
     
     return tagstr;
 }
@@ -742,7 +652,7 @@ void MainWindow::media_overwrite(){
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite"), tr("Value"), QLineEdit::Normal, "Manually deleted", &ok);
     if (ok && !str.isEmpty())
-        PRINTF("Overwritten with: %s\n", str);
+        PRINTF("Overwritten with: %s\n", str.toLocal8Bit().data());
 }
 
 void MainWindow::media_replace_w_link(const char* src){
@@ -770,8 +680,13 @@ void MainWindow::media_linkfrom(){
 }
 
 uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry_name){
-    uint64_t value;
-    return sql__get_id_from_table(SQL_STMT, SQL_RES, table_name, entry_name, value);
+    uint64_t value = 0;
+    StartConcatWithApostrapheAndCommaFlag c;
+    EndConcatWithApostrapheAndCommaFlag d;
+    res1::query("SELECT id FROM ", table_name, " WHERE name=", c, entry_name, d);
+    res1::assign_next_result(&value);
+    res1::free_result();
+    return value;
 }
 
 
@@ -858,61 +773,24 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     const QPoint botR = this->instance_widget->geometry.bottomRight();
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
-    const double x  =  (topL.x() / W)   /  this->scale_factor;
-    const double y  =  (topL.y() / H)   /  this->scale_factor;
-    const double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
-    const double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
-    const double xywh[4] = {x, y, w, h};
+    double x  =  (topL.x() / W)   /  this->scale_factor;
+    double y  =  (topL.y() / H)   /  this->scale_factor;
+    double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
+    double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
     
     
-    this->ensure_fileID_set(); // Modifies STMT, so must be done first
+    EnsureDoubleBetweenZeroAndOne a(x);
+    EnsureDoubleBetweenZeroAndOne b(y);
+    EnsureDoubleBetweenZeroAndOne c(w);
+    EnsureDoubleBetweenZeroAndOne d(h);
     
-    int i = 0;
     
-    constexpr const char* a = "INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(";
+    this->ensure_fileID_set();
     
-    memcpy(STMT + i,  a,  strlen(a));
-    i += strlen(a);
+    StartConcatWithCommaFlag comma0;
+    EndConcatWithCommaFlag comma1;
     
-    /*
-    const QByteArray bname = qname.toLocal8Bit();
-    const char* cname = bname.data();
-    
-    STMT[i++] = '"';
-    while (*cname != 0){
-        if (*cname == '\\'  ||  *cname == '"')
-            STMT[i++] = '\\';
-        STMT[i++] = *cname;
-        ++cname;
-    }
-    STMT[i++] = '"';
-    STMT[i++] = ',';
-    */
-    
-    itoa_nonstandard(this->file_id,  this->file_id_str_len,  STMT + i);
-    i += this->file_id_str_len;
-    STMT[i++] = ',';
-    
-    for (auto j = 0;  j < 4;  ++j){
-        if (xywh[j] >= 1.0d){
-            STMT[i++] = '1';
-        } else if (xywh[j] <= 0.0d){
-            STMT[i++] = '0';
-        } else {
-            STMT[i++] = '0';
-            STMT[i++] = '.';
-            ftoa_nonstandard__gt_zero__lt_one(xywh[j],  16,  STMT + i);
-            i += 16;
-        }
-        STMT[i++] = ',';
-    }
-    
-    i += itoa_nonstandard(frame_n,  STMT + i);
-    STMT[i++] = ')';
-    STMT[i] = 0;
-    
-    PRINTF("%s\n", STMT);
-    SQL_STMT->execute(STMT);
+    mymysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", comma0, this->file_id, a, 17, b, 17, c, 17, d, 17, frame_n, comma1, ')');
 }
 
 void MainWindow::create_instance(){
@@ -947,7 +825,7 @@ void MainWindow::create_instance(){
             tagid = this->get_id_from_table("tag", tagchars);
         }
         this->instance_widget->tags.append(tagstr);
-        sql__add_many2many(SQL_STMT, "instance", this->instance_widget->id, "tag", tagid);
+        mymysql::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ",", tagid, ")");
     }
     
     this->instance_widget->set_colour(QColor(255,0,255,100));
