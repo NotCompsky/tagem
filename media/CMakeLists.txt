@@ -26,7 +26,7 @@ foreach(file_type ${MY_TARGETS})
     set(tgt "mytag${file_type}")
     add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h)
     target_include_directories("${tgt}" PRIVATE "../include")
-    target_link_libraries("${tgt}" mysqlcppconn)
+    target_link_libraries("${tgt}" mysqlclient)
     target_link_libraries("${tgt}" Qt5::Widgets)
     #target_compile_features("${tgt}" PRIVATE cxx_std_98) # CONTRIBUTIONS WELCOME: Tests
     foreach(dfn ${MY_DEFINITIONS})
