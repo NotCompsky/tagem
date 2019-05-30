@@ -13,25 +13,20 @@ CREATE TABLE file (
 CREATE TABLE tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(128),
-    added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
 
 CREATE TABLE tag2parent (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     tag_id BIGINT UNSIGNED NOT NULL,
     parent_id BIGINT UNSIGNED NOT NULL,
-    added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY `tag2parent` (`tag_id`, `parent_id`),
-    PRIMARY KEY (id)
+    PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
 );
 
 CREATE TABLE file2tag (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     file_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
-    added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
 CREATE TABLE instance (
@@ -49,7 +44,7 @@ CREATE TABLE instance (
 CREATE TABLE instance2tag (
     instance_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
-    UNIQUE KEY `instance2tag` (`instance_id`, `tag_id`)
+    PRIMARY KEY `instance2tag` (`instance_id`, `tag_id`)
 );
 
 CREATE TABLE relation (
@@ -62,7 +57,7 @@ CREATE TABLE relation (
 CREATE TABLE relation2tag (
     relation_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
-    UNIQUE KEY `instance2tag` (`relation_id`, `tag_id`)
+    PRIMARY KEY `instance2tag` (`relation_id`, `tag_id`)
 );
 
 CREATE TABLE relationtag2tag (
@@ -220,7 +215,7 @@ BEGIN
     PREPARE stmt FROM @query;
     EXECUTE stmt;
     
-    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node INT UNSIGNED PRIMARY KEY);");
+    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY);");
     PREPARE stmt FROM @query;
     EXECUTE stmt;
 END $$
@@ -264,4 +259,263 @@ delimiter ;
 
 ## Usage
 
-CALL descendant_tags_id_from("_tmp_arg",  "'BM', 'WF'");
+CALL descendant_tags_id_from("_tmp_arg",  "'tagname', 'tagname2'");
+
+
+
+
+
+
+DROP PROCEDURE IF EXISTS ancestor_tags_id_from;
+
+delimiter $$
+
+CREATE PROCEDURE ancestor_tags_id_rooted_from_id(tbl VARBINARY(1024),  tag_id INT)
+BEGIN
+    CALL ancestor_tags_id_rooted_init(tbl);
+    set @query = concat("INSERT INTO ", tbl, " (node, depth) VALUES (", tag_id, ", 0);");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    DROP TABLE IF EXISTS _tmp;
+    
+    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    CALL ancestor_tags_id_rooted_preseeded(tbl);
+END $$
+
+delimiter ;
+
+
+
+
+
+
+
+
+# Get table of (file path, instance coords)  given tag names
+# TODO: frame_n
+
+SELECT name, tag_id, x, y, w, h
+FROM file
+JOIN (
+    SELECT file_id, tag_id, x, y, w, h
+    FROM instance
+    JOIN (
+        SELECT instance_id, tag_id
+        FROM instance2tag
+        WHERE tag_id IN (
+            SELECT id
+            FROM tag
+            WHERE name IN ("tagname")
+        )
+    ) A ON A.instance_id = id
+) B ON B.file_id = id
+;
+
+# The above, but including descendant tags (counted as separate tags)
+
+CALL descendant_tags_id_from("tmptable", "'tagname'");
+
+SELECT name, tag_id, x, y, w, h
+FROM file
+JOIN (
+    SELECT file_id, tag_id, x, y, w, h
+    FROM instance
+    JOIN (
+        SELECT instance_id, tag_id
+        FROM instance2tag
+        JOIN tmptable tt ON tt.node = tag_id
+    ) A ON A.instance_id = id
+) B ON B.file_id = id
+;
+
+
+# The above, but descendant tags counted as their heirarchical root
+
+## Procedures
+
+DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_init;
+DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_preseeded;
+DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_from;
+
+delimiter $$
+
+CREATE PROCEDURE descendant_tags_id_rooted_init(tbl VARBINARY(1024))
+BEGIN
+    set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY,  root BIGINT UNSIGNED NOT NULL);");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+END $$
+
+CREATE PROCEDURE descendant_tags_id_rooted_preseeded(tbl VARBINARY(1024))
+BEGIN
+    set @query_b = concat("INSERT IGNORE INTO _tmp SELECT tag_id, root FROM ", tbl, " JOIN tag2parent ON node = parent_id;");
+    set @query_d = concat("INSERT IGNORE INTO ", tbl, " SELECT node, root FROM _tmp;");
+    PREPARE stmt_b FROM @query_b;
+    PREPARE stmt_d FROM @query_d;
+    REPEAT
+        TRUNCATE TABLE _tmp;
+        EXECUTE stmt_b;
+        EXECUTE stmt_d;
+    UNTIL ROW_COUNT() = 0
+    END REPEAT;
+END $$
+
+CREATE PROCEDURE descendant_tags_id_rooted_from(tbl VARBINARY(1024),  str VARBINARY(1024))
+BEGIN
+    CALL descendant_tags_id_rooted_init(tbl);
+    set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT id, id FROM tag WHERE name IN (", str, ");");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    DROP TABLE IF EXISTS _tmp;
+    
+    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    CALL descendant_tags_id_rooted_preseeded(tbl);
+END $$
+
+delimiter ;
+
+
+## Usage
+
+CALL descendant_tags_id_rooted_from("tmptable", "'foo','bar'");
+
+SELECT name, root, x, y, w, h
+FROM file
+JOIN (
+    SELECT DISTINCT file_id, root, x, y, w, h
+    FROM instance
+    JOIN (
+        SELECT instance_id, tt.root
+        FROM instance2tag
+        JOIN tmptable tt ON tt.node = tag_id
+    ) A ON A.instance_id = id
+) B ON B.file_id = id
+;
+
+
+
+
+
+# List combined coordinates (i.e. minimum spanning rectangle) in files covering combinations of instances with relations tagged RTAG where the master has the tag ITAG1 and the slave has the tag ITAG2
+
+CALL descendant_tags_id_from("rtag", "'ActionTag'");
+CALL descendant_tags_id_from("mtag", "'MasterTag(the doer)'");
+CALL descendant_tags_id_from("stag", "'SlaveTag(the acted on object)'");
+
+SELECT name, x, y, w, h
+FROM file
+JOIN (
+    SELECT file_id, MIN(x) AS x, MIN(y) AS y, MAX(x+w) - MIN(x) AS w, MAX(h+y) - MIN(y) AS h
+    FROM instance
+    JOIN (
+        SELECT master_id, slave_id
+        FROM relation
+        JOIN (
+            SELECT relation_id
+            FROM relation2tag
+            WHERE tag_id IN (SELECT node FROM rtag)
+        ) R2T ON R2T.relation_id = id
+        WHERE master_id IN (
+            SELECT instance_id
+            FROM instance2tag
+            WHERE tag_id IN (SELECT node FROM mtag)
+        )
+        AND slave_id IN (
+            SELECT instance_id
+            FROM instance2tag
+            WHERE tag_id IN (SELECT node FROM stag)
+        )
+    ) A ON A.master_id = id
+        OR A.slave_id = id
+    GROUP BY file_id, A.slave_id
+) B ON B.file_id = id
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# List all parents of a tag (this heirarchy is a tree structure)
+
+## Procedures
+
+DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_init;
+DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_preseeded;
+DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_from_id;
+
+delimiter $$
+
+CREATE PROCEDURE ancestor_tags_id_rooted_init(tbl VARBINARY(1024))
+BEGIN
+    set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED,  parent BIGINT UNSIGNED NOT NULL,  PRIMARY KEY `node2parent` (`node`, `parent`));");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+END $$
+
+CREATE PROCEDURE ancestor_tags_id_rooted_preseeded(tbl VARBINARY(1024))
+BEGIN
+    set @query_b = concat("INSERT IGNORE INTO _tmp SELECT tag_id, parent_id FROM ", tbl, " JOIN tag2parent ON tag_id = parent;");
+    set @query_d = concat("INSERT IGNORE INTO ", tbl, " SELECT node, parent FROM _tmp;");
+    PREPARE stmt_b FROM @query_b;
+    PREPARE stmt_d FROM @query_d;
+    REPEAT
+        TRUNCATE TABLE _tmp;
+        EXECUTE stmt_b;
+        EXECUTE stmt_d;
+    UNTIL ROW_COUNT() = 0
+    END REPEAT;
+END $$
+
+CREATE PROCEDURE ancestor_tags_id_rooted_from_id(tbl VARBINARY(1024),  tag_id INT)
+BEGIN
+    CALL ancestor_tags_id_rooted_init(tbl);
+    set @query = concat("INSERT INTO ", tbl, " SELECT ", tag_id, ", parent_id FROM tag2parent WHERE tag_id=", tag_id, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    DROP TABLE IF EXISTS _tmp;
+    
+    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    CALL ancestor_tags_id_rooted_preseeded(tbl);
+END $$
+
+delimiter ;
+
+
+CALL ancestor_tags_id_rooted_from_id("foobar", 90);
+SELECT * FROM foobar;
