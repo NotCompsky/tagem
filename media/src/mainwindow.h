@@ -102,8 +102,8 @@ class InstanceWidget : public QRubberBand{
         for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
             delete iter->second;
         }
-        //delete this->relation_btn;  // runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
-        //delete this->btn;  runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+        delete this->relation_btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+        delete this->btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
     };
     void set_colour(const QColor& cl){
         this->colour = cl;
@@ -209,6 +209,7 @@ class MainWindow : public QWidget{
     uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
     double volume;
     QString tag_preset[10];
+    bool reached_stdin_end;
   #ifdef BOXABLE
     InstanceWidget* instance_widget; // Selection box
     bool is_mouse_down;

@@ -2,6 +2,7 @@
 
 #include <cstdio> // for remove
 #include <unistd.h> // for symlink
+#include <string.h> // for memset
 
 #include <QApplication> // for QApplication::queryKeyboardModifiers
 #include <QSlider>
@@ -175,7 +176,8 @@ MainWindow::~MainWindow(){
 MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
 :
     QWidget(parent),
-    media_fp_indx(MEDIA_FP_SZ)
+    media_fp_indx(MEDIA_FP_SZ),
+    reached_stdin_end(false)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;
@@ -315,8 +317,14 @@ void MainWindow::media_next(){
     this->media_fp_len = 0;
     while(true){
         if (i == MEDIA_FP_SZ){
-            fread(this->media_fp_buf, 1, MEDIA_FP_SZ, stdin);
+            if (this->reached_stdin_end)
+                exit(0);
+            size_t n = fread(this->media_fp_buf, 1, MEDIA_FP_SZ, stdin);
             i = 0;
+            if (n != MEDIA_FP_SZ){
+                this->reached_stdin_end = true;
+                memset(this->media_fp_buf + n,  0,  MEDIA_FP_SZ - n);
+            }
         }
         if (this->media_fp_buf[i] == '/')
             this->media_dir_len = this->media_fp_len;
