@@ -19,12 +19,12 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 if (MY_TARGETS STREQUAL "")
     # e.g. cmake .. -DMY_TARGETS=txt;img
-    set(MY_TARGETS "mytagtxt" "mytagimg" "mytagvid")
+    set(MY_TARGETS "txt" "img" "vid")
 endif()
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "mytag${file_type}")
-    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h)
+    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h ../include/tagdialog.hpp)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" mysqlclient)
     target_link_libraries("${tgt}" Qt5::Widgets)
