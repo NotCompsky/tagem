@@ -2,10 +2,7 @@
 #define MAINRWINDOW_H
 
 #include <QCompleter>
-#include <QDialog>
-#include <QDialogButtonBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QWidget>
 
 #ifdef TXT
@@ -172,16 +169,6 @@ class Overlay : public QWidget{
     MainWindow* win;
 };
 #endif
-
-
-class TagDialog : public QDialog{
-    Q_OBJECT
- public:
-    explicit TagDialog(QString title,  QString str,  QWidget* parent = 0);
-    QLineEdit* nameEdit;
- private:
-    QDialogButtonBox* buttonBox;
-};
 
 
 #ifdef BOXABLE

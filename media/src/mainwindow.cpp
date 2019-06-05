@@ -21,6 +21,8 @@
   #include <QScrollBar>
 #endif
 
+#include "tagdialog.hpp" // for TagDialog
+
 #include "asciify.hpp" // for compsky::asciify::(flag,fake_type)
 
 #include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
@@ -61,22 +63,6 @@ uint64_t get_last_insert_id(){
     res1::assign_next_result(&n);
     res1::free_result();
     return n;
-}
-
-
-TagDialog::TagDialog(QString title,  QString str,  QWidget *parent) : QDialog(parent){
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
-    QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(buttonBox);
-    nameEdit = new QLineEdit(str);
-    mainLayout->addWidget(nameEdit);
-    QLabel* guide = new QLabel(tr("Enter blank tag to designate as root tag"));
-    mainLayout->addWidget(guide);
-    this->setLayout(mainLayout);
-    this->setWindowTitle(title);
-    QTimer::singleShot(0, nameEdit, SLOT(setFocus())); // Set focus after TagDialog instance is visible
 }
 
 #ifdef BOXABLE
