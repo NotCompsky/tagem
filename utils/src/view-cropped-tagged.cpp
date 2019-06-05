@@ -2,11 +2,16 @@
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
 #include <stdio.h> // for printf
 
-#include "utils.hpp" // for asciify
+#include "asciify.hpp" // for asciify
 #include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
 
 namespace res1 {
     #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+}
+
+
+namespace compsky::asciify {
+    char* BUF = (char*)malloc(1024);
 }
 
 
@@ -26,13 +31,19 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
     const int newH = (y + h > 1.0d) ? H - newY : h*H;
     
     /* Debugging */
-    BUF_INDX = 0;
+    
     int u2fz = 2;
-    asciify(tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, 'x', newW, ',', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, fp, '\n', '\0');
-    printf("%s", BUF);
     
     cv::Rect rect(newX, newY, newW, newH);
     cv::Mat img = orig_img(rect);
+    
+    if (img.cols == 0  ||  img.rows == 0){
+        // Bad crop
+        compsky::asciify::BUF_INDX = 0;
+        compsky::asciify::asciify("Bad crop:\t", tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, ' ', newW, 'x', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, '\t', fp, '\n');
+        fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX, stderr);
+        return;
+    }
     
     cv::imshow("Cropped Section", img); // Window name is constant so that it is reused (rather than spawning a new window for each image)
     cv::waitKey(0);
@@ -79,21 +90,26 @@ int main(const int argc, const char** argv) {
     
     mymysql::init(argv[++arg_n]);
     
-    StartConcatWithApostrapheAndCommaFlag start_cwaacf;
-    EndConcatWithApostrapheAndCommaFlag end_cwaacf;
+    
+    {
     
     constexpr const char* a = "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"";
-    mymysql::exec(a, start_cwaacf, argv+2, argc-2, end_cwaacf, "\")");
-    
+    auto f = compsky::asciify::flag::concat::start;
+    auto g = compsky::asciify::flag::concat::end;
+    res1::exec(a, f, "','", 3, argv+2, argc-2, g, "\")");
     
     if (not_subtags.size() != 0){
-        BUF_INDX = strlen(a);
+        compsky::asciify::BUF_INDX = strlen(a);
         
-        BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
+        compsky::asciify::BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
         
-        mymysql::exec(/* a already included in BUF */ start_cwaacf, not_subtags, not_subtags.size(), end_cwaacf, ')');
+        compsky::asciify::asciify(/* a already included in BUF */ f, "','", 3, not_subtags.data(), not_subtags.size(), g, ')');
         
-        mymysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+        res1::exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
+        
+        res1::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+    }
+    
     }
     
     
@@ -105,9 +121,15 @@ int main(const int argc, const char** argv) {
     
     char* name;
     char* fp;
-    DoubleBetweenZeroAndOne zao_x(0.0), zao_y(0.0), zao_w(0.0), zao_h(0.0);
-    while(res1::assign_next_result(&name, &fp, &zao_x, &zao_y, &zao_w, &zao_h))
-        view_img(name, fp, zao_x.value, zao_y.value, zao_w.value, zao_h.value);
+    
+    auto f = compsky::asciify::flag::guarantee::between_zero_and_one;
+    double x, y, w, h;
+    while(res1::assign_next_result(&name, &fp, f, &x, f, &y, f, &w, f, &h))
+        view_img(name, fp, x, y, w, h);
+    
+    res1::free_result();
+    
+    mymysql::exit();
     
     return 0;
 }
