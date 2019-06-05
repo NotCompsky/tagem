@@ -705,10 +705,17 @@ void MainWindow::media_linkfrom(){
 
 uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry_name){
     uint64_t value = 0;
+    
+    goto__returnresultsofthegetidfromtablequery:
     res1::query("SELECT id FROM ", table_name, " WHERE name=\"", compsky::asciify::flag::escape, '"', entry_name, '"');
     res1::assign_next_result(&value);
     res1::free_result();
-    return value;
+    
+    if (value)
+        return value;
+    
+    res1::exec("INSERT INTO ", table_name, " (name) VALUES (\"", compsky::asciify::flag::escape, '"', entry_name, "\")");
+    goto goto__returnresultsofthegetidfromtablequery;
 }
 
 

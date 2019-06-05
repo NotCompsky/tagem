@@ -299,7 +299,7 @@ void asciify_subzero(double d,  Precision precision){
     for (auto i = 0;  d > 0  &&  i < precision;  ++i){
         d *= 10;
         char c = d;
-        asciify('0' + c);
+        asciify((char)('0' + c));
         d -= c;
     }
 };
@@ -328,7 +328,8 @@ void asciify(float f,  T precision,  Args... args){
 
 template<typename T,  typename... Args>
 void asciify(flag::guarantee::BetweenZeroAndOne f,  double d,  T precision,  Args... args){
-    asciify((uint64_t)('0' + (uint64_t)d),  '.');
+    asciify((char)('0' + (char)d),  '.');
+    d -= (char)d;
     asciify_subzero(d, precision);
     asciify(args...);
 };
@@ -371,14 +372,14 @@ void asciify(flag::concat::Start e,  const char c,  flag::concat::End f,  Args..
 
 template<typename T,  typename... Args>
 void asciify(flag::concat::Start f,  const char c,  T t,  Args... args){
-    asciify(c);
     asciify(t);
+    asciify(c);
     asciify(f, c, args...);
 };
 
-template<typename T,  typename S,  typename... Args>
-void asciify(flag::concat::Start f,  const char c,  flag::guarantee::BetweenZeroAndOne g,  T t,  S s,  Args... args){
-    asciify(g, t, s);
+template<typename T,  typename Precision,  typename... Args>
+void asciify(flag::concat::Start f,  const char c,  flag::guarantee::BetweenZeroAndOne g,  T t,  Precision precision,  Args... args){
+    asciify(g, t, precision);
     asciify(c);
     asciify(f, c, args...);
 };
