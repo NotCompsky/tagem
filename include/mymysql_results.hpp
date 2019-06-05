@@ -6,36 +6,105 @@ int COL;
 MYSQL_RES* RES;
 
 
-void query_noclearbuf(){
-    COL = 0;
-    BUF[BUF_INDX] = 0;
-    if (mysql_real_query(&mymysql::OBJ, BUF, BUF_INDX) == 0){
-        RES = mysql_store_result(&mymysql::OBJ);
+void exec_buffer(const char* s,  const size_t sz){
+    if (mysql_real_query(&mymysql::OBJ, s, sz) == 0)
         return;
-    }
-    fprintf(stderr, "Error executing query %s\n", BUF);
+    fprintf(stderr, "Error executing %s\n", s);
     exit(1);
 };
 
+void exec_buffer(const char* s){
+    if (mysql_real_query(&mymysql::OBJ, s, strlen(s)) == 0)
+        return;
+    fprintf(stderr, "Error executing %s\n", s);
+    exit(1);
+};
 
 template<typename... Args>
-void query_noclearbuf(Args... args){
+void exec(Args... args){
+    compsky::asciify::asciify(compsky::asciify::flag::change_buffer, compsky::asciify::BUF, 0, args...);
+    compsky::asciify::BUF[compsky::asciify::BUF_INDX] = 0;
+  #ifdef DEBUG
+    printf("%s\n", compsky::asciify::BUF);
+  #endif
+    exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
+};
+
+
+
+
+void query_buffer(const char* s,  const size_t sz){
     COL = 0;
-    asciify(args...);
-    query_noclearbuf();
+    if (mysql_real_query(&mymysql::OBJ, s, sz) == 0){
+        RES = mysql_store_result(&mymysql::OBJ);
+        return;
+    }
+    fprintf(stderr, "Error executing query %s\n", s);
+  #ifndef __WIN32
+    fprintf(stderr, "Raw dump of entire buffer:\n");
+    write(2, s, sz);
+  #endif
+    exit(1);
+};
+
+void query_buffer(const char* s){
+    COL = 0;
+    if (mysql_real_query(&mymysql::OBJ, s, strlen(s)) == 0){
+        RES = mysql_store_result(&mymysql::OBJ);
+        return;
+    }
+    fprintf(stderr, "Error executing query %s\n", s);
+    exit(1);
 };
 
 template<typename... Args>
 void query(Args... args){
-    query_noclearbuf(args...);
-    BUF_INDX = 0;
+    compsky::asciify::asciify(compsky::asciify::flag::change_buffer, compsky::asciify::BUF, 0, args...);
+    query_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
 };
 
 
 
 /* Headers */
 template<typename... Args>
-void assign_next_column(DoubleBetweenZeroAndOne*& dd,  Args... args);
+void assign_next_column(compsky::asciify::flag::guarantee::BetweenZeroAndOne f,  double*& d,  Args... args);
+
+template<typename... Args>
+void assign_next_column(char**& s,  Args... args);
+/*
+template<typename... Args>
+void assign_next_column(char*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(unsigned char*& n,  Args... args);
+*/
+template<typename... Args>
+void assign_next_column(int8_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(uint8_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(int16_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(uint16_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(int32_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(uint32_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(int64_t*& n,  Args... args);
+
+template<typename... Args>
+void assign_next_column(uint64_t*& n,  Args... args);
+
+
+/* Base Case */
+void assign_next_column(){};
 
 
 
@@ -53,15 +122,67 @@ T ascii2n(T m){
     return n;
 };
 
-void assign_next_column(uint64_t*& n){
+
+namespace flag {
+    struct SizeOfAssigned{};
+    const SizeOfAssigned size_of_assigned;
+}
+
+template<typename... Args>
+void assign_next_column(flag::SizeOfAssigned*& f,  size_t*& sz,  Args... args){
+    *sz = ROW[COL+1] - ROW[COL];
+    return assign_next_column(args...);
+};
+
+template<typename... Args>
+void assign_next_column(uint64_t*& n,  Args... args){
     *n = ascii2n(*n);
-}
-void assign_next_column(char**& s){
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(int64_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(uint32_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(int32_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(uint16_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(int16_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(uint8_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+template<typename... Args>
+void assign_next_column(int8_t*& n,  Args... args){
+    *n = ascii2n(*n);
+    assign_next_column(args...);
+};
+
+template<typename... Args>
+void assign_next_column(char**& s,  Args... args){
     *s = ROW[COL++];
-}
-void assign_next_column(DoubleBetweenZeroAndOne*& dd){
-    (*dd).value = 0;
-    
+    assign_next_column(args...);
+};
+
+template<typename... Args>
+void assign_next_column(compsky::asciify::flag::guarantee::BetweenZeroAndOne f,  double*& d,  Args... args){
     char* s = ROW[COL++];
     ++s; // Skip the "0"
     
@@ -72,42 +193,10 @@ void assign_next_column(DoubleBetweenZeroAndOne*& dd){
     int n_digits = strlen(s);
     
     for (auto i = n_digits - 1;  i >= 0;  --i){
-        (*dd).value += s[i] - '0';
-        (*dd).value /= 10;
+        *d += s[i] - '0';
+        *d /= 10;
     }
-}
-/*
-void assign_next_column(int32_t& n){
-    printf("int32_t %s\n", ROW[COL++]);
-};
-
-void assign_next_column(char*& s){
-    printf("char* %s\n", ROW[COL++]);
-};
-*/
-
-template<typename... Args>
-void assign_next_column(uint64_t*& n,  Args... args){
-    *n = ascii2n(*n);
-    assign_next_column(args...);
-};
-/*
-template<typename... Args>
-void assign_next_column(int32_t& n,  Args... args){
-    printf("int32_t %s\n", ROW[COL++]);
-    assign_next_column(args...);
-};
-*/
-
-template<typename... Args>
-void assign_next_column(char**& s,  Args... args){
-    *s = ROW[COL++];
-    assign_next_column(args...);
-};
-
-template<typename... Args>
-void assign_next_column(DoubleBetweenZeroAndOne*& dd,  Args... args){
-    assign_next_column(dd);
+    
     assign_next_column(args...);
 };
 
