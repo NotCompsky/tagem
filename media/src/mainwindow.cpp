@@ -76,7 +76,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
     
-    res1::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ")");
+    res1::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
     
     ir->id = get_last_insert_id();
     
@@ -84,10 +84,10 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     while(true){
         bool ok;
         TagDialog* tagdialog = new TagDialog("Relation Tag", "");
-        tagdialog->nameEdit->setCompleter(this->win->tagcompleter);
+        tagdialog->name_edit->setCompleter(this->win->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
             break;
-        QString tagstr = tagdialog->nameEdit->text();
+        QString tagstr = tagdialog->name_edit->text();
         if (tagstr.isEmpty())
             break;
         uint64_t tagid;
@@ -99,7 +99,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
             tagid = win->get_id_from_table("tag", tagchars);
         }
         ir->tags.append(tagstr);
-        res1::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ",", tagid, ")");
+        res1::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;
@@ -597,12 +597,12 @@ uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     
     /* Get parent tag */
     TagDialog* tagdialog = new TagDialog("Parent Tag of", tagstr);
-    tagdialog->nameEdit->setCompleter(this->tagcompleter);
+    tagdialog->name_edit->setCompleter(this->tagcompleter);
     goto__cannotcancelparenttag:
     if (tagdialog->exec() != QDialog::Accepted)
         goto goto__cannotcancelparenttag;
     
-    QString parent_tagstr = tagdialog->nameEdit->text();
+    QString parent_tagstr = tagdialog->name_edit->text();
     
     if (parent_tagstr.isEmpty()){
         this->tag2parent(tagid, 0);
@@ -644,11 +644,11 @@ QString MainWindow::media_tag(QString str){
     // Triggered on key press
     bool ok;
     TagDialog* tagdialog = new TagDialog("Tag", str);
-    tagdialog->nameEdit->setCompleter(this->tagcompleter);
+    tagdialog->name_edit->setCompleter(this->tagcompleter);
     if (tagdialog->exec() != QDialog::Accepted)
         return "";
     
-    QString tagstr = tagdialog->nameEdit->text();
+    QString tagstr = tagdialog->name_edit->text();
     
     if (tagstr.isEmpty())
         return "";
@@ -834,10 +834,10 @@ void MainWindow::create_instance(){
     while(true){
         bool ok;
         TagDialog* tagdialog = new TagDialog("Instance Tag", "");
-        tagdialog->nameEdit->setCompleter(this->tagcompleter);
+        tagdialog->name_edit->setCompleter(this->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
             break; // TODO: Create a way to cancel ALL past operations on this instance_widget if the cancel button is pressed for any one of the tags
-        QString tagstr = tagdialog->nameEdit->text();
+        QString tagstr = tagdialog->name_edit->text();
         if (tagstr.isEmpty())
             break;
         uint64_t tagid;
@@ -849,7 +849,7 @@ void MainWindow::create_instance(){
             tagid = this->get_id_from_table("tag", tagchars);
         }
         this->instance_widget->tags.append(tagstr);
-        res1::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ",", tagid, ")");
+        res1::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
     }
     
     this->instance_widget->set_colour(QColor(255,0,255,100));
