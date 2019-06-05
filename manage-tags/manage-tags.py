@@ -11,8 +11,8 @@ Utility to add tags immediately with multiple parents (already written in C++)
 
 from   itertools import chain
 import mysql.connector
-from   PyQt5.QtCore import QMimeData, QModelIndex, Qt
-from   PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QToolButton, QHeaderView
+from   PyQt5.QtCore import QMimeData, QModelIndex, Qt, QTimer
+from   PyQt5.QtWidgets import QApplication, QMainWindow, QTreeView, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QToolButton, QHeaderView, QDialog, QDialogButtonBox, QLineEdit, QLabel
 from   PyQt5.QtGui import QStandardItem, QStandardItemModel, QDragMoveEvent
 from   re import sub
 import sys
@@ -28,6 +28,23 @@ def cursor_execute(s:str):
     cursor.execute(s, multi=False) # WARNING: If multi is set to False, it will automatically commit the last stored commit. If True, it will not commit anything.
     cnx.commit()
 
+
+class TagDialog(QDialog):
+    def __init__(self, title, string, parent):
+        # Exact (aside from renamed vars) equivalent of C++ in mainwindow.cpp
+        super().__init__(parent)
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        l = QVBoxLayout()
+        l.addWidget(button_box)
+        self.name_edit = QLineEdit(string)
+        l.addWidget(self.name_edit)
+        guide = QLabel("Enter blank tag to designate as root tag")
+        l.addWidget(guide)
+        self.setLayout(l)
+        self.setWindowTitle(title)
+        #QTimer.singleShot(0, self.name_edit, self.setFocus)
 
 
 class PrimaryItem(QStandardItem):
@@ -158,17 +175,18 @@ class TagTreeView(QTreeView):
             if (i > 2*n_results):
                 ls:list = [f"{p}\t{t}\t{n.decode()}" for (p,t,n,c) in generator]
                 delim:str = "\n  "
-                raise Exception(f"Skipped some tags at least twice, probably because heirarchy is broken. Bad tags: {delim}Parent Tag Name{delim}{delim.join(ls)}")
+                print(f"Skipped some tags at least twice, probably because heirarchy is broken. Bad tags: {delim}Parent Tag Name{delim}{delim.join(ls)}")
+                break
             print(parent_id, tag_id, name, count)
             # parent_id is actually tag_id and vice versa, but this is the view of the reverse heirarchy, parents branching from children
             if (parent_id == tag_id):
-                raise ValueError("tag_id == parent_id (unfortunately, MySQL does not support checks)")
+                raise ValueError(f"{name}: tag_id == parent_id == {tag_id} (unfortunately, MySQL does not support checks)")
             
             entry__id:QStandardItem = PrimaryItem(str(tag_id))
             entry__id.setEditable(False)
             entry__id.setDropEnabled(True)
             
-            entry__name:QStandardItem = QStandardItem(name.decode())
+            entry__name:QStandardItem = QStandardItem("[NONE]" if name is None else name.decode())
             entry__name.setEditable(True)
             entry__name.setDropEnabled(False)
             
@@ -212,8 +230,8 @@ class TagTreeView(QTreeView):
             self.model.tag2parent[tag_id] = parent_id
             self.model.tagid2entry[tag_id] = entry__id
             tagid2name[tag_id] = name
-            tagid2directoccurances[tag_id] = tagid2occurances[tag_id] = count
-            tagid2occurances[parent_id] += count
+            tagid2directoccurances[tag_id] = tagid2occurances[tag_id] = 0 if count is None else count
+            tagid2occurances[parent_id] += 0 if count is None else count
     
     def dragMoveEvent(self, e:QDragMoveEvent):
         self.model.is_dragging = True
@@ -277,21 +295,34 @@ class MainWindow(QMainWindow):
         w.setLayout(l)
         self.setCentralWidget(w)
         self.show()
+        self.add_tag()
+    def add_new_tag(self):
+        tagdialog = TagDialog("Title", "Str", self)
+        if (tagdialog.exec_() == 0):
+            return
+        s:str = tagdialog.name_edit.text()
+        if (s == ""):
+            return 
 
 
 if __name__ == "__main__":
-    fp:str = sys.argv[1]
-    credentials:list = open(fp).read().split("\n")
+    import re
     
-    kwargs:dict = {"user": credentials[1],  "password": credentials[2],  "database": "mytag"}
+    fp:str = sys.argv[1]
+    
+    srch = re.search("HOST: (?P<host>.*)\nPATH: (?P<path>.*)\nUSER: (?P<user>.*)\nPWD:  (?P<password>.*)\nDB:   (?P<database>.*)\nPORT: (?P<port>.*)\n",  open(fp).read())
+    
+    kwargs:dict = srch.groupdict()
     
     kwargs["get_warnings"] = True
     kwargs["raise_on_warnings"] = True
     kwargs["buffered"] = True
     
-    mysql_url:str = credentials[0]
-    if (mysql_url.startswith("unix://")):
-        kwargs["unix_socket"] = credentials[0][7:]
+    if (kwargs["host"] == "localhost"):
+        kwargs["unix_socket"] = kwargs["path"]
+        del kwargs["host"]
+        del kwargs["path"]
+        del kwargs["port"]
     else:
         raise Exception("Not imnplemented yet, and to prove it this message has typos")
     
