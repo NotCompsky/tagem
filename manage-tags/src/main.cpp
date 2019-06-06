@@ -2,7 +2,7 @@
 
 #include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
 
-#include "mainwindow.h"
+#include "mainwindow.hpp"
 
 namespace compsky::asciify {
     char* BUF = (char*)malloc(4096);
