@@ -23,7 +23,6 @@ void exec_buffer(const char* s){
 template<typename... Args>
 void exec(Args... args){
     compsky::asciify::asciify(compsky::asciify::flag::change_buffer, compsky::asciify::BUF, 0, args...);
-    compsky::asciify::BUF[compsky::asciify::BUF_INDX] = 0;
   #ifdef DEBUG
     printf("%s\n", compsky::asciify::BUF);
   #endif
@@ -40,10 +39,6 @@ void query_buffer(const char* s,  const size_t sz){
         return;
     }
     fprintf(stderr, "Error executing query %s\n", s);
-  #ifndef __WIN32
-    fprintf(stderr, "Raw dump of entire buffer:\n");
-    write(2, s, sz);
-  #endif
     exit(1);
 };
 

@@ -1,12 +1,6 @@
-/*
-
-Function library, largely for string manipulation
-
-*/
-
-
 #ifndef __COMPSKY_MYMYSQL__
 #define __COMPSKY_MYMYSQL__
+
 
 #include <stdio.h> // for fopen, fread
 #include <mysql/mysql.h>

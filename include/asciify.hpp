@@ -6,37 +6,14 @@
 
 #include "utils.hpp" // for compsky::utils::*
 
+#include "asciify_flags.hpp"
+
+
 namespace compsky::asciify {
 
 extern char* BUF;
 int BUF_INDX;
 
-namespace flag {
-    namespace concat {
-        struct Start{};
-        struct End{};
-        const Start start;
-        const End end;
-    }
-    struct ChangeBuffer{};
-    const ChangeBuffer change_buffer;
-    struct Escape{};
-    const Escape escape;
-    struct StrLen{};
-    const StrLen strlen;
-    struct FillWithLeadingZeros{};
-    const FillWithLeadingZeros fill_with_leading_zeros;
-    struct UpToFirstZero{};
-    const UpToFirstZero uptofirstzero;
-    namespace ensure {
-        struct BetweenZeroAndOne{};
-        const BetweenZeroAndOne between_zero_and_one;
-    }
-    namespace guarantee {
-        struct BetweenZeroAndOne{};
-        const BetweenZeroAndOne between_zero_and_one;
-    }
-}
 namespace fake_type {
     struct Infinity{};
     const Infinity infinity;
@@ -122,6 +99,12 @@ template<typename... Args>
 void asciify(flag::concat::Start e,  const char* s,  const int sz,  flag::concat::End f,  Args... args);
 
 template<typename T,  typename... Args>
+void asciify(flag::concat::Start f,  const char* s,  const int sz,  const char** ss,  T n,  Args... args);
+
+template<typename T,  typename... Args>
+void asciify(flag::concat::Start f,  const char* s,  const int sz,  const std::vector<const char*> ss,  T n,  Args... args);
+
+template<typename T,  typename... Args>
 void asciify(flag::concat::Start f,  const char c,  T t,  Args... args);
 
 template<typename T,  typename S,  typename... Args>
@@ -129,6 +112,13 @@ void asciify(flag::concat::Start f,  const char c,  flag::guarantee::BetweenZero
 
 template<typename... Args>
 void asciify(flag::concat::Start e,  const char c,  flag::concat::End f,  Args... args);
+
+#ifdef QT_GUI_LIB
+void asciify(const QString& qs);
+
+template<typename... Args>
+void asciify(const QString& qs,  Args... args);
+#endif
 
 
 
@@ -194,12 +184,17 @@ void asciify(const char** s,  const int n,  Args... args){
     return asciify(args...);
 };
 
-#ifdef QOBJECT
-template<typename... Args>
-void asciify(const QString& qs,  Args... args){
+#ifdef QT_GUI_LIB
+void asciify(const QString& qs){
     QByteArray bs = qs.toLocal8Bit();
     const char* s = bs.data();
-    return asciify(s, args...);
+    asciify(s);
+}
+
+template<typename... Args>
+void asciify(const QString& qs,  Args... args){
+    asciify(qs);
+    return asciify(args...);
 };
 #endif
 
@@ -362,6 +357,24 @@ void asciify(flag::concat::Start e,  const char* s,  const int sz,  flag::concat
     // Overrides previous (more general) template
     BUF_INDX -= sz;
     asciify(args...);
+};
+
+template<typename T,  typename... Args>
+void asciify(flag::concat::Start f,  const char* s,  const int sz,  const char** ss,  T n,  Args... args){
+    for (auto i = 0;  i < n;  ++i){
+        asciify(ss[i]);
+        asciify(flag::strlen, s, sz);
+    }
+    asciify(f, s, sz, args...);
+};
+
+template<typename T,  typename... Args>
+void asciify(flag::concat::Start f,  const char* s,  const int sz,  const std::vector<const char*> ss,  T n,  Args... args){
+    for (auto i = 0;  i < n;  ++i){
+        asciify(ss[i]);
+        asciify(flag::strlen, s, sz);
+    }
+    asciify(f, s, sz, args...);
 };
 
 template<typename... Args>
