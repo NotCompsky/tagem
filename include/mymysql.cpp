@@ -1,10 +1,10 @@
+#include "mymysql.hpp"
+
 #include <stdio.h> // for fopen, fread
 #include <mysql/mysql.h>
 #include <sys/mman.h> // for mmap, munmap
 
-#include "utils.hpp" // for compsky::utils::*
-
-#include "mymysql.hpp"
+#include "utils.hpp" // for compsky::utils::memzero_secure
 
 
 /*

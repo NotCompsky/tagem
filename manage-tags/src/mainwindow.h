@@ -40,40 +40,7 @@ class MainWindow : public QMainWindow {
     QCompleter* tagcompleter;
     QPushButton* commit_btn;
     
-    void add_new_tag(){
-        TagDialog* tagdialog = new TagDialog("TagDialog", "TagStr");
-        tagdialog->name_edit->setCompleter(this->tagcompleter);
-        
-        if (tagdialog->exec() != QDialog::Accepted)
-            return;
-        
-        QString tagstr = tagdialog->name_edit->text();
-        
-        if (tagstr.isEmpty())
-            return;
-        
-        qDebug() << "added new tag: " << tagstr;
-    };
+    void add_new_tag();
 };
-
-inline MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    // Inlined to avoid multiple definition error
-    this->setWindowTitle("MyTag Tag Manager");
-    QWidget* w = new QWidget();
-    QVBoxLayout* vl = new QVBoxLayout();
-    QHBoxLayout* hl = new QHBoxLayout();
-    this->commit_btn = new QPushButton("Commit (unimplemented)");
-    TagChildTreeView* tag_child_tree_view = new TagChildTreeView(this);
-    hl->addWidget(tag_child_tree_view);
-    TagParentTreeView* tag_parent_tree_view = new TagParentTreeView(tag_child_tree_view, this);
-    hl->addWidget(tag_parent_tree_view);
-    vl->addLayout(hl);
-    vl->addWidget(this->commit_btn);
-    w->setLayout(vl);
-    this->setCentralWidget(w);
-    this->show();
-    
-    this->add_new_tag();
-}
 
 #endif

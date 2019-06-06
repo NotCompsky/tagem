@@ -7,15 +7,7 @@
 #include "mymysql_res1.hpp" // for res1::*
 
 
-struct AvadaKevadra {
-    AvadaKevadra(const uint64_t tag,  const uint64_t parent,  const char* name,  const uint64_t count);
-    // Explicitly defined to allow use of emplace_back
-    
-    const uint64_t tag;
-    const uint64_t parent;
-    const char* name;
-    const uint64_t count;
-};
+AvadaKevadra::AvadaKevadra(const uint64_t tag,  const uint64_t parent,  const char* name,  const uint64_t count) : tag(tag), parent(parent), name(name), count(count) {}
 
 
 

@@ -1,6 +1,44 @@
 #include "mainwindow.h"
 
+#include <QVBoxLayout>
+
 #include "mymysql_res1.hpp" // for res1::*
+
+
+MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+    // Inlined to avoid multiple definition error
+    this->setWindowTitle("MyTag Tag Manager");
+    QWidget* w = new QWidget();
+    QVBoxLayout* vl = new QVBoxLayout();
+    QHBoxLayout* hl = new QHBoxLayout();
+    this->commit_btn = new QPushButton("Commit (unimplemented)");
+    TagChildTreeView* tag_child_tree_view = new TagChildTreeView(this);
+    hl->addWidget(tag_child_tree_view);
+    TagParentTreeView* tag_parent_tree_view = new TagParentTreeView(tag_child_tree_view, this);
+    hl->addWidget(tag_parent_tree_view);
+    vl->addLayout(hl);
+    vl->addWidget(this->commit_btn);
+    w->setLayout(vl);
+    this->setCentralWidget(w);
+    this->show();
+    
+    this->add_new_tag();
+}
+
+void MainWindow::add_new_tag(){
+    TagDialog* tagdialog = new TagDialog("TagDialog", "TagStr");
+    tagdialog->name_edit->setCompleter(this->tagcompleter);
+    
+    if (tagdialog->exec() != QDialog::Accepted)
+        return;
+    
+    QString tagstr = tagdialog->name_edit->text();
+    
+    if (tagstr.isEmpty())
+        return;
+    
+    qDebug() << "added new tag: " << tagstr;
+};
 
 
 TagChildTreeView::TagChildTreeView(QWidget* parent) : TagTreeView(true, parent) {
@@ -9,7 +47,7 @@ TagChildTreeView::TagChildTreeView(QWidget* parent) : TagTreeView(true, parent) 
     this->setDragDropMode(this->InternalMove);
     this->setDragDropOverwriteMode(false);
     
-    res1::query("SELECT parent_id, B.id, B.c, B.name FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC");
+    res1::query_buffer("SELECT parent_id, B.id, B.c, B.name FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC");
     this->place_tags(0);
     res1::free_result();
 };
