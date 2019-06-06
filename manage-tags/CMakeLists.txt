@@ -18,31 +18,6 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 11)
 
-
-add_library(primaryitem      src/primaryitem.cpp)
-add_library(tagtreemodel     src/tagtreemodel.cpp)
-add_library(tagtreeview      src/tagtreeview.cpp)
-add_library(mainwindow       src/mainwindow.cpp)
-add_library(utils            ../include/utils.cpp)
-add_library(asciify          ../include/asciify.cpp)
-add_library(mymysql          ../include/mymysql.cpp)
-add_library(mymysql_results  ../include/mymysql_results.cpp)
-add_library(tagdialog        ../include/tagdialog.cpp)
-
-target_include_directories(primaryitem PRIVATE "../include")
-target_include_directories(tagtreeview PRIVATE "../include")
-target_include_directories(mainwindow  PRIVATE "../include")
-
-target_link_libraries(tagtreemodel      Qt5::Widgets mymysql_results)
-target_link_libraries(primaryitem       Qt5::Widgets mymysql_results tagtreemodel)
-target_link_libraries(tagtreeview       Qt5::Widgets mymysql_results tagtreemodel primaryitem)
-target_link_libraries(utils             Qt5::Widgets)
-target_link_libraries(asciify           Qt5::Widgets)
-target_link_libraries(mymysql           Qt5::Widgets mysqlclient utils)
-target_link_libraries(mymysql_results   Qt5::Widgets mymysql asciify)
-target_link_libraries(tagdialog         Qt5::Widgets)
-target_link_libraries(mainwindow        Qt5::Widgets mymysql_results tagtreemodel tagtreeview tagdialog)
-
-add_executable(managetags src/main.cpp)
+add_executable(managetags src/main.cpp src/primaryitem.cpp src/tagtreemodel.cpp src/tagtreeview.cpp src/mainwindow.cpp ../include/utils.cpp ../include/asciify.cpp ../include/mymysql.cpp ../include/mymysql_results.cpp ../include/tagdialog.cpp)
 target_include_directories(managetags PRIVATE "../include")
-target_link_libraries(managetags mymysql primaryitem tagtreemodel tagtreeview utils asciify mymysql mymysql_results mainwindow tagdialog) #mainwindow)
+target_link_libraries(managetags mysqlclient Qt5::Widgets)
