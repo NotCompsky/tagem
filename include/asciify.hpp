@@ -397,7 +397,6 @@ void asciify(flag::concat::Start f,  const char c,  flag::guarantee::BetweenZero
     asciify(f, c, args...);
 };
 
-
 } // END: namespace compsky::asciify
 
 
