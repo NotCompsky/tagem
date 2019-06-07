@@ -1,5 +1,6 @@
 #include "mymysql.hpp"
 
+#include <string.h> // for strlen
 #include <stdio.h> // for fopen, fread
 #include <mysql/mysql.h>
 #include <sys/mman.h> // for mmap, munmap
@@ -77,6 +78,45 @@ void exit(){
     compsky::utils::memzero_secure(MYSQL_AUTH[0],  MYSQL_AUTH[5] - MYSQL_AUTH[0]); // Overwrite MySQL authorisation data 
     
     munmap(AUTH, AUTH_SZ);
+}
+
+
+
+
+void exec_buffer(const char* s,  const size_t sz){
+    if (mysql_real_query(&mymysql::OBJ, s, sz) == 0)
+        return;
+    fprintf(stderr, "Error executing %s\n", s);
+    abort();
+};
+
+void exec_buffer(const char* s){
+    if (mysql_real_query(&mymysql::OBJ, s, strlen(s)) == 0)
+        return;
+    fprintf(stderr, "Error executing %s\n", s);
+    abort();
+};
+
+
+void query_buffer(MYSQL_RES*& res,  const char* s,  const size_t sz){
+    if (mysql_real_query(&mymysql::OBJ, s, sz) == 0){
+        res = mysql_store_result(&mymysql::OBJ);
+        return;
+    }
+    fprintf(stderr, "Error executing query %s\n", s);
+    abort();
+};
+
+void query_buffer(MYSQL_RES*& res,  const char* s){
+    query_buffer(res, s, strlen(s));
+};
+
+/* Base Case */
+void assign_next_column(MYSQL_ROW row,  int* col){};
+
+
+namespace flag {
+    const SizeOfAssigned size_of_assigned;
 }
 
 } // END namespace mymysql

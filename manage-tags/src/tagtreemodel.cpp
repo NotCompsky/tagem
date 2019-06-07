@@ -4,6 +4,8 @@
 
 #include "unpackaged_utils.hpp" // for ascii_to_uint64
 
+#include "mymysql_results.hpp"
+
 
 
 TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
@@ -11,16 +13,15 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
 :
     QStandardItemModel(a, b, parent)
 {
-    res1::query_buffer("SELECT id, name FROM tag");
+    mymysql::query_buffer(mymysql::RES, "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
-    while (res1::assign_next_result(&id, &name)){
+    while (mymysql::assign_next_result(mymysql::RES, &mymysql::ROW, &id, &name)){
         const QString s = name;
         this->tag2name[id] = s;
         this->tagslist << s;
     }
-    res1::free_result();
     }
     this->tagcompleter = new QCompleter(this->tagslist);
     
@@ -87,8 +88,8 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
     if (!QStandardItemModel::dropMimeData(data, action, row, 0, dst_parent))
         return false;
     
-    res1::exec("INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
-    res1::exec("DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
+    mymysql::exec("INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
+    mymysql::exec("DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
     
     qDebug() << "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (" << parent_tag_id << "," << tag_id << ")";
     qDebug() << "DELETE FROM tag2parent WHERE parent_id=" << current_parent_id << " AND tag_id=" << tag_id;

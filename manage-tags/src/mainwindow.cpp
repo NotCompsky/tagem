@@ -2,7 +2,7 @@
 
 #include <QVBoxLayout>
 
-#include "mymysql_res1.hpp" // for res1::*
+#include "mymysql_results.hpp" // for mymysql::*
 
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -47,9 +47,8 @@ TagChildTreeView::TagChildTreeView(QWidget* parent) : TagTreeView(true, parent) 
     this->setDragDropMode(this->InternalMove);
     this->setDragDropOverwriteMode(false);
     
-    res1::query_buffer("SELECT parent_id, B.id, B.c, B.name FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC");
+    mymysql::query_buffer(mymysql::RES, "SELECT parent_id, B.id, B.c, B.name FROM tag2parent t2p LEFT JOIN (SELECT id, name, COUNT(A.tag_id) as c FROM tag LEFT JOIN(SELECT tag_id FROM file2tag) A ON A.tag_id = id GROUP BY id, name) B ON B.id = t2p.tag_id ORDER BY t2p.parent_id ASC");
     this->place_tags(0);
-    res1::free_result();
 };
 
 
@@ -81,8 +80,8 @@ void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSel
     QString a = indx.sibling(indx.row(), 0).data().toString();
     QByteArray b = a.toLocal8Bit();
     const char* tag_id_str = b.data();
-    res1::exec("CALL ancestor_tags_id_rooted_from_id(\"tmp_tag_parents\", ", tag_id_str, ')');
-    res1::query_buffer("SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
+    mymysql::exec("CALL ancestor_tags_id_rooted_from_id(\"tmp_tag_parents\", ", tag_id_str, ')');
+    mymysql::query_buffer(mymysql::RES, "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
     
     this->place_tags(ascii_to_uint64(tag_id_str));
 };

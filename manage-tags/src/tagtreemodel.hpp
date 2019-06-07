@@ -5,20 +5,6 @@
 #include <QStandardItemModel>
 #include <QMimeData>
 
-namespace res1 {
-    extern void free_result();
-    template<typename... Args>void query(Args... args);
-    template<typename... Args>void exec(Args... args);
-    extern void query_buffer(const char*);
-    extern void query_buffer(const char*,  size_t);
-    template<typename... Args>void asciify(Args... args);
-    template<typename... Args>bool assign_next_result(Args... args);
-}
-
-namespace compsky::asciify {
-    extern char* BUF;
-}
-
 // Assumes res1 is already defined through mymysql_results.hpp import
 
 

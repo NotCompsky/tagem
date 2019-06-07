@@ -3,15 +3,15 @@
 #include "asciify_flags.hpp"
 #include "tagtreemodel.hpp"
 
-#include "mymysql_res1.hpp" // for res1::*
+#include "mymysql_results.hpp"
 
 
 void PrimaryItem::delete_self(){
-    QStandardItem* prnt = this->parent();
+    QStandardItem* prnt = QStandardItem::parent();
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
-    res1::exec("DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
+    mymysql::exec("DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
     if (prnt)
         this->model()->removeRow(this->row());
     else
@@ -44,7 +44,7 @@ void NameItem::setData(const QVariant& value,  int role){
     if (qs == mdl->tag2name[this->tag_id])
         return;
     
-    res1::exec("UPDATE tag SET name=\"",  compsky::asciify::flag::escape,  '"',  neue,  "\" WHERE id=",  this->tag_id);
+    mymysql::exec("UPDATE tag SET name=\"",  compsky::asciify::flag::escape,  '"',  neue,  "\" WHERE id=",  this->tag_id);
     
     QStandardItem::setData(value, role);
 };

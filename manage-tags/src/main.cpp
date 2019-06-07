@@ -8,6 +8,11 @@ namespace compsky::asciify {
     char* BUF = (char*)malloc(4096);
 }
 
+namespace mymysql {
+    MYSQL_RES* RES;
+    MYSQL_ROW ROW;
+}
+
 namespace detail {
     // For primaryitem.hpp
     char* BUF = (char*)malloc(4096);

@@ -4,7 +4,7 @@
 #include "tagtreeview.hpp"
 #include "tagtreemodel.hpp"
 
-#include "mymysql_res1.hpp" // for res1::*
+#include "mymysql_results.hpp"
 
 
 AvadaKevadra::AvadaKevadra(const uint64_t tag,  const uint64_t parent,  const char* name,  const uint64_t count) : tag(tag), parent(parent), name(name), count(count) {}
@@ -53,7 +53,7 @@ void TagTreeView::place_tags(uint64_t root){
     
     uint64_t parent, tag, count;
     char* name;
-    while (res1::assign_next_result(&parent, &tag, &count, &name)){
+    while (mymysql::assign_next_result(mymysql::RES, &mymysql::ROW, &parent, &tag, &count, &name)){
         if (parent == tag){
             qDebug() << name << ": tag_id == parent_id == ", tag, " (unfortunately, MySQL does not support checks)";
             exit(555);
