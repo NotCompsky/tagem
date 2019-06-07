@@ -265,12 +265,6 @@ void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guara
 template<typename... Args>
 bool assign_next_result(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args){
     if ((*row = mysql_fetch_row(res))){
-      #ifdef DEBUG
-        printf("Row: ");
-        for (auto i = 0;  i < 5;  ++i)
-            printf("%s\t", (*row)[i]);
-        printf("\n");
-      #endif
         int col = 0;
         assign_next_column(*row, &col, args...);
         return true;
