@@ -4,6 +4,8 @@
   #include <QtAVWidgets>
 #endif
 
+#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
+
 #include "mainwindow.h"
 
 
@@ -12,11 +14,15 @@ char** dummy_argv;
 
 
 int main(const int argc,  const char** argv){
+    mymysql::init(argv[1]);
   #ifdef VID
     QtAV::Widgets::registerRenderers();
   #endif
     QApplication app(dummy_argc, dummy_argv);
     MainWindow player(argc, argv);
     player.show();
-    return app.exec();
+    
+    int rc = app.exec();
+    mymysql::exit();
+    return rc;
 }

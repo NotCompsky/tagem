@@ -24,7 +24,7 @@ endif()
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "mytag${file_type}")
-    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/mainwindow.h ../include/tagdialog.hpp)
+    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp ../include/utils.cpp ../include/mymysql.cpp ../include/tagdialog.cpp ../include/asciify_base.cpp ../include/asciify_core.cpp  ../include/asciify_types.cpp)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" mysqlclient)
     target_link_libraries("${tgt}" Qt5::Widgets)
