@@ -1,7 +1,9 @@
 #ifndef __ASCIIFY_BASE__
 #define __ASCIIFY_BASE__
 
-#include <QString>
+#ifdef QT_GUI_LIB
+  #include <QString>
+#endif
 #include "asciify_flags.hpp"
 
 namespace compsky::asciify {

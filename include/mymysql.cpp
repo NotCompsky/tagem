@@ -86,27 +86,24 @@ void exit(){
 void exec_buffer(const char* s,  const size_t sz){
     if (mysql_real_query(&mymysql::OBJ, s, sz) == 0)
         return;
-    fprintf(stderr, "Error executing %s\n", s);
+    fprintf(stderr, "Error executing [%lu] %.*s\n", sz, (int)sz, s);
     abort();
 };
 
 void exec_buffer(const char* s){
-    if (mysql_real_query(&mymysql::OBJ, s, strlen(s)) == 0)
-        return;
-    fprintf(stderr, "Error executing %s\n", s);
-    abort();
+    exec_buffer(s, strlen(s));
 };
 
 
 void query_buffer(MYSQL_RES** res,  const char* s,  const size_t sz){
   #ifdef DEBUG
-    printf("Query: %s\n", s);
+    printf("Query [%lu]: %.*s\n", sz, (int)sz, s);
   #endif
     if (mysql_real_query(&mymysql::OBJ, s, sz) == 0){
         *res = mysql_store_result(&mymysql::OBJ);
         return;
     }
-    fprintf(stderr, "Error executing query %s\n", s);
+    fprintf(stderr, "Error executing query [%lu] %.*s\n", sz, (int)sz, s);
     abort();
 };
 

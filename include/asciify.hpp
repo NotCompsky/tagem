@@ -112,8 +112,10 @@ void asciify(flag::concat::Start e,  const char* s,  const int sz,  flag::concat
 template<typename T,  typename... Args>
 void asciify(flag::concat::Start f,  const char* s,  const int sz,  const char** ss,  T n,  Args... args);
 
+#ifdef USE_VECTOR
 template<typename T,  typename... Args>
 void asciify(flag::concat::Start f,  const char* s,  const int sz,  const std::vector<const char*> ss,  T n,  Args... args);
+#endif
 
 template<typename... Args>
 void asciify(flag::concat::Start e,  const char c,  flag::concat::End f,  Args... args);
@@ -168,7 +170,9 @@ void asciify(flag::concat::Start f,  const char c,  flag::guarantee::BetweenZero
 
 
 #include <string.h> // for memcpy
-#include <QString>
+#ifdef QT_GUI_LIB
+  #include <QString>
+#endif
 #include <vector>
 
 #include "utils.hpp" // for compsky::utils::*
@@ -399,6 +403,7 @@ void asciify(flag::concat::Start f,  const char* s,  const int sz,  const char**
     asciify(f, s, sz, args...);
 };
 
+#ifdef USE_VECTOR
 template<typename T,  typename... Args>
 void asciify(flag::concat::Start f,  const char* s,  const int sz,  const std::vector<const char*> ss,  T n,  Args... args){
     for (auto i = 0;  i < n;  ++i){
@@ -407,6 +412,7 @@ void asciify(flag::concat::Start f,  const char* s,  const int sz,  const std::v
     }
     asciify(f, s, sz, args...);
 };
+#endif
 
 template<typename... Args>
 void asciify(flag::concat::Start e,  const char c,  flag::concat::End f,  Args... args){

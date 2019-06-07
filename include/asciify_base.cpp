@@ -1,4 +1,7 @@
 #include "asciify_base.hpp"
+
+#include <string.h> // for memcpy
+
 #include "asciify_core.hpp"
 
 
@@ -18,7 +21,7 @@ void asciify(const char c){
 }
 
 void asciify(flag::StrLen f,  const char* s,  const int sz){
-    memcpy(BUF,  s,  sz);
+    memcpy(BUF + BUF_INDX,  s,  sz);
     BUF_INDX += sz;
 };
 
