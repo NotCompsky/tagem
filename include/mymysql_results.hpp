@@ -59,6 +59,12 @@ template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndOne f,  double*& d,  Args... args);
 
 template<typename... Args>
+void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f,  double*& d,  Args... args);
+
+template<typename... Args>
+void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndTenLeftInclusive f,  double*& d,  Args... args);
+
+template<typename... Args>
 bool assign_next_result(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args);
 
 } // END namespace mymysql
@@ -202,14 +208,45 @@ void assign_next_column(MYSQL_ROW row,  int* col,  int8_t*& n,  Args... args){
 
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  char**& s,  Args... args){
-    *s = row[*col++];
+    *s = row[(*col)++];
     assign_next_column(row,  col,  args...);
 };
 
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndOne f,  double*& d,  Args... args){
-    char* s = row[*col++];
+    char* s = row[(*col)++];
     ++s; // Skip the "0"
+    
+    *d = 0;
+    
+    if (*s == 0)
+        return;
+    
+    ++s; // Skip the "."
+    int n_digits = strlen(s);
+    
+    for (auto i = n_digits - 1;  i >= 0;  --i){
+        *d += s[i] - '0';
+        *d /= 10;
+    }
+    
+    assign_next_column(row,  col,  args...);
+};
+
+template<typename... Args>
+void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f,  double*& d,  Args... args){
+    // Mostly seperated from `BetweenZeroAndTenLeftInclusive` case for clarity - might be confusing to declare some things as between 0 and 10 when they are between 0 and 1.
+    // Maybe some performance gain with `*d = (*s == '0') ? 0 : 1;`... but not worth it
+    assign_next_column(row, col, compsky::asciify::flag::guarantee::between_zero_and_ten_left_inclusive, d, args...);
+};
+
+template<typename... Args>
+void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guarantee::BetweenZeroAndTenLeftInclusive f,  double*& d,  Args... args){
+    char* s = row[(*col)++];
+    
+    *d = *s - '0';
+    
+    ++s;
     
     if (*s == 0)
         return;
@@ -230,7 +267,7 @@ bool assign_next_result(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args){
     if ((*row = mysql_fetch_row(res))){
       #ifdef DEBUG
         printf("Row: ");
-        for (auto i = 0;  i < 2;  ++i)
+        for (auto i = 0;  i < 5;  ++i)
             printf("%s\t", (*row)[i]);
         printf("\n");
       #endif

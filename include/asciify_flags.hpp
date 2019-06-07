@@ -21,10 +21,18 @@ namespace compsky::asciify::flag {
     namespace ensure {
         struct BetweenZeroAndOne{};
         const BetweenZeroAndOne between_zero_and_one;
+        struct BetweenZeroAndOneInclusive{};
+        const BetweenZeroAndOneInclusive between_zero_and_one_inclusive;
+        struct BetweenZeroAndTenLeftInclusive{};
+        const BetweenZeroAndTenLeftInclusive between_zero_and_ten_left_inclusive;
     }
     namespace guarantee {
         struct BetweenZeroAndOne{};
         const BetweenZeroAndOne between_zero_and_one;
+        struct BetweenZeroAndOneInclusive{};
+        const BetweenZeroAndOneInclusive between_zero_and_one_inclusive;
+        struct BetweenZeroAndTenLeftInclusive{};
+        const BetweenZeroAndTenLeftInclusive between_zero_and_ten_left_inclusive;
     }
 }
 
