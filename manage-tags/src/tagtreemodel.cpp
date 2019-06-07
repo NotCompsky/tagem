@@ -13,7 +13,7 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
 :
     QStandardItemModel(a, b, parent)
 {
-    mymysql::query_buffer(mymysql::RES, "SELECT id, name FROM tag");
+    mymysql::query_buffer(&mymysql::RES, "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;

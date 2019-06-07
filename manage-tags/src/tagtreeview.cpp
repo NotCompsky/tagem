@@ -54,17 +54,17 @@ void TagTreeView::place_tags(uint64_t root){
     uint64_t parent, tag, count;
     char* name;
     while (mymysql::assign_next_result(mymysql::RES, &mymysql::ROW, &parent, &tag, &count, &name)){
-        if (parent == tag){
+        qDebug() << tag << name << parent << count;
+        
+        /*if (parent == tag){
             qDebug() << "tag_id == parent_id\n  for tag, parent, count, name\n  " << +tag << +parent << +count << name; // (unfortunately, MySQL does not support checks
             exit(555);
-        }
+        }*/
         
         if (mdl->tag2entry.find(parent) == mdl->tag2entry.end()){ // TODO: Replace with std::map::contains (C++20) in a few decades
             queue.emplace_back(tag, parent, name, count);
             continue;
         }
-        
-        qDebug() << tag << name << parent << count;
         
         PrimaryItem* entry__id = new PrimaryItem(QString("%0").arg(tag));
         entry__id->setEditable(false);

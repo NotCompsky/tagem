@@ -42,8 +42,8 @@ extern MYSQL_ROW ROW; // Not used in this header, only for convenience
 void exec_buffer(const char* s,  const size_t sz);
 void exec_buffer(const char* s);
 
-void query_buffer(MYSQL_RES*& res,  const char* s,  const size_t sz);
-void query_buffer(MYSQL_RES*& res,  const char* s);
+void query_buffer(MYSQL_RES** res,  const char* s,  const size_t sz);
+void query_buffer(MYSQL_RES** res,  const char* s);
 
 void assign_next_column(MYSQL_ROW row,  int* col);
 

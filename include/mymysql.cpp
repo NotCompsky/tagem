@@ -98,16 +98,19 @@ void exec_buffer(const char* s){
 };
 
 
-void query_buffer(MYSQL_RES*& res,  const char* s,  const size_t sz){
+void query_buffer(MYSQL_RES** res,  const char* s,  const size_t sz){
+  #ifdef DEBUG
+    printf("Query: %s\n", s);
+  #endif
     if (mysql_real_query(&mymysql::OBJ, s, sz) == 0){
-        res = mysql_store_result(&mymysql::OBJ);
+        *res = mysql_store_result(&mymysql::OBJ);
         return;
     }
     fprintf(stderr, "Error executing query %s\n", s);
     abort();
 };
 
-void query_buffer(MYSQL_RES*& res,  const char* s){
+void query_buffer(MYSQL_RES** res,  const char* s){
     query_buffer(res, s, strlen(s));
 };
 

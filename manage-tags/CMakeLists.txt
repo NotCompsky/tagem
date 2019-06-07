@@ -19,5 +19,8 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(managetags src/main.cpp src/primaryitem.cpp src/tagtreemodel.cpp src/tagtreeview.cpp src/mainwindow.cpp ../include/utils.cpp ../include/mymysql.cpp ../include/tagdialog.cpp ../include/asciify_base.cpp ../include/asciify_core.cpp  ../include/asciify_types.cpp)
+foreach(def ${MY_DEFINITIONS})
+    target_compile_definitions(managetags PRIVATE ${def})
+endforeach(def)
 target_include_directories(managetags PRIVATE "../include")
 target_link_libraries(managetags mysqlclient Qt5::Widgets)

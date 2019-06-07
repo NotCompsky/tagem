@@ -9,6 +9,10 @@
 
 #include "mymysql.hpp"
 
+#ifdef DEBUG
+  #include <stdio.h> // for printf
+#endif
+
 
 // Assumes mysql/mysql.h, utils.hpp and mymysql.hpp are included in main scope of main program
 
@@ -18,7 +22,7 @@ template<typename... Args>
 void exec(Args... args);
 
 template<typename... Args>
-void query(MYSQL_RES*& res,  Args... args);
+void query(MYSQL_RES** res,  Args... args);
 
 
 
@@ -126,7 +130,7 @@ void exec(Args... args){
 
 
 template<typename... Args>
-void query(MYSQL_RES*& res,  Args... args){
+void query(MYSQL_RES** res,  Args... args){
     compsky::asciify::asciify(compsky::asciify::flag::change_buffer, compsky::asciify::BUF, 0, args...);
     query_buffer(res, compsky::asciify::BUF, compsky::asciify::BUF_INDX);
 };
@@ -136,9 +140,9 @@ void query(MYSQL_RES*& res,  Args... args){
 
 
 template<typename T>
-T ascii2n(MYSQL_ROW row,  int* col,  T m){
+T ascii2n(MYSQL_ROW row,  int col,  T m){
     T n = 0;
-    char* s = row[*col++];
+    char* s = row[col];
     while (*s != 0){
         n *= 10;
         n += *s - '0';
@@ -157,42 +161,42 @@ void assign_next_column(MYSQL_ROW row,  int* col,  flag::SizeOfAssigned*& f,  si
 
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  uint64_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  int64_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  uint32_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  int32_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  uint16_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  int16_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  uint8_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 template<typename... Args>
 void assign_next_column(MYSQL_ROW row,  int* col,  int8_t*& n,  Args... args){
-    *n = ascii2n(row, col, *n);
+    *n = ascii2n(row, (*col)++, *n);
     assign_next_column(row,  col,  args...);
 };
 
@@ -224,6 +228,12 @@ void assign_next_column(MYSQL_ROW row,  int* col,  compsky::asciify::flag::guara
 template<typename... Args>
 bool assign_next_result(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args){
     if ((*row = mysql_fetch_row(res))){
+      #ifdef DEBUG
+        printf("Row: ");
+        for (auto i = 0;  i < 2;  ++i)
+            printf("%s\t", (*row)[i]);
+        printf("\n");
+      #endif
         int col = 0;
         assign_next_column(*row, &col, args...);
         return true;

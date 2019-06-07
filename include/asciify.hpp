@@ -11,10 +11,6 @@
 
 namespace compsky::asciify {
 
-extern char* BUF;
-extern int BUF_INDX;
-
-
 
 
 /* Base Case to Override (must precede Base Cases) */

@@ -1,10 +1,12 @@
 #ifndef __ASCIIFY_CORE__
 #define __ASCIIFY_CORE__
 
+#include <cstddef> // for size_t
+
 namespace compsky::asciify {
 
 extern char* BUF;
-extern int BUF_INDX;
+extern size_t BUF_INDX;
 
 }
 

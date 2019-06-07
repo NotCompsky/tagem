@@ -1,5 +1,7 @@
+#include "asciify_core.hpp"
+
 namespace compsky::asciify {
 
-int BUF_INDX;
+size_t BUF_INDX = 0;
 
 }
