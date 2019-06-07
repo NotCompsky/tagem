@@ -55,7 +55,7 @@ void TagTreeView::place_tags(uint64_t root){
     char* name;
     while (mymysql::assign_next_result(mymysql::RES, &mymysql::ROW, &parent, &tag, &count, &name)){
         if (parent == tag){
-            qDebug() << name << ": tag_id == parent_id == ", tag, " (unfortunately, MySQL does not support checks)";
+            qDebug() << "tag_id == parent_id\n  for tag, parent, count, name\n  " << +tag << +parent << +count << name; // (unfortunately, MySQL does not support checks
             exit(555);
         }
         
