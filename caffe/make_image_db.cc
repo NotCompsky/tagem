@@ -15,17 +15,7 @@
  */
 
 // This script converts an image dataset to a database.
-//
-// FLAGS_input_folder is the root folder that holds all the images
-//
-// FLAGS_list_file is the path to a file containing a list of files
-// and their labels, as follows:
-//
-//   subfolder1/file1.JPEG 7
-//   subfolder1/file2.JPEG 7
-//   subfolder2/file1.JPEG 8
-//   ...
-//
+
 
 #include <opencv2/opencv.hpp>
 
@@ -42,15 +32,13 @@
 #include "caffe2/proto/caffe2_pb.h"
 #include "caffe2/core/logging.h"
 
+#include <compsky/mysql/query>
+
+
 C10_DEFINE_bool(
     shuffle,
     false,
     "Randomly shuffle the order of images and their labels");
-C10_DEFINE_string(input_folder, "", "The input image file name.");
-C10_DEFINE_string(
-    list_file,
-    "",
-    "The text file containing the list of images.");
 C10_DEFINE_string(output_db_name, "", "The output training leveldb name.");
 C10_DEFINE_string(db, "leveldb", "The db type.");
 C10_DEFINE_bool(
@@ -67,6 +55,22 @@ C10_DEFINE_int(
     num_threads,
     -1,
     "Number of image parsing and conversion threads.");
+
+
+char STMT[4096];
+
+MYSQL_RES* RES;
+MYSQL_ROW ROW;
+
+struct Jomsborg {
+    const char* fp;
+    const uint64_t tag_id;
+    const double x;
+    const double y;
+    const double w;
+    const double h;
+};
+
 
 namespace caffe2 {
 
@@ -98,8 +102,8 @@ class Converter {
     }
   }
 
-  void queue(const std::pair<std::string, int>& pair) {
-    in_.push(pair);
+  void queue(const Jomsborg& jom) {
+    in_.push(jom);
   }
 
   void start() {
@@ -119,17 +123,18 @@ class Converter {
   }
 
   void run() {
-    const auto& input_folder = FLAGS_input_folder;
     std::unique_lock<std::mutex> lock(mutex_);
     std::string value;
     while (!in_.empty()) {
-      auto pair = in_.front();
+      Jomsborg jom = in_.front();
       in_.pop();
       lock.unlock();
 
-      label_->set_int32_data(0, pair.second);
+      label_->set_int32_data(0, jom.tag_id);
 
-      cv::Mat img = cv::imread(input_folder + pair.first,  FLAGS_color ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE);
+      cv::Mat orig_img = cv::imread(jom.fp,  FLAGS_color ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE);
+      cv::Rect rect(jom.x, jom.y, jom.w, jom.h);
+      cv::Mat img = orig_img(rect);
 
       // Add raw file contents to DB if !raw
       if (!FLAGS_raw) {
@@ -137,7 +142,7 @@ class Converter {
         data_->set_dims(1, img.cols);
       } else {
         // Resize image
-        cv::Mat orig_img = img;
+        orig_img = img;
         int scaled_width, scaled_height;
         if (FLAGS_warp) {
           scaled_width = FLAGS_scale;
@@ -181,7 +186,7 @@ class Converter {
   TensorProtos protos_;
   TensorProto* data_;
   TensorProto* label_;
-  std::queue<std::pair<std::string, int>> in_;
+  std::queue<Jomsborg> in_;
   std::queue<std::string> out_;
 
   std::mutex mutex_;
@@ -190,16 +195,20 @@ class Converter {
 };
 
 void ConvertImageDataset(
-    const string& input_folder,
-    const string& list_filename,
     const string& output_db_name,
     const bool /*shuffle*/) {
-  std::ifstream list_file(list_filename);
-  std::vector<std::pair<std::string, int> > lines;
+  std::vector<Jomsborg> lines;
   std::string filename;
   int file_label;
-  while (list_file >> filename >> file_label) {
-    lines.push_back(std::make_pair(filename, file_label));
+  
+  {
+  char* fp;
+  uint64_t tag_id;
+  double x, y, w, h;
+  auto f = compsky::asciify::flag::guarantee::between_zero_and_one_inclusive;
+  while(compsky::mysql::assign_next_result(RES, &ROW, &fp, &tag_id, f, &x, f, &y, f, &w, f, &h){
+    lines.emplace_back(fp, tag_id, x, y, w, h);
+  }
   }
 
   if (FLAGS_shuffle) {
@@ -240,8 +249,7 @@ void ConvertImageDataset(
     auto value = converters[i % converters.size()].get();
 
     // Synthesize key for this entry
-    auto key_len = snprintf(
-        key_cstr, sizeof(key_cstr), "%08d_%s", i, lines[i].first.c_str());
+    auto key_len = snprintf(key_cstr, sizeof(key_cstr), "%08d_%s", i, lines[i].fp);
     DCHECK_LE(key_len, sizeof(key_cstr));
 
     // Put in db
@@ -263,8 +271,41 @@ void ConvertImageDataset(
 
 
 int main(int argc, char** argv) {
+  // USAGE: ./make_image_db TAG1 TAG2 ... TAGN - [original caffe args]
+  int myargs_n = 0;
+  compsky::mysql::init(argv[++myargs_n], "mytag");
+
+  constexpr const char* a = "SELECT name, tag_id, x, y, w, h FROM file JOIN(SELECT file_id, tag_id, x, y, w, h FROM instance JOIN(SELECT instance_id, tag_id FROM instance2tag WHERE tag_id IN(";
+  constexpr const char* b = "))) A ON A.instance_id = id) B ON B.file_id=id";
+
+  size_t i = 0;
+
+  memcpy(STMT + i,  a,  strlen(a));
+  i += strlen(a);
+
+  while (true){
+    const char* arg = argv[++myargs_n];
+    if (arg[0] == '-')
+        break;
+    STMT[i++] = '"';
+    memcpy(STMT + i,  arg,  strlen(arg));
+    i += strlen(arg);
+    STMT[i++] = '"';
+    STMT[i++] = ',';
+  }
+  --i;
+
+  memcpy(STMT + i,  b,  strlen(b));
+  i += strlen(b);
+
+  compsky::mysql::query_buffer(STMT,  i - 1);
+
+  argc += myargs_n;
+
   caffe2::GlobalInit(&argc, &argv);
-  caffe2::ConvertImageDataset(
-      FLAGS_input_folder, FLAGS_list_file, FLAGS_output_db_name, FLAGS_shuffle);
+  caffe2::ConvertImageDataset(FLAGS_output_db_name, FLAGS_shuffle);
+  
+  compsky::mysql::exit();
+  
   return 0;
 }
