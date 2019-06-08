@@ -23,7 +23,7 @@ TagTreeView::TagTreeView(bool editable,  QWidget* parent)
         TagTreeModel* mdl = new TagTreeModel(0, 5, parent);
         this->setModel(mdl);
     } else {
-        QStandardItemModel* mdl = new QStandardItemModel(0, 3, parent);
+        TagTreeModel* mdl = new TagTreeModel(0, 3, parent);
         this->setModel(mdl);
     }
     
