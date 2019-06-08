@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
         w.setLayout(l)
         self.setCentralWidget(w)
         self.show()
-        self.add_tag()
+        self.add_new_tag()
     def add_new_tag(self):
         tagdialog = TagDialog("Title", "Str", self)
         if (tagdialog.exec_() == 0):
