@@ -2,9 +2,9 @@
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
 #include <stdio.h> // for printf
 
-#include "asciify.hpp" // for asciify
-#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
-#include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+#include <compsky/asciify/asciify.hpp> // for asciify
+#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
+#include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
 
 
 MYSQL_RES* RES;
@@ -87,7 +87,7 @@ int main(const int argc, const char** argv) {
     }
     --arg_n; // For consistency.
     
-    mymysql::init(argv[++arg_n]);
+    compsky::mysql::init(argv[++arg_n]);
     
     
     {
@@ -95,7 +95,7 @@ int main(const int argc, const char** argv) {
     constexpr const char* a = "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'";
     auto f = compsky::asciify::flag::concat::start;
     auto g = compsky::asciify::flag::concat::end;
-    mymysql::exec(a, f, "','", 3, argv+arg_n+1, argc-arg_n-1, g, "'\")");
+    compsky::mysql::exec(a, f, "','", 3, argv+arg_n+1, argc-arg_n-1, g, "'\")");
     
     if (not_subtags.size() != 0){
         compsky::asciify::BUF_INDX = strlen(a);
@@ -104,29 +104,29 @@ int main(const int argc, const char** argv) {
         
         compsky::asciify::asciify(/* a already included in BUF */ f, "','", 3, not_subtags.data(), not_subtags.size(), g, ')');
         
-        mymysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
+        compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
         
-        mymysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+        compsky::mysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
     }
     
     }
     
     
     if (root_tags)
-        mymysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
+        compsky::mysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
     else
         // NOTE: This query will include duplicates, if an instance is tagged with multiple distinct tags in tmp_tagids (i.e. multiple tags inheriting from the tags we asked for)
-        mymysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id=id) B ON B.file_id=id)C ON C.tag_id=id");
+        compsky::mysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id=id) B ON B.file_id=id)C ON C.tag_id=id");
     
     char* name;
     char* fp;
     
     auto f = compsky::asciify::flag::guarantee::between_zero_and_one_inclusive;
     double x, y, w, h;
-    while(mymysql::assign_next_result(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
+    while(compsky::mysql::assign_next_result(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
         view_img(name, fp, x, y, w, h);
     
-    mymysql::exit();
+    compsky::mysql::exit();
     
     return 0;
 }

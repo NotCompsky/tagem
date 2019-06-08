@@ -1,7 +1,7 @@
 #include <iostream> // for std::cout, std::endl
 
-#include "mymysql.hpp" // for mymysql::*
-#include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
+#include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
 
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
@@ -11,7 +11,7 @@ namespace compsky::asciify {
 }
 
 int main(const int argc,  char** argv){
-    mymysql::init(argv[1]);
+    compsky::mysql::init(argv[1]);
     
     {
     char* sort;
@@ -21,11 +21,11 @@ int main(const int argc,  char** argv){
         sort = "DESC";
     }
     
-    mymysql::query(&RES, "SELECT name FROM file WHERE score IS NOT NULL ORDER BY score ", sort);
+    compsky::mysql::query(&RES, "SELECT name FROM file WHERE score IS NOT NULL ORDER BY score ", sort);
     }
     
     
     char* s;
-    while (mymysql::assign_next_result(RES, &ROW, &s))
+    while (compsky::mysql::assign_next_result(RES, &ROW, &s))
         std::cout << s << std::endl;
 }

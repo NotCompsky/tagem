@@ -44,18 +44,25 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 #include <stdio.h> // for fwrite
 #include <string.h> // for strlen, memcpy?
 
-#include "mymysql.hpp" // for mymysql::*
+#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
 
-namespace res1 {
-    #include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+#include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
+
+
+MYSQL_RES* RES;
+MYSQL_ROW ROW;
+
+namespace compsky::asciify {
+    char* BUF = (char*)malloc(4096);
+    int BUF_SZ = 4096;
+        
+    void ensure_buf_can_fit(size_t n){
+        if (BUF_INDX + n  >  BUF_SZ){
+            fwrite(BUF, 1, BUF_INDX, stderr);
+            BUF_INDX = 0;
+        }
+    }
 }
-
-
-
-constexpr const int BUF_SZ_INIT = 4096;
-const int BUF_SZ = BUF_SZ_INIT;
-char* BUF = (char*)malloc(BUF_SZ_INIT);
-int BUF_INDX;
 
 
 
@@ -76,7 +83,7 @@ void increment_tmptbl_postfix(){
 }
 
 void add_union_start(){
-    asciify("\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_", TMPTBL_POSTFIX, ')');
+    compsky::asciify::asciify("\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_", TMPTBL_POSTFIX, ')');
     
     SQL__CALL_DESC_TAGS_FROM[strlen("CALL descendant_tags_id_from(\"_tmp_tagids_")] = TMPTBL_POSTFIX;
     
@@ -86,29 +93,28 @@ void add_union_start(){
 void add_union_end(){
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = '"';
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX++] = ')';
-    SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX] = 0;
+    SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX] = '\n';
     
     fwrite(SQL__CALL_DESC_TAGS_FROM, 1, SQL__CALL_DESC_TAGS_FROM__INDX, stderr);
-    fwrite("\n", 1, 1, stderr);
     
-    mymysql::exec((const char*)SQL__CALL_DESC_TAGS_FROM);
+    compsky::mysql::exec_buffer((const char*)SQL__CALL_DESC_TAGS_FROM,  SQL__CALL_DESC_TAGS_FROM__INDX);
     
     SQL__CALL_DESC_TAGS_FROM__INDX = strlen("CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"");
     
-    asciify("\n\t\t)\n\t");
+    compsky::asciify::asciify("\n\t\t)\n\t");
 }
 
 void add_union_unionness(){
-    asciify("\n\t\t\tUNION ALL");
+    compsky::asciify::asciify("\n\t\t\tUNION ALL");
 }
 
 void construct_stmt(const char** argv){
-    BUF_INDX = 0;
+    compsky::asciify::BUF_INDX = 0;
     
     bool add_comma = false;
     
     
-    asciify("SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t"); 
+    compsky::asciify::asciify("SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t"); 
     
     add_union_start();
     
@@ -151,34 +157,30 @@ void construct_stmt(const char** argv){
     
     add_union_end();
     
-    asciify(") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
+    compsky::asciify::asciify(") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
 }
 
 
 int main(const int argc, const char* argv[]){
-    mymysql::init(argv[1]);
+    compsky::mysql::init(argv[1]);
     
     construct_stmt(argv + 2);
     
-    BUF[BUF_INDX] = '\n';
-    fwrite(BUF, 1, BUF_INDX+1, stderr);
-    BUF[BUF_INDX] = 0;
+    compsky::asciify::BUF[compsky::asciify::BUF_INDX] = '\n';
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX+1, stderr);
     
-    res1::query();
+    compsky::mysql::query_buffer(&RES, compsky::asciify::BUF, compsky::asciify::BUF_INDX);
     
-    BUF_INDX = 0;
+    compsky::asciify::BUF_INDX = 0;
     
     char* fp;
-    while (res1::assign_next_result(&fp)){
-        const int i = strlen(fp);
-        if (BUF_INDX + i + 1  >  BUF_SZ){
-            fwrite(BUF, 1, BUF_INDX, stderr);
-            BUF_INDX = 0;
-        }
-        memcpy(BUF + BUF_INDX,  fp,  i);
-        BUF_INDX += i;
-        BUF[BUF_INDX++] = '\n';
+    while (compsky::mysql::assign_next_result(RES, &ROW, &fp)){
+        const size_t i = strlen(fp);
+        compsky::asciify::ensure_buf_can_fit(i + 1);
+        memcpy(compsky::asciify::BUF + compsky::asciify::BUF_INDX,  fp,  i);
+        compsky::asciify::BUF_INDX += i;
+        compsky::asciify::BUF[compsky::asciify::BUF_INDX++] = '\n';
     }
     
-    fwrite(BUF, 1, BUF_INDX, stderr);
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX, stderr);
 }

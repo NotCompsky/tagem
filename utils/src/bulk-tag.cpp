@@ -1,13 +1,12 @@
 /*
 Usage:
-    myttag {MYSQL_CONFIG_FILE} {{OPTIONS}} {{RELATIVE_PATHS}} - {{TAGS}}
+    ./bulk-tag {MYSQL_CONFIG_FILE} {{OPTIONS}} {{RELATIVE_PATHS}} - {{TAGS}}
 */
 
-#include <string.h> // for strlen, memcpy
+#include <string.h> // for strlen
 #include <unistd.h> // for getcwd
 
-#include "utils.hpp"
-#include "mymysql.hpp" // for mymysql::*
+#include <compsky/mysql/query.hpp> // for compsky::mysql::exec
 
 
 namespace ERR {
@@ -16,6 +15,10 @@ namespace ERR {
         UNKNOWN,
         GETCWD
     };
+}
+
+namespace compsky::asciify {
+    char* BUF = (char*)malloc(4096);
 }
 
 
@@ -32,13 +35,13 @@ int ascii2n(const char* s){
 
 int main(const int argc, const char** argv){
     int score = 0;
-    char cwd[4096];
-    if (getcwd(cwd, 1024) == NULL)
+    char cwd[4096] = "','"; // For the cncatenation later
+    if (getcwd(cwd + 3,  1024) == NULL)
         return ERR::GETCWD;
     
     int i = 0;
     
-    mymysql::init(argv[++i]);
+    compsky::mysql::init(argv[++i]);
     
     bool is_absolute = false;
     
@@ -72,60 +75,57 @@ int main(const int argc, const char** argv){
     
     // All remaining arguments (i.e. argv[j] for all i<=j<argc) are tags
     
-    StartConcatWith start_concat_bckts("'),('", 5);
-    EndConcatWith end_concat_brckts;
+    auto f = compsky::asciify::flag::concat::start;
+    auto g = compsky::asciify::flag::concat::end;
     
-    StartConcatWithApostrapheAndCommaFlag start_ap;
-    EndConcatWithApostrapheAndCommaFlag end_ap;
-    
-    auto cwd_len = strlen(cwd);
+    const size_t cwd_len = strlen(cwd);
     cwd[cwd_len] = '/';  // Replace trailing \0
-    StartPrefixFlag start_prefix(cwd, cwd_len);
-    EndPrefixFlag end_prefix;
     
-    mymysql::exec(
+    auto start_prefix = compsky::asciify::flag::prefix::start;
+    auto end_prefix   = compsky::asciify::flag::prefix::end;
+    
+    compsky::mysql::exec(
         // If tags do not already exist in table, register them
         "INSERT IGNORE into tag (name) "
         "VALUES ('",
-            start_concat_bckts,
+            f, "'),('", 5,
                 argv+i, argc-i,
-            end_concat_brckts,
+            g,
         "')"
     );
     
     if (is_absolute){
-        mymysql::exec(
+        compsky::mysql::exec(
             "INSERT IGNORE into file2tag (tag_id, file_id) "
             "SELECT t.id, f.id "
             "FROM tag t, file f "
-            "WHERE t.name IN (",
-                start_ap,
-                    argv+i, argc-i ,
-                end_ap,
-            ") AND f.name IN (",
-                start_ap,
+            "WHERE t.name IN ('",
+                f, "','", 3,
+                    argv+i, argc-i,
+                g,
+            "') AND f.name IN ('",
+                f, "','", 3,
                     argv + file_argc_offset,
                     n_files,
-                end_ap,
-            ")"
+                g,
+            "')"
         );
     } else {
-        mymysql::exec(
+        compsky::mysql::exec(
             "INSERT IGNORE into file2tag (tag_id, file_id) "
             "SELECT t.id, f.id "
             "FROM tag t, file f "
-            "WHERE t.name IN (",
-                start_ap,
-                    argv+i, argc-i ,
-                end_ap,
-            ") AND f.name IN (",
-                start_ap,
-                    start_prefix,
-                        argv + file_argc_offset,
-                        n_files,
-                    end_prefix,
-                end_ap,
-            ")"
+            "WHERE t.name IN ('",
+                f, "','", 3,
+                    argv+i, argc-i,
+                g,
+            "') AND f.name IN ('",
+                cwd + 3, // Skip prefix
+                f, cwd, cwd_len,
+                    argv + file_argc_offset,
+                    n_files,
+                g,
+            "')"
         );
     }
 }
