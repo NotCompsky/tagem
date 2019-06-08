@@ -4,7 +4,7 @@
   #include <QtAVWidgets>
 #endif
 
-#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
+#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
 
 #include "mainwindow.h"
 
@@ -14,7 +14,7 @@ char** dummy_argv;
 
 
 int main(const int argc,  const char** argv){
-    mymysql::init(argv[1]);
+    compsky::mysql::init(argv[1]);
   #ifdef VID
     QtAV::Widgets::registerRenderers();
   #endif
@@ -23,6 +23,6 @@ int main(const int argc,  const char** argv){
     player.show();
     
     int rc = app.exec();
-    mymysql::exit();
+    compsky::mysql::exit();
     return rc;
 }

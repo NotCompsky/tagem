@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14.1 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 find_package(QtAV REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(Compsky REQUIRED COMPONENTS asciify mysql qt5)
 set(CMAKE_AUTOMOC ON)
 
 
@@ -17,18 +18,17 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 
-if (MY_TARGETS STREQUAL "")
+if ("${MY_TARGETS} " STREQUAL " ") # Suffix character is deliberate; simply does not match empty strings without it
     # e.g. cmake .. -DMY_TARGETS=txt;img
     set(MY_TARGETS "txt" "img" "vid")
 endif()
+message(STATUS "Targets: ${MY_TARGETS}")
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "mytag${file_type}")
-    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp ../include/utils.cpp ../include/mymysql.cpp ../include/tagdialog.cpp ../include/asciify_base.cpp ../include/asciify_core.cpp  ../include/asciify_types.cpp)
+    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp)
     target_include_directories("${tgt}" PRIVATE "../include")
-    target_link_libraries("${tgt}" mysqlclient)
-    target_link_libraries("${tgt}" Qt5::Widgets)
-    #target_compile_features("${tgt}" PRIVATE cxx_std_98) # CONTRIBUTIONS WELCOME: Tests
+    target_link_libraries("${tgt}" mysqlclient Qt5::Widgets compsky_asciify compsky_mysql compsky_qt5)
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
     endforeach(dfn)

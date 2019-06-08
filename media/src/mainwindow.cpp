@@ -21,11 +21,9 @@
   #include <QScrollBar>
 #endif
 
-#include "tagdialog.hpp" // for TagDialog
-
-#include "asciify.hpp" // for compsky::asciify::(flag,fake_type)
-
-#include "mymysql_results.hpp" // for ROW, RES, COL, ERR
+#include <compsky/asciify/asciify.hpp> // for compsky::asciify::(flag|fake_type)
+#include <compsky/mysql/query.hpp> // for compsky::mysql::(exec|query)(_buffer)?
+#include <compsky/qt5/tagdialog.hpp> // for TagDialog
 
 #ifdef DEBUG
   #define PRINTF printf
@@ -62,8 +60,8 @@ char* NOTE = (char*)malloc(30000);
 
 uint64_t get_last_insert_id(){
     uint64_t n = 0;
-    mymysql::query_buffer(&sql1::RES,  "SELECT LAST_INSERT_ID() as ''");
-    while (mymysql::assign_next_result(sql1::RES, &sql1::ROW, &n));
+    compsky::mysql::query_buffer(&sql1::RES,  "SELECT LAST_INSERT_ID() as ''");
+    while (compsky::mysql::assign_next_result(sql1::RES, &sql1::ROW, &n));
     return n;
 }
 
@@ -78,7 +76,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
     
-    mymysql::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
+    compsky::mysql::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
     
     ir->id = get_last_insert_id();
     
@@ -101,7 +99,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
             tagid = win->get_id_from_table("tag", tagchars);
         }
         ir->tags.append(tagstr);
-        mymysql::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
+        compsky::mysql::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;
@@ -177,11 +175,11 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
         } else exit(3);
     }
     
-    mymysql::query_buffer(&sql1::RES,  "SELECT id, name FROM tag");
+    compsky::mysql::query_buffer(&sql1::RES,  "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
-    while (mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id, &name)){
+    while (compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id, &name)){
         const QString s = name;
         this->tag_id2name[id] = s;
         this->tagslist << s;
@@ -328,10 +326,10 @@ void MainWindow::media_next(){
 uint64_t is_file_in_db(const char* fp){
     constexpr const char* a = "SELECT id FROM file WHERE name=\"";
     
-    mymysql::query(&sql1::RES,  "SELECT id FROM file WHERE name=\"", compsky::asciify::flag::escape, '"', fp, "\"");
+    compsky::mysql::query(&sql1::RES,  "SELECT id FROM file WHERE name=\"", compsky::asciify::flag::escape, '"', fp, "\"");
     
     uint64_t id = 0;
-    while(mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id));
+    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id));
     
     return id;
 }
@@ -345,7 +343,7 @@ void MainWindow::init_file_from_db(){
     const double H = this->main_widget->size().height();
   #endif
   #ifdef BOXABLE
-    mymysql::query(&sql1::RES,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
+    compsky::mysql::query(&sql1::RES,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
     {
     uint64_t instance_id;
     uint64_t frame_n;
@@ -354,7 +352,7 @@ void MainWindow::init_file_from_db(){
     double w = 0.0;
     double h = 0.0;
     auto f = compsky::asciify::flag::guarantee::between_zero_and_one;
-    while(mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &instance_id, &frame_n, f, &x, f, &y, f, &w, f, &h)){
+    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &instance_id, &frame_n, f, &x, f, &y, f, &w, f, &h)){
         InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
         iw->id = instance_id;
         
@@ -364,10 +362,10 @@ void MainWindow::init_file_from_db(){
         this->instanceid2pointer[instance_id] = iw;
         
         
-        mymysql::query(&sql2::RES,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
+        compsky::mysql::query(&sql2::RES,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
         
         uint64_t tag_id;
-        while(mymysql::assign_next_result(sql2::RES, &sql2::ROW, &tag_id))
+        while(compsky::mysql::assign_next_result(sql2::RES, &sql2::ROW, &tag_id))
             iw->tags.append(this->tag_id2name[tag_id]);
         
         iw->set_colour(QColor(255,0,255,100));
@@ -387,11 +385,11 @@ void MainWindow::init_file_from_db(){
         InstanceWidget* master = iter->second;
         
         
-        mymysql::query(&sql1::RES,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
+        compsky::mysql::query(&sql1::RES,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
         
         uint64_t relation_id;
         uint64_t slave_id;
-        while(mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &relation_id, &slave_id)){
+        while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &relation_id, &slave_id)){
             InstanceWidget* slave  = this->instanceid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
@@ -400,9 +398,9 @@ void MainWindow::init_file_from_db(){
             
             ir->id = relation_id;
             
-            mymysql::query(&sql2::RES,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
+            compsky::mysql::query(&sql2::RES,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
             uint64_t tag_id;
-            while(mymysql::assign_next_result(sql1::RES, &sql1::ROW, &tag_id))
+            while(compsky::mysql::assign_next_result(sql1::RES, &sql1::ROW, &tag_id))
                 ir->tags.append(this->tag_id2name[tag_id]);
             
             master->relations[slave] = ir;
@@ -536,12 +534,12 @@ void MainWindow::media_score(){
     
     this->ensure_fileID_set();
     
-    mymysql::exec("UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
+    compsky::mysql::exec("UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
 }
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-        mymysql::exec("INSERT INTO file (name) VALUES(\"", compsky::asciify::flag::escape, '"', this->get_media_fp(), "\")");
+        compsky::mysql::exec("INSERT INTO file (name) VALUES(\"", compsky::asciify::flag::escape, '"', this->get_media_fp(), "\")");
         this->file_id = get_last_insert_id();
     }
 }
@@ -549,10 +547,10 @@ void MainWindow::ensure_fileID_set(){
 void MainWindow::media_note(){
     this->ensure_fileID_set();
     
-    mymysql::query(&sql1::RES,  "SELECT note FROM file WHERE id=", this->file_id);
+    compsky::mysql::query(&sql1::RES,  "SELECT note FROM file WHERE id=", this->file_id);
     
     NOTE[0] = 0;
-    mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &NOTE);
+    compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &NOTE);
     
     bool ok;
     QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
@@ -567,11 +565,11 @@ void MainWindow::media_note(){
         NOTE[j++] = cstr[i];
     }
     NOTE[j] = 0;
-    mymysql::exec("UPDATE file SET note=\"", compsky::asciify::flag::escape, '"', NOTE, "\" WHERE id=", this->file_id);
+    compsky::mysql::exec("UPDATE file SET note=\"", compsky::asciify::flag::escape, '"', NOTE, "\" WHERE id=", this->file_id);
 }
 
 void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
-    mymysql::exec("INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
+    compsky::mysql::exec("INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
 }
 
 uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
@@ -654,7 +652,7 @@ QString MainWindow::media_tag(QString str){
     
     this->ensure_fileID_set();
     
-    mymysql::exec("INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
+    compsky::mysql::exec("INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
     
     return tagstr;
 }
@@ -699,14 +697,14 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     uint64_t value = 0;
     
     goto__returnresultsofthegetidfromtablequery:
-    mymysql::query(&sql1::RES,  "SELECT id FROM ", table_name, " WHERE name=\"", compsky::asciify::flag::escape, '"', entry_name, '"');
+    compsky::mysql::query(&sql1::RES,  "SELECT id FROM ", table_name, " WHERE name=\"", compsky::asciify::flag::escape, '"', entry_name, '"');
     
-    while(mymysql::assign_next_result(sql1::RES,  &sql1::ROW,  &value));
+    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &value));
     
     if (value)
         return value;
     
-    mymysql::exec("INSERT INTO ", table_name, " (name) VALUES (\"", compsky::asciify::flag::escape, '"', entry_name, "\")");
+    compsky::mysql::exec("INSERT INTO ", table_name, " (name) VALUES (\"", compsky::asciify::flag::escape, '"', entry_name, "\")");
     goto goto__returnresultsofthegetidfromtablequery;
 }
 
@@ -813,7 +811,7 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     
     this->ensure_fileID_set();
     
-    mymysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", compsky::asciify::flag::concat::start, ',', this->file_id, f, x, 17, f, y, 17, f, w, 17, f, h, 17, frame_n, compsky::asciify::flag::concat::end, ')');
+    compsky::mysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", compsky::asciify::flag::concat::start, ',', this->file_id, f, x, 17, f, y, 17, f, w, 17, f, h, 17, frame_n, compsky::asciify::flag::concat::end, ')');
 }
 
 void MainWindow::create_instance(){
@@ -848,7 +846,7 @@ void MainWindow::create_instance(){
             tagid = this->get_id_from_table("tag", tagchars);
         }
         this->instance_widget->tags.append(tagstr);
-        mymysql::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
+        compsky::mysql::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
     }
     
     this->instance_widget->set_colour(QColor(255,0,255,100));
