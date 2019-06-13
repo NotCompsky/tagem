@@ -6,7 +6,7 @@
 
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
 
-#include "mainwindow.h"
+#include "mainwindow.hpp"
 
 
 int dummy_argc = 0;
@@ -14,7 +14,7 @@ char** dummy_argv;
 
 
 int main(const int argc,  const char** argv){
-    compsky::mysql::init(argv[1]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
   #ifdef VID
     QtAV::Widgets::registerRenderers();
   #endif

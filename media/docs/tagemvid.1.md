@@ -4,11 +4,11 @@
 
 # NAME
 
-mytagvid - Utility to aid the tagging of a stream of video files
+tagemvid - Utility to aid the tagging of a stream of video files
 
 # SYNOPSIS
 
-mytagvid *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagemvid *MYSQL_CONFIG_FILE* [*OPTIONS*]
 
 # DESCRIPTION
 
@@ -16,19 +16,19 @@ A Qt5 and MySQL C++ GUI program designed for rapid heirarchical tagging of many 
 
 # ARGUMENTS
 
-See **mytag**(1)
+See **tagem**(1)
 
 # OPTIONS
 
-See **mytag**(1)
+See **tagem**(1)
 
 # EXAMPLES
 
 # USAGE
 
-See **mytag**(1) for the core usage details.
+See **tagem**(1) for the core usage details.
 
-Additional commands in **mytagvid** include:
+Additional commands in **tagemvid** include:
 
 * *SPACE* to play/pause current video
 * *LEFT BRACKET* to decrease audio volume
@@ -36,7 +36,7 @@ Additional commands in **mytagvid** include:
 
 # COMMON MISTAKES
 
-See **mytag**(1)
+See **tagem**(1)
 
 # BUGS
 
@@ -60,7 +60,7 @@ None known.
 
 # CONTRIBUTING
 
-See **mytag**(1)
+See **tagem**(1)
 
 # SEE ALSO
-mytagimg(1), mytagtxt(1), myfindvid(1), mytag(1)
+tagemimg(1), tagemtxt(1), myfindvid(1), tagem(1)

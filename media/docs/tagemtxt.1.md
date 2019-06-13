@@ -4,11 +4,11 @@
 
 # NAME
 
-mytagtxt - Utility to aid the tagging of a stream of text files
+tagemtxt - Utility to aid the tagging of a stream of text files
 
 # SYNOPSIS
 
-mytagtxt *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagemtxt *MYSQL_CONFIG_FILE* [*OPTIONS*]
 
 # DESCRIPTION
 
@@ -16,34 +16,34 @@ A Qt5 and MySQL C++ GUI program designed for rapid heirarchical tagging of many 
 
 # ARGUMENTS
 
-See **mytag**(1)
+See **tagem**(1)
 
 # OPTIONS
 
-See **mytag**(1)
+See **tagem**(1)
 
 # EXAMPLES
 
 In descending order of usefulness.
 
-`find -name '*.txt' -o -name '*.md' ~/Documents  |  mytagtxt ~/.config/mysql/mytag.auth`
+`find -name '*.txt' -o -name '*.md' ~/Documents  |  tagemtxt ~/.config/mysql/tagem.auth`
 :   Process all files with **txt** and **md** file extensions.
 
-`myfindtxt ~/Documents  |  mydefmt  |  mytagtxt ~/.config/mysql/mytag.auth`
+`myfindtxt ~/Documents  |  mydefmt  |  tagemtxt ~/.config/mysql/tagem.auth`
 :   The same as above, but using **myfindtxt**(1)
 
 # USAGE
 
-See **mytag**(1) for the core usage details.
+See **tagem**(1) for the core usage details.
 
-Additional commands in **mytagtxt** include:
+Additional commands in **tagemtxt** include:
 
 * *i* to toggle read-only mode
 * *s* to save current file
 
 # COMMON MISTAKES
 
-See **mytag**(1)
+See **tagem**(1)
 
 # BUGS
 
@@ -67,7 +67,7 @@ None known.
 
 # CONTRIBUTING
 
-See **mytag**(1)
+See **tagem**(1)
 
 # SEE ALSO
-mytagimg(1), mytagvid(1), myfindtxt(1), mytag(1)
+tagemimg(1), tagemvid(1), myfindtxt(1), tagem(1)

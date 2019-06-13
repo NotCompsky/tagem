@@ -1,7 +1,9 @@
-#include "mainwindow.h"
+#include "mainwindow.hpp"
 
 #include <cstdio> // for remove
-#include <unistd.h> // for symlink
+#ifndef _WIN32
+# include <unistd.h> // for symlink
+#endif
 #include <string.h> // for memset
 
 #include <QApplication> // for QApplication::queryKeyboardModifiers
@@ -25,11 +27,22 @@
 #include <compsky/mysql/query.hpp> // for compsky::mysql::(exec|query)(_buffer)?
 #include <compsky/qt5/tagdialog.hpp> // for TagDialog
 
+#include "keyreceiver.hpp"
+
+#ifdef BOXABLE
+# include <vector> // for std::vector
+# include "instancerelation.hpp"
+# include "instancewidget.hpp"
+# include "instancewidgetbutton.hpp"
+# include "overlay.hpp"
+#endif
+
+#include "utils.hpp"
+
 #ifdef DEBUG
-  #define PRINTF printf
+# define PRINTF printf
 #else
-  template<typename... Args>
-  void PRINTF(Args... args){};
+# define PRINTF(...)
 #endif
 
 #define STDIN_FILENO 0
@@ -37,100 +50,30 @@
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
 
 
-namespace sql1 {
-    MYSQL_RES* RES;
-    MYSQL_ROW ROW;
-}
-namespace sql2 {
-    MYSQL_RES* RES;
-    MYSQL_ROW ROW;
-}
+MYSQL_RES* RES1;
+MYSQL_ROW ROW1;
+MYSQL_RES* RES2;
+MYSQL_ROW ROW2;
 
 
 constexpr int MIN_FONT_SIZE = 8;
-constexpr int SCROLL_INTERVAL = 1;
 
 
-namespace compsky::asciify {
-    char* BUF = (char*)malloc(4096);
+namespace compsky {
+    namespace asciify {
+        char* BUF = (char*)malloc(4096);
+    }
 }
+
+constexpr static const compsky::asciify::flag::Escape f_esc;
+constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOne f_g;
+constexpr static const compsky::asciify::flag::concat::Start f_start;
+constexpr static const compsky::asciify::flag::concat::End f_end;
+
 
 char* NOTE = (char*)malloc(30000);
 
 
-uint64_t get_last_insert_id(){
-    uint64_t n = 0;
-    compsky::mysql::query_buffer(&sql1::RES,  "SELECT LAST_INSERT_ID() as ''");
-    while (compsky::mysql::assign_next_result(sql1::RES, &sql1::ROW, &n));
-    return n;
-}
-
-#ifdef BOXABLE
-void InstanceWidget::start_relation_line(){
-    this->win->start_relation_line(this);
-}
-void InstanceWidget::add_relation_line(InstanceWidget* iw){
-    if (this->relations[iw])
-        return;
-    QPoint middle = (this->geometry.topRight() + iw->geometry.topLeft()) / 2;
-    InstanceRelation* ir = new InstanceRelation(middle, this->parent);
-    this->win->main_widget_overlay->do_not_update_instances = true;
-    
-    compsky::mysql::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
-    
-    ir->id = get_last_insert_id();
-    
-    // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
-    while(true){
-        bool ok;
-        TagDialog* tagdialog = new TagDialog("Relation Tag", "");
-        tagdialog->name_edit->setCompleter(this->win->tagcompleter);
-        if (tagdialog->exec() != QDialog::Accepted)
-            break;
-        QString tagstr = tagdialog->name_edit->text();
-        if (tagstr.isEmpty())
-            break;
-        uint64_t tagid;
-        if (!win->tagslist.contains(tagstr))
-            tagid = win->add_new_tag(tagstr);
-        else {
-            QByteArray tagstr_ba = tagstr.toLocal8Bit();
-            const char* tagchars = tagstr_ba.data();
-            tagid = win->get_id_from_table("tag", tagchars);
-        }
-        ir->tags.append(tagstr);
-        compsky::mysql::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
-    }
-    this->win->main_widget_overlay->do_not_update_instances = false;
-    this->relations[iw] = ir;
-    this->win->main_widget_overlay->update();
-}
-
-void Overlay::paintEvent(QPaintEvent* e){
-    if (this->do_not_update_instances)
-        return;
-    QPainter painter(this);
-    QPen pen;
-    pen.setStyle(Qt::DashLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum
-    pen.setWidth(3);
-    pen.setBrush(Qt::green);
-    painter.setPen(pen);
-    painter.save();
-    foreach(InstanceWidget* iw,  this->win->instance_widgets){
-        for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
-            // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
-            QPoint master;
-            QPoint slave;
-            master = iw->geometry.topRight();
-            slave  = iter->first->geometry.topLeft();
-            painter.drawLine(master, slave);
-            QPoint p = (master + slave) / 2;
-            iter->second->btn->move(p);
-        }
-    }
-    painter.restore();
-}
-#endif
 
 MainWindow::~MainWindow(){
     //delete key_receiver;
@@ -175,11 +118,11 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
         } else exit(3);
     }
     
-    compsky::mysql::query_buffer(&sql1::RES,  "SELECT id, name FROM tag");
+    compsky::mysql::query_buffer(&RES1,  "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
-    while (compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id, &name)){
+    while (compsky::mysql::assign_next_result(RES1,  &ROW1,  &id, &name)){
         const QString s = name;
         this->tag_id2name[id] = s;
         this->tagslist << s;
@@ -272,7 +215,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
     
     setLayout(vl);
     
-    keyReceiver* key_receiver = new keyReceiver();
+    KeyReceiver* key_receiver = new KeyReceiver();
     key_receiver->window = this;
     
     this->installEventFilter(key_receiver);
@@ -323,17 +266,6 @@ void MainWindow::media_next(){
     this->media_open();
 }
 
-uint64_t is_file_in_db(const char* fp){
-    constexpr const char* a = "SELECT id FROM file WHERE name=\"";
-    
-    compsky::mysql::query(&sql1::RES,  "SELECT id FROM file WHERE name=\"", compsky::asciify::flag::escape, '"', fp, "\"");
-    
-    uint64_t id = 0;
-    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &id));
-    
-    return id;
-}
-
 void MainWindow::init_file_from_db(){
   #ifdef SCROLLABLE
     const double W = this->main_widget_orig_size.width();
@@ -343,7 +275,7 @@ void MainWindow::init_file_from_db(){
     const double H = this->main_widget->size().height();
   #endif
   #ifdef BOXABLE
-    compsky::mysql::query(&sql1::RES,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
+    compsky::mysql::query(&RES1,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
     {
     uint64_t instance_id;
     uint64_t frame_n;
@@ -351,8 +283,8 @@ void MainWindow::init_file_from_db(){
     double y = 0.0;
     double w = 0.0;
     double h = 0.0;
-    auto f = compsky::asciify::flag::guarantee::between_zero_and_one;
-    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &instance_id, &frame_n, f, &x, f, &y, f, &w, f, &h)){
+    
+    while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &instance_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
         InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
         iw->id = instance_id;
         
@@ -362,10 +294,10 @@ void MainWindow::init_file_from_db(){
         this->instanceid2pointer[instance_id] = iw;
         
         
-        compsky::mysql::query(&sql2::RES,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
+        compsky::mysql::query(&RES2,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
         
         uint64_t tag_id;
-        while(compsky::mysql::assign_next_result(sql2::RES, &sql2::ROW, &tag_id))
+        while(compsky::mysql::assign_next_result(RES2, &ROW2, &tag_id))
             iw->tags.append(this->tag_id2name[tag_id]);
         
         iw->set_colour(QColor(255,0,255,100));
@@ -385,11 +317,11 @@ void MainWindow::init_file_from_db(){
         InstanceWidget* master = iter->second;
         
         
-        compsky::mysql::query(&sql1::RES,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
+        compsky::mysql::query(&RES1,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
         
         uint64_t relation_id;
         uint64_t slave_id;
-        while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &relation_id, &slave_id)){
+        while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &relation_id, &slave_id)){
             InstanceWidget* slave  = this->instanceid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
@@ -398,9 +330,9 @@ void MainWindow::init_file_from_db(){
             
             ir->id = relation_id;
             
-            compsky::mysql::query(&sql2::RES,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
+            compsky::mysql::query(&RES2,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
             uint64_t tag_id;
-            while(compsky::mysql::assign_next_result(sql1::RES, &sql1::ROW, &tag_id))
+            while(compsky::mysql::assign_next_result(RES1, &ROW1, &tag_id))
                 ir->tags.append(this->tag_id2name[tag_id]);
             
             master->relations[slave] = ir;
@@ -539,7 +471,7 @@ void MainWindow::media_score(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-        compsky::mysql::exec("INSERT INTO file (name) VALUES(\"", compsky::asciify::flag::escape, '"', this->get_media_fp(), "\")");
+        compsky::mysql::exec("INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\")");
         this->file_id = get_last_insert_id();
     }
 }
@@ -547,10 +479,10 @@ void MainWindow::ensure_fileID_set(){
 void MainWindow::media_note(){
     this->ensure_fileID_set();
     
-    compsky::mysql::query(&sql1::RES,  "SELECT note FROM file WHERE id=", this->file_id);
+    compsky::mysql::query(&RES1,  "SELECT note FROM file WHERE id=", this->file_id);
     
     NOTE[0] = 0;
-    compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &NOTE);
+    compsky::mysql::assign_next_result(RES1,  &ROW1,  &NOTE);
     
     bool ok;
     QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
@@ -565,7 +497,7 @@ void MainWindow::media_note(){
         NOTE[j++] = cstr[i];
     }
     NOTE[j] = 0;
-    compsky::mysql::exec("UPDATE file SET note=\"", compsky::asciify::flag::escape, '"', NOTE, "\" WHERE id=", this->file_id);
+    compsky::mysql::exec("UPDATE file SET note=\"", f_esc, '"', NOTE, "\" WHERE id=", this->file_id);
 }
 
 void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
@@ -669,6 +601,7 @@ void MainWindow::media_overwrite(){
         PRINTF("Overwritten with: %s\n", str.toLocal8Bit().data());
 }
 
+#ifndef _WIN32
 void MainWindow::media_replace_w_link(const char* src){
     PRINTF("Deleting: %s\n", this->get_media_fp());
     if (remove(this->get_media_fp()) != 0)
@@ -676,11 +609,13 @@ void MainWindow::media_replace_w_link(const char* src){
     if (symlink(src, this->get_media_fp()) != 0)
         fprintf(stderr, "Failed to create ln2del symlink: %s\n", this->get_media_fp());
 }
+#endif
 
 void MainWindow::media_delete(){
     this->media_replace_w_link("/home/compsky/bin/ln2del_ln");
 }
 
+#ifndef _WIN32
 void MainWindow::media_linkfrom(){
     bool ok;
     QString str = QInputDialog::getText(this, tr("Overwrite with link"), tr("Source path"), QLineEdit::Normal, "", &ok);
@@ -692,19 +627,20 @@ void MainWindow::media_linkfrom(){
     const char* src = str.toLocal8Bit().data();
     this->media_replace_w_link(src);
 }
+#endif
 
 uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry_name){
     uint64_t value = 0;
     
     goto__returnresultsofthegetidfromtablequery:
-    compsky::mysql::query(&sql1::RES,  "SELECT id FROM ", table_name, " WHERE name=\"", compsky::asciify::flag::escape, '"', entry_name, '"');
+    compsky::mysql::query(&RES1,  "SELECT id FROM ", table_name, " WHERE name=\"", f_esc, '"', entry_name, '"');
     
-    while(compsky::mysql::assign_next_result(sql1::RES,  &sql1::ROW,  &value));
+    while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &value));
     
     if (value)
         return value;
     
-    compsky::mysql::exec("INSERT INTO ", table_name, " (name) VALUES (\"", compsky::asciify::flag::escape, '"', entry_name, "\")");
+    compsky::mysql::exec("INSERT INTO ", table_name, " (name) VALUES (\"", f_esc, '"', entry_name, "\")");
     goto goto__returnresultsofthegetidfromtablequery;
 }
 
@@ -749,15 +685,6 @@ bool operator<(const QRect& a, const QRect& b){
     // To allow their use as keys
     return (&a < &b);
 }
-
-template<typename T>
-void scale(QRect& rect,  T scale){
-    const QPoint d = (rect.bottomRight() - rect.topLeft())  *  scale;
-    const QPoint p = rect.topLeft() * scale;
-    const QPoint q = QPoint(p.x() + d.x(),  p.y() + d.y());
-    rect.setTopLeft(p);
-    rect.setBottomRight(q);
-};
 
 #ifdef SCROLLABLE
 void MainWindow::rescale_main(double factor){
@@ -807,11 +734,9 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     double h  =  (botR.y() / H);
   #endif
     
-    auto f = compsky::asciify::flag::guarantee::between_zero_and_one;
-    
     this->ensure_fileID_set();
     
-    compsky::mysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", compsky::asciify::flag::concat::start, ',', this->file_id, f, x, 17, f, y, 17, f, w, 17, f, h, 17, frame_n, compsky::asciify::flag::concat::end, ')');
+    compsky::mysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
 }
 
 void MainWindow::create_instance(){
@@ -886,205 +811,3 @@ void MainWindow::create_relation_line_to(InstanceWidget* iw){
 }
 #endif
 
-
-
-
-std::map<const int, const int> key2n = {
-    {Qt::Key_1, 1},
-    {Qt::Key_2, 2},
-    {Qt::Key_3, 3},
-    {Qt::Key_4, 4},
-    {Qt::Key_5, 5},
-    {Qt::Key_6, 6},
-    {Qt::Key_7, 7},
-    {Qt::Key_8, 8},
-    {Qt::Key_9, 9},
-    {Qt::Key_0, 0},
-    {Qt::Key_Exclam, 1},
-    {Qt::Key_QuoteDbl, 2},
-    {Qt::Key_sterling, 3},
-    {Qt::Key_Dollar, 4},
-    {Qt::Key_Percent, 5},
-    {Qt::Key_AsciiCircum, 6},
-    {Qt::Key_Ampersand, 7},
-    {Qt::Key_Asterisk, 8},
-    {Qt::Key_ParenLeft, 9},
-    {Qt::Key_ParenRight, 0},
-};
-
-
-bool keyReceiver::eventFilter(QObject* obj, QEvent* event)
-// src: https://wiki.qt.io/How_to_catch_enter_key
-{
-    Qt::KeyboardModifiers kb_mods = QApplication::queryKeyboardModifiers();
-    switch(event->type()){
-        case QEvent::Wheel:{ // Mouse wheel rolled
-            QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
-          #ifdef TXT
-            short direction  =  (wheel_event->delta() > 0 ? SCROLL_INTERVAL : -1 * SCROLL_INTERVAL);
-            return true;
-          #endif
-          #ifdef SCROLLABLE
-            if ((kb_mods & Qt::ControlModifier) == 0)
-                // Scroll (default) unless CTRL key is down
-                return true;
-            double factor  =  (wheel_event->delta() > 0 ? 1.25 : 0.80);
-            window->rescale_main(factor);
-          #endif
-            return true;
-        }
-      #ifdef BOXABLE
-        case QEvent::MouseButtonPress:{
-            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-            window->mouse_dragged_from = mouse_event->pos();
-          #ifdef SCROLLABLE
-            window->mouse_dragged_from += window->get_scroll_offset();
-            /*
-            if (window->mouse_dragged_from.x() < 0)
-                window->mouse_dragged_from.setX(0);
-            else if (window->mouse_dragged_from.x() > window->main_widget->size().width())
-                window->mouse_dragged_from.setX(window->main_widget->size().width());
-            if (window->mouse_dragged_from.y() < 0)
-                window->mouse_dragged_from.setY(0);
-            else if (window->mouse_dragged_from.y() > window->main_widget->size().height())
-                window->mouse_dragged_from.setY(window->main_widget->size().height());
-            */
-          #endif
-            window->is_mouse_down = true;
-            if (window->instance_widget != nullptr){
-                delete window->instance_widget;
-                window->instance_widget = nullptr;
-                return true;
-            }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window, window->main_widget);
-            window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
-            QRect r = window->boundingbox_geometry;
-            window->instance_widget->setGeometry(r);
-            window->instance_widget->show();
-            return true;
-        }
-        case QEvent::MouseButtonRelease:{
-            window->is_mouse_down = false;
-            return true;
-        }
-        case QEvent::MouseMove:{
-            QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
-            window->mouse_dragged_to = mouse_event->pos();
-          #ifdef SCROLLABLE
-            window->mouse_dragged_to += window->get_scroll_offset();
-          #endif
-            if (!window->is_mouse_down  ||  window->instance_widget == nullptr){
-                window->display_instance_mouseover();
-                return true;
-            }
-            window->instance_widget->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
-            return true;
-        }
-      #endif
-        case QEvent::KeyPress:{
-            QKeyEvent* key = static_cast<QKeyEvent*>(event);
-            switch(int keyval = key->key()){
-                case Qt::Key_Enter:
-                case Qt::Key_Return:
-                case Qt::Key_D:
-                    window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
-                    break;
-                case Qt::Key_L:
-                    window->media_linkfrom();
-                    break;
-                case Qt::Key_R: // Rate
-                    window->media_score();
-                    break;
-                case Qt::Key_I:
-                  #ifdef TXT // No need for text editor to select rectangles
-                    window->unset_read_only();
-                   #ifdef BOXABLE
-                    #error "TXT and BOXABLE are mutually exclusive"
-                   #endif
-                  #endif
-                  #ifdef BOXABLE
-                    window->create_instance();
-                  #endif
-                    break;
-                case Qt::Key_Escape:
-                  #ifdef TXT
-                    window->set_read_only();
-                  #endif
-                    break;
-                case Qt::Key_S: // Save
-                  #ifdef TXT
-                    window->media_save();
-                  #endif
-                    break;
-                case Qt::Key_N:
-                    window->media_note();
-                    break;
-                case Qt::Key_T:
-                    window->media_tag("");
-                    break;
-                case Qt::Key_O:
-                    window->media_overwrite();
-                    break;
-                case Qt::Key_Q:
-                    window->close();
-                    break;
-                case Qt::Key_X:
-                    window->media_delete();
-                    window->media_next();
-                    break;
-                case Qt::Key_Space:
-                  #ifdef VID
-                    window->playPause();
-                  #endif
-                    break;
-                case Qt::Key_BracketLeft:
-                  #ifdef VID
-                    if (window->volume > 0){
-                        window->volume -= 0.05;
-                        window->m_player->audio()->setVolume(window->volume);
-                    }
-                  #endif
-                    break;
-                case Qt::Key_BracketRight:
-                  #ifdef VID
-                    if (window->volume < 1.25){
-                        window->volume += 0.05;
-                        window->m_player->audio()->setVolume(window->volume);
-                    }
-                  #endif
-                    break;
-                /* Preset Tags */
-                // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
-                case Qt::Key_1:
-                case Qt::Key_2:
-                case Qt::Key_3:
-                case Qt::Key_4:
-                case Qt::Key_5:
-                case Qt::Key_6:
-                case Qt::Key_7:
-                case Qt::Key_8:
-                case Qt::Key_9:
-                case Qt::Key_0:
-                    window->media_tag(window->tag_preset[key2n[keyval]]);
-                    break;
-                case Qt::Key_Exclam:
-                case Qt::Key_QuoteDbl:
-                case Qt::Key_sterling:
-                case Qt::Key_Dollar:
-                case Qt::Key_Percent:
-                case Qt::Key_AsciiCircum:
-                case Qt::Key_Ampersand:
-                case Qt::Key_Asterisk:
-                case Qt::Key_ParenLeft:
-                case Qt::Key_ParenRight:
-                    window->media_tag_new_preset(key2n[keyval]);
-                    break;
-                
-                default: return QObject::eventFilter(obj, event);
-            }
-            return true;
-        }
-        default: break;
-    }
-    return QObject::eventFilter(obj, event);
-}

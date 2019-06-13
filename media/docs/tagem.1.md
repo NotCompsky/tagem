@@ -4,11 +4,11 @@
 
 # NAME
 
-mytag - Family of utilities to aid the tagging of a stream of large quantities of files
+tagem - Family of utilities to aid the tagging of a stream of large quantities of files
 
 # SYNOPSIS
 
-mytag**FILE_TYPE** *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagem**FILE_TYPE** *MYSQL_CONFIG_FILE* [*OPTIONS*]
 
 where **FILE_TYPE** is one of **txt**, **img**, **vid**
 
@@ -35,7 +35,7 @@ t
 
 # EXAMPLES
 
-See **mytagtxt**(1), **mytagimg**(1), **mytagvid**(1) for examples.
+See **tagemtxt**(1), **tagemimg**(1), **tagemvid**(1) for examples.
 
 # USAGE
 
@@ -65,13 +65,13 @@ The program is largely based on key and mouse events.
 
 # ROADMAP
 
-**mytagpdf** is planned, to support PDF rendering, and will likely act very similarly to **mytagimg**.
+**tagempdf** is planned, to support PDF rendering, and will likely act very similarly to **tagemimg**.
 
 # CONTRIBUTING
 
-Repository is found at https://github.com/NotCompsky/mytags
+Repository is found at https://github.com/NotCompsky/tagems
 
 Lines that are easiest to contribute to are often marked with `# CONTRIBUTIONS WELCOME`
 
 # SEE ALSO
-mytagtxt(1), mytagimg(1), mytagvid(1), myfind(1)
+tagemtxt(1), tagemimg(1), tagemvid(1), myfind(1)
