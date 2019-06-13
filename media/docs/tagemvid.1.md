@@ -8,15 +8,11 @@ tagemvid - Utility to aid the tagging of a stream of video files
 
 # SYNOPSIS
 
-tagemvid *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagemvid [*OPTIONS*]
 
 # DESCRIPTION
 
 A Qt5 and MySQL C++ GUI program designed for rapid heirarchical tagging of many video files, file paths being provided by STDIN.
-
-# ARGUMENTS
-
-See **tagem**(1)
 
 # OPTIONS
 
@@ -63,4 +59,4 @@ None known.
 See **tagem**(1)
 
 # SEE ALSO
-tagemimg(1), tagemtxt(1), myfindvid(1), tagem(1)
+tagemimg(1), tagemtxt(1), myfindvid(1)

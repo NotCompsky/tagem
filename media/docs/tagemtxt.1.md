@@ -8,15 +8,11 @@ tagemtxt - Utility to aid the tagging of a stream of text files
 
 # SYNOPSIS
 
-tagemtxt *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagemtxt [*OPTIONS*]
 
 # DESCRIPTION
 
 A Qt5 and MySQL C++ GUI program designed for rapid heirarchical tagging of many text files, file paths being provided by STDIN.
-
-# ARGUMENTS
-
-See **tagem**(1)
 
 # OPTIONS
 

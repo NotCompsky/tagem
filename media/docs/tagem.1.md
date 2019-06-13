@@ -8,25 +8,13 @@ tagem - Family of utilities to aid the tagging of a stream of large quantities o
 
 # SYNOPSIS
 
-tagem**FILE_TYPE** *MYSQL_CONFIG_FILE* [*OPTIONS*]
+tagem**FILE_TYPE** [*OPTIONS*]
 
 where **FILE_TYPE** is one of **txt**, **img**, **vid**
 
 # DESCRIPTION
 
 A Qt5 and MySQL C++ GUI program designed for rapid heirarchical tagging of many files, file paths being provided by STDIN.
-
-# ARGUMENTS
-
-*MYSQL_CONFIG_FILE*
-:   File path of MySQL config file
-    The first line must be the **URL**
-    
-    The second line must be the **USERNAME**
-    
-    The third line must be the **PASSWORD**
-    
-    **WARNING**: Lines must be delineated only by a single newline (\\n) character. Some older Windows text editors might insert an additional character (a carriage return, \\r), which this program does not account for.
 
 # OPTIONS
 
@@ -54,6 +42,8 @@ The program is largely based on key and mouse events.
 
 ## MOUSE
 
+All but **tagemtxt** include the following:
+
 * Click and drag, then press *i*, to create an object instance around a box
 * Click on two object instances' buttons sequentially to create a master-slave object relation
 
@@ -74,4 +64,4 @@ Repository is found at https://github.com/NotCompsky/tagems
 Lines that are easiest to contribute to are often marked with `# CONTRIBUTIONS WELCOME`
 
 # SEE ALSO
-tagemtxt(1), tagemimg(1), tagemvid(1), myfind(1)
+tagemtxt(1), tagemimg(1), tagemvid(1)
