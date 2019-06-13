@@ -41,7 +41,7 @@ int main(const int argc, const char** argv){
     
     int i = 0;
     
-    compsky::mysql::init(argv[++i]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
     bool is_absolute = false;
     
@@ -75,14 +75,14 @@ int main(const int argc, const char** argv){
     
     // All remaining arguments (i.e. argv[j] for all i<=j<argc) are tags
     
-    auto f = compsky::asciify::flag::concat::start;
-    auto g = compsky::asciify::flag::concat::end;
+    constexpr static const compsky::asciify::flag::concat::Start f;
+    constexpr static const compsky::asciify::flag::concat::End g;
     
     const size_t cwd_len = strlen(cwd);
     cwd[cwd_len] = '/';  // Replace trailing \0
     
-    auto start_prefix = compsky::asciify::flag::prefix::start;
-    auto end_prefix   = compsky::asciify::flag::prefix::end;
+    constexpr static const compsky::asciify::flag::prefix::Start start_prefix;
+    constexpr static const compsky::asciify::flag::prefix::End end_prefix;
     
     compsky::mysql::exec(
         // If tags do not already exist in table, register them

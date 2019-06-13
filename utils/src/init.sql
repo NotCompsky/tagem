@@ -1,0 +1,98 @@
+R"=====(
+
+CREATE TABLE IF NOT EXISTS user (
+    id BIGINT UNSIGNED NOT NULL,
+    name VARBINARY(128),
+    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS subreddit (
+    id BIGINT UNSIGNED NOT NULL,
+    name VARBINARY(128),
+    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS submission (
+    id BIGINT UNSIGNED NOT NULL,
+    author_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    subreddit_id BIGINT UNSIGNED NOT NULL,
+    content VARBINARY(40000),
+    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS comment (
+    id BIGINT UNSIGNED NOT NULL,
+    parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    author_id BIGINT UNSIGNED NOT NULL,
+    submission_id BIGINT UNSIGNED NOT NULL,
+    content VARBINARY(40000) NOT NULL,
+    created_at BIGINT UNSIGNED NOT NULL,
+    reason_matched INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS subreddit2tag (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    subreddit_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,
+    UNIQUE KEY `subreddit2tag` (`subreddit_id`, `tag_id`),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS tag (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARBINARY(128) UNIQUE,
+    r FLOAT NOT NULL,
+    g FLOAT NOT NULL,
+    b FLOAT NOT NULL,
+    a FLOAT NOT NULL,
+    UNIQUE KEY (`name`),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS reason_matched (
+    id INT UNSIGNED NOT NULL,
+    name VARBINARY(128) UNIQUE,
+    UNIQUE KEY (name),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS user2subreddit_cmnt_count (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    subreddit_id BIGINT UNSIGNED NOT NULL,
+    count INT UNSIGNED NOT NULL,
+    UNIQUE KEY `user2subreddit` (`user_id`, `subreddit_id`),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS tag2category (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag_id BIGINT UNSIGNED NOT NULL,
+    category_id INT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS category (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARBINARY(32),
+    UNIQUE KEY (name),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS moderator (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    subreddit_id BIGINT UNSIGNED NOT NULL,
+    permissions BIGINT UNSIGNED NOT NULL,
+    added_on BIGINT UNSIGNED NOT NULL,
+    removed_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    rank INT UNSIGNED NOT NULL,
+    UNIQUE KEY `user2subreddit` (`user_id`, `subreddit_id`),
+    PRIMARY KEY (id)
+);
+)====="

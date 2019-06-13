@@ -93,16 +93,16 @@ int main(const int argc, const char** argv) {
     {
     
     constexpr const char* a = "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'";
-    auto f = compsky::asciify::flag::concat::start;
-    auto g = compsky::asciify::flag::concat::end;
-    compsky::mysql::exec(a, f, "','", 3, argv+arg_n+1, argc-arg_n-1, g, "'\")");
+    constexpr static const compsky::asciify::flag::concat::Start f_start;
+    constexpr static const compsky::asciify::flag::concat::End f_end;
+    compsky::mysql::exec(a, f_start, "','", 3, argv+arg_n+1, argc-arg_n-1, f_end, "'\")");
     
     if (not_subtags.size() != 0){
         compsky::asciify::BUF_INDX = strlen(a);
         
         compsky::asciify::BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
         
-        compsky::asciify::asciify(/* a already included in BUF */ f, "','", 3, not_subtags.data(), not_subtags.size(), g, ')');
+        compsky::asciify::asciify(/* a already included in BUF */ f_start, "','", 3, not_subtags.data(), not_subtags.size(), f_end, ')');
         
         compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
         
@@ -121,7 +121,7 @@ int main(const int argc, const char** argv) {
     char* name;
     char* fp;
     
-    auto f = compsky::asciify::flag::guarantee::between_zero_and_one_inclusive;
+    constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
     while(compsky::mysql::assign_next_result(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
         view_img(name, fp, x, y, w, h);

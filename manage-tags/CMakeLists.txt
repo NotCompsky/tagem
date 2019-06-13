@@ -21,3 +21,9 @@ set(CMAKE_CXX_STANDARD 11)
 add_executable(tagem-tags src/main.cpp src/mainwindow.cpp src/primaryitem.cpp src/tagchildtreeview.cpp src/tagparenttreeview.cpp src/tagtreemodel.cpp src/tagtreeview.cpp)
 target_compile_definitions(tagem-tags PRIVATE ${MY_DEFINITIONS} QT_GUI_LIB=1)
 target_link_libraries(tagem-tags mysqlclient Qt5::Widgets compsky_asciify compsky_mysql compsky_qt5)
+
+install(
+    TARGETS tagem-tags
+    RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+        COMPONENT bin
+)

@@ -161,7 +161,7 @@ void construct_stmt(const char** argv){
 }
 
 
-int main(const int argc, const char* argv[]){
+int main(const int argc,  const char** argv){
     compsky::mysql::init(argv[1]);
     
     construct_stmt(argv + 2);
