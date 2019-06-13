@@ -1,9 +1,17 @@
 #include "primaryitem.hpp"
 
-#include "asciify_flags.hpp"
+#include <QStandardItem>
+
+#include <compsky/asciify/flags.hpp>
+#include <compsky/mysql/query.hpp>
+
+
 #include "tagtreemodel.hpp"
 
-#include "mymysql_results.hpp"
+
+namespace _f {
+    constexpr static const compsky::asciify::flag::Escape esc;
+}
 
 
 void PrimaryItem::delete_self(){
@@ -11,7 +19,7 @@ void PrimaryItem::delete_self(){
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
-    mymysql::exec("DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
+    compsky::mysql::exec("DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
     if (prnt)
         this->model()->removeRow(this->row());
     else
@@ -30,10 +38,8 @@ void NameItem::setData(const QVariant& value,  int role){
     if (!s)
         return;
     
-    const QString qs = value.toString();
-    const QByteArray ba = qs.toLocal8Bit();
-    const char* neue = ba.data();
-    if (neue[0] == 0)
+    const QString neue = value.toString();
+    if (neue.isEmpty())
         return;
     
     TagTreeModel* mdl = (TagTreeModel*)this->model();
@@ -41,10 +47,10 @@ void NameItem::setData(const QVariant& value,  int role){
         // Probably during construction of NameItem during construction of TagTreeModel
         return;
     
-    if (qs == mdl->tag2name[this->tag_id])
+    if (neue == mdl->tag2name[this->tag_id])
         return;
     
-    mymysql::exec("UPDATE tag SET name=\"",  compsky::asciify::flag::escape,  '"',  neue,  "\" WHERE id=",  this->tag_id);
+    compsky::mysql::exec("UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
     
     QStandardItem::setData(value, role);
 };

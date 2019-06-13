@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.14.1 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 find_package(Qt5Widgets 5.9.5 REQUIRED) # Just the version I know works
+find_package(Compsky REQUIRED COMPONENTS asciify mysql qt)
 set(CMAKE_AUTOMOC ON)
 
 
@@ -15,12 +16,8 @@ else()
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(managetags src/main.cpp src/primaryitem.cpp src/tagtreemodel.cpp src/tagtreeview.cpp src/mainwindow.cpp ../include/utils.cpp ../include/mymysql.cpp ../include/tagdialog.cpp ../include/asciify_base.cpp ../include/asciify_core.cpp  ../include/asciify_types.cpp)
-foreach(def ${MY_DEFINITIONS})
-    target_compile_definitions(managetags PRIVATE ${def})
-endforeach(def)
-target_include_directories(managetags PRIVATE "../include")
-target_link_libraries(managetags mysqlclient Qt5::Widgets)
+add_executable(tagem-tags src/main.cpp src/mainwindow.cpp src/primaryitem.cpp src/tagchildtreeview.cpp src/tagparenttreeview.cpp src/tagtreemodel.cpp src/tagtreeview.cpp)
+target_compile_definitions(tagem-tags PRIVATE ${MY_DEFINITIONS} QT_GUI_LIB=1)
+target_link_libraries(tagem-tags mysqlclient Qt5::Widgets compsky_asciify compsky_mysql compsky_qt5)

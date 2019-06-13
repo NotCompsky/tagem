@@ -1,9 +1,13 @@
 #ifndef __TAGTREEMODEL__
 #define __TAGTREEMODEL__
 
+#include <map> // for std::map
+
 #include <QCompleter>
-#include <QStandardItemModel>
 #include <QMimeData>
+#include <QModelIndex>
+#include <QStandardItemModel>
+#include <QStringList>
 
 // Assumes res1 is already defined through mymysql_results.hpp import
 

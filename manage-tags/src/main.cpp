@@ -1,29 +1,18 @@
 #include <QApplication>
 
-#include "mymysql.hpp" // for mymysql::*, BUF, BUF_INDX
+#include <compsky/mysql/mysql.hpp>
 
 #include "mainwindow.hpp"
 
-namespace compsky::asciify {
-    char* BUF = (char*)malloc(4096);
-}
-
-namespace mymysql {
-    MYSQL_RES* RES;
-    MYSQL_ROW ROW;
-}
-
-namespace detail {
-    // For primaryitem.hpp
-    char* BUF = (char*)malloc(4096);
-    size_t BUF_SZ = 4096;
-    size_t BUF_INDX = 4096;
-    
-    void enlarge_buf(){
-        BUF_INDX += BUF_SZ;
-        BUF = (char*)realloc(BUF, BUF_SZ*=2);
+namespace compsky {
+    namespace asciify {
+        char* BUF = (char*)malloc(4096);
     }
 }
+
+
+MYSQL_RES* RES;
+MYSQL_ROW ROW;
 
 int dummy_argc = 0;
 char** dummy_argv;
@@ -31,10 +20,10 @@ char** dummy_argv;
 
 int main(const int argc,  const char** argv){
     QApplication app(dummy_argc, dummy_argv);
-    mymysql::init(argv[1]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     MainWindow win;
     win.show();
     int rc = app.exec();
-    mymysql::exit();
+    compsky::mysql::exit();
     return rc;
 }
