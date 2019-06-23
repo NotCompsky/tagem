@@ -25,7 +25,7 @@
 
 #include <compsky/asciify/asciify.hpp> // for compsky::asciify::(flag|fake_type)
 #include <compsky/mysql/query.hpp> // for compsky::mysql::(exec|query)(_buffer)?
-#include <compsky/qt5/tagdialog.hpp> // for TagDialog
+#include "name_dialog.hpp"
 
 #include "keyreceiver.hpp"
 
@@ -122,7 +122,7 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
     {
     uint64_t id;
     char* name;
-    while (compsky::mysql::assign_next_result(RES1,  &ROW1,  &id, &name)){
+    while (compsky::mysql::assign_next_row(RES1,  &ROW1,  &id, &name)){
         const QString s = name;
         this->tag_id2name[id] = s;
         this->tagslist << s;
@@ -284,7 +284,7 @@ void MainWindow::init_file_from_db(){
     double w = 0.0;
     double h = 0.0;
     
-    while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &instance_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
+    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &instance_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
         InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
         iw->id = instance_id;
         
@@ -297,7 +297,7 @@ void MainWindow::init_file_from_db(){
         compsky::mysql::query(&RES2,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
         
         uint64_t tag_id;
-        while(compsky::mysql::assign_next_result(RES2, &ROW2, &tag_id))
+        while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
             iw->tags.append(this->tag_id2name[tag_id]);
         
         iw->set_colour(QColor(255,0,255,100));
@@ -321,7 +321,7 @@ void MainWindow::init_file_from_db(){
         
         uint64_t relation_id;
         uint64_t slave_id;
-        while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &relation_id, &slave_id)){
+        while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &relation_id, &slave_id)){
             InstanceWidget* slave  = this->instanceid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
@@ -332,7 +332,7 @@ void MainWindow::init_file_from_db(){
             
             compsky::mysql::query(&RES2,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
             uint64_t tag_id;
-            while(compsky::mysql::assign_next_result(RES1, &ROW1, &tag_id))
+            while(compsky::mysql::assign_next_row(RES1, &ROW1, &tag_id))
                 ir->tags.append(this->tag_id2name[tag_id]);
             
             master->relations[slave] = ir;
@@ -482,7 +482,7 @@ void MainWindow::media_note(){
     compsky::mysql::query(&RES1,  "SELECT note FROM file WHERE id=", this->file_id);
     
     NOTE[0] = 0;
-    compsky::mysql::assign_next_result(RES1,  &ROW1,  &NOTE);
+    compsky::mysql::assign_next_row(RES1,  &ROW1,  &NOTE);
     
     bool ok;
     QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
@@ -518,7 +518,7 @@ uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     this->tag_id2name[tagid] = tagstr;
     
     /* Get parent tag */
-    TagDialog* tagdialog = new TagDialog("Parent Tag of", tagstr);
+    NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
     tagdialog->name_edit->setCompleter(this->tagcompleter);
     goto__cannotcancelparenttag:
     if (tagdialog->exec() != QDialog::Accepted)
@@ -565,7 +565,7 @@ QString MainWindow::media_tag(QString str){
     
     // Triggered on key press
     bool ok;
-    TagDialog* tagdialog = new TagDialog("Tag", str);
+    NameDialog* tagdialog = new NameDialog("Tag", str);
     tagdialog->name_edit->setCompleter(this->tagcompleter);
     if (tagdialog->exec() != QDialog::Accepted)
         return "";
@@ -635,7 +635,7 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     goto__returnresultsofthegetidfromtablequery:
     compsky::mysql::query(&RES1,  "SELECT id FROM ", table_name, " WHERE name=\"", f_esc, '"', entry_name, '"');
     
-    while(compsky::mysql::assign_next_result(RES1,  &ROW1,  &value));
+    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &value));
     
     if (value)
         return value;
@@ -755,7 +755,7 @@ void MainWindow::create_instance(){
     
     while(true){
         bool ok;
-        TagDialog* tagdialog = new TagDialog("Instance Tag", "");
+        NameDialog* tagdialog = new NameDialog("Instance Tag", "");
         tagdialog->name_edit->setCompleter(this->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
             break; // TODO: Create a way to cancel ALL past operations on this instance_widget if the cancel button is pressed for any one of the tags

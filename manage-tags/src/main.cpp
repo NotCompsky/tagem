@@ -21,6 +21,6 @@ int main(int argc,  char** argv){
     MainWindow win;
     win.show();
     int rc = app.exec();
-    compsky::mysql::exit();
+    compsky::mysql::exit_mysql();
     return rc;
 }

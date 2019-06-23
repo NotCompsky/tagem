@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.14.1 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 find_package(QtAV REQUIRED)
 find_package(Qt5Widgets REQUIRED)
-find_package(Compsky REQUIRED COMPONENTS asciify mysql qt5)
+find_package(Compsky REQUIRED COMPONENTS asciify mysql)
 set(CMAKE_AUTOMOC ON)
 
 
@@ -26,9 +26,9 @@ message(STATUS "Targets: ${MY_TARGETS}")
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
-    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/keyreceiver.cpp src/utils.cpp)
+    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/keyreceiver.cpp src/utils.cpp src/name_dialog.cpp)
     target_include_directories("${tgt}" PRIVATE "../include")
-    target_link_libraries("${tgt}" mysqlclient Qt5::Widgets compsky_asciify compsky_mysql compsky_qt5)
+    target_link_libraries("${tgt}" mysqlclient Qt5::Widgets compsky_asciify compsky_mysql)
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
     endforeach(dfn)

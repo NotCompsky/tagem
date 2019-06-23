@@ -1,2 +1,4 @@
+build/*
+build-mxe/*
 *.kate-swp
 *.pro.user

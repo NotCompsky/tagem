@@ -20,7 +20,7 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
     {
     uint64_t id;
     char* name;
-    while (compsky::mysql::assign_next_result(RES, &ROW, &id, &name)){
+    while (compsky::mysql::assign_next_row(RES, &ROW, &id, &name)){
         const QString s = name;
         this->tag2name[id] = s;
         this->tagslist << s;

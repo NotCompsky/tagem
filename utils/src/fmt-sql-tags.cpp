@@ -174,7 +174,7 @@ int main(const int argc,  const char** argv){
     compsky::asciify::BUF_INDX = 0;
     
     char* fp;
-    while (compsky::mysql::assign_next_result(RES, &ROW, &fp)){
+    while (compsky::mysql::assign_next_row(RES, &ROW, &fp)){
         const size_t i = strlen(fp);
         compsky::asciify::ensure_buf_can_fit(i + 1);
         memcpy(compsky::asciify::BUF + compsky::asciify::BUF_INDX,  fp,  i);

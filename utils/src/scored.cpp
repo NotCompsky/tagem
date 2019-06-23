@@ -26,6 +26,6 @@ int main(const int argc,  char** argv){
     
     
     char* s;
-    while (compsky::mysql::assign_next_result(RES, &ROW, &s))
+    while (compsky::mysql::assign_next_row(RES, &ROW, &s))
         std::cout << s << std::endl;
 }

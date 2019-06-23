@@ -7,6 +7,7 @@
 #include <compsky/mysql/query.hpp>
 #include <compsky/qt5/tagdialog.hpp>
 
+#include "name_dialog.hpp"
 #include "tagchildtreeview.hpp"
 #include "tagparenttreeview.hpp"
 
@@ -32,7 +33,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 }
 
 void MainWindow::add_new_tag(){
-    TagDialog* tagdialog = new TagDialog("TagDialog", "TagStr");
+    NameDialog* tagdialog = new NameDialog("TagDialog", "TagStr");
     tagdialog->name_edit->setCompleter(this->tagcompleter);
     
     if (tagdialog->exec() != QDialog::Accepted)

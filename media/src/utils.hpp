@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#include <mysql/mysql.h>
+#include <compsky/mysql/mysql.h>
 
 
 extern MYSQL_RES* RES1;

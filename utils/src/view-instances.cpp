@@ -123,10 +123,10 @@ int main(const int argc, const char** argv) {
     
     constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
-    while(compsky::mysql::assign_next_result(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
+    while(compsky::mysql::assign_next_row(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
         view_img(name, fp, x, y, w, h);
     
-    compsky::mysql::exit();
+    compsky::mysql::exit_mysql();
     
     return 0;
 }

@@ -23,6 +23,6 @@ int main(const int argc,  const char** argv){
     player.show();
     
     int rc = app.exec();
-    compsky::mysql::exit();
+    compsky::mysql::exit_mysql();
     return rc;
 }

@@ -1,98 +1,70 @@
 R"=====(
 
-CREATE TABLE IF NOT EXISTS user (
-    id BIGINT UNSIGNED NOT NULL,
-    name VARBINARY(128),
-    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS subreddit (
-    id BIGINT UNSIGNED NOT NULL,
-    name VARBINARY(128),
-    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS submission (
-    id BIGINT UNSIGNED NOT NULL,
-    author_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    subreddit_id BIGINT UNSIGNED NOT NULL,
-    content VARBINARY(40000),
-    created_at BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS comment (
-    id BIGINT UNSIGNED NOT NULL,
-    parent_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    author_id BIGINT UNSIGNED NOT NULL,
-    submission_id BIGINT UNSIGNED NOT NULL,
-    content VARBINARY(40000) NOT NULL,
-    created_at BIGINT UNSIGNED NOT NULL,
-    reason_matched INT UNSIGNED NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS subreddit2tag (
+CREATE TABLE file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    subreddit_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,
-    UNIQUE KEY `subreddit2tag` (`subreddit_id`, `tag_id`),
+    name VARBINARY(1024),
+    language_id BIGINT UNSIGNED,
+    score INT,
+    added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS tag (
+CREATE TABLE tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARBINARY(128) UNIQUE,
-    r FLOAT NOT NULL,
-    g FLOAT NOT NULL,
-    b FLOAT NOT NULL,
-    a FLOAT NOT NULL,
-    UNIQUE KEY (`name`),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS reason_matched (
-    id INT UNSIGNED NOT NULL,
-    name VARBINARY(128) UNIQUE,
+    name VARBINARY(128),
     UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS user2subreddit_cmnt_count (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id BIGINT UNSIGNED NOT NULL,
-    subreddit_id BIGINT UNSIGNED NOT NULL,
-    count INT UNSIGNED NOT NULL,
-    UNIQUE KEY `user2subreddit` (`user_id`, `subreddit_id`),
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS tag2category (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+CREATE TABLE tag2parent (
     tag_id BIGINT UNSIGNED NOT NULL,
-    category_id INT UNSIGNED NOT NULL,
-    PRIMARY KEY (id)
+    parent_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
 );
 
-CREATE TABLE IF NOT EXISTS category (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARBINARY(32),
-    UNIQUE KEY (name),
-    PRIMARY KEY (id)
+CREATE TABLE file2tag (
+    file_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
-CREATE TABLE IF NOT EXISTS moderator (
+CREATE TABLE instance (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id BIGINT UNSIGNED NOT NULL,
-    subreddit_id BIGINT UNSIGNED NOT NULL,
-    permissions BIGINT UNSIGNED NOT NULL,
-    added_on BIGINT UNSIGNED NOT NULL,
-    removed_by BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    rank INT UNSIGNED NOT NULL,
-    UNIQUE KEY `user2subreddit` (`user_id`, `subreddit_id`),
+    name VARBINARY(128),
+    file_id BIGINT UNSIGNED NOT NULL,
+    frame_n BIGINT UNSIGNED NOT NULL,
+    x DOUBLE NOT NULL,  # As proportion of (image|frame)'s width
+    y DOUBLE NOT NULL,
+    w DOUBLE NOT NULL,
+    h DOUBLE NOT NULL,
     PRIMARY KEY (id)
+);
+
+CREATE TABLE instance2tag (
+    instance_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
+    PRIMARY KEY `instance2tag` (`instance_id`, `tag_id`)
+);
+
+CREATE TABLE relation (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    master_id BIGINT UNSIGNED NOT NULL,  # ID of master instance
+    slave_id BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE relation2tag (
+    relation_id BIGINT UNSIGNED NOT NULL,
+    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
+    PRIMARY KEY `instance2tag` (`relation_id`, `tag_id`)
+);
+
+CREATE TABLE relationtag2tag (
+    # Decides on the tags a relation automatically gives rise to, given the tags of the master and slave object instances
+    tag BIGINT UNSIGNED NOT NULL,  # ID of the relation's tag (not relation table's ID)
+    master BIGINT UNSIGNED NOT NULL,  # Tag ID of one of the master's tags
+    slave BIGINT UNSIGNED NOT NULL,
+    result BIGINT UNSIGNED NOT NULL,  # Resulting Tag ID
+    PRIMARY KEY `relation2mst` (tag, master, slave, result)
 );
 )====="

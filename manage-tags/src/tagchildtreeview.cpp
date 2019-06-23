@@ -1,7 +1,6 @@
 #include "tagchildtreeview.hpp"
 
-#include <mysql/mysql.h>
-
+#include <compsky/mysql/mysql.h> // for MYSQL_RES*
 #include <compsky/mysql/query.hpp>
 
 

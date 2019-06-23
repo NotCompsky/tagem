@@ -12,6 +12,7 @@
 #include "instancerelation.hpp"
 #include "instancewidgetbutton.hpp"
 #include "mainwindow.hpp"
+#include "name_dialog.hpp"
 #include "overlay.hpp"
 
 #include "utils.hpp"
@@ -87,7 +88,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
     while(true){
         bool ok;
-        TagDialog* tagdialog = new TagDialog("Relation Tag", "");
+        NameDialog* tagdialog = new NameDialog("Relation Tag", "");
         tagdialog->name_edit->setCompleter(this->win->tagcompleter);
         if (tagdialog->exec() != QDialog::Accepted)
             break;

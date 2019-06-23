@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.1 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 find_package(Qt5Widgets 5.9.5 REQUIRED) # Just the version I know works
 find_package(OpenCV COMPONENTS core imgcodecs highgui)
 find_package(Compsky REQUIRED COMPONENTS asciify mysql)

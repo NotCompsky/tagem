@@ -63,7 +63,7 @@ void TagTreeView::place_tags(uint64_t root){
     
     uint64_t parent, tag, count;
     char* name;
-    while (compsky::mysql::assign_next_result(RES, &ROW, &parent, &tag, &count, &name)){
+    while (compsky::mysql::assign_next_row(RES, &ROW, &parent, &tag, &count, &name)){
         qDebug() << tag << name << parent << count;
         
         /*if (parent == tag){
