@@ -167,9 +167,9 @@ void construct_stmt(const char** argv){
 
 
 int main(const int argc,  const char** argv){
-    compsky::mysql::init(argv[1]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
-    construct_stmt(argv + 2);
+    construct_stmt(argv + 1);
     
     compsky::asciify::BUF[compsky::asciify::get_index()] = '\n';
     fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index()+1, stderr);

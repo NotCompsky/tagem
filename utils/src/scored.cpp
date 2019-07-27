@@ -11,12 +11,12 @@ namespace compsky::asciify {
 }
 
 int main(const int argc,  char** argv){
-    compsky::mysql::init(argv[1]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
     {
     char* sort;
-    if (argc == 3){
-        sort = argv[2];
+    if (argc == 2){
+        sort = argv[1];
     } else {
         sort = "DESC";
     }

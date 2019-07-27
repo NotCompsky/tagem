@@ -87,7 +87,7 @@ int main(const int argc, const char** argv) {
     }
     --arg_n; // For consistency.
     
-    compsky::mysql::init(argv[++arg_n]);
+    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
     
     {
