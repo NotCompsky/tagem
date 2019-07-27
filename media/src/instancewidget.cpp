@@ -7,7 +7,6 @@
 #include <QRect>
 
 #include <compsky/mysql/query.hpp>
-#include <compsky/qt5/tagdialog.hpp>
 
 #include "instancerelation.hpp"
 #include "instancewidgetbutton.hpp"
