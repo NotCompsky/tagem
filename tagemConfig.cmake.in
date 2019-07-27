@@ -1,0 +1,9 @@
+# BEGIN: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
+
+get_filename_component(TAGEM_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(TAGEM_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# These are IMPORTED targets created by FooBarTargets.cmake
+set(TAGEM_LIBRARIES tagem)
+
+# END: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file

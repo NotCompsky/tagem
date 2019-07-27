@@ -21,24 +21,24 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(tagem-scored src/scored.cpp)
-target_link_libraries(tagem-scored PRIVATE mysqlclient compsky_asciify compsky_mysql)
+target_link_libraries(tagem-scored PRIVATE compsky_asciify compsky_mysql)
 target_compile_definitions(tagem-scored PRIVATE ${MY_DEFINES})
 
 if(OpenCV_FOUND)
     add_executable(tagem-instances src/view-instances.cpp)
     target_include_directories(tagem-instances PRIVATE ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(tagem-instances PRIVATE mysqlclient compsky_asciify compsky_mysql opencv_core opencv_imgcodecs opencv_highgui)
+    target_link_libraries(tagem-instances PRIVATE compsky_asciify compsky_mysql opencv_core opencv_imgcodecs opencv_highgui)
     target_compile_definitions(tagem-instances PRIVATE ${MY_DEFINES})
 else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")
 endif()
 
 add_executable(tagem-bulk-tag src/bulk-tag.cpp)
-target_link_libraries(tagem-bulk-tag PRIVATE mysqlclient compsky_asciify compsky_mysql)
+target_link_libraries(tagem-bulk-tag PRIVATE compsky_asciify compsky_mysql)
 target_compile_definitions(tagem-bulk-tag PRIVATE ${MY_DEFINES})
 
 add_executable(tagem-srch src/fmt-sql-tags.cpp)
-target_link_libraries(tagem-srch PRIVATE mysqlclient compsky_asciify compsky_mysql)
+target_link_libraries(tagem-srch PRIVATE compsky_asciify compsky_mysql)
 target_compile_definitions(tagem-srch PRIVATE ${MY_DEFINES})
 
 add_executable(tagem-init src/init.cpp)
@@ -48,6 +48,7 @@ set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 install(
     TARGETS tagem-scored tagem-instances tagem-bulk-tag tagem-srch tagem-init
+    EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
 )

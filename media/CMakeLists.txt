@@ -28,7 +28,7 @@ foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
     add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/keyreceiver.cpp src/utils.cpp src/name_dialog.cpp)
     target_include_directories("${tgt}" PRIVATE "../include")
-    target_link_libraries("${tgt}" mysqlclient Qt5::Widgets compsky_asciify compsky_mysql)
+    target_link_libraries("${tgt}" Qt5::Widgets compsky_asciify compsky_mysql)
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
     endforeach(dfn)
@@ -79,7 +79,7 @@ endif()
 
 install(
     TARGETS tagemtxt tagemimg tagemvid
-    # Adds the mysql library to the "export-set"
+    EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
 )
