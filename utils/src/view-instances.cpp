@@ -39,9 +39,9 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
     
     if (img.cols == 0  ||  img.rows == 0){
         // Bad crop
-        compsky::asciify::BUF_INDX = 0;
+        compsky::asciify::reset_index();
         compsky::asciify::asciify("Bad crop:\t", tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, ' ', newW, 'x', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, '\t', fp, '\n');
-        fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX, stderr);
+        fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stderr);
         return;
     }
     
@@ -92,19 +92,17 @@ int main(const int argc, const char** argv) {
     
     {
     
-    constexpr const char* a = "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'";
     constexpr static const compsky::asciify::flag::concat::Start f_start;
     constexpr static const compsky::asciify::flag::concat::End f_end;
-    compsky::mysql::exec(a, f_start, "','", 3, argv+arg_n+1, argc-arg_n-1, f_end, "'\")");
+    compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv+arg_n+1, argc-arg_n-1, f_end, "'\")");
+    compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
     
     if (not_subtags.size() != 0){
-        compsky::asciify::BUF_INDX = strlen(a);
-        
         compsky::asciify::BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
         
         compsky::asciify::asciify(/* a already included in BUF */ f_start, "','", 3, not_subtags.data(), not_subtags.size(), f_end, ')');
         
-        compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::BUF_INDX);
+        compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
         
         compsky::mysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
     }

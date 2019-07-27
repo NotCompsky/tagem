@@ -5,6 +5,7 @@ Usage:
 
 #include <string.h> // for strlen
 #include <unistd.h> // for getcwd
+#include <cstdlib> // for malloc and getenv
 
 #include <compsky/mysql/query.hpp> // for compsky::mysql::exec
 

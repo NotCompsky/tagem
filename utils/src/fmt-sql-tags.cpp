@@ -43,6 +43,7 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 
 #include <stdio.h> // for fwrite
 #include <string.h> // for strlen, memcpy?
+#include <cstdlib> // for malloc
 
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
 
@@ -57,11 +58,15 @@ namespace compsky::asciify {
     int BUF_SZ = 4096;
         
     void ensure_buf_can_fit(size_t n){
-        if (BUF_INDX + n  >  BUF_SZ){
-            fwrite(BUF, 1, BUF_INDX, stderr);
-            BUF_INDX = 0;
+        if (get_index() + n  >  BUF_SZ){
+            fwrite(BUF, 1, get_index(), stderr);
+            reset_index();
         }
     }
+}
+
+namespace _f {
+    constexpr static const compsky::asciify::flag::StrLen strlen;
 }
 
 
@@ -109,7 +114,7 @@ void add_union_unionness(){
 }
 
 void construct_stmt(const char** argv){
-    compsky::asciify::BUF_INDX = 0;
+    compsky::asciify::reset_index();
     
     bool add_comma = false;
     
@@ -166,21 +171,19 @@ int main(const int argc,  const char** argv){
     
     construct_stmt(argv + 2);
     
-    compsky::asciify::BUF[compsky::asciify::BUF_INDX] = '\n';
-    fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX+1, stderr);
+    compsky::asciify::BUF[compsky::asciify::get_index()] = '\n';
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index()+1, stderr);
     
-    compsky::mysql::query_buffer(&RES, compsky::asciify::BUF, compsky::asciify::BUF_INDX);
+    compsky::mysql::query_buffer(&RES, compsky::asciify::BUF, compsky::asciify::get_index());
     
-    compsky::asciify::BUF_INDX = 0;
+    compsky::asciify::reset_index();
     
     char* fp;
     while (compsky::mysql::assign_next_row(RES, &ROW, &fp)){
-        const size_t i = strlen(fp);
-        compsky::asciify::ensure_buf_can_fit(i + 1);
-        memcpy(compsky::asciify::BUF + compsky::asciify::BUF_INDX,  fp,  i);
-        compsky::asciify::BUF_INDX += i;
-        compsky::asciify::BUF[compsky::asciify::BUF_INDX++] = '\n';
+        const size_t fp_sz = strlen(fp);
+        compsky::asciify::ensure_buf_can_fit(fp_sz + 1);
+        compsky::asciify::asciify(_f::strlen, fp, fp_sz, '\n');
     }
     
-    fwrite(compsky::asciify::BUF, 1, compsky::asciify::BUF_INDX, stderr);
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stderr);
 }
