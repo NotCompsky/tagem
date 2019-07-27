@@ -5,7 +5,6 @@
 #include <QVBoxLayout>
 
 #include <compsky/mysql/query.hpp>
-#include <compsky/qt5/tagdialog.hpp>
 
 #include "name_dialog.hpp"
 #include "tagchildtreeview.hpp"
