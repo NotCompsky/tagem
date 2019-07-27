@@ -23,6 +23,7 @@
   #include <QScrollBar>
 #endif
 
+#include <compsky/asciify/init.hpp> // for compsky::asciify::alloc
 #include <compsky/asciify/asciify.hpp> // for compsky::asciify::(flag|fake_type)
 #include <compsky/mysql/query.hpp> // for compsky::mysql::(exec|query)(_buffer)?
 #include "name_dialog.hpp"
@@ -61,7 +62,8 @@ constexpr int MIN_FONT_SIZE = 8;
 
 namespace compsky {
     namespace asciify {
-        char* BUF = (char*)malloc(4096);
+        char* BUF;
+		char* ITR;
     }
 }
 
@@ -104,6 +106,8 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
     media_fp_indx(MEDIA_FP_SZ),
     reached_stdin_end(false)
 {
+	if(compsky::asciify::alloc(4096))
+		return;
   #ifdef BOXABLE
     this->is_mouse_down = false;
   #endif
@@ -332,7 +336,7 @@ void MainWindow::init_file_from_db(){
             
             compsky::mysql::query(&RES2,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
             uint64_t tag_id;
-            while(compsky::mysql::assign_next_row(RES1, &ROW1, &tag_id))
+            while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
                 ir->tags.append(this->tag_id2name[tag_id]);
             
             master->relations[slave] = ir;
