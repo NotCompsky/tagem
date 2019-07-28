@@ -1,4 +1,5 @@
 build/*
 build-mxe/*
+build-dbg/*
 *.kate-swp
 *.pro.user

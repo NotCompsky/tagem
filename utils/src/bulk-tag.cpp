@@ -7,7 +7,10 @@ Usage:
 #include <unistd.h> // for getcwd
 #include <cstdlib> // for malloc and getenv
 
+#include <cstdarg> // To avoid error in MariaDB/mysql.h: ‘va_list’ has not been declared
+#include <cstdio> // to avoid printf error
 #include <compsky/mysql/query.hpp> // for compsky::mysql::exec
+#include <compsky/asciify/init.hpp>
 
 
 namespace ERR {
@@ -18,8 +21,11 @@ namespace ERR {
     };
 }
 
-namespace compsky::asciify {
-    char* BUF = (char*)malloc(4096);
+namespace compsky {
+	namespace asciify {
+		char* BUF;
+		char* ITR;
+	}
 }
 
 
@@ -35,6 +41,8 @@ int ascii2n(const char* s){
 
 
 int main(const int argc, const char** argv){
+	if(compsky::asciify::alloc(4096))
+		return 4;
     int score = 0;
     char cwd[4096] = "','"; // For the cncatenation later
     if (getcwd(cwd + 3,  1024) == NULL)

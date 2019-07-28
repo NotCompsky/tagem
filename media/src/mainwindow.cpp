@@ -400,6 +400,15 @@ void MainWindow::media_open(){
         this->media_next();
         return;
     }
+	const int w = this->image.width();
+	const int h = this->image.height();
+	if (
+		(r.w_min && w < r.w_min) ||
+		(r.w_max && w > r.w_max) ||
+		(r.h_min && h < r.h_min) ||
+		(r.h_max && h > r.h_max)
+	)
+		return this->media_next();
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
     this->main_widget->adjustSize();
   #endif

@@ -22,7 +22,7 @@ int main(){
 
     compsky::mysql::create_config(
         sql
-        , "SELECT, INSERT, UPDATE, DELETE"
+        , "SELECT, INSERT, UPDATE, DELETE, EXECUTE"
         , "TAGEM_MYSQL_CFG"
     );
     

@@ -2,6 +2,7 @@
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
 #include <stdio.h> // for printf
 
+#include <compsky/asciify/init.hpp>
 #include <compsky/asciify/asciify.hpp> // for asciify
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
 #include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
@@ -10,8 +11,11 @@
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
 
-namespace compsky::asciify {
-    char* BUF = (char*)malloc(1024);
+namespace compsky {
+	namespace asciify {
+		char* BUF;
+		char* ITR;
+	}
 }
 
 
@@ -49,13 +53,13 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
     cv::waitKey(0);
 }
 
-int main(const int argc, const char** argv) {
+int main(int argc,  char** argv) {
     /*
     USAGE
       Non-rooted:
-        ./view-instances [MYSQL_CFG_FILE] TAG1 TAG2 ... TAGN
+        ./view-instances TAG1 TAG2 ... TAGN
       Rooted:
-        ./view-instances [MYSQL_CFG_FILE] -r TAG1 TAG2 ... TAGN
+        ./view-instances -r TAG1 TAG2 ... TAGN
       
     OPTIONS
         -r
@@ -63,29 +67,32 @@ int main(const int argc, const char** argv) {
         -D [TAG]
             Ignore the following descendant tag of one of the specified tags
             NOTE: Does not ignore instances tagged with this tag, but ensures that, if this subtag is the only subtag of a specified tag, the instance is not added.
-            E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak "${MYSQL_CFG_FILE}" Tree`, it would display the first and third instances only.
+            E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third instances only.
         -f [TAG]
             Only include files tagged with the following
         -F [TAG]
             Ignore files tagged with the following
     */
-    int arg_n = 0;
+
+	if(compsky::asciify::alloc(1024))
+		return 4;
     
     bool root_tags = false;
     std::vector<const char*> not_subtags;
     
     while (true){
-        const char* arg = argv[++arg_n];
-        if (arg[0] != '-')
+		++argv;
+		--argc;
+        const char* arg = *argv;
+        if (arg[0] != '-'  ||  arg[1] != 0)
             break;
         
         switch(arg[1]){
             case 'r': root_tags = true; break;
-            case 'D': not_subtags.push_back(argv[++arg_n]); break;
+            case 'D': not_subtags.push_back(*(++argv)); break;
             default: break;
         }
     }
-    --arg_n; // For consistency.
     
     compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
@@ -94,7 +101,7 @@ int main(const int argc, const char** argv) {
     
     constexpr static const compsky::asciify::flag::concat::Start f_start;
     constexpr static const compsky::asciify::flag::concat::End f_end;
-    compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv+arg_n+1, argc-arg_n-1, f_end, "'\")");
+    compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, const_cast<const char**>(argv), argc, f_end, "'\")");
     compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
     
     if (not_subtags.size() != 0){
@@ -104,7 +111,7 @@ int main(const int argc, const char** argv) {
         
         compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
         
-        compsky::mysql::exec("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+        compsky::mysql::exec_buffer("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
     }
     
     }

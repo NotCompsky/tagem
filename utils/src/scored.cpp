@@ -2,15 +2,23 @@
 
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
 #include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
+#include <compsky/asciify/init.hpp>
+
 
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
 
-namespace compsky::asciify {
-    char* BUF = (char*)malloc(strlen("SELECT name FROM file WHERE score IS NOT NULL ORDER BY score DESC")+1);
+namespace compsky {
+	namespace asciify {
+		char* BUF;
+		char* ITR;
+	}
 }
 
 int main(const int argc,  char** argv){
+	if(compsky::asciify::alloc(strlen("SELECT name FROM file WHERE score IS NOT NULL ORDER BY score DESC")+1))
+		return 4;
+	
     compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
     {

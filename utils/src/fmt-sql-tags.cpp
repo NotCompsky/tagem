@@ -1,5 +1,5 @@
 /*
-Convert    ./fmt-sql-tags [MYSQL_CFG] 2 foo bar '&' ree gee dee '&' chi phi khi
+Convert    ./fmt-sql-tags 2 foo bar '&' ree gee dee '&' chi phi khi
 
 To
 
@@ -46,16 +46,17 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 #include <cstdlib> // for malloc
 
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
-
 #include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
+#include <compsky/asciify/init.hpp>
 
 
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
 
 namespace compsky::asciify {
-    char* BUF = (char*)malloc(4096);
-    int BUF_SZ = 4096;
+    char* BUF;
+	char* ITR;
+    constexpr static const size_t BUF_SZ = 4096;
         
     void ensure_buf_can_fit(size_t n){
         if (get_index() + n  >  BUF_SZ){
@@ -167,6 +168,9 @@ void construct_stmt(const char** argv){
 
 
 int main(const int argc,  const char** argv){
+	if(compsky::asciify::alloc(compsky::asciify::BUF_SZ))
+		return 4;
+	
     compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
     
     construct_stmt(argv + 1);
@@ -185,5 +189,5 @@ int main(const int argc,  const char** argv){
         compsky::asciify::asciify(_f::strlen, fp, fp_sz, '\n');
     }
     
-    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stderr);
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stdout);
 }
