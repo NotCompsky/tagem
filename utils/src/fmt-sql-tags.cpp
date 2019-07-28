@@ -102,6 +102,7 @@ void add_union_end(){
     SQL__CALL_DESC_TAGS_FROM[SQL__CALL_DESC_TAGS_FROM__INDX] = '\n';
     
     fwrite(SQL__CALL_DESC_TAGS_FROM, 1, SQL__CALL_DESC_TAGS_FROM__INDX, stderr);
+	fwrite(";\n", 2, 1, stderr);
     
     compsky::mysql::exec_buffer((const char*)SQL__CALL_DESC_TAGS_FROM,  SQL__CALL_DESC_TAGS_FROM__INDX);
     
@@ -114,7 +115,7 @@ void add_union_unionness(){
     compsky::asciify::asciify("\n\t\t\tUNION ALL");
 }
 
-void construct_stmt(const char** argv){
+void construct_stmt(const char** argv,  const char* score_condition){
     compsky::asciify::reset_index();
     
     bool add_comma = false;
@@ -124,10 +125,10 @@ void construct_stmt(const char** argv){
     
     add_union_start();
     
-    const char* count_str = *(argv++);
+    const char* count_str = *argv;
     
-    while (*argv != 0){
-        const char* arg = *(argv++);
+    while (*(++argv) != 0){
+        const char* arg = *argv;
         
         if (arg[1] == 0){
             switch(arg[0]){
@@ -164,6 +165,10 @@ void construct_stmt(const char** argv){
     add_union_end();
     
     compsky::asciify::asciify(") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
+	compsky::asciify::asciify(
+		(score_condition) ? " WHERE f.score " : "",
+		(score_condition) ? score_condition : ""
+	);
 }
 
 
@@ -172,8 +177,22 @@ int main(const int argc,  const char** argv){
 		return 4;
 	
     compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
+	
+	const char* score_condition = nullptr;
+	while(true){
+		// Everything before "--" is considered an option/flag/etc, not an argument
+		const char* arg = *(++argv);
+		if(arg[0] != '-'  ||  arg[2] != 0)
+			break;
+		switch(arg[1]){
+			case 's':
+				score_condition = *(++argv);
+				break;
+			default: exit(3);
+		}
+	}
     
-    construct_stmt(argv + 1);
+    construct_stmt(argv, score_condition);
     
     compsky::asciify::BUF[compsky::asciify::get_index()] = '\n';
     fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index()+1, stderr);
