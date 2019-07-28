@@ -11,31 +11,37 @@
 #include "mainwindow.hpp"
 
 
-constexpr short SCROLL_INTERVAL = 1;
+constexpr static const short SCROLL_INTERVAL = 1;
 
-
-std::map<const int, const int> key2n = {
-    {Qt::Key_1, 1},
-    {Qt::Key_2, 2},
-    {Qt::Key_3, 3},
-    {Qt::Key_4, 4},
-    {Qt::Key_5, 5},
-    {Qt::Key_6, 6},
-    {Qt::Key_7, 7},
-    {Qt::Key_8, 8},
-    {Qt::Key_9, 9},
-    {Qt::Key_0, 0},
-    {Qt::Key_Exclam, 1},
-    {Qt::Key_QuoteDbl, 2},
-    {Qt::Key_sterling, 3},
-    {Qt::Key_Dollar, 4},
-    {Qt::Key_Percent, 5},
-    {Qt::Key_AsciiCircum, 6},
-    {Qt::Key_Ampersand, 7},
-    {Qt::Key_Asterisk, 8},
-    {Qt::Key_ParenLeft, 9},
-    {Qt::Key_ParenRight, 0},
+constexpr static const int numeric_keys[20] = {
+	Qt::Key_0,
+	Qt::Key_1,
+	Qt::Key_2,
+	Qt::Key_3,
+	Qt::Key_4,
+	Qt::Key_5,
+	Qt::Key_6,
+	Qt::Key_7,
+	Qt::Key_8,
+	Qt::Key_9,
+	Qt::Key_ParenRight, // 0
+	Qt::Key_Exclam,
+	Qt::Key_QuoteDbl,
+	Qt::Key_sterling,
+	Qt::Key_Dollar,
+	Qt::Key_Percent,
+	Qt::Key_AsciiCircum,
+	Qt::Key_Ampersand,
+	Qt::Key_Asterisk,
+	Qt::Key_ParenLeft
 };
+
+int key2n(const int key){
+	for (auto i = 0;  i < 20;  ++i)
+		if (numeric_keys[i] == key)
+			return i;
+	return -1;
+}
 
 
 bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
@@ -190,7 +196,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_8:
                 case Qt::Key_9:
                 case Qt::Key_0:
-                    window->media_tag(window->tag_preset[key2n[keyval]]);
+                    window->media_tag(window->tag_preset[key2n(keyval)]);
                     break;
                 case Qt::Key_Exclam:
                 case Qt::Key_QuoteDbl:
@@ -202,7 +208,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_Asterisk:
                 case Qt::Key_ParenLeft:
                 case Qt::Key_ParenRight:
-                    window->media_tag_new_preset(key2n[keyval]);
+                    window->media_tag_new_preset(key2n(keyval) - 10);
                     break;
                 
                 default: return QObject::eventFilter(obj, event);
