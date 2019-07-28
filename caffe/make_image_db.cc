@@ -273,7 +273,7 @@ void ConvertImageDataset(
 int main(int argc, char** argv) {
   // USAGE: ./make_image_db TAG1 TAG2 ... TAGN - [original caffe args]
   int myargs_n = 0;
-  compsky::mysql::init(argv[++myargs_n], "mytag");
+  compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
 
   constexpr const char* a = "SELECT name, tag_id, x, y, w, h FROM file JOIN(SELECT file_id, tag_id, x, y, w, h FROM instance JOIN(SELECT instance_id, tag_id FROM instance2tag WHERE tag_id IN(";
   constexpr const char* b = "))) A ON A.instance_id = id) B ON B.file_id=id";
