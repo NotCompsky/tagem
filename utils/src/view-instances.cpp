@@ -102,7 +102,7 @@ int main(int argc,  const char** argv) {
             Ignore files tagged with the following
     */
 
-	if(compsky::asciify::alloc(1024))
+	if(compsky::asciify::alloc(4096))
 		return 4;
     
     bool root_tags = false;
@@ -136,8 +136,7 @@ int main(int argc,  const char** argv) {
 		compsky::mysql::exec_buffer("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'foobar'\")");
 		compsky::mysql::exec_buffer("INSERT IGNORE INTO tmp_tagids (node) SELECT id FROM tag");
 	} else {
-		compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv, argc, f_end, "'\")");
-		compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
+		compsky::mysql::exec("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv, argc, f_end, "'\")");
 	}
 	
     if (not_subtags.size() != 0){
