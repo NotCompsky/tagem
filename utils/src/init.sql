@@ -6,6 +6,7 @@ CREATE TABLE file (
     language_id BIGINT UNSIGNED,
     score INT,
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
+    note VARBINARY(30000),
     PRIMARY KEY (id)
 );
 
