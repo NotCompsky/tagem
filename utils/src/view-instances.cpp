@@ -7,6 +7,8 @@
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
 #include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
 
+#include <sys/stat.h> // for mkdir
+
 
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
@@ -18,8 +20,11 @@ namespace compsky {
 	}
 }
 
+char SAVE_FILES_TO[4096] = {0};
+char* SAVE_FILES_TO_END = nullptr;
 
-void view_img(const char* tag,  const char* fp,  const double x,  const double y,  const double w,  const double h){
+
+void view_img(const char* tag,  const char* fp,  const double x,  const double y,  const double w,  const double h,  int i){
     cv::Mat orig_img = cv::imread(fp);
     
     if (orig_img.cols == 0)
@@ -49,11 +54,34 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
         return;
     }
     
-    cv::imshow("Cropped Section", img); // Window name is constant so that it is reused (rather than spawning a new window for each image)
-    cv::waitKey(0);
+    if(SAVE_FILES_TO_END){
+		char* itr = SAVE_FILES_TO_END;
+		*(itr++) = '/';
+		while(*tag != 0)
+			*(itr++) = *(tag++);
+		*itr = 0;
+		mkdir(SAVE_FILES_TO, 0777); // TODO: Check return value
+		*(itr++) = '/';
+		while(i != 0){
+			*(itr++) = (i % 10) + '0';
+			i /= 10;
+		}
+		*(itr++) = '.';
+		*(itr++) = 'p';
+		*(itr++) = 'n';
+		*(itr++) = 'g';
+		*itr = 0;
+		cv::imwrite(SAVE_FILES_TO, img);
+		*(itr++) = '\n';
+		*itr = 0;
+		fwrite(SAVE_FILES_TO,  (uintptr_t)itr - (uintptr_t)SAVE_FILES_TO,  1,  stderr);
+	} else {
+		cv::imshow("Cropped Section", img); // Window name is constant so that it is reused (rather than spawning a new window for each image)
+		cv::waitKey(0);
+	}
 }
 
-int main(int argc,  char** argv) {
+int main(int argc,  const char** argv) {
     /*
     USAGE
       Non-rooted:
@@ -83,13 +111,16 @@ int main(int argc,  char** argv) {
     while (true){
 		++argv;
 		--argc;
+		if(argc == 0)
+			break;
         const char* arg = *argv;
-        if (arg[0] != '-'  ||  arg[1] != 0)
+        if (arg[0] != '-'  ||  arg[2] != 0)
             break;
         
         switch(arg[1]){
             case 'r': root_tags = true; break;
-            case 'D': not_subtags.push_back(*(++argv)); break;
+            case 'D': not_subtags.push_back(*(++argv)); --argc; break;
+			case 's': { const size_t len = strlen(*(++argv));  memcpy(SAVE_FILES_TO, *argv, len);  SAVE_FILES_TO_END = SAVE_FILES_TO + len; --argc; }  break;
             default: break;
         }
     }
@@ -101,9 +132,14 @@ int main(int argc,  char** argv) {
     
     constexpr static const compsky::asciify::flag::concat::Start f_start;
     constexpr static const compsky::asciify::flag::concat::End f_end;
-    compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, const_cast<const char**>(argv), argc, f_end, "'\")");
-    compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
-    
+	if(argc == 0){
+		compsky::mysql::exec_buffer("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'foobar'\")");
+		compsky::mysql::exec_buffer("INSERT IGNORE INTO tmp_tagids (node) SELECT id FROM tag");
+	} else {
+		compsky::asciify::asciify("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv, argc, f_end, "'\")");
+		compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
+	}
+	
     if (not_subtags.size() != 0){
         compsky::asciify::BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
         
@@ -116,7 +152,6 @@ int main(int argc,  char** argv) {
     
     }
     
-    
     if (root_tags)
         compsky::mysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
     else
@@ -128,8 +163,9 @@ int main(int argc,  char** argv) {
     
     constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
+	int i = 0;
     while(compsky::mysql::assign_next_row(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
-        view_img(name, fp, x, y, w, h);
+        view_img(name, fp, x, y, w, h, ++i);
     
     compsky::mysql::exit_mysql();
     
