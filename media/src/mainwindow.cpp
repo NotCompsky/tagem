@@ -46,6 +46,8 @@
 # define PRINTF(...)
 #endif
 
+#include "inlist_filter_dialog.hpp"
+
 #define STDIN_FILENO 0
 
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
@@ -100,7 +102,7 @@ MainWindow::~MainWindow(){
     delete this->tagcompleter;
 }
 
-MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
+MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
     media_fp_indx(MEDIA_FP_SZ),
@@ -111,16 +113,6 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
   #ifdef BOXABLE
     this->is_mouse_down = false;
   #endif
-    this->ignore_tagged = false;
-    for (auto i = 2;  i < argc;  ++i){
-        const char* arg = argv[i];
-        if (arg[1] == 0){
-            switch(arg[0]){
-                case 't': this->ignore_tagged = true; break;
-                default: exit(2);
-            }
-        } else exit(3);
-    }
     
     compsky::mysql::query_buffer(&RES1,  "SELECT id, name FROM tag");
     {
@@ -226,6 +218,8 @@ MainWindow::MainWindow(const int argc,  const char** argv,  QWidget *parent)
     
     for (auto i=0; i<10; ++i)
         tag_preset[i] = "";
+	
+	this->inlist_filter_dialog = new InlistFilterDialog(this);
 }
 
 #ifdef VID
@@ -357,12 +351,17 @@ void MainWindow::media_open(){
   #endif
     
     this->file_id = is_file_in_db(this->get_media_fp());
-    if (!this->file_id){
-        if (this->ignore_tagged){
-            PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
-            return this->media_next();
-        }
-    }
+	const InlistFilterRules r = this->inlist_filter_dialog->rules;
+	
+    if (r.skip_tagged  &&  this->file_id){
+		PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
+		return this->media_next();
+	}
+	if (!r.filename_regexp.pattern().isEmpty()){
+		const QRegularExpressionMatch m = r.filename_regexp.match(this->get_media_fp());
+		if (m.captured().isEmpty())
+			return this->media_next();
+	}
     
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file = this->get_media_fp();
@@ -813,5 +812,8 @@ void MainWindow::create_relation_line_to(InstanceWidget* iw){
         return;
     this->relation_line_from->add_relation_line(iw);
 }
-#endif
+#endif // end ifdef BOXABLE
 
+void MainWindow::show_settings_dialog(){
+	this->inlist_filter_dialog->show();
+}

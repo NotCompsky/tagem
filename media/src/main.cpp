@@ -19,7 +19,7 @@ int main(const int argc,  const char** argv){
     QtAV::Widgets::registerRenderers();
   #endif
     QApplication app(dummy_argc, dummy_argv);
-    MainWindow player(argc, argv);
+    MainWindow player;
     player.show();
     
     int rc = app.exec();

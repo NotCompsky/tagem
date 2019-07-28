@@ -33,6 +33,9 @@ class QSlider;
 QT_END_NAMESPACE
 
 
+class InlistFilterDialog;
+
+
 #ifdef BOXABLE
 bool operator<(const QRect& a, const QRect& b);
 
@@ -51,7 +54,7 @@ class MainWindow : public QWidget{
     Q_OBJECT
  public:
     ~MainWindow();
-    explicit MainWindow(const int argc,  const char** argv,  QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = 0);
     QString media_tag(QString str);
     void media_tag_new_preset(int n);
     void media_overwrite();
@@ -63,6 +66,7 @@ class MainWindow : public QWidget{
     void media_linkfrom();
     void media_score();
     void media_note();
+	void show_settings_dialog();
     uint64_t get_id_from_table(const char* table_name, const char* entry_name);
     uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
     double volume;
@@ -146,7 +150,7 @@ class MainWindow : public QWidget{
     };
   #endif
     const char* get_media_fp();
-    bool ignore_tagged;
+	InlistFilterDialog* inlist_filter_dialog;
     char media_fp[MEDIA_FP_SZ];
     char media_fp_buf[MEDIA_FP_SZ];
     int media_fp_indx;

@@ -210,6 +210,10 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_ParenRight:
                     window->media_tag_new_preset(key2n(keyval) - 10);
                     break;
+				
+				case Qt::Key_AsciiTilde:
+					window->show_settings_dialog();
+					break;
                 
                 default: return QObject::eventFilter(obj, event);
             }
