@@ -493,11 +493,11 @@ void MainWindow::media_note(){
     
     compsky::mysql::query(&RES1,  "SELECT note FROM file WHERE id=", this->file_id);
     
-    NOTE[0] = 0;
-    compsky::mysql::assign_next_row(RES1,  &ROW1,  &NOTE);
+    char* previous_note;
+    compsky::mysql::assign_next_row(RES1,  &ROW1,  &previous_note);
     
     bool ok;
-    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), NOTE, &ok);
+    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), previous_note, &ok);
     if (!ok || str.isEmpty())
         return;
     QByteArray  bstr = str.toLocal8Bit();
