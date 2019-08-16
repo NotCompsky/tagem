@@ -204,7 +204,14 @@ void InlistFilterDialog::apply(){
 	this->rules.h_min = this->h_min->text().toInt();
 	this->rules.h_max = this->h_max->text().toInt();
 	
-	compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  this->rules.files_from);
+	// Clear previous results
+	char* _media_fp;
+	while(compsky::mysql::assign_next_row(this->files_from_sql__res,  &this->files_from_sql__row,  &_media_fp));
+	
+	const QStringList statements = this->rules.files_from.split(";");
+	for (auto i = 0;  i < statements.size() - 1;  ++i)
+		compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[i]);
+	compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[statements.size()-1]);
 	
 	this->close();
 }
