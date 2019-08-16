@@ -856,3 +856,19 @@ void MainWindow::create_relation_line_to(InstanceWidget* iw){
 void MainWindow::show_settings_dialog(){
 	this->inlist_filter_dialog->show();
 }
+
+void MainWindow::display_info(){
+	QString s = "";
+	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT f.name, f.score, GROUP_CONCAT(t.name SEPARATOR '\n') FROM file f, file2tag f2t, tag t WHERE f2t.file_id=f.id AND t.id=f2t.tag_id AND f.id=", this->file_id);
+	char* _filepath;
+	char* _score;
+	char* _tags;
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filepath, &_score, &_tags)){
+		s += _filepath;
+		s += '\n';
+		s += _score;
+		s += '\n';
+		s += _tags;
+		QMessageBox::information(this, "Info", s);
+	}
+}

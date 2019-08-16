@@ -134,8 +134,12 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                    #endif
                   #endif
                   #ifdef BOXABLE
-                    window->create_instance();
+					if (window->instance_widget != nullptr){
+						window->create_instance();
+						break;
+					}
                   #endif
+					window->display_info();
                     break;
                 case Qt::Key_Escape:
                   #ifdef TXT
