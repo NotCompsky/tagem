@@ -205,6 +205,8 @@ void InlistFilterDialog::apply(){
 	this->rules.h_max = this->h_max->text().toInt();
 	
 	compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  this->rules.files_from);
+	
+	this->close();
 }
 
 void InlistFilterDialog::load(){
