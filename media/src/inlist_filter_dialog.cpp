@@ -6,6 +6,10 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 
 
 #include "inlist_filter_dialog.hpp"
+#include "dropdown_dialog.hpp"
+#include "name_dialog.hpp"
+
+#include <compsky/mysql/query.hpp>
 
 #include <QGroupBox>
 #include <QLabel>
@@ -20,8 +24,41 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 #endif
 
 
+namespace _mysql {
+	extern MYSQL* obj;
+}
+
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW ROW1;
+extern char BUF[4096];
+
+namespace _f {
+	constexpr static const compsky::asciify::flag::Escape esc;
+}
+
 InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 	QVBoxLayout* l = new QVBoxLayout(this);
+	
+	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT name FROM settings");
+	char* name;
+	while (compsky::mysql::assign_next_row(RES1, &ROW1, &name)){
+		this->settings_names << name;
+	}
+	
+	{
+		QHBoxLayout* hbox = new QHBoxLayout;
+		{
+			QPushButton* btn = new QPushButton("Load");
+			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::load);
+			hbox->addWidget(btn);
+		}
+		{
+			QPushButton* btn = new QPushButton("Save");
+			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::save);
+			hbox->addWidget(btn);
+		}
+		l->addLayout(hbox);
+	}
 	
 	{
 		QGroupBox* group_box = new QGroupBox("Files from");
@@ -119,8 +156,8 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 		QVBoxLayout* vbox = new QVBoxLayout;
 		{
 			QHBoxLayout* hbox = new QHBoxLayout;
-			this->files_from = new QLineEdit("SELECT id FROM file ORDER BY id DESC LIMIT 1");
-			hbox->addWidget(this->files_from);
+			this->start_from = new QLineEdit("SELECT id FROM file ORDER BY id DESC LIMIT 1");
+			hbox->addWidget(this->start_from);
 			vbox->addLayout(hbox);
 		}
 		{
@@ -155,13 +192,14 @@ unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int
 void InlistFilterDialog::apply(){
 	this->rules.filename_regexp.setPattern(this->filename_regexp->text());
 	this->rules.files_from = this->files_from->text();
+	this->rules.start_from = this->start_from->text();
 
 	this->rules.skip_tagged = this->skip_tagged->isChecked();
 	this->rules.skip_trans  = this->skip_trans->isChecked();
 	this->rules.skip_grey   = this->skip_grey->isChecked();
 	
-	this->rules.files_from = get_checked_radio_btn_index(this->files_from_which, N_FILES_FROM_WHICH);
-	this->rules.start_from = get_checked_radio_btn_index(this->start_from_which, N_START_FROM_WHICH);
+	this->rules.files_from_which = get_checked_radio_btn_index(this->files_from_which, N_FILES_FROM_WHICH);
+	this->rules.start_from_which = get_checked_radio_btn_index(this->start_from_which, N_START_FROM_WHICH);
 	
 	this->rules.w_min = this->w_min->text().toInt();
 	this->rules.w_max = this->w_max->text().toInt();
@@ -169,4 +207,87 @@ void InlistFilterDialog::apply(){
 	this->rules.h_max = this->h_max->text().toInt();
 	
 	printf("%d %d\n%d %d\n", this->rules.w_min, this->rules.w_max, this->rules.h_min, this->rules.h_max);
+}
+
+void InlistFilterDialog::load(){
+	DropdownDialog* dialog = new DropdownDialog("Load Settings", this->settings_names);
+	if (dialog->exec() != QDialog::Accepted)
+		return;
+	const QString name = dialog->combo_box->currentText();
+	if (name.isEmpty())
+		return;
+	
+	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', name, "\"");
+	
+	char* _filename_regexp;
+	char* _files_from;
+	char* _start_from;
+	bool _skip_tagged;
+	bool _skip_trans;
+	bool _skip_grey;
+	unsigned int _files_from_which;
+	unsigned int _start_from_which;
+	char* _w_max;
+	char* _w_min;
+	char* _h_max;
+	char* _h_min;
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_w_max, &_w_min, &_h_max, &_h_min)){
+		this->filename_regexp->setText(_filename_regexp);
+		this->files_from->setText(_files_from);
+		this->start_from->setText(_start_from);
+		this->skip_tagged->setChecked(_skip_tagged);
+		this->skip_trans->setChecked(_skip_trans);
+		this->skip_grey->setChecked(_skip_grey);
+		this->files_from_which[_files_from_which]->setChecked(true);
+		this->start_from_which[_start_from_which]->setChecked(true);
+		this->w_min->setText(_w_min);
+		this->w_max->setText(_w_max);
+		this->h_min->setText(_h_min);
+		this->h_max->setText(_h_max);
+	}
+}
+
+constexpr
+static char bool2char(const bool b){
+	return (b) ? '1' : '0';
+}
+
+void InlistFilterDialog::save(){
+	NameDialog* dialog = new NameDialog("Save Settings As", "");
+	if (dialog->exec() != QDialog::Accepted)
+		return;
+	const QString name = dialog->name_edit->text();
+	if (name.isEmpty())
+		return;
+	
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, w_max, w_min, h_max, h_min) VALUES (",
+			'"', _f::esc, '"', name, '"', ',',
+			'"', _f::esc, '"', this->filename_regexp->text(), '"', ',',
+			'"', _f::esc, '"', this->files_from->text(), '"', ',',
+			'"', _f::esc, '"', this->start_from->text(), '"', ',',
+			bool2char(this->skip_tagged->isChecked()), ',',
+			bool2char(this->skip_trans->isChecked()), ',',
+			bool2char(this->skip_grey->isChecked()), ',',
+			get_checked_radio_btn_index(this->files_from_which, N_FILES_FROM_WHICH), ',',
+			get_checked_radio_btn_index(this->start_from_which, N_START_FROM_WHICH), ',',
+			this->w_max->text().toInt(), ',',
+			this->w_min->text().toInt(), ',',
+			this->h_max->text().toInt(), ',',
+			this->h_min->text().toInt(),
+		") ON DUPLICATE KEY UPDATE "
+			"filename_regexp=VALUES(filename_regexp),"
+			"files_from=VALUES(files_from),"
+			"skip_tagged=VALUES(skip_tagged),"
+			"skip_trans=VALUES(skip_trans),"
+			"skip_grey=VALUES(skip_grey),"
+			"files_from_which=VALUES(files_from_which),"
+			"start_from_which=VALUES(start_from_which),"
+			"w_max=VALUES(w_max),"
+			"w_min=VALUES(w_min),"
+			"h_max=VALUES(h_max),"
+			"h_min=VALUES(h_min)"
+	);
 }

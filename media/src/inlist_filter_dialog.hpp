@@ -3,6 +3,7 @@
 
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
 #include <QLineEdit>
 #include <QRadioButton>
@@ -39,12 +40,16 @@ class InlistFilterDialog : public QDialog {
 	InlistFilterRules rules;
   private:
 	void apply();
+	void load();
+	void save();
 	QLineEdit* filename_regexp;
 	QLineEdit* w_min;
 	QLineEdit* w_max;
 	QLineEdit* h_min;
 	QLineEdit* h_max;
 	QLineEdit* files_from;
+	QLineEdit* start_from;
+	QStringList settings_names;
 	QRadioButton* files_from_which[3];
 	QRadioButton* start_from_which[2];
 	QCheckBox* skip_tagged;

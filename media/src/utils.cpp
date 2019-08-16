@@ -11,6 +11,7 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
+extern MYSQL_RES* RES1;
 extern char BUF[4096];
 
 uint64_t get_last_insert_id(){
