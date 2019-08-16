@@ -5,16 +5,23 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QLineEdit>
+#include <QRadioButton>
 #include <QRegularExpression>
 
 
 struct InlistFilterRules {
 	QRegularExpression filename_regexp; // Initialises to empty
+	QString files_from;
+	QString start_from;
 	int w_min;
 	int w_max;
 	int h_min;
 	int h_max;
+	unsigned int files_from_which;
+	unsigned int start_from_which;
 	bool skip_tagged;
+	bool skip_trans;
+	bool skip_grey;
 	
 	InlistFilterRules()
 	:	w_min(0)
@@ -37,7 +44,12 @@ class InlistFilterDialog : public QDialog {
 	QLineEdit* w_max;
 	QLineEdit* h_min;
 	QLineEdit* h_max;
+	QLineEdit* files_from;
+	QRadioButton* files_from_which[3];
+	QRadioButton* start_from_which[2];
 	QCheckBox* skip_tagged;
+	QCheckBox* skip_trans;
+	QCheckBox* skip_grey;
 };
 
 
