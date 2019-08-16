@@ -9,12 +9,19 @@
 #include "mainwindow.hpp"
 
 
+namespace _mysql {
+	MYSQL* obj;
+	constexpr static const size_t auth_sz = 512;
+	char auth[auth_sz];
+}
+
+
 int dummy_argc = 0;
 char** dummy_argv;
 
 
 int main(const int argc,  const char** argv){
-    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
+    compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
   #ifdef VID
     QtAV::Widgets::registerRenderers();
   #endif
@@ -23,6 +30,6 @@ int main(const int argc,  const char** argv){
     player.show();
     
     int rc = app.exec();
-    compsky::mysql::exit_mysql();
+    compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
     return rc;
 }

@@ -17,6 +17,13 @@
 #include "utils.hpp"
 
 
+namespace _mysql {
+	extern MYSQL* obj;
+}
+
+extern char* const BUF;
+
+
 InstanceWidget::InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)
 :
     QRubberBand(shape, parent),  win(win),  parent(parent),  is_expanded(true)
@@ -36,8 +43,8 @@ InstanceWidget::~InstanceWidget(){
     for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
         delete iter->second;
     }
-    delete this->relation_btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
-    delete this->btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+    // delete this->relation_btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+    // delete this->btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
 }
 
 void InstanceWidget::set_colour(const QColor& cl){
@@ -80,7 +87,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     InstanceRelation* ir = new InstanceRelation(middle, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
     
-    compsky::mysql::exec("INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
     
     ir->id = get_last_insert_id();
     
@@ -103,7 +110,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
             tagid = win->get_id_from_table("tag", tagchars);
         }
         ir->tags.append(tagstr);
-        compsky::mysql::exec("INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
+        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
     this->relations[iw] = ir;

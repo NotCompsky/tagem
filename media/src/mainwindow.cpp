@@ -23,7 +23,6 @@
   #include <QScrollBar>
 #endif
 
-#include <compsky/asciify/init.hpp> // for compsky::asciify::alloc
 #include <compsky/asciify/asciify.hpp> // for compsky::asciify::(flag|fake_type)
 #include <compsky/mysql/query.hpp> // for compsky::mysql::(exec|query)(_buffer)?
 #include "name_dialog.hpp"
@@ -53,6 +52,10 @@
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
 
 
+namespace _mysql {
+	extern MYSQL* obj;
+}
+
 MYSQL_RES* RES1;
 MYSQL_ROW ROW1;
 MYSQL_RES* RES2;
@@ -61,21 +64,15 @@ MYSQL_ROW ROW2;
 
 constexpr int MIN_FONT_SIZE = 8;
 
-
-namespace compsky {
-    namespace asciify {
-        char* BUF;
-		char* ITR;
-    }
-}
-
 constexpr static const compsky::asciify::flag::Escape f_esc;
 constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOne f_g;
 constexpr static const compsky::asciify::flag::concat::Start f_start;
 constexpr static const compsky::asciify::flag::concat::End f_end;
 
 
-char* NOTE = (char*)malloc(30000);
+char BUF[4096];
+char* ITR = BUF;
+char NOTE[30000];
 
 
 
@@ -108,13 +105,11 @@ MainWindow::MainWindow(QWidget *parent)
     media_fp_indx(MEDIA_FP_SZ),
     reached_stdin_end(false)
 {
-	if(compsky::asciify::alloc(4096))
-		return;
   #ifdef BOXABLE
     this->is_mouse_down = false;
   #endif
     
-    compsky::mysql::query_buffer(&RES1,  "SELECT id, name FROM tag");
+    compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
@@ -273,7 +268,7 @@ void MainWindow::init_file_from_db(){
     const double H = this->main_widget->size().height();
   #endif
   #ifdef BOXABLE
-    compsky::mysql::query(&RES1,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
+    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
     {
     uint64_t instance_id;
     uint64_t frame_n;
@@ -292,7 +287,7 @@ void MainWindow::init_file_from_db(){
         this->instanceid2pointer[instance_id] = iw;
         
         
-        compsky::mysql::query(&RES2,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
+        compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
         
         uint64_t tag_id;
         while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
@@ -315,7 +310,7 @@ void MainWindow::init_file_from_db(){
         InstanceWidget* master = iter->second;
         
         
-        compsky::mysql::query(&RES1,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
+        compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
         
         uint64_t relation_id;
         uint64_t slave_id;
@@ -328,7 +323,7 @@ void MainWindow::init_file_from_db(){
             
             ir->id = relation_id;
             
-            compsky::mysql::query(&RES2,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
+            compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
             uint64_t tag_id;
             while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
                 ir->tags.append(this->tag_id2name[tag_id]);
@@ -400,13 +395,18 @@ void MainWindow::media_open(){
         this->media_next();
         return;
     }
+    if (r.skip_trans){
+		
+	}
 	const int w = this->image.width();
 	const int h = this->image.height();
 	if (
 		(r.w_min && w < r.w_min) ||
 		(r.w_max && w > r.w_max) ||
 		(r.h_min && h < r.h_min) ||
-		(r.h_max && h > r.h_max)
+		(r.h_max && h > r.h_max) ||
+		(r.skip_grey && this->image.allGray()) ||
+		(r.skip_trans && this->image.hasAlphaChannel() && false /* && this->image_has_transparent_pixel() : hasAlpha only detects whether an alpha channel exists, not whether it is used. */ )
 	)
 		return this->media_next();
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
@@ -478,12 +478,12 @@ void MainWindow::media_score(){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec("UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
+    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
 }
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-        compsky::mysql::exec("INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\")");
+        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\")");
         this->file_id = get_last_insert_id();
     }
 }
@@ -491,7 +491,7 @@ void MainWindow::ensure_fileID_set(){
 void MainWindow::media_note(){
     this->ensure_fileID_set();
     
-    compsky::mysql::query(&RES1,  "SELECT note FROM file WHERE id=", this->file_id);
+    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT note FROM file WHERE id=", this->file_id);
     
     char* previous_note;
     compsky::mysql::assign_next_row(RES1,  &ROW1,  &previous_note);
@@ -509,11 +509,11 @@ void MainWindow::media_note(){
         NOTE[j++] = cstr[i];
     }
     NOTE[j] = 0;
-    compsky::mysql::exec("UPDATE file SET note=\"", f_esc, '"', NOTE, "\" WHERE id=", this->file_id);
+    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET note=\"", f_esc, '"', NOTE, "\" WHERE id=", this->file_id);
 }
 
 void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
-    compsky::mysql::exec("INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
 }
 
 uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
@@ -596,7 +596,7 @@ QString MainWindow::media_tag(QString str){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec("INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
     
     return tagstr;
 }
@@ -645,14 +645,14 @@ uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry
     uint64_t value = 0;
     
     goto__returnresultsofthegetidfromtablequery:
-    compsky::mysql::query(&RES1,  "SELECT id FROM ", table_name, " WHERE name=\"", f_esc, '"', entry_name, '"');
+    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id FROM ", table_name, " WHERE name=\"", f_esc, '"', entry_name, '"');
     
     while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &value));
     
     if (value)
         return value;
     
-    compsky::mysql::exec("INSERT INTO ", table_name, " (name) VALUES (\"", f_esc, '"', entry_name, "\")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO ", table_name, " (name) VALUES (\"", f_esc, '"', entry_name, "\")");
     goto goto__returnresultsofthegetidfromtablequery;
 }
 
@@ -748,7 +748,7 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec("INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
 }
 
 void MainWindow::create_instance(){
@@ -783,7 +783,7 @@ void MainWindow::create_instance(){
             tagid = this->get_id_from_table("tag", tagchars);
         }
         this->instance_widget->tags.append(tagstr);
-        compsky::mysql::exec("INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
+        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
     }
     
     this->instance_widget->set_colour(QColor(255,0,255,100));
