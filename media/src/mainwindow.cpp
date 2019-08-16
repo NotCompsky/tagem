@@ -11,6 +11,7 @@
 #include <QLayout>
 #include <QInputDialog>
 #include <QKeyEvent>
+#include <QMessageBox>
 #include <QTimer>
 
 #ifdef TXT
@@ -227,6 +228,35 @@ void MainWindow::set_player_options_for_img(){
 #endif
 
 void MainWindow::media_next(){
+	const InlistFilterRules r = this->inlist_filter_dialog->rules;
+	
+	switch(r.files_from_which){
+		case files_from_which::sql:
+		{
+			char* _media_fp;
+			if(likely(compsky::mysql::assign_next_row(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
+				printf("%s\n", _media_fp);
+				memcpy(this->media_fp,  _media_fp,  strlen(_media_fp) + 1);
+				this->media_dir_len = 0;
+				for(size_t i = 0;  this->media_fp[i] != 0;  ++i)
+					if(this->media_fp[i] == '/')
+						this->media_dir_len = i + 1;
+				this->media_open();
+				return;
+			}
+			QMessageBox::warning(this,  "Files from SQL query",  "No more results");
+			return;
+		}
+		case files_from_which::directory:
+			QMessageBox::warning(this,  "Files from directory",  "Not implemented");
+			return;
+		case files_from_which::url:
+			QMessageBox::warning(this,  "Files from URL",  "Not implemented");
+			return;
+		case files_from_which::stdin:
+			break;
+	}
+	
     auto i = this->media_fp_indx;
     this->media_fp_len = 0;
     while(true){

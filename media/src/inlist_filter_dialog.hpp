@@ -9,6 +9,27 @@
 #include <QRadioButton>
 #include <QRegularExpression>
 
+#include <compsky/mysql/mysql.hpp>
+
+
+namespace files_from_which {
+	enum {
+		directory,
+		sql,
+		stdin,
+		url,
+		COUNT
+	};
+}
+
+namespace start_from_which {
+	enum {
+		regex,
+		sql,
+		COUNT
+	};
+}
+
 
 struct InlistFilterRules {
 	QRegularExpression filename_regexp; // Initialises to empty
@@ -29,6 +50,8 @@ struct InlistFilterRules {
 	,	w_max(0)
 	,	h_min(0)
 	,	h_max(0)
+	,	files_from_which(files_from_which::stdin)
+	,	start_from_which(start_from_which::regex)
 	,	skip_tagged(false)
 	{}
 };
@@ -38,6 +61,9 @@ class InlistFilterDialog : public QDialog {
   public:
 	InlistFilterDialog(QWidget* parent = nullptr);
 	InlistFilterRules rules;
+	
+	MYSQL_RES* files_from_sql__res;
+	MYSQL_ROW files_from_sql__row;
   private:
 	void apply();
 	void load();
@@ -50,8 +76,8 @@ class InlistFilterDialog : public QDialog {
 	QLineEdit* files_from;
 	QLineEdit* start_from;
 	QStringList settings_names;
-	QRadioButton* files_from_which[3];
-	QRadioButton* start_from_which[2];
+	QRadioButton* files_from_which[files_from_which::COUNT];
+	QRadioButton* start_from_which[start_from_which::COUNT];
 	QCheckBox* skip_tagged;
 	QCheckBox* skip_trans;
 	QCheckBox* skip_grey;

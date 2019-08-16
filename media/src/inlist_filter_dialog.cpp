@@ -70,15 +70,14 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 			vbox->addLayout(hbox);
 		}
 		{
-			this->files_from_which[0] = new QRadioButton("Directory");
-			this->files_from_which[1] = new QRadioButton("Url");
-			this->files_from_which[2] = new QRadioButton("SQL");
-	#       define N_FILES_FROM_WHICH 3
+			this->files_from_which[files_from_which::directory] = new QRadioButton("Directory");
+			this->files_from_which[files_from_which::url]       = new QRadioButton("Url");
+			this->files_from_which[files_from_which::sql]       = new QRadioButton("SQL");
+			this->files_from_which[files_from_which::stdin]     = new QRadioButton("stdin");
 			this->files_from_which[0]->setChecked(true);
 			QHBoxLayout* hbox = new QHBoxLayout;
-			hbox->addWidget(this->files_from_which[0]);
-			hbox->addWidget(this->files_from_which[1]);
-			hbox->addWidget(this->files_from_which[2]);
+			for (auto i = 0;  i < files_from_which::COUNT;  ++i)
+				hbox->addWidget(this->files_from_which[i]);
 			hbox->addStretch(1);
 			vbox->addLayout(hbox);
 		}
@@ -161,13 +160,12 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 			vbox->addLayout(hbox);
 		}
 		{
-			this->start_from_which[0] = new QRadioButton("Regex");
-			this->start_from_which[1] = new QRadioButton("SQL");
-	#       define N_START_FROM_WHICH 2
+			this->start_from_which[start_from_which::regex] = new QRadioButton("Regex");
+			this->start_from_which[start_from_which::sql]   = new QRadioButton("SQL");
 			this->start_from_which[1]->setChecked(true);
 			QHBoxLayout* hbox = new QHBoxLayout;
-			hbox->addWidget(this->start_from_which[0]);
-			hbox->addWidget(this->start_from_which[1]);
+			for (auto i = 0;  i < start_from_which::COUNT;  ++i)
+				hbox->addWidget(this->start_from_which[i]);
 			hbox->addStretch(1);
 			vbox->addLayout(hbox);
 		}
@@ -198,15 +196,15 @@ void InlistFilterDialog::apply(){
 	this->rules.skip_trans  = this->skip_trans->isChecked();
 	this->rules.skip_grey   = this->skip_grey->isChecked();
 	
-	this->rules.files_from_which = get_checked_radio_btn_index(this->files_from_which, N_FILES_FROM_WHICH);
-	this->rules.start_from_which = get_checked_radio_btn_index(this->start_from_which, N_START_FROM_WHICH);
+	this->rules.files_from_which = get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT);
+	this->rules.start_from_which = get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT);
 	
 	this->rules.w_min = this->w_min->text().toInt();
 	this->rules.w_max = this->w_max->text().toInt();
 	this->rules.h_min = this->h_min->text().toInt();
 	this->rules.h_max = this->h_max->text().toInt();
 	
-	printf("%d %d\n%d %d\n", this->rules.w_min, this->rules.w_max, this->rules.h_min, this->rules.h_max);
+	compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  this->rules.files_from);
 }
 
 void InlistFilterDialog::load(){
@@ -271,8 +269,8 @@ void InlistFilterDialog::save(){
 			bool2char(this->skip_tagged->isChecked()), ',',
 			bool2char(this->skip_trans->isChecked()), ',',
 			bool2char(this->skip_grey->isChecked()), ',',
-			get_checked_radio_btn_index(this->files_from_which, N_FILES_FROM_WHICH), ',',
-			get_checked_radio_btn_index(this->start_from_which, N_START_FROM_WHICH), ',',
+			get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT), ',',
+			get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT), ',',
 			this->w_max->text().toInt(), ',',
 			this->w_min->text().toInt(), ',',
 			this->h_max->text().toInt(), ',',
