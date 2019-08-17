@@ -1,10 +1,3 @@
-/*
-Skip input files (from stdin) based on characteristics such as text length, number of paragraphs, file size, and image dimension.
-
-Rules are all stored in a single struct. TODO: and therefore constitute 'profiles' which can be switched easily.
-*/
-
-
 #include "info_dialog.hpp"
 #include "mainwindow.hpp"
 #include "unlink_tag_btn.hpp"
@@ -15,11 +8,6 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#ifdef DEBUG
-# include <stdio.h>
-#else
-# define printf(...)
-#endif
 
 class MainWindow;
 
