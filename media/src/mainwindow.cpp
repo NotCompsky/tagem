@@ -411,7 +411,16 @@ void MainWindow::media_open(){
     
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file = this->get_media_fp();
-    
+	
+	QFile f(file);
+	this->file_sz = f.size();
+	
+	if (
+		(r.file_sz_min && this->file_sz < r.file_sz_min) ||
+		(r.file_sz_max && this->file_sz > r.file_sz_max)
+	)
+		return this->media_next();
+	
     /* Set window title */
     QString fname = this->get_media_fp() + this->media_dir_len;
     this->setWindowTitle(fname);
@@ -421,7 +430,6 @@ void MainWindow::media_open(){
     PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
   #elif (defined TXT)
-    QFile f(file);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
         fprintf(stderr,  "Cannot load file: %s\n",  file);
         this->media_next();
@@ -879,7 +887,7 @@ void MainWindow::show_settings_dialog(){
 }
 
 void MainWindow::display_info(){
-	InfoDialog* info_dialog = new InfoDialog(this->file_id, this);
+	InfoDialog* info_dialog = new InfoDialog(this->file_id, this->file_sz, this);
 	info_dialog->exec();
 	delete info_dialog;
 }

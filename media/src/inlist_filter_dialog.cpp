@@ -110,6 +110,20 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		QRegExpValidator* validator_digits = new QRegExpValidator(QRegExp("\\d*"));
 		
 		{
+			table->addWidget(new QLabel("File Size"),  row,  0);
+			
+			this->file_sz_min = new QLineEdit("");
+			this->file_sz_min->setValidator(validator_digits);
+			table->addWidget(this->file_sz_min, row, 1);
+			
+			this->file_sz_max = new QLineEdit("");
+			this->file_sz_max->setValidator(validator_digits);
+			table->addWidget(this->file_sz_max, row, 2);
+			
+			++row;
+		}
+		
+		{
 			table->addWidget(new QLabel("Width"),  row,  0);
 			
 			this->w_min = new QLineEdit("");
@@ -204,6 +218,9 @@ void InlistFilterDialog::apply(){
 	this->rules.files_from_which = get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT);
 	this->rules.start_from_which = get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT);
 	
+	this->rules.file_sz_min = this->file_sz_min->text().toInt();
+	this->rules.file_sz_max = this->file_sz_max->text().toInt();
+	
 	this->rules.w_min = this->w_min->text().toInt();
 	this->rules.w_max = this->w_max->text().toInt();
 	this->rules.h_min = this->h_min->text().toInt();
@@ -244,7 +261,7 @@ void InlistFilterDialog::load(){
 	if (name.isEmpty())
 		return;
 	
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', name, "\"");
+	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', name, "\"");
 	
 	char* _filename_regexp;
 	char* _files_from;
@@ -254,11 +271,13 @@ void InlistFilterDialog::load(){
 	bool _skip_grey;
 	unsigned int _files_from_which;
 	unsigned int _start_from_which;
+	char* _file_sz_min;
+	char* _file_sz_max;
 	char* _w_max;
 	char* _w_min;
 	char* _h_max;
 	char* _h_min;
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_w_max, &_w_min, &_h_max, &_h_min)){
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
 		this->filename_regexp->setText(_filename_regexp);
 		this->files_from->setText(_files_from);
 		this->start_from->setText(_start_from);
@@ -267,6 +286,8 @@ void InlistFilterDialog::load(){
 		this->skip_grey->setChecked(_skip_grey);
 		this->files_from_which[_files_from_which]->setChecked(true);
 		this->start_from_which[_start_from_which]->setChecked(true);
+		this->file_sz_min->setText(_file_sz_min);
+		this->file_sz_max->setText(_file_sz_max);
 		this->w_min->setText(_w_min);
 		this->w_max->setText(_w_max);
 		this->h_min->setText(_h_min);
@@ -290,7 +311,7 @@ void InlistFilterDialog::save(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, w_max, w_min, h_max, h_min) VALUES (",
+		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min) VALUES (",
 			'"', _f::esc, '"', name, '"', ',',
 			'"', _f::esc, '"', this->filename_regexp->text(), '"', ',',
 			'"', _f::esc, '"', this->files_from->text(), '"', ',',
@@ -300,6 +321,8 @@ void InlistFilterDialog::save(){
 			bool2char(this->skip_grey->isChecked()), ',',
 			get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT), ',',
 			get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT), ',',
+			this->file_sz_min->text().toInt(), ',',
+			this->file_sz_max->text().toInt(), ',',
 			this->w_max->text().toInt(), ',',
 			this->w_min->text().toInt(), ',',
 			this->h_max->text().toInt(), ',',

@@ -38,6 +38,8 @@ struct InlistFilterRules {
 	QRegularExpression filename_regexp; // Initialises to empty
 	QString files_from;
 	QString start_from;
+	size_t file_sz_min;
+	size_t file_sz_max;
 	int w_min;
 	int w_max;
 	int h_min;
@@ -49,7 +51,9 @@ struct InlistFilterRules {
 	bool skip_grey;
 	
 	InlistFilterRules()
-	:	w_min(0)
+	:	file_sz_min(0)
+	,	file_sz_max(0)
+	,	w_min(0)
 	,	w_max(0)
 	,	h_min(0)
 	,	h_max(0)
@@ -73,6 +77,8 @@ class InlistFilterDialog : public QDialog {
 	void load();
 	void save();
 	QLineEdit* filename_regexp;
+	QLineEdit* file_sz_min;
+	QLineEdit* file_sz_max;
 	QLineEdit* w_min;
 	QLineEdit* w_max;
 	QLineEdit* h_min;

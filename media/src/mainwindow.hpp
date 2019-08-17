@@ -158,6 +158,7 @@ class MainWindow : public QWidget{
     int media_fp_indx;
     int media_fp_len;
     char media_fname[1024];
+	qint64 file_sz;
     int media_dir_len;
     int file_id_str_len;
     char file_id_str[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.

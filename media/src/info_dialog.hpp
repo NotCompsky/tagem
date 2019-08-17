@@ -7,7 +7,7 @@
 
 class InfoDialog : public QDialog {
   public:
-	InfoDialog(const uint64_t file_id,  QWidget* parent = nullptr);
+	InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* parent = nullptr);
 	uint64_t file_id;
   private:
 	void unlink_tag();

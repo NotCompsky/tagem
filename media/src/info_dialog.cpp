@@ -31,15 +31,20 @@ extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
 extern char BUF[4096];
 
+#include <QDebug>
+
 namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
-InfoDialog::InfoDialog(const uint64_t file_id,  QWidget* parent)
+InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* parent)
 : QDialog(parent)
 , file_id(file_id)
 {
 	QVBoxLayout* l = new QVBoxLayout(this);
+	
+	QLocale locale = this->locale();
+	l->addWidget(new QLabel(QString("File size: ") + locale.formattedDataSize(file_sz)));
 	
 	char* _score_str;
 	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT score FROM file WHERE id=", this->file_id);
