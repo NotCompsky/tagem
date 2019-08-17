@@ -17,12 +17,6 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 #include <QRegExpValidator>
 #include <QVBoxLayout>
 
-#ifdef DEBUG
-# include <stdio.h>
-#else
-# define printf(...)
-#endif
-
 
 namespace _mysql {
 	extern MYSQL* obj;
@@ -30,7 +24,7 @@ namespace _mysql {
 
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
-extern char BUF[4096];
+extern char BUF[];
 
 namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;

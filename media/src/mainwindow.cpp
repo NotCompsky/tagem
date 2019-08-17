@@ -71,8 +71,8 @@ constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOne f_g;
 constexpr static const compsky::asciify::flag::concat::Start f_start;
 constexpr static const compsky::asciify::flag::concat::End f_end;
 
-
-char BUF[4096];
+#define BUF_SZ (2 * 4096)
+char BUF[BUF_SZ];
 char* ITR = BUF;
 char NOTE[30000];
 

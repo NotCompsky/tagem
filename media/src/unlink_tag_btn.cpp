@@ -17,7 +17,7 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
-extern char BUF[4096];
+extern char BUF[];
 
 
 UnlinkTagBtn::UnlinkTagBtn(const uint64_t id,  QWidget* parent) : QPushButton("Unlink", parent), tag_id(id) {}

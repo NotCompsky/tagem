@@ -17,7 +17,7 @@ namespace _mysql {
 
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
-extern char BUF[4096];
+extern char BUF[];
 
 #include <QDebug>
 

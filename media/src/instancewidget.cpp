@@ -21,7 +21,7 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
-extern char* const BUF;
+extern char BUF[];
 
 
 InstanceWidget::InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent)
