@@ -160,8 +160,9 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 			vbox->addLayout(hbox);
 		}
 		{
-			this->start_from_which[start_from_which::regex] = new QRadioButton("Regex");
-			this->start_from_which[start_from_which::sql]   = new QRadioButton("SQL");
+			this->start_from_which[start_from_which::literal] = new QRadioButton("Literal");
+			this->start_from_which[start_from_which::regex]   = new QRadioButton("Regex");
+			this->start_from_which[start_from_which::sql]     = new QRadioButton("SQL");
 			this->start_from_which[1]->setChecked(true);
 			QHBoxLayout* hbox = new QHBoxLayout;
 			for (auto i = 0;  i < start_from_which::COUNT;  ++i)

@@ -14,9 +14,9 @@
 
 namespace files_from_which {
 	enum {
+		stdin,
 		directory,
 		sql,
-		stdin,
 		url,
 		COUNT
 	};
@@ -24,6 +24,7 @@ namespace files_from_which {
 
 namespace start_from_which {
 	enum {
+		literal,
 		regex,
 		sql,
 		COUNT
@@ -51,7 +52,7 @@ struct InlistFilterRules {
 	,	h_min(0)
 	,	h_max(0)
 	,	files_from_which(files_from_which::stdin)
-	,	start_from_which(start_from_which::regex)
+	,	start_from_which(start_from_which::literal)
 	,	skip_tagged(false)
 	{}
 };

@@ -1,4 +1,5 @@
 #include "mainwindow.hpp"
+#include "info_dialog.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -234,7 +235,7 @@ void MainWindow::media_next(){
 		case files_from_which::sql:
 		{
 			char* _media_fp;
-			if(likely(compsky::mysql::assign_next_row(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
+			if(likely(compsky::mysql::assign_next_row__no_free(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
 				printf("%s\n", _media_fp);
 				memcpy(this->media_fp,  _media_fp,  strlen(_media_fp) + 1);
 				this->media_dir_len = 0;
@@ -244,7 +245,8 @@ void MainWindow::media_next(){
 				this->media_open();
 				return;
 			}
-			QMessageBox::warning(this,  "Files from SQL query",  "No more results");
+			QMessageBox::warning(this,  "Files from SQL query",  "No more results - looping to beginning");
+			mysql_data_seek(this->inlist_filter_dialog->files_from_sql__res, 0);
 			return;
 		}
 		case files_from_which::directory:
@@ -626,7 +628,7 @@ QString MainWindow::media_tag(QString str){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", tagid, ",", this->file_id,  ")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
     
     return tagstr;
 }
@@ -858,17 +860,7 @@ void MainWindow::show_settings_dialog(){
 }
 
 void MainWindow::display_info(){
-	QString s = "";
-	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT f.name, f.score, GROUP_CONCAT(t.name SEPARATOR '\n') FROM file f, file2tag f2t, tag t WHERE f2t.file_id=f.id AND t.id=f2t.tag_id AND f.id=", this->file_id);
-	char* _filepath;
-	char* _score;
-	char* _tags;
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filepath, &_score, &_tags)){
-		s += _filepath;
-		s += '\n';
-		s += _score;
-		s += '\n';
-		s += _tags;
-		QMessageBox::information(this, "Info", s);
-	}
+	InfoDialog* info_dialog = new InfoDialog(this->file_id, this);
+	info_dialog->exec();
+	delete info_dialog;
 }
