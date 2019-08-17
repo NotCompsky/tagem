@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QLineEdit>
+#include <QProcess>
 #include <QRadioButton>
 #include <QRegularExpression>
 
@@ -17,6 +18,7 @@ namespace files_from_which {
 		stdin,
 		directory,
 		sql,
+		bash,
 		url,
 		COUNT
 	};
@@ -65,6 +67,7 @@ class InlistFilterDialog : public QDialog {
 	
 	MYSQL_RES* files_from_sql__res;
 	MYSQL_ROW files_from_sql__row;
+	QProcess files_from_bash;
   private:
 	void apply();
 	void load();

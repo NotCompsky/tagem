@@ -228,7 +228,15 @@ void MainWindow::set_player_options_for_img(){
 }
 #endif
 
+void MainWindow::set_media_dir_len(){
+	this->media_dir_len = 0;
+	for(size_t i = 0;  this->media_fp[i] != 0;  ++i)
+		if(this->media_fp[i] == '/')
+			this->media_dir_len = i + 1;
+}
+
 void MainWindow::media_next(){
+	// TODO: Implement in inlist_filter_dialog
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
 	
 	switch(r.files_from_which){
@@ -238,14 +246,11 @@ void MainWindow::media_next(){
 			if(likely(compsky::mysql::assign_next_row__no_free(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
 				printf("%s\n", _media_fp);
 				memcpy(this->media_fp,  _media_fp,  strlen(_media_fp) + 1);
-				this->media_dir_len = 0;
-				for(size_t i = 0;  this->media_fp[i] != 0;  ++i)
-					if(this->media_fp[i] == '/')
-						this->media_dir_len = i + 1;
+				this->set_media_dir_len();
 				this->media_open();
 				return;
 			}
-			QMessageBox::warning(this,  "Files from SQL query",  "No more results - looping to beginning");
+			QMessageBox::warning(this,  "No more results",  "SQL query results exhausted - looping to beginning");
 			mysql_data_seek(this->inlist_filter_dialog->files_from_sql__res, 0);
 			return;
 		}
@@ -255,6 +260,20 @@ void MainWindow::media_next(){
 		case files_from_which::url:
 			QMessageBox::warning(this,  "Files from URL",  "Not implemented");
 			return;
+		case files_from_which::bash:
+		{
+			const qint64 _sz = this->inlist_filter_dialog->files_from_bash.readLine(this->media_fp, MEDIA_FP_SZ);
+			if (_sz == -1){
+				// Errored
+				QMessageBox::warning(this,  "No more results",  "Bash command output exhausted.");
+				return;
+			}
+			this->media_fp[_sz - 1] = 0; // Remove trailing newline
+			this->set_media_dir_len();
+			printf("media_fp: %s\n", this->media_fp);
+			this->media_open();
+			return;
+		}
 		case files_from_which::stdin:
 			break;
 	}

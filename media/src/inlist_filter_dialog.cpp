@@ -36,7 +36,10 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
-InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
+InlistFilterDialog::InlistFilterDialog(QWidget* parent)
+: QDialog(parent)
+, files_from_sql__res(nullptr)
+{
 	QVBoxLayout* l = new QVBoxLayout(this);
 	
 	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT name FROM settings");
@@ -73,6 +76,7 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent) : QDialog(parent) {
 			this->files_from_which[files_from_which::directory] = new QRadioButton("Directory");
 			this->files_from_which[files_from_which::url]       = new QRadioButton("Url");
 			this->files_from_which[files_from_which::sql]       = new QRadioButton("SQL");
+			this->files_from_which[files_from_which::bash]      = new QRadioButton("Bash");
 			this->files_from_which[files_from_which::stdin]     = new QRadioButton("stdin");
 			this->files_from_which[0]->setChecked(true);
 			QHBoxLayout* hbox = new QHBoxLayout;
@@ -206,13 +210,28 @@ void InlistFilterDialog::apply(){
 	this->rules.h_max = this->h_max->text().toInt();
 	
 	// Clear previous results
-	char* _media_fp;
-	while(compsky::mysql::assign_next_row(this->files_from_sql__res,  &this->files_from_sql__row,  &_media_fp));
+	if (this->files_from_sql__res != nullptr){
+		char* _media_fp;
+		while(compsky::mysql::assign_next_row(this->files_from_sql__res,  &this->files_from_sql__row,  &_media_fp));
+		this->files_from_sql__res = nullptr;
+	}
 	
-	const QStringList statements = this->rules.files_from.split(";");
-	for (auto i = 0;  i < statements.size() - 1;  ++i)
-		compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[i]);
-	compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[statements.size()-1]);
+	switch(this->rules.files_from_which){
+		case files_from_which::bash:
+			if (this->files_from_bash.state() == QProcess::Running)
+				this->files_from_bash.kill();
+			this->files_from_bash.start("bash",  {"-c", this->rules.files_from});
+			if (!this->files_from_bash.waitForStarted())
+				// Errored
+				return;
+			break;
+		case files_from_which::sql:
+			const QStringList statements = this->rules.files_from.split(";");
+			for (auto i = 0;  i < statements.size() - 1;  ++i)
+				compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[i]);
+			compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[statements.size()-1]);
+			break;
+	}
 	
 	this->close();
 }

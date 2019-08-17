@@ -150,6 +150,7 @@ class MainWindow : public QWidget{
         rect.setBottomRight(q);
     };
   #endif
+	void set_media_dir_len();
     const char* get_media_fp();
 	InlistFilterDialog* inlist_filter_dialog;
     char media_fp[MEDIA_FP_SZ];
