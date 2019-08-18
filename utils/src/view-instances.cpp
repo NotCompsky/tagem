@@ -194,12 +194,28 @@ int main(int argc,  const char** argv) {
     
     }
     
-	compsky::mysql::query_buffer(
+	compsky::mysql::query(
 		mysql_obj,
 		mysql_res,
-		(root_tags)
-			? "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h"
-			: "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id=id) B ON B.file_id=id)C ON C.tag_id=id"
+		BUF,
+		"SELECT t.name, C.fp, C.x, C.y, C.w, C.h "
+		"FROM tag t "
+		"JOIN("
+			"SELECT name as fp, tag_id, x, y, w, h "
+			"FROM file JOIN("
+				"SELECT file_id, tag_id, x, y, w, h "
+				"FROM instance "
+				"JOIN("
+					"SELECT instance_id, ",
+					(root_tags) ? "root" : "node",
+					" AS tag_id "
+					"FROM instance2tag "
+					"JOIN tmp_tagids tt "
+					"ON tt.node=tag_id"
+				")A ON A.instance_id=id"
+			") B ON B.file_id=id"
+		")C ON C.tag_id=id "
+		"GROUP BY tag_id, t.name, C.fp, C.x, C.y, C.w, C.h"
 	);
     
     char* name;
