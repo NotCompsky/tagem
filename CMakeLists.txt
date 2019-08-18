@@ -6,8 +6,8 @@ endif()
 
 project(tagem CXX) # WARNING: Sets some important variables about the plarform. Don't call find_package before setting a project name.
 
-find_package(Compsky COMPONENTS asciify mysql REQUIRED)
-
+find_package(Compsky REQUIRED)
+include_directories(${COMPSKY_INCLUDE_DIRS})
 
 set(TAGEM_MAJOR_VERSION 0)
 set(TAGEM_MINOR_VERSION 1)
