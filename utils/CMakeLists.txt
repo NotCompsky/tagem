@@ -33,9 +33,9 @@ else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")
 endif()
 
-add_executable(tagem-bulk-tag src/bulk-tag.cpp)
-target_link_libraries(tagem-bulk-tag PRIVATE compsky_asciify compsky_mysql)
-target_compile_definitions(tagem-bulk-tag PRIVATE ${MY_DEFINES})
+add_executable(tagemall src/tagemall.cpp)
+target_link_libraries(tagemall PRIVATE compsky_asciify compsky_mysql)
+target_compile_definitions(tagemall PRIVATE ${MY_DEFINES})
 
 add_executable(tagem-srch src/fmt-sql-tags.cpp)
 target_link_libraries(tagem-srch PRIVATE compsky_asciify compsky_mysql)
@@ -47,7 +47,7 @@ target_link_libraries(tagem-init compsky_mysql_create_config compsky_asciify)
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 install(
-    TARGETS tagem-scored tagem-instances tagem-bulk-tag tagem-srch tagem-init
+    TARGETS tagem-scored tagem-instances tagemall tagem-srch tagem-init
     EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
