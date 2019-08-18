@@ -1,24 +1,20 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp> // for cv::imshow
-#include <stdio.h> // for printf
+#include <stdio.h> // for fwrite
 
-#include <compsky/asciify/init.hpp>
-#include <compsky/asciify/asciify.hpp> // for asciify
-#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
-#include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
+#include <compsky/asciify/asciify.hpp>
+#include <compsky/mysql/mysql.hpp>
+#include <compsky/mysql/query.hpp>
 
 #include <sys/stat.h> // for mkdir
 
 
-MYSQL_RES* RES;
-MYSQL_ROW ROW;
-
-namespace compsky {
-	namespace asciify {
-		char* BUF;
-		char* ITR;
-	}
+namespace _f {
+	constexpr static const compsky::asciify::flag::concat::Start start;
+	constexpr static const compsky::asciify::flag::concat::End end;
 }
+
+char BUF[4096];
 
 char SAVE_FILES_TO[4096] = {0};
 char* SAVE_FILES_TO_END = nullptr;
@@ -48,9 +44,9 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
     
     if (img.cols == 0  ||  img.rows == 0){
         // Bad crop
-        compsky::asciify::reset_index();
-        compsky::asciify::asciify("Bad crop:\t", tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, ' ', newW, 'x', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, '\t', fp, '\n');
-        fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stderr);
+		char* itr = BUF;
+        compsky::asciify::asciify(itr, "Bad crop:\t", tag, '\t', x, u2fz, ',', y, u2fz, '\t', w, u2fz, 'x', h, u2fz, '\t', "@\t", newX, ',', newY, ' ', newW, 'x', newH, "\tfrom\t", orig_img.cols, 'x', orig_img.rows, '\t', fp, '\n');
+        fwrite(BUF,  1,  (uintptr_t)itr - (uintptr_t)BUF,  stderr);
         return;
     }
     
@@ -101,9 +97,13 @@ int main(int argc,  const char** argv) {
         -F [TAG]
             Ignore files tagged with the following
     */
-
-	if(compsky::asciify::alloc(4096))
-		return 4;
+	
+	constexpr static const size_t mysql_auth_sz = 512;
+	char mysql_auth[mysql_auth_sz];
+	
+	MYSQL* mysql_obj;
+	MYSQL_RES* mysql_res;
+	MYSQL_ROW mysql_row;
     
     bool root_tags = false;
     std::vector<const char*> not_subtags;
@@ -125,37 +125,39 @@ int main(int argc,  const char** argv) {
         }
     }
     
-    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
+    compsky::mysql::init(mysql_obj, mysql_auth, mysql_auth_sz, getenv("TAGEM_MYSQL_CFG"));
     
     
     {
     
-    constexpr static const compsky::asciify::flag::concat::Start f_start;
-    constexpr static const compsky::asciify::flag::concat::End f_end;
 	if(argc == 0){
-		compsky::mysql::exec_buffer("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'foobar'\")");
-		compsky::mysql::exec_buffer("INSERT IGNORE INTO tmp_tagids (node) SELECT id FROM tag");
+		compsky::mysql::exec_buffer(mysql_obj, "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'foobar'\")");
+		compsky::mysql::exec_buffer(mysql_obj, "INSERT IGNORE INTO tmp_tagids (node) SELECT id FROM tag");
 	} else {
-		compsky::mysql::exec("CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", f_start, "','", 3, argv, argc, f_end, "'\")");
+		compsky::mysql::exec(mysql_obj, BUF, "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", _f::start, "','", 3, argv, argc, _f::end, "'\")");
 	}
 	
     if (not_subtags.size() != 0){
-        compsky::asciify::BUF[strlen("CALL descendant_tags_id_rooted_from(\"tmp_")-1] = 'D'; // Replace '_' with 'D', i.e. "tmp_tagids" -> "tmpDtagids"
+        compsky::mysql::exec(
+			mysql_obj,
+			BUF,
+			"CALL descendant_tags_id_rooted_from(\"tmp", 'D', "tagids\", \"'",
+				_f::start, "','", 3, not_subtags.data(), not_subtags.size(), _f::end,
+			")"
+		);
         
-        compsky::asciify::asciify(/* a already included in BUF */ f_start, "','", 3, not_subtags.data(), not_subtags.size(), f_end, ')');
-        
-        compsky::mysql::exec_buffer(compsky::asciify::BUF, compsky::asciify::get_index());
-        
-        compsky::mysql::exec_buffer("DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
+        compsky::mysql::exec_buffer(mysql_obj, "DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
     }
     
     }
     
-    if (root_tags)
-        compsky::mysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h");
-    else
-        // NOTE: This query will include duplicates, if an instance is tagged with multiple distinct tags in tmp_tagids (i.e. multiple tags inheriting from the tags we asked for)
-        compsky::mysql::query_buffer(&RES, "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id=id) B ON B.file_id=id)C ON C.tag_id=id");
+	compsky::mysql::query_buffer(
+		mysql_obj,
+		mysql_res,
+		(root_tags)
+			? "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,root,x,y,w,h FROM file JOIN(SELECT file_id,root,x,y,w,h FROM instance JOIN(SELECT instance_id,root FROM instance2tag JOIN tmp_tagids tt ON tt.node=tag_id)A ON A.instance_id = id) B ON B.file_id=id)C ON C.root = id GROUP BY root, t.name, C.fp, C.x, C.y, C.w, C.h"
+			: "SELECT t.name, C.fp, C.x, C.y, C.w, C.h FROM tag t JOIN(SELECT name as fp,tag_id,x,y,w,h FROM file JOIN(SELECT file_id,tag_id,x,y,w,h FROM instance JOIN(SELECT instance_id,tag_id FROM instance2tag WHERE tag_id IN(SELECT node FROM tmp_tagids))A ON A.instance_id=id) B ON B.file_id=id)C ON C.tag_id=id"
+	);
     
     char* name;
     char* fp;
@@ -163,10 +165,10 @@ int main(int argc,  const char** argv) {
     constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
 	int i = 0;
-    while(compsky::mysql::assign_next_row(RES, &ROW, &name, &fp, f, &x, f, &y, f, &w, f, &h))
+    while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &fp, f, &x, f, &y, f, &w, f, &h))
         view_img(name, fp, x, y, w, h, ++i);
     
-    compsky::mysql::exit_mysql();
+    compsky::mysql::wipe_auth(mysql_auth, mysql_auth_sz);
     
     return 0;
 }
