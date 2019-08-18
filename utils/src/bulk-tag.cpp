@@ -10,131 +10,166 @@ Usage:
 #include <cstdarg> // To avoid error in MariaDB/mysql.h: ‘va_list’ has not been declared
 #include <cstdio> // to avoid printf error
 #include <compsky/mysql/query.hpp> // for compsky::mysql::exec
-#include <compsky/asciify/init.hpp>
 
 
 namespace ERR {
     enum {
         NONE,
         UNKNOWN,
+		MALLOC,
+		BAD_OPTION,
         GETCWD
     };
 }
 
-namespace compsky {
-	namespace asciify {
-		char* BUF;
-		char* ITR;
-	}
+
+namespace _f {
+	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
 
-int ascii2n(const char* s){
-    int n = 0;
-    while (*s != 0){
-        n *= 10;
-        n += *s - '0';
-        ++s;
-    }
-    return n;
-};
-
-
 int main(const int argc, const char** argv){
-	if(compsky::asciify::alloc(4096))
-		return 4;
-    int score = 0;
-    char cwd[4096] = "','"; // For the cncatenation later
-    if (getcwd(cwd + 3,  1024) == NULL)
-        return ERR::GETCWD;
+	// tagemall [OPTIONS] - tag1 ... tagN - filepath1 filepath2 ... filepathM
+	constexpr static const size_t buf_sz = 4 * 1024 * 1024;
+	char* buf = (char*)malloc(buf_sz);
+	if(buf == nullptr)
+		return ERR::MALLOC;
+	
+	const char* score = "NULL";
+	
+	char cwd[4096]; // For the cncatenation later
+	if (getcwd(cwd,  4096 - 1) == NULL)
+		return ERR::GETCWD;
+	const size_t cwd_len = strlen(cwd);
+	cwd[cwd_len] = '/';
+	cwd[cwd_len+1] = 0;
     
-    int i = 0;
-    
-    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
-    
-    bool is_absolute = false;
-    
-    while (i < argc){
-        const char* arg = argv[++i];
-        if (arg[0] != '-' || arg[2] != 0)
-            break;
-        
-        switch(arg[1]){
-            case 'a':
-                is_absolute = true;
-                break;
-            case 's':
-                score = ascii2n(argv[++i]);
-                break;
-        }
-    }
-    --i;
-    
-    int file_argc_offset  =  i + 1;
-    
-    while (i < argc){
-        const char* arg = argv[++i];
-        if (arg[0] == '-'  &&  arg[1] == 0)
-            break;
-    }
-    
-    ++i; // Skip delineating argument flag
-    
-    int n_files  =  i - file_argc_offset;
-    
-    // All remaining arguments (i.e. argv[j] for all i<=j<argc) are tags
-    
-    constexpr static const compsky::asciify::flag::concat::Start f;
-    constexpr static const compsky::asciify::flag::concat::End g;
-    
-    const size_t cwd_len = strlen(cwd);
-    cwd[cwd_len] = '/';  // Replace trailing \0
-    
-    constexpr static const compsky::asciify::flag::prefix::Start start_prefix;
-    constexpr static const compsky::asciify::flag::prefix::End end_prefix;
-    
-    compsky::mysql::exec(
-        // If tags do not already exist in table, register them
-        "INSERT IGNORE into tag (name) "
-        "VALUES ('",
-            f, "'),('", 5,
-                argv+i, argc-i,
-            g,
-        "')"
-    );
-    
-    if (is_absolute){
-        compsky::mysql::exec(
-            "INSERT IGNORE into file2tag (tag_id, file_id) "
-            "SELECT t.id, f.id "
-            "FROM tag t, file f "
-            "WHERE t.name IN ('",
-                f, "','", 3,
-                    argv+i, argc-i,
-                g,
-            "') AND f.name IN ('",
-                f, "','", 3,
-                    argv + file_argc_offset,
-                    n_files,
-                g,
-            "')"
-        );
-    } else {
-        compsky::mysql::exec(
-            "INSERT IGNORE into file2tag (tag_id, file_id) "
-            "SELECT t.id, f.id "
-            "FROM tag t, file f "
-            "WHERE t.name IN ('",
-                f, "','", 3,
-                    argv+i, argc-i,
-                g,
-            "') AND f.name IN ('",
-                cwd + 3, // Skip prefix
-                f, cwd, cwd_len,
-                    argv + file_argc_offset,
-                    n_files,
-                g,
-            "')"
-        );
-    }
+	MYSQL* mysql_obj;
+	constexpr static const size_t mysql_auth_sz = 512;
+	char mysql_auth[mysql_auth_sz];
+	compsky::mysql::init(mysql_obj, mysql_auth, mysql_auth_sz, getenv("TAGEM_MYSQL_CFG"));
+	
+	
+	unsigned int i = 0;
+	while (i < argc){
+		const char* arg = argv[++i];
+		
+		switch(arg[0]){
+			case '-':
+				switch(arg[1]){
+					case 0:
+						goto break_all__a;
+					case 's':
+						score = argv[++i];
+						break;
+					default:
+						return ERR::BAD_OPTION;
+				}
+				break;
+			default:
+				return ERR::BAD_OPTION;
+		}
+	}
+	break_all__a:
+	
+	
+	const unsigned int tag_offset = i + 1;
+	unsigned int n_tags = 0;
+	while (i < argc){
+		const char* arg = argv[++i];
+		
+		if(arg[0] == '-'  &&  arg[1] == 0)
+			break;
+		
+		++n_tags;
+	}
+	
+	
+	const unsigned int file_offset = i + 1;
+	const unsigned int n_files = argc - file_offset;
+
+	
+	char* itr;
+
+	
+    itr = buf;
+	compsky::asciify::asciify(
+		itr,
+		"INSERT IGNORE INTO tag (name) "
+		"VALUES "
+	);
+	for (auto j = tag_offset;  j < tag_offset + n_tags;  ++j){
+		const char* const name = argv[j];
+		compsky::asciify::asciify(
+			itr,
+			'(',
+				'"', _f::esc, '"', name, '"',
+			')',
+			','
+		);
+	}
+	--itr; // Ignore trailing comma
+	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+	
+	itr = buf;
+	compsky::asciify::asciify(
+		itr,
+		"INSERT IGNORE INTO file (name, score) "
+		"VALUES "
+	);
+	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
+		const char* const name = argv[j];
+		compsky::asciify::asciify(
+			itr,
+			'(',
+				'"',
+					_f::esc, '"',  (name[0] == '/') ? "" : cwd,
+					_f::esc, '"', name,
+				'"', ',',
+				score,
+			')',
+			','
+		);
+	}
+	--itr; // Ignore trailing comma
+	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+	
+	itr = buf;
+	compsky::asciify::asciify(
+		itr,
+		"INSERT IGNORE INTO file2tag (file_id, tag_id) "
+		"SELECT f.id, t.id "
+		"FROM file f, tag t "
+		"WHERE f.name IN ("
+	);
+	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
+		const char* const name = argv[j];
+		compsky::asciify::asciify(
+			itr,
+			'"',
+				_f::esc, '"',  (name[0] == '/') ? "" : cwd,
+				_f::esc, '"', name,
+			'"',
+			','
+		);
+	}
+	--itr; // Ignore trailing comma
+	compsky::asciify::asciify(
+		itr,
+		") AND t.name IN ("
+	);
+	for (auto j = tag_offset;  j < tag_offset + n_tags;  ++j){
+		const char* const name = argv[j];
+		compsky::asciify::asciify(
+			itr,
+			'"', _f::esc, '"', name, '"',
+			','
+		);
+	}
+	--itr; // Ignore trailing comma
+	compsky::asciify::asciify(
+		itr,
+		")"
+	);
+	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 }
