@@ -20,10 +20,6 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(tagem-scored src/scored.cpp)
-target_link_libraries(tagem-scored PRIVATE compsky_asciify compsky_mysql)
-target_compile_definitions(tagem-scored PRIVATE ${MY_DEFINES})
-
 if(OpenCV_FOUND)
     add_executable(tagem-instances src/view-instances.cpp)
     target_include_directories(tagem-instances PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -47,7 +43,7 @@ target_link_libraries(tagem-init compsky_mysql_create_config compsky_asciify)
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 install(
-    TARGETS tagem-scored tagem-instances tagemall tagem-srch tagem-init
+    TARGETS tagem-instances tagemall tagem-srch tagem-init
     EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
