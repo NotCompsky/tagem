@@ -117,11 +117,22 @@ int main(int argc,  const char** argv) {
         if (arg[0] != '-'  ||  arg[2] != 0)
             break;
         
-        switch(arg[1]){
-            case 'r': root_tags = true; break;
-            case 'D': not_subtags.push_back(*(++argv)); --argc; break;
-			case 's': { const size_t len = strlen(*(++argv));  memcpy(SAVE_FILES_TO, *argv, len);  SAVE_FILES_TO_END = SAVE_FILES_TO + len; --argc; }  break;
-            default: break;
+		switch(arg[1]){
+			case 'r':
+				root_tags = true;
+				break;
+			case 'D':
+				not_subtags.push_back(*(++argv));
+				--argc;
+				break;
+			case 's': {
+				const size_t len = strlen(*(++argv));
+				memcpy(SAVE_FILES_TO, *argv, len);
+				SAVE_FILES_TO_END = SAVE_FILES_TO + len;
+				--argc;
+				break;
+			}
+			default: break;
         }
     }
     
