@@ -14,6 +14,15 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::concat::End end;
 }
 
+namespace _err {
+	enum {
+		none,
+		generic,
+		bad_option,
+		not_implemented
+	};
+}
+
 char BUF[4096];
 
 char SAVE_FILES_TO[4096] = {0};
@@ -92,6 +101,23 @@ int main(int argc,  const char** argv) {
             Ignore the following descendant tag of one of the specified tags
             NOTE: Does not ignore instances tagged with this tag, but ensures that, if this subtag is the only subtag of a specified tag, the instance is not added.
             E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third instances only.
+		-s [TAG]
+			Split on a tag.
+			For instance, if we split on 'Animal' and 'Image Type', we would end up with the directory structure
+				[Root directory]
+				|-- Cat
+					|-- Photograph
+					|-- Sketch
+				|- Dog
+					|-- Photograph
+					|-- Sketch
+				|- Fox
+					|-- Photograph
+					|-- Sketch
+				|- Mouse
+					|-- Photograph
+					|-- Sketch
+			Can be specified multiple times.
         -w [DIRECTORY]
             Write cropped images to directory
     */
@@ -105,6 +131,7 @@ int main(int argc,  const char** argv) {
     
     bool root_tags = false;
     std::vector<const char*> not_subtags;
+	std::vector<const char*> split_on_tags;
     
     while (true){
 		++argv;
@@ -123,6 +150,13 @@ int main(int argc,  const char** argv) {
 				not_subtags.push_back(*(++argv));
 				--argc;
 				break;
+			case 's':
+				/*
+				split_on_tags.push_back(*(++argv));
+				--argc;
+				break;
+				*/
+				return _err::not_implemented;
 			case 'w': {
 				const size_t len = strlen(*(++argv));
 				memcpy(SAVE_FILES_TO, *argv, len);
