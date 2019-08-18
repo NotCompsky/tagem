@@ -7,6 +7,7 @@ CREATE TABLE file (
     score INT,
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
     note VARBINARY(30000),
+    UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
 
@@ -68,4 +69,24 @@ CREATE TABLE relationtag2tag (
     result BIGINT UNSIGNED NOT NULL,  # Resulting Tag ID
     PRIMARY KEY `relation2mst` (tag, master, slave, result)
 );
+
+CREATE TABLE settings (
+	name VARBINARY(128) NOT NULL,
+	filename_regexp VARCHAR(1024),
+	files_from VARCHAR(1024) NOT NULL,
+	start_from VARCHAR(1024) NOT NULL,
+	skip_tagged BOOLEAN NOT NULL,
+	skip_trans BOOLEAN NOT NULL,
+	skip_grey BOOLEAN NOT NULL,
+	files_from_which INT UNSIGNED NOT NULL,
+	start_from_which INT UNSIGNED NOT NULL,
+	file_sz_min BIGINT UNSIGNED NOT NULL,
+	file_sz_max BIGINT UNSIGNED NOT NULL,
+	w_max INT UNSIGNED NOT NULL,
+	w_min INT UNSIGNED NOT NULL,
+	h_max INT UNSIGNED NOT NULL,
+	h_min INT UNSIGNED NOT NULL,
+	PRIMARY KEY (name)
+);
+
 )====="
