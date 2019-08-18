@@ -92,10 +92,8 @@ int main(int argc,  const char** argv) {
             Ignore the following descendant tag of one of the specified tags
             NOTE: Does not ignore instances tagged with this tag, but ensures that, if this subtag is the only subtag of a specified tag, the instance is not added.
             E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third instances only.
-        -f [TAG]
-            Only include files tagged with the following
-        -F [TAG]
-            Ignore files tagged with the following
+        -w [DIRECTORY]
+            Write cropped images to directory
     */
 	
 	constexpr static const size_t mysql_auth_sz = 512;
@@ -125,7 +123,7 @@ int main(int argc,  const char** argv) {
 				not_subtags.push_back(*(++argv));
 				--argc;
 				break;
-			case 's': {
+			case 'w': {
 				const size_t len = strlen(*(++argv));
 				memcpy(SAVE_FILES_TO, *argv, len);
 				SAVE_FILES_TO_END = SAVE_FILES_TO + len;
