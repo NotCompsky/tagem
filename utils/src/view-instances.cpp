@@ -198,24 +198,13 @@ int main(int argc,  const char** argv) {
 		mysql_obj,
 		mysql_res,
 		BUF,
-		"SELECT t.name, C.fp, C.x, C.y, C.w, C.h "
-		"FROM tag t "
-		"JOIN("
-			"SELECT name as fp, tag_id, x, y, w, h "
-			"FROM file JOIN("
-				"SELECT file_id, tag_id, x, y, w, h "
-				"FROM instance "
-				"JOIN("
-					"SELECT instance_id, ",
-					(root_tags) ? "root" : "node",
-					" AS tag_id "
-					"FROM instance2tag "
-					"JOIN tmp_tagids tt "
-					"ON tt.node=tag_id"
-				")A ON A.instance_id=id"
-			") B ON B.file_id=id"
-		")C ON C.tag_id=id "
-		"GROUP BY tag_id, t.name, C.fp, C.x, C.y, C.w, C.h"
+		"SELECT t.name, f.name, i.x, i.y, i.w, i.h "
+		"FROM tag t, file f, instance i, instance2tag i2t, tmp_tagids tt "
+		"WHERE i2t.instance_id=i.id "
+		  "AND f.id=i.file_id "
+		  "AND t.id=i2t.tag_id "
+		  "AND tt.", (root_tags)?"node":"root", "=t.id "
+		"GROUP BY t.name, f.name, i.x, i.y, i.w, i.h"
 	);
     
     char* name;
