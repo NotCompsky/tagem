@@ -10,6 +10,7 @@ class InstanceRelationDialog : public QDialog {
 	InstanceRelationDialog(const uint64_t _id,  MainWindow* const _win,  QWidget* parent = nullptr);
   private:
 	void add_tag();
+	void display_hub();
 	MainWindow* const win;
 	const uint64_t id;
 };

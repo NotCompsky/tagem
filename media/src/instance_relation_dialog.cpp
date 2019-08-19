@@ -1,4 +1,5 @@
 #include "instance_relation_dialog.hpp"
+#include "relation_hub.hpp"
 #include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
 
@@ -48,6 +49,12 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 		connect(btn, &QPushButton::clicked, this, &InstanceRelationDialog::add_tag);
 		l->addWidget(btn);
 	}
+	
+	{
+		QPushButton* btn = new QPushButton("Hub", this);
+		connect(btn, &QPushButton::clicked, this, &InstanceRelationDialog::display_hub);
+		l->addWidget(btn);
+	}
 }
 
 void InstanceRelationDialog::add_tag(){
@@ -56,4 +63,10 @@ void InstanceRelationDialog::add_tag(){
 		return;
 	
 	compsky::mysql::exec(_mysql::obj, BUF, "INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES (", this->id, ',', tag_id, ")");
+}
+
+void InstanceRelationDialog::display_hub(){
+	RelationHub* hub = new RelationHub(this->win, nullptr);
+	hub->exec();
+	delete hub;
 }

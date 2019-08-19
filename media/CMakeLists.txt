@@ -26,7 +26,18 @@ message(STATUS "Targets: ${MY_TARGETS}")
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
-    add_executable("${tgt}" src/main.cpp src/mainwindow.cpp src/keyreceiver.cpp src/name_dialog.cpp src/inlist_filter_dialog.cpp src/dropdown_dialog.cpp src/info_dialog.cpp src/unlink_tag_btn.cpp src/instance_relation_dialog.cpp)
+    add_executable("${tgt}"
+		src/main.cpp
+		src/mainwindow.cpp
+		src/keyreceiver.cpp
+		src/name_dialog.cpp
+		src/inlist_filter_dialog.cpp
+		src/dropdown_dialog.cpp
+		src/info_dialog.cpp
+		src/unlink_tag_btn.cpp
+		src/instance_relation_dialog.cpp
+		src/relation_hub.cpp
+	)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" Qt5::Widgets compsky_asciify compsky_mysql)
     foreach(dfn ${MY_DEFINITIONS})
