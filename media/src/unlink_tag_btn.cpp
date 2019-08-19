@@ -10,8 +10,6 @@
 
 #include <compsky/mysql/query.hpp>
 
-#include <QMessageBox>
-
 
 namespace _mysql {
 	extern MYSQL* obj;
