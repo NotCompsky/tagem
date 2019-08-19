@@ -68,7 +68,7 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		QVBoxLayout* vbox = new QVBoxLayout;
 		{
 			QHBoxLayout* hbox = new QHBoxLayout;
-			this->files_from = new QLineEdit("");
+			this->files_from = new QTextEdit("");
 			hbox->addWidget(this->files_from);
 			vbox->addLayout(hbox);
 		}
@@ -210,7 +210,7 @@ unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int
 
 void InlistFilterDialog::apply(){
 	this->rules.filename_regexp.setPattern(this->filename_regexp->text());
-	this->rules.files_from = this->files_from->text();
+	this->rules.files_from = this->files_from->toPlainText();
 	this->rules.start_from = this->start_from->text();
 
 	this->rules.skip_tagged = this->skip_tagged->isChecked();
@@ -274,7 +274,7 @@ void InlistFilterDialog::load(){
 	char* _h_min;
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
 		this->filename_regexp->setText(_filename_regexp);
-		this->files_from->setText(_files_from);
+		this->files_from->setPlainText(_files_from);
 		this->start_from->setText(_start_from);
 		this->skip_tagged->setChecked(_skip_tagged);
 		this->skip_trans->setChecked(_skip_trans);
@@ -302,7 +302,7 @@ void InlistFilterDialog::save(){
 		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min) VALUES (",
 			'"', _f::esc, '"', this->settings_name->text(), '"', ',',
 			'"', _f::esc, '"', this->filename_regexp->text(), '"', ',',
-			'"', _f::esc, '"', this->files_from->text(), '"', ',',
+			'"', _f::esc, '"', this->files_from->toPlainText(), '"', ',',
 			'"', _f::esc, '"', this->start_from->text(), '"', ',',
 			bool2char(this->skip_tagged->isChecked()), ',',
 			bool2char(this->skip_trans->isChecked()), ',',

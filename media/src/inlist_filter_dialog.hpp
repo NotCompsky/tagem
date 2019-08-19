@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QLineEdit>
+#include <QTextEdit>
 #include <QProcess>
 #include <QRadioButton>
 #include <QRegularExpression>
@@ -84,7 +85,7 @@ class InlistFilterDialog : public QDialog {
 	QLineEdit* w_max;
 	QLineEdit* h_min;
 	QLineEdit* h_max;
-	QLineEdit* files_from;
+	QTextEdit* files_from;
 	QLineEdit* start_from;
 	QStringList settings_names;
 	QRadioButton* files_from_which[files_from_which::COUNT];
