@@ -13,10 +13,6 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
-namespace _f {
-	constexpr static const compsky::asciify::flag::Escape esc;
-}
-
 extern char BUF[];
 
 
