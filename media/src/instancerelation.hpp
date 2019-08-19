@@ -11,15 +11,13 @@ class MainWindow;
 
 
 class InstanceRelation : public QObject{
-    Q_OBJECT
  public:
     InstanceRelation(const uint64_t _id,  QPoint middle,  MainWindow* const _win,  QWidget* parent);
     ~InstanceRelation();
     QPushButton* btn;
     uint64_t id;
- private Q_SLOTS:
-    void toggle_expand();
  private:
+	void toggle_expand(); // SLOT
 	MainWindow* const win;
 };
 

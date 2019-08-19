@@ -12,9 +12,8 @@ class MainWindow;
 class RelationHub : public QDialog {
   public:
 	RelationHub(MainWindow* const _win,  QWidget* parent = nullptr);
-  private Q_SLOTS:
-	void add();
   private:
+	void add(); // SLOT
 	MainWindow* const win;
 	MYSQL_RES* res;
 	MYSQL_ROW row;

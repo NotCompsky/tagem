@@ -51,7 +51,6 @@ void scale(QRect& rect,  T scale){
 
 
 class MainWindow : public QWidget{
-    Q_OBJECT
  public:
     ~MainWindow();
     explicit MainWindow(QWidget *parent = 0);
@@ -68,6 +67,11 @@ class MainWindow : public QWidget{
     void media_note();
 	void show_settings_dialog();
 	void display_info();
+  #ifdef VID
+	void seekBySlider(int value); // SLOT
+	void seekBySlider(); // SLOT
+	void playPause(); // SLOT
+  #endif
     uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name);
     double volume;
     QString tag_preset[10];
@@ -112,23 +116,16 @@ class MainWindow : public QWidget{
     QStringList tagslist;
     std::map<uint64_t, QString> tag_id2name;
     QCompleter* tagcompleter;
- public Q_SLOTS:
+ private:
   #ifdef VID
-    void seekBySlider(int value);
-    void seekBySlider();
-    void playPause();
-  #endif
- private Q_SLOTS:
-  #ifdef VID
-    void updateSlider(qint64 value);
-    void updateSlider();
-    void updateSliderUnit();
-    void set_player_options_for_img();
+	void updateSlider(qint64 value); // SLOT
+	void updateSlider(); // SLOT
+	void updateSliderUnit(); // SLOT
+	void set_player_options_for_img(); // SLOT
   #endif
   #ifdef TXT
-    void file_modified();
+	void file_modified(); // SLOT
   #endif
- private:
   #ifdef VID
     QSlider *m_slider;
     int m_unit;
