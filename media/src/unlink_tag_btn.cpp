@@ -18,10 +18,16 @@ namespace _mysql {
 extern char BUF[];
 
 
-UnlinkTagBtn::UnlinkTagBtn(const uint64_t id,  QWidget* parent) : QPushButton("Unlink", parent), tag_id(id) {}
+UnlinkTagBtn::UnlinkTagBtn(const char* const _delete_from_where,  const uint64_t _primary_id,  const char* const _and_tag_id_eql,  const uint64_t _tag_id,  QWidget* parent)
+: QPushButton("Unlink", parent)
+, delete_from_where(_delete_from_where)
+, primary_id(_primary_id)
+, and_tag_id_eql(_and_tag_id_eql)
+, tag_id(_tag_id)
+{}
 
 void UnlinkTagBtn::exec(){
-	compsky::mysql::exec(_mysql::obj,  BUF,  "DELETE FROM file2tag WHERE tag_id=", this->tag_id, " AND file_id=", static_cast<InfoDialog*>(this->parent())->file_id);
+	compsky::mysql::exec(_mysql::obj,  BUF,  this->delete_from_where, this->primary_id, this->and_tag_id_eql, this->tag_id);
 }
 
 void UnlinkTagBtn::mousePressEvent(QMouseEvent* e){

@@ -15,11 +15,15 @@
 
 class UnlinkTagBtn : public QPushButton{
 	Q_OBJECT
+  private:
+	const char* const delete_from_where;
+	const uint64_t primary_id;
+	const char* const and_tag_id_eql;
   private Q_SLOTS:
 	void mousePressEvent(QMouseEvent* e);
   public:
 	const uint64_t tag_id;
-	explicit UnlinkTagBtn(const uint64_t id,  QWidget* parent);
+	explicit UnlinkTagBtn(const char* const _delete_from_where,  const uint64_t _primary_id,  const char* const and_tag_id_eql,  const uint64_t _tag_id,  QWidget* parent);
   public Q_SLOTS:
 	void exec();
 };

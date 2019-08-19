@@ -1,5 +1,5 @@
 #include "instance_relation_dialog.hpp"
-#include "instance_relation_unlink_tag_btn.hpp"
+#include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
 
 #include <compsky/mysql/query.hpp>
@@ -38,7 +38,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 		QHBoxLayout* hbox = new QHBoxLayout;
 		
 		hbox->addWidget(new QLabel(_tag_name));
-		hbox->addWidget(new InstanceRelationUnlinkTagBtn(_id, _tag_id, this));
+		hbox->addWidget(new UnlinkTagBtn("DELETE FROM relation2tag WHERE relation_id=", _id, " AND tag_id=", _tag_id, this));
 		
 		l->addLayout(hbox);
 	}

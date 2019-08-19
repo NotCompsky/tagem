@@ -40,7 +40,7 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 		QHBoxLayout* hbox = new QHBoxLayout;
 		
 		hbox->addWidget(new QLabel(_tagname));
-		hbox->addWidget(new UnlinkTagBtn(_tagid, this));
+		hbox->addWidget(new UnlinkTagBtn("DELETE FROM file2tag WHERE file_id=", this->file_id, " AND tag_id=",_tagid, this));
 		
 		l->addLayout(hbox);
 	}
