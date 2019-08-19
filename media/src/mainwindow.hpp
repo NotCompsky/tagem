@@ -55,7 +55,7 @@ class MainWindow : public QWidget{
  public:
     ~MainWindow();
     explicit MainWindow(QWidget *parent = 0);
-    QString media_tag(QString str);
+	const QString media_tag(const QString str);
     void media_tag_new_preset(int n);
     void media_overwrite();
     void media_next();
@@ -68,8 +68,7 @@ class MainWindow : public QWidget{
     void media_note();
 	void show_settings_dialog();
 	void display_info();
-    uint64_t get_id_from_table(const char* table_name, const char* entry_name);
-    uint64_t file_attr_id(const char* attr,  uint64_t attr_id_int,  const char* file_id_str,  const int file_id_str_len);
+    uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name);
     double volume;
     QString tag_preset[10];
     bool reached_stdin_end;
@@ -108,7 +107,8 @@ class MainWindow : public QWidget{
     QSize main_widget_orig_size;
     double scale_factor;
   #endif
-    uint64_t add_new_tag(QString tagstr,  uint64_t tagid = 0);
+	uint64_t ask_for_tag(const QString str = "");
+	uint64_t add_new_tag(const QString tagstr,  uint64_t tagid = 0);
     QStringList tagslist;
     std::map<uint64_t, QString> tag_id2name;
     QCompleter* tagcompleter;

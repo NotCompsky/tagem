@@ -1,10 +1,13 @@
 #include "instancerelation.hpp"
+#include "instance_relation_dialog.hpp"
 
 
-InstanceRelation::InstanceRelation(QPoint middle,  QWidget* parent) : is_expanded(true){
+InstanceRelation::InstanceRelation(const uint64_t _id,  QPoint middle,  MainWindow* const _win,  QWidget* parent)
+: id(_id)
+, win(_win)
+{
     this->btn = new QPushButton("Relation", parent);
     this->btn->move(middle);
-    this->toggle_expand();
     connect(this->btn, &QPushButton::clicked, this, &InstanceRelation::toggle_expand);
     this->btn->show();
 };
@@ -14,14 +17,7 @@ InstanceRelation::~InstanceRelation(){
 };
 
 void InstanceRelation::toggle_expand(){
-    if (this->is_expanded)
-        this->btn->setText("Relation");
-    else
-        this->btn->setText(this->tags.join("\n"));
-    this->show_text();
-    this->is_expanded = !this->is_expanded;
-};
-
-void InstanceRelation::show_text(){
-    this->btn->resize(QSize(this->btn->sizeHint().width(), this->btn->sizeHint().height()));
+	InstanceRelationDialog* dialog = new InstanceRelationDialog(this->id, this->win);
+	dialog->exec();
+	delete dialog;
 };

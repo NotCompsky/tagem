@@ -369,15 +369,10 @@ void MainWindow::init_file_from_db(){
             InstanceWidget* slave  = this->instanceid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
-            InstanceRelation* ir = new InstanceRelation(middle, this->main_widget);
+            InstanceRelation* ir = new InstanceRelation(relation_id, middle, this, this->main_widget);
             // NOTE: master destruction destroys ir
             
             ir->id = relation_id;
-            
-            compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM relation2tag WHERE relation_id=", relation_id);
-            uint64_t tag_id;
-            while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
-                ir->tags.append(this->tag_id2name[tag_id]);
             
             master->relations[slave] = ir;
         }
@@ -575,9 +570,24 @@ void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
     compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (", tagid, ",", parid, ")");
 }
 
-uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
-    QByteArray tagstr_ba = tagstr.toLocal8Bit();
-    const char* tagchars = tagstr_ba.data();
+uint64_t MainWindow::ask_for_tag(const QString str){
+	NameDialog* tagdialog = new NameDialog("Tag", str);
+	tagdialog->name_edit->setCompleter(this->tagcompleter);
+	const auto rc = tagdialog->exec();
+	const QString tagstr = tagdialog->name_edit->text();
+
+	if (rc != QDialog::Accepted  ||  tagstr.isEmpty())
+		return 0;
+
+	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
+	const char* tagchars = tagstr_ba.data();
+	
+	return  (this->tagslist.contains(tagstr))  ?  this->get_id_from_table("tag", tagchars)  :  this->add_new_tag(tagstr);
+}
+
+uint64_t MainWindow::add_new_tag(const QString tagstr,  uint64_t tagid){
+	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
+    const char* const tagchars = tagstr_ba.data();
     
     this->tagslist.append(tagstr);
     delete this->tagcompleter;
@@ -630,34 +640,20 @@ uint64_t MainWindow::add_new_tag(QString tagstr,  uint64_t tagid){
     return tagid;
 }
 
-QString MainWindow::media_tag(QString str){
+const QString MainWindow::media_tag(const QString str){
     if (media_fp[0] == 0)
         return "";
     
-    // Triggered on key press
-    bool ok;
-    NameDialog* tagdialog = new NameDialog("Tag", str);
-    tagdialog->name_edit->setCompleter(this->tagcompleter);
-    if (tagdialog->exec() != QDialog::Accepted)
-        return "";
-    
-    QString tagstr = tagdialog->name_edit->text();
-    
-    if (tagstr.isEmpty())
-        return "";
-    
-    uint64_t tagid;
-    QByteArray tagstr_ba = tagstr.toLocal8Bit();
-    const char* tagchars = tagstr_ba.data();
-    if (!this->tagslist.contains(tagstr)){
-        tagid = this->add_new_tag(tagstr);
-    } else tagid = this->get_id_from_table("tag", tagchars);
+	const uint64_t tagid = this->ask_for_tag(str);
+	
+	if (tagid == 0)
+		return "";
     
     this->ensure_fileID_set();
     
     compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
     
-    return tagstr;
+    return this->tag_id2name[tagid];
 }
 
 void MainWindow::media_tag_new_preset(int n){
@@ -700,7 +696,7 @@ void MainWindow::media_linkfrom(){
 }
 #endif
 
-uint64_t MainWindow::get_id_from_table(const char* table_name, const char* entry_name){
+uint64_t MainWindow::get_id_from_table(const char* const table_name,  const char* const entry_name){
     uint64_t value = 0;
     
     goto__returnresultsofthegetidfromtablequery:
@@ -825,23 +821,10 @@ void MainWindow::create_instance(){
     this->instance_widget->id = get_last_insert_id();
     
     while(true){
-        bool ok;
-        NameDialog* tagdialog = new NameDialog("Instance Tag", "");
-        tagdialog->name_edit->setCompleter(this->tagcompleter);
-        if (tagdialog->exec() != QDialog::Accepted)
-            break; // TODO: Create a way to cancel ALL past operations on this instance_widget if the cancel button is pressed for any one of the tags
-        QString tagstr = tagdialog->name_edit->text();
-        if (tagstr.isEmpty())
-            break;
-        uint64_t tagid;
-        if (!this->tagslist.contains(tagstr))
-            tagid = this->add_new_tag(tagstr);
-        else {
-            QByteArray tagstr_ba = tagstr.toLocal8Bit();
-            const char* tagchars = tagstr_ba.data();
-            tagid = this->get_id_from_table("tag", tagchars);
-        }
-        this->instance_widget->tags.append(tagstr);
+		const uint64_t tagid = this->ask_for_tag();
+		if (tagid == 0)
+			break;
+		this->instance_widget->tags.append(this->tag_id2name[tagid]);
         compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
     }
     
@@ -854,7 +837,6 @@ void MainWindow::create_instance(){
     
     this->instance_widget->frame_n = frame_n;
     
-    goto__clearrubberband:
     this->instance_widget = nullptr;
 }
 

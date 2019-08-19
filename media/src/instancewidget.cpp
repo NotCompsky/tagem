@@ -88,30 +88,14 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO relation (master_id, slave_id) VALUES(",  this->id,  ',',  iw->id,  ')');
     const uint64_t _relation_id = get_last_insert_id();
 	
-	InstanceRelation* ir = new InstanceRelation(_relation_id, middle, this->parent);
+	InstanceRelation* ir = new InstanceRelation(_relation_id, middle, this->win, this->parent);
     this->win->main_widget_overlay->do_not_update_instances = true;
     
     // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
     while(true){
-        NameDialog* tagdialog = new NameDialog("Relation Tag", "");
-        tagdialog->name_edit->setCompleter(this->win->tagcompleter);
-		const auto rc = tagdialog->exec();
-		const QString tagstr = tagdialog->name_edit->text();
-		delete tagdialog;
-		
-        if (rc != QDialog::Accepted)
-            break;
-        if (tagstr.isEmpty())
-            break;
-		
-        uint64_t tagid;
-        if (!win->tagslist.contains(tagstr))
-            tagid = win->add_new_tag(tagstr);
-        else {
-			const QByteArray tagstr_ba = tagstr.toLocal8Bit();
-            const char* tagchars = tagstr_ba.data();
-            tagid = win->get_id_from_table("tag", tagchars);
-        }
+		const uint64_t tagid = this->win->ask_for_tag();
+		if (tagid == 0)
+			break;
         compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
     }
     this->win->main_widget_overlay->do_not_update_instances = false;
