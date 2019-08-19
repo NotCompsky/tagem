@@ -1,15 +1,13 @@
 #include "info_dialog.hpp"
-#include "mainwindow.hpp"
 #include "unlink_tag_btn.hpp"
 
 #include <compsky/mysql/query.hpp>
 
 #include <QLabel>
+#include <QLocale>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-
-class MainWindow;
 
 namespace _mysql {
 	extern MYSQL* obj;
@@ -19,11 +17,6 @@ extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
 extern char BUF[];
 
-#include <QDebug>
-
-namespace _f {
-	constexpr static const compsky::asciify::flag::Escape esc;
-}
 
 InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* parent)
 : QDialog(parent)
