@@ -6,11 +6,10 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 
 
 #include "inlist_filter_dialog.hpp"
-#include "dropdown_dialog.hpp"
-#include "name_dialog.hpp"
 
 #include <compsky/mysql/query.hpp>
 
+#include <QCompleter>
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
@@ -34,6 +33,8 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 : QDialog(parent)
 , files_from_sql__res(nullptr)
 {
+	constexpr static const char* const default_string = "[DEFAULT]";
+	
 	QVBoxLayout* l = new QVBoxLayout(this);
 	
 	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT name FROM settings");
@@ -44,6 +45,11 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 	
 	{
 		QHBoxLayout* hbox = new QHBoxLayout;
+		{
+			this->settings_name = new QLineEdit(default_string);
+			this->settings_name->setCompleter(new QCompleter(this->settings_names, this));
+			hbox->addWidget(this->settings_name);
+		}
 		{
 			QPushButton* btn = new QPushButton("Load");
 			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::load);
@@ -191,6 +197,8 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::apply);
 		l->addWidget(btn);
 	}
+	
+	this->load(); // Load settings named default_string
 }
 
 unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int n_elements) {
@@ -248,14 +256,7 @@ void InlistFilterDialog::apply(){
 }
 
 void InlistFilterDialog::load(){
-	DropdownDialog* dialog = new DropdownDialog("Load Settings", this->settings_names);
-	if (dialog->exec() != QDialog::Accepted)
-		return;
-	const QString name = dialog->combo_box->currentText();
-	if (name.isEmpty())
-		return;
-	
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', name, "\"");
+	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', this->settings_name->text(), "\"");
 	
 	char* _filename_regexp;
 	char* _files_from;
@@ -295,18 +296,11 @@ static char bool2char(const bool b){
 }
 
 void InlistFilterDialog::save(){
-	NameDialog* dialog = new NameDialog("Save Settings As", "");
-	if (dialog->exec() != QDialog::Accepted)
-		return;
-	const QString name = dialog->name_edit->text();
-	if (name.isEmpty())
-		return;
-	
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
 		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min) VALUES (",
-			'"', _f::esc, '"', name, '"', ',',
+			'"', _f::esc, '"', this->settings_name->text(), '"', ',',
 			'"', _f::esc, '"', this->filename_regexp->text(), '"', ',',
 			'"', _f::esc, '"', this->files_from->text(), '"', ',',
 			'"', _f::esc, '"', this->start_from->text(), '"', ',',

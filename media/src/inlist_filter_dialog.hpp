@@ -76,6 +76,7 @@ class InlistFilterDialog : public QDialog {
 	void apply();
 	void load();
 	void save();
+	QLineEdit* settings_name;
 	QLineEdit* filename_regexp;
 	QLineEdit* file_sz_min;
 	QLineEdit* file_sz_max;
