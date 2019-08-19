@@ -30,12 +30,12 @@ InstanceWidget::InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWid
 {
     this->relation_btn = new InstanceWidgetButton(this, parent, "+Relation");
     this->relation_btn_sz = QSize(this->relation_btn->sizeHint().width(), this->relation_btn->sizeHint().height());
-    connect(this->relation_btn, SIGNAL(clicked()), this, SLOT(start_relation_line()));
+    connect(this->relation_btn, &QPushButton::clicked, this, &InstanceWidget::start_relation_line);
     this->relation_btn->show();
     
     this->btn = new InstanceWidgetButton(this, parent, "Instance");
     this->toggle_expand();
-    connect(this->btn, SIGNAL(clicked()), this, SLOT(toggle_expand()));
+    connect(this->btn, &QPushButton::clicked, this, &InstanceWidget::toggle_expand);
     this->btn->show();
 }
 
