@@ -43,8 +43,8 @@ InstanceWidget::~InstanceWidget(){
     for (auto iter = this->relations.begin();  iter != this->relations.end();  iter++){
         delete iter->second;
     }
-    // delete this->relation_btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
-    // delete this->btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+    delete this->relation_btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
+    delete this->btn;  // Only on exit: runtime error: member call on address  which does not point to an object of type 'InstanceWidgetButton'
 }
 
 void InstanceWidget::set_colour(const QColor& cl){
