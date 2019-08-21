@@ -29,7 +29,7 @@ char SAVE_FILES_TO[4096] = {0};
 char* SAVE_FILES_TO_END = nullptr;
 
 
-void view_img(const char* tag,  const char* fp,  const double x,  const double y,  const double w,  const double h,  int i){
+void view_img(const char* tag,  const char* root_tag_name,  const char* const fp,  const double x,  const double y,  const double w,  const double h,  int i){
     cv::Mat orig_img = cv::imread(fp);
     
     if (orig_img.cols == 0)
@@ -64,6 +64,11 @@ void view_img(const char* tag,  const char* fp,  const double x,  const double y
 		*(itr++) = '/';
 		while(*tag != 0)
 			*(itr++) = *(tag++);
+		if (root_tag_name != nullptr){
+			*(itr++) = '/';
+			while(*root_tag_name != 0)
+				*(itr++) = *(root_tag_name++);
+		}
 		*itr = 0;
 		mkdir(SAVE_FILES_TO, 0777); // TODO: Check return value
 		*(itr++) = '/';
@@ -151,11 +156,9 @@ int main(int argc,  const char** argv) {
 				--argc;
 				break;
 			case 's':
-				/*
 				split_on_tags.push_back(*(++argv));
 				--argc;
 				break;
-				*/
 				return _err::not_implemented;
 			case 'w': {
 				const size_t len = strlen(*(++argv));
@@ -185,7 +188,7 @@ int main(int argc,  const char** argv) {
 			mysql_obj,
 			BUF,
 			"CALL descendant_tags_id_rooted_from(\"tmp", 'D', "tagids\", \"'",
-				_f::start, "','", 3, not_subtags.data(), not_subtags.size(), _f::end,
+				
 			")"
 		);
         
@@ -193,13 +196,34 @@ int main(int argc,  const char** argv) {
     }
     
     }
+	
+	
+	
+	if (split_on_tags.size() != 0){
+		compsky::mysql::query(
+			mysql_obj,
+			mysql_res,
+			BUF,
+			"CALL descendant_tags_id__max_depth_1('tmp_split_on_tags', \"'",
+				_f::start, "','", 3, split_on_tags.data(), split_on_tags.size(), _f::end,
+			"'\");"
+		);
+	}
     
 	compsky::mysql::query(
 		mysql_obj,
 		mysql_res,
 		BUF,
-		"SELECT t.name, f.name, i.x, i.y, i.w, i.h "
-		"FROM tag t, file f, instance i, instance2tag i2t, tmp_tagids tt "
+		"SELECT t.name, A.name, f.name, i.x, i.y, i.w, i.h "
+		"FROM file f, instance i, instance2tag i2t, tmp_tagids tt, tag t "
+		"LEFT JOIN ",
+		(split_on_tags.size() == 0) ?
+		"tag A ON FALSE ":
+		"("
+			"SELECT tmp.node, t.name "
+			"FROM tag t, tmp_split_on_tags tmp "
+			"WHERE tmp.root=t.id "
+		") A ON A.node=t.id ",
 		"WHERE i2t.instance_id=i.id "
 		  "AND f.id=i.file_id "
 		  "AND t.id=i2t.tag_id "
@@ -208,13 +232,14 @@ int main(int argc,  const char** argv) {
 	);
     
     char* name;
+	char* root_tag_name;
     char* fp;
     
     constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
 	int i = 0;
-    while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &fp, f, &x, f, &y, f, &w, f, &h))
-        view_img(name, fp, x, y, w, h, ++i);
+    while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &root_tag_name, &fp, f, &x, f, &y, f, &w, f, &h))
+        view_img(name, root_tag_name, fp, x, y, w, h, ++i);
     
     compsky::mysql::wipe_auth(mysql_auth, mysql_auth_sz);
     
