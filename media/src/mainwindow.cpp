@@ -140,12 +140,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_player->setRenderer(m_vo);
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
-    connect(m_slider, SIGNAL(sliderMoved(int)), SLOT(seekBySlider(int)));
-    connect(m_slider, SIGNAL(sliderPressed()), SLOT(seekBySlider()));
-    connect(m_player, SIGNAL(positionChanged(qint64)), SLOT(updateSlider(qint64)));
-    connect(m_player, SIGNAL(started()), SLOT(updateSlider()));
-    connect(m_player, SIGNAL(notifyIntervalChanged()), SLOT(updateSliderUnit()));
-    connect(m_player, SIGNAL(started()), SLOT(set_player_options_for_img()));
+    connect(m_slider, &QSlider::sliderMoved, &QSlider::seekBySlider);
+    connect(m_slider, &QSlider::sliderPressed, &QSlider::seekBySlider);
+    connect(m_player, &QSlider::positionChanged, &QSlider::updateSlider);
+    connect(m_player, &QSlider::started, &QSlider::updateSlider);
+    connect(m_player, &QSlider::notifyIntervalChanged, &QSlider::updateSliderUnit);
+    connect(m_player, &QSlider::started, &QSlider::set_player_options_for_img);
     
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
@@ -173,7 +173,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->is_read_only = true;
     this->main_widget->setReadOnly(true);
     
-    this->connect(this->main_widget, SIGNAL(textChanged()), this, SLOT(file_modified()), Qt::UniqueConnection);
+    this->connect(this->main_widget, &QPlainTextEdit::textChanged, this, &MainWindow::file_modified, Qt::UniqueConnection);
     this->is_file_modified = false;
    #ifdef IMG
     #error "IMG and TXT are mutually exclusive"
