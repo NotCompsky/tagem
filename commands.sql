@@ -13,13 +13,28 @@ WHERE t.name IN ('Typing')
 
 # View previous relationtag2tag
 
-SELECT A.name as tag, B.name as master, C.name as slave, D.name as result
-FROM relationtag2tag
-JOIN tag A ON A.id=tag
-JOIN tag B ON B.id=master
-JOIN tag C ON C.id=slave
-JOIN tag D ON D.id=result
+SELECT t1.name as tag, t2.name as master, t3.name as slave, t4.name as result
+FROM relationtag2tag rt2t, tag t1, tag t2, tag t3, tag t4
+WHERE t1.id=rt2t.tag AND t2.id=rt2t.master AND t3.id=rt2t.slave AND t4.id=rt2t.result
 ;
+
+
+# Add into relationtag2tag
+
+INSERT INTO relationtag2tag
+(tag, master, slave, result)
+SELECT t1.id, t2.id, t3.id, t4.id
+FROM tag t1, tag t2, tag t3, tag t4
+WHERE t1.name='foo' AND t2.name='bar' AND t3.name='ree' AND t4.name='gee'
+;
+
+# View files involving this relation (Derived from: Table of relation ID to all tags and descendant tags)
+SELECT DISTINCT f.name
+FROM file f, instance i_master, relation r, relation2tag r2t, tag2root t2R, tag t
+WHERE t2R.root=r2t.tag_id AND t.id=t2R.node AND r.id=r2t.relation_id AND i_master.id=r.master_id AND f.id=i_master.file_id
+  AND t.name='foobar'
+;
+
 
 
 # Relate relations to their resulting tags
@@ -68,10 +83,9 @@ JOIN tag F ON F.id=D.tag_id
 
 
 # Table of relation ID to all tags and descendant tags
-SELECT B.name, relation_id
-FROM relation2tag
-JOIN tag2root A ON A.root=tag_id
-JOIN tag B ON B.id=node
+SELECT t.name, r2t.relation_id
+FROM relation2tag r2t, tag2root t2R, tag t
+WHERE t2R.root=r2t.tag_id AND t.id=t2R.node
 ;
 
 
@@ -88,6 +102,48 @@ RIGHT JOIN (
     ) A ON A.tag_id = t.id
 ) B ON B.parent_id = t.id
 ;
+
+
+
+
+
+
+
+
+# Collect all the direct descendends of tag of ID `N`, with descendant level <= 1 (i.e. itself and direct children)
+
+DROP PROCEDURE IF EXISTS descendant_tags_id__max_depth_1;
+
+delimiter $$
+
+CREATE PROCEDURE descendant_tags_id__max_depth_1(tbl VARBINARY(1024),  str VARBINARY(1024))
+BEGIN
+	set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
+	PREPARE stmt FROM @query;
+	EXECUTE stmt;
+
+	set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY,  root BIGINT UNSIGNED NOT NULL);");
+	PREPARE stmt FROM @query;
+	EXECUTE stmt;
+
+	set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT id, id FROM tag WHERE name IN (", str, ");");
+	PREPARE stmt FROM @query;
+	EXECUTE stmt;
+
+	DROP TABLE IF EXISTS _tmp;
+
+	set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT t2p.tag_id, t2p.parent_id FROM tag2parent t2p, tag t WHERE t2p.parent_id=t.id AND t.name IN (", str, ");");
+	PREPARE stmt FROM @query;
+	EXECUTE stmt;
+END $$
+
+delimiter ;
+
+## eg
+# CALL descendant_tags_id__max_depth_1('ttttt', "'Human'");
+# SELECT t.name, T.name FROM ttttt a, tag t, tag T WHERE a.node=t.id AND a.root=T.id;
+
+
 
 
 
