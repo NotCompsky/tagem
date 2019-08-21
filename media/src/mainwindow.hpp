@@ -69,7 +69,6 @@ class MainWindow : public QWidget{
 	void display_info();
   #ifdef VID
 	void seekBySlider(int value); // SLOT
-	void seekBySlider(); // SLOT
 	void playPause(); // SLOT
   #endif
     uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name);
@@ -119,7 +118,6 @@ class MainWindow : public QWidget{
  private:
   #ifdef VID
 	void updateSlider(qint64 value); // SLOT
-	void updateSlider(); // SLOT
 	void updateSliderUnit(); // SLOT
 	void set_player_options_for_img(); // SLOT
   #endif

@@ -140,12 +140,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_player->setRenderer(m_vo);
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
-    connect(m_slider, &QSlider::sliderMoved, &QSlider::seekBySlider);
-    connect(m_slider, &QSlider::sliderPressed, &QSlider::seekBySlider);
-    connect(m_player, &QSlider::positionChanged, &QSlider::updateSlider);
-    connect(m_player, &QSlider::started, &QSlider::updateSlider);
-    connect(m_player, &QSlider::notifyIntervalChanged, &QSlider::updateSliderUnit);
-    connect(m_player, &QSlider::started, &QSlider::set_player_options_for_img);
+    connect(m_slider,  &QSlider::sliderMoved,     this,  &MainWindow::seekBySlider);
+    connect(m_slider,  &QSlider::sliderPressed,   this,  [=]() { this->seekBySlider(m_slider->value()); });
+    connect(m_player,  &QtAV::AVPlayer::positionChanged, this, &MainWindow::updateSlider);
+    connect(m_player,  &QtAV::AVPlayer::started,  this,  [=](){ this->updateSlider(m_player->position()); });
+    connect(m_player,  &QtAV::AVPlayer::notifyIntervalChanged, this, &MainWindow::updateSliderUnit);
+    connect(m_player,  &QtAV::AVPlayer::started,  this,  &MainWindow::set_player_options_for_img);
     
     this->volume = 0.1;
     this->m_player->audio()->setVolume(this->volume);
@@ -486,11 +486,6 @@ void MainWindow::seekBySlider(int value)
     m_player->seek(qint64(value*m_unit));
 }
 
-void MainWindow::seekBySlider()
-{
-    seekBySlider(m_slider->value());
-}
-
 void MainWindow::playPause()
 {
     if (!m_player->isPlaying()) {
@@ -506,15 +501,10 @@ void MainWindow::updateSlider(qint64 value)
     m_slider->setValue(int(value/m_unit));
 }
 
-void MainWindow::updateSlider()
-{
-    updateSlider(m_player->position());
-}
-
 void MainWindow::updateSliderUnit()
 {
     m_unit = m_player->notifyInterval();
-    updateSlider();
+	this->updateSlider(m_player->position());
 }
 #endif
 
