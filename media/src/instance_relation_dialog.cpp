@@ -6,6 +6,7 @@
 #include <compsky/mysql/query.hpp>
 
 #include <QLabel>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
@@ -30,8 +31,42 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 {
 	QVBoxLayout* l = new QVBoxLayout(this);
 	
-	l->addWidget(new QLabel("Tags"));
+	{
+		QGridLayout* grid = new QGridLayout;
+		
+		auto lambda__thingymajig = [&_id, &grid](const int _col,  const char* const s){
+			int _row = 0;
+			QLabel* lbl = new QLabel(s);
+			grid->addWidget(lbl, _row++, _col);
+			lbl->setStyleSheet("font-weight: bold");
+			
+			compsky::mysql::query(
+				_mysql::obj,
+				RES2,
+				BUF,
+				"SELECT t.name "
+				"FROM tag t, instance2tag i2t, instance i, relation r "
+				"WHERE i.id=r.", s, "_id "
+				"AND i2t.instance_id=i.id "
+				"AND t.id=i2t.tag_id "
+				"AND r.id=", _id
+			);
+			char* _tag_name;
+			while(compsky::mysql::assign_next_row(RES2, &ROW2, &_tag_name)){
+				
+				
+				grid->addWidget(new QLabel(_tag_name), _row++, _col);
+			}
+		};
+		
+		lambda__thingymajig(0, "master");
+		lambda__thingymajig(1, "slave");
+		
+		l->addLayout(grid);
+	}
 	
+	
+	l->addWidget(new QLabel("Tags"));
 	compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT t.id, t.name FROM tag t, relation2tag r2t WHERE t.id=r2t.tag_id AND r2t.relation_id=", _id);
 	uint64_t _tag_id;
 	char* _tag_name;
