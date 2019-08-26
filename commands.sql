@@ -48,19 +48,19 @@ INSERT INTO root2tag_a SELECT * FROM root2tag;
 INSERT INTO root2tag_b SELECT * FROM root2tag;
 
 
-SELECT relation_id, A.node, C.tag_id as 'm', D.tag_id as 's'#, tG.name, tC.name, t.name, tD.name
-FROM relation2tag r2t
-JOIN root2tag A ON A.root=r2t.tag_id # Get all ancestor tags of relation tag
-JOIN relation r ON r.id=r2t.relation_id
-JOIN instance2tag C ON C.instance_id=master_id
-JOIN instance2tag D ON D.instance_id=slave_id
-JOIN root2tag_a E ON E.root=C.tag_id
-JOIN root2tag_b F ON F.root=D.tag_id
-JOIN relationtag2tag G ON G.tag=A.node AND G.master=E.node AND G.slave=F.node
-#JOIN tag tG ON tG.id=G.result
-#JOIN tag t ON t.id=r2t.tag_id
-#JOIN tag tC ON tC.id=C.tag_id
-#JOIN tag tD ON tD.id=D.tag_id
+SELECT r.id, R2t.node, t1.name AS 'Result', t2.name AS 'Relation', t3.name AS 'master', t4.name AS 'slave'
+FROM relation2tag r2t, relation r, root2tag R2t, instance2tag i2t_master, instance2tag i2t_slave, root2tag_a R2t_a, root2tag_b R2t_b, relationtag2tag rt2t, tag t1, tag t2, tag t3, tag t4
+WHERE r.id=r2t.relation_id
+  AND R2t.root=r2t.tag_id
+  AND i2t_master.instance_id=r.master_id
+  AND i2t_slave.instance_id =r.slave_id
+  AND R2t_a.root=i2t_master.tag_id
+  AND R2t_b.root=i2t_slave.tag_id
+  AND rt2t.tag=R2t.node AND rt2t.master=R2t_a.node AND rt2t.slave=R2t_b.node
+  AND t1.id=rt2t.result
+  AND t2.id=r2t.tag_id
+  AND t3.id=i2t_master.tag_id
+  AND t4.id=i2t_slave.tag_id
 ;
 
 
