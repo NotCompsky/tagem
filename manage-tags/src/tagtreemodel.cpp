@@ -1,8 +1,10 @@
 #include "tagtreemodel.hpp"
 
 #include <QByteArray>
+#include <QCompleter>
 #include <QDebug> // TMP
 #include <QStandardItem>
+#include <QStringList>
 
 #include <compsky/mysql/query.hpp>
 
@@ -14,6 +16,9 @@ namespace _mysql {
 }
 
 extern char BUF[];
+
+extern QCompleter* tagcompleter;
+extern QStringList tagslist;
 
 
 TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
@@ -28,10 +33,11 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
     while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &id, &name)){
         const QString s = name;
         this->tag2name[id] = s;
-        this->tagslist << s;
+        tagslist << s;
     }
     }
-    this->tagcompleter = new QCompleter(this->tagslist);
+	delete tagcompleter;
+	tagcompleter = new QCompleter(tagslist);
 }
 
 

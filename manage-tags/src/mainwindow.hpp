@@ -10,12 +10,9 @@
 class MainWindow : public QMainWindow {
  public:
     MainWindow(QWidget* parent = 0);
-    
-    QStringList tagslist;
-    QCompleter* tagcompleter;
+	void add_new_tag();
+	
     QPushButton* commit_btn;
-    
-    void add_new_tag();
 };
 
 #endif

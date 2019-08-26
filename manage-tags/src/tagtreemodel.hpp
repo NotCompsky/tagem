@@ -4,11 +4,9 @@
 #include <map> // for std::map
 #include <vector>
 
-#include <QCompleter>
 #include <QMimeData>
 #include <QModelIndex>
 #include <QStandardItemModel>
-#include <QStringList>
 
 // Assumes res1 is already defined through mymysql_results.hpp import
 
@@ -16,9 +14,6 @@
 class TagTreeModel : public QStandardItemModel {
  public:
     TagTreeModel(int a,  int b,  QObject* parent);
-    
-    QStringList tagslist;
-    QCompleter* tagcompleter;
     
     std::map<uint64_t, QString> tag2name;
     std::map<uint64_t, std::vector<QStandardItem*>> tag2entries;

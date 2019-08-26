@@ -1,12 +1,11 @@
 #include <QApplication>
+#include <QCompleter>
+#include <QStringList>
 
 #include <compsky/mysql/mysql.hpp>
 
 #include "mainwindow.hpp"
 
-
-MYSQL_RES* RES;
-MYSQL_ROW ROW;
 
 namespace _mysql {
 	MYSQL* obj;
@@ -17,6 +16,9 @@ namespace _mysql {
 }
 
 char BUF[4096];
+
+QCompleter* tagcompleter;
+QStringList tagslist;
 
 
 int main(int argc,  char** argv){

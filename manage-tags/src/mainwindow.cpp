@@ -1,5 +1,6 @@
 #include "mainwindow.hpp"
 
+#include <QCompleter>
 #include <QString>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -9,6 +10,9 @@
 #include "name_dialog.hpp"
 #include "tagchildtreeview.hpp"
 #include "tagparenttreeview.hpp"
+
+
+extern QCompleter* tagcompleter;
 
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -33,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 void MainWindow::add_new_tag(){
     NameDialog* tagdialog = new NameDialog("TagDialog", "TagStr");
-    tagdialog->name_edit->setCompleter(this->tagcompleter);
+    tagdialog->name_edit->setCompleter(tagcompleter);
     
     if (tagdialog->exec() != QDialog::Accepted)
         return;
