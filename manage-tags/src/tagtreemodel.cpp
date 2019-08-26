@@ -45,19 +45,16 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
     if (column == 0)
         return false;
     
-    uint64_t tag_id;
-    //uint64_t direct_occurances;
+	const QByteArray ba = data->data("application/x-qabstractitemmodeldatalist");
     
-    QByteArray ba = data->data("application/x-qabstractitemmodeldatalist");
-    
-    char* s = ba.data();
+	const char* s = ba.data();
     
     size_t i = 0;
     
     while(s[i] < '0'  ||  s[i] > '9')
         ++i;
     
-    tag_id = s[i] - '0';
+	uint64_t tag_id = s[i] - '0';
     while(i < ba.size()){
         s += 2; // Skip null byte
         if (s[i] == 0)
@@ -85,10 +82,12 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
     
     qDebug() << dst_parent.data().toString();
     
-    QString qs = dst_parent.data().toString();
-    ba = qs.toLocal8Bit();
-    s = ba.data();
+	const QString qs = dst_parent.data().toString();
+    const QByteArray ba2 = qs.toLocal8Bit();
+    s = ba2.data();
     while(*s != 0){
+		if(*s < '0'  ||  *s > '9')
+			throw std::runtime_error("ONLY DROP MIMEDATA ON FIRST ROW (where text is the tag ID)");
         parent_tag_id *= 10;
         parent_tag_id += *s - '0';
         ++s;
@@ -100,6 +99,13 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
     if (!QStandardItemModel::dropMimeData(data, action, row, 0, dst_parent))
         return false;
     
+	if (tag_id > 9999){
+		throw std::runtime_error("tag_id has strangely high value");
+	}
+	if (parent_tag_id > 9999){
+		throw std::runtime_error("parent_tag_id has strangely high value");
+	}
+	
     compsky::mysql::exec(_mysql::obj, BUF,  "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
     compsky::mysql::exec(_mysql::obj, BUF,  "DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
     

@@ -62,24 +62,59 @@ void TagTreeView::place_tags(uint64_t root){
     mdl->tag2entry[root] = mdl->invisibleRootItem();
     
     std::vector<AvadaKevadra> queue;
-    queue.reserve(1024);
+    queue.reserve(4096);
     
-    uint64_t parent, tag, count;
-    char* name;
-    while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &parent, &tag, &count, &name)){
-		if (tag == 2  ||  parent == 3  ||  tag == 3  ||  parent == 2)
-			qDebug() << tag << name << parent << count;
-        
+	{
+		uint64_t _parent, _tag, _count;
+		char* _name;
+		while (compsky::mysql::assign_next_row__no_free(_mysql::res, &_mysql::row, &_parent, &_tag, &_count, &_name)){
+			queue.emplace_back(_tag, _parent, _name, _count);
+		}
+	}
+	
+	size_t n_non_null_kevadras_skipped_prev = 0;
+	while(true){
         /*if (parent == tag){
             qDebug() << "tag_id == parent_id\n  for tag, parent, count, name\n  " << +tag << +parent << +count << name; // (unfortunately, MySQL does not support checks
             exit(555);
         }*/
-        
-		if (mdl->tag2entry[parent] == nullptr){
-            queue.emplace_back(tag, parent, name, count);
-            continue;
-        }
-        
+		
+		size_t n_non_null_kevadras_skipped = 0;
+		uint64_t tag = 0;
+		uint64_t parent;
+		uint64_t count;
+		const char* name;
+		for (size_t i = 0;  i < queue.size();  ++i){
+			const AvadaKevadra kevadra = queue[i];
+			tag = kevadra.tag;
+			parent = kevadra.parent;
+			name = kevadra.name;
+			count = kevadra.count;
+			if (kevadra.tag != 0){
+				qDebug() << "Good:" << tag << parent << name << count;
+				if (mdl->tag2entry[queue[i].parent] == nullptr){
+					++n_non_null_kevadras_skipped;
+					continue;
+				}
+				queue[i].tag = 0; // Tells us that the tag has been processed
+				break;
+			}
+		}
+		if (tag == 0){
+			if (n_non_null_kevadras_skipped == 0)
+				// No non-null elements were found
+				break;
+			else {
+				if (n_non_null_kevadras_skipped == n_non_null_kevadras_skipped_prev){
+					qDebug() << "Some elements failed to be pasted";
+					break;
+				}
+				qDebug() << n_non_null_kevadras_skipped_prev << n_non_null_kevadras_skipped;
+				n_non_null_kevadras_skipped_prev = n_non_null_kevadras_skipped;
+				continue;
+			}
+		}
+		
 		PrimaryItem* entry__id = new PrimaryItem(QString("%0").arg(tag));
 		entry__id->setEditable(false);
 		entry__id->setDropEnabled(true);
@@ -126,6 +161,9 @@ void TagTreeView::place_tags(uint64_t root){
         mdl->tag2directoccurances[tag] = mdl->tag2occurances[tag] = count;
         mdl->tag2occurances[parent] += count;
     }
+	
+	while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row));
+	// Free results
 };
 
 void TagTreeView::dragMoveEvent(QDragMoveEvent* e){
