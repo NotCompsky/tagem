@@ -34,7 +34,7 @@ TagParentTreeView::TagParentTreeView(TagChildTreeView* tag_child_tree_view,  QWi
 
 void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSelection& deselected){
     TagTreeModel* mdl = (TagTreeModel*)this->model();
-    mdl->tag2entries.clear(); // Not unnecessary
+    mdl->tag2entry.clear(); // Not unnecessary
     mdl->tag2parent.clear();
     this->init_headers();
     

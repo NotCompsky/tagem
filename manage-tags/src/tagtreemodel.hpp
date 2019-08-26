@@ -2,7 +2,6 @@
 #define __TAGTREEMODEL__
 
 #include <map> // for std::map
-#include <vector>
 
 #include <QMimeData>
 #include <QModelIndex>
@@ -16,7 +15,7 @@ class TagTreeModel : public QStandardItemModel {
     TagTreeModel(int a,  int b,  QObject* parent);
     
     std::map<uint64_t, QString> tag2name;
-    std::map<uint64_t, std::vector<QStandardItem*>> tag2entries;
+    std::map<uint64_t, QStandardItem*> tag2entry;
     std::map<uint64_t, uint64_t> tag2parent;
     std::map<uint64_t, uint64_t> tag2directoccurances;
     std::map<uint64_t, uint64_t> tag2occurances;
