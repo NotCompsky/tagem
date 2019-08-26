@@ -1,30 +1,30 @@
 #include <QApplication>
 
 #include <compsky/mysql/mysql.hpp>
-#include <compsky/asciify/init.hpp>
 
 #include "mainwindow.hpp"
-
-namespace compsky {
-    namespace asciify {
-        char* BUF;
-		char* ITR;
-    }
-}
 
 
 MYSQL_RES* RES;
 MYSQL_ROW ROW;
 
+namespace _mysql {
+	MYSQL* obj;
+	constexpr static const size_t auth_sz = 512;
+	char auth[auth_sz];
+	MYSQL_RES* res;
+	MYSQL_ROW row;
+}
+
+char BUF[4096];
+
 
 int main(int argc,  char** argv){
-	if(compsky::asciify::alloc(4096))
-		return 4;
     QApplication app(argc, argv);
-    compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
+	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
     MainWindow win;
     win.show();
-    int rc = app.exec();
-    compsky::mysql::exit_mysql();
+	const int rc = app.exec();
+	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
     return rc;
 }

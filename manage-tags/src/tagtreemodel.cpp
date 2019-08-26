@@ -7,8 +7,13 @@
 #include <compsky/mysql/query.hpp>
 
 
-extern MYSQL_RES* RES;
-extern MYSQL_ROW ROW;
+namespace _mysql {
+	extern MYSQL* obj;
+	extern MYSQL_RES* res;
+	extern MYSQL_ROW row;
+}
+
+extern char BUF[];
 
 
 TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
@@ -16,19 +21,17 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
 :
     QStandardItemModel(a, b, parent)
 {
-    compsky::mysql::query_buffer(&RES, "SELECT id, name FROM tag");
+    compsky::mysql::query_buffer(_mysql::obj, _mysql::res, "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
-    while (compsky::mysql::assign_next_row(RES, &ROW, &id, &name)){
+    while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &id, &name)){
         const QString s = name;
         this->tag2name[id] = s;
         this->tagslist << s;
     }
     }
     this->tagcompleter = new QCompleter(this->tagslist);
-    
-    connect(this, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(item_changed(QStandardItem*)));
 }
 
 
@@ -91,8 +94,8 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
     if (!QStandardItemModel::dropMimeData(data, action, row, 0, dst_parent))
         return false;
     
-    compsky::mysql::exec("INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
-    compsky::mysql::exec("DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
+    compsky::mysql::exec(_mysql::obj, BUF,  "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
+    compsky::mysql::exec(_mysql::obj, BUF,  "DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
     
     qDebug() << "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (" << parent_tag_id << "," << tag_id << ")";
     qDebug() << "DELETE FROM tag2parent WHERE parent_id=" << current_parent_id << " AND tag_id=" << tag_id;

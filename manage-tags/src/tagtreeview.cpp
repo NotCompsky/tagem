@@ -13,8 +13,11 @@
 #include <compsky/mysql/query.hpp>
 
 
-extern MYSQL_RES* RES;
-extern MYSQL_ROW ROW;
+namespace _mysql {
+	extern MYSQL* obj;
+	extern MYSQL_RES* res;
+	extern MYSQL_ROW row;
+}
 
 
 AvadaKevadra::AvadaKevadra(const uint64_t tag,  const uint64_t parent,  const char* name,  const uint64_t count) : tag(tag), parent(parent), name(name), count(count) {}
@@ -55,15 +58,15 @@ void TagTreeView::place_tags(uint64_t root){
     // Inlined to avoid multiple definition error
     TagTreeModel* mdl = (TagTreeModel*)this->model();
     
-    mdl->tag2entry.clear();
-    mdl->tag2entry[root] = mdl->invisibleRootItem();
+    mdl->tag2entries.clear();
+    mdl->tag2entries[root].push_back(mdl->invisibleRootItem());
     
     std::vector<AvadaKevadra> queue;
     queue.reserve(1024);
     
     uint64_t parent, tag, count;
     char* name;
-    while (compsky::mysql::assign_next_row(RES, &ROW, &parent, &tag, &count, &name)){
+    while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &parent, &tag, &count, &name)){
         qDebug() << tag << name << parent << count;
         
         /*if (parent == tag){
@@ -71,7 +74,7 @@ void TagTreeView::place_tags(uint64_t root){
             exit(555);
         }*/
         
-        if (mdl->tag2entry.find(parent) == mdl->tag2entry.end()){ // TODO: Replace with std::map::contains (C++20) in a few decades
+        if (mdl->tag2entries.find(parent) == mdl->tag2entries.end()){ // TODO: Replace with std::map::contains (C++20) in a few decades
             queue.emplace_back(tag, parent, name, count);
             continue;
         }
@@ -114,10 +117,11 @@ void TagTreeView::place_tags(uint64_t root){
             connect(delete_btn, &QToolButton::clicked, entry__id, &PrimaryItem::delete_self);
         }
         
-        mdl->tag2entry[parent]->appendRow(ls);
+        for (auto x : mdl->tag2entries[parent])
+            x->appendRow(ls);
         
         mdl->tag2parent[tag] = parent;
-        mdl->tag2entry[tag] = entry__id;
+        mdl->tag2entries[tag].push_back(entry__id);
         mdl->tag2name[tag] = name;
         mdl->tag2directoccurances[tag] = mdl->tag2occurances[tag] = count;
         mdl->tag2occurances[parent] += count;

@@ -35,14 +35,12 @@ class StandardItem : public QStandardItem {
 };
 
 class PrimaryItem : public QObject, public StandardItem {
-    Q_OBJECT
  public:
     PrimaryItem(const QString& s) : StandardItem(s) {};
     PrimaryItem(uint64_t n) : StandardItem(uint64_to_str(n)) {};
+	void delete_self(); // SLOT
+	void add_subtag(); // SLOT
     QStandardItem* parent();
- public Q_SLOTS:
-    void delete_self();
-    void add_subtag();
 };
 
 class NameItem : public QObject, public StandardItem {

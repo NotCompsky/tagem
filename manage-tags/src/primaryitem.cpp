@@ -13,13 +13,20 @@ namespace _f {
     constexpr static const compsky::asciify::flag::Escape esc;
 }
 
+namespace _mysql {
+	extern MYSQL* obj;
+	extern MYSQL_ROW row;
+}
+
+extern char BUF[];
+
 
 void PrimaryItem::delete_self(){
     QStandardItem* prnt = QStandardItem::parent();
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
-    compsky::mysql::exec("DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
+    compsky::mysql::exec(_mysql::obj, BUF, "DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
     if (prnt)
         this->model()->removeRow(this->row());
     else
@@ -50,7 +57,7 @@ void NameItem::setData(const QVariant& value,  int role){
     if (neue == mdl->tag2name[this->tag_id])
         return;
     
-    compsky::mysql::exec("UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
+    compsky::mysql::exec(_mysql::obj, BUF, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
     
     QStandardItem::setData(value, role);
 };

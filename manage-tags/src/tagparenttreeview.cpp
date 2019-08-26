@@ -10,7 +10,12 @@
 #include "unpackaged_utils.hpp" // for ascii_to_uint64
 
 
-extern MYSQL_RES* RES;
+namespace _mysql {
+	extern MYSQL* obj;
+	extern MYSQL_RES* res;
+}
+
+extern char BUF[];
 
 
 TagParentTreeView::TagParentTreeView(TagChildTreeView* tag_child_tree_view,  QWidget* parent)
@@ -29,7 +34,7 @@ TagParentTreeView::TagParentTreeView(TagChildTreeView* tag_child_tree_view,  QWi
 
 void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSelection& deselected){
     TagTreeModel* mdl = (TagTreeModel*)this->model();
-    mdl->tag2entry.clear(); // Not unnecessary
+    mdl->tag2entries.clear(); // Not unnecessary
     mdl->tag2parent.clear();
     this->init_headers();
     
@@ -38,11 +43,11 @@ void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSel
     
     auto indx = selected.indexes()[0]; // TODO: Allow display of multiple heirarchies (drag to select multiple)
     
-    QString a = indx.sibling(indx.row(), 0).data().toString();
-    QByteArray b = a.toLocal8Bit();
+	const QString a = indx.sibling(indx.row(), 0).data().toString();
+	const QByteArray b = a.toLocal8Bit();
     const char* tag_id_str = b.data();
-    compsky::mysql::exec("CALL ancestor_tags_id_rooted_from_id(\"tmp_tag_parents\", ", tag_id_str, ')');
-    compsky::mysql::query_buffer(&RES, "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "CALL ancestor_tags_id_rooted_from_id(\"tmp_tag_parents\", ", tag_id_str, ')');
+    compsky::mysql::query_buffer(_mysql::obj, _mysql::res,  "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
     
     this->place_tags(ascii_to_uint64(tag_id_str));
 };
