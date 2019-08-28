@@ -8,7 +8,6 @@
 #ifdef BOXABLE
 # include "instancewidget.hpp"
 #endif
-#include "relation_add_instance_tags.hpp"
 #include "mainwindow.hpp"
 
 
@@ -174,12 +173,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
 				case Qt::Key_AsciiTilde:
-				{
-					RelationAddInstanceTags* dialog = new RelationAddInstanceTags(window);
-					dialog->exec();
-					delete dialog;
 					break;
-				}
                 case Qt::Key_BracketLeft:
                   #ifdef VID
                     if (window->volume > 0){

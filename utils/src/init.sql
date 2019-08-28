@@ -90,6 +90,13 @@ CREATE TABLE relation_add_instance_tags__rules (
 	PRIMARY KEY (id)
 );
 
+CREATE TABLE relation_add_instance_tags__req_relation_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+
 CREATE TABLE relation_add_instance_tags__req_master_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
@@ -98,6 +105,13 @@ CREATE TABLE relation_add_instance_tags__req_master_tags (
 );
 
 CREATE TABLE relation_add_instance_tags__req_slave_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+
+CREATE TABLE relation_add_instance_tags__res_relation_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,

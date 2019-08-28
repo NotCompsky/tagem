@@ -1,5 +1,5 @@
 #include "instance_relation_dialog.hpp"
-#include "relation_hub.hpp"
+#include "relation_add_instance_tags.hpp"
 #include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
 
@@ -101,7 +101,7 @@ void InstanceRelationDialog::add_tag(){
 }
 
 void InstanceRelationDialog::display_hub(){
-	RelationHub* hub = new RelationHub(this->win, nullptr);
+	RelationAddInstanceTags* hub = new RelationAddInstanceTags(this->win);
 	hub->exec();
 	delete hub;
 }

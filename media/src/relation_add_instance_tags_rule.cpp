@@ -22,21 +22,6 @@ namespace _mysql {
 
 extern char BUF[];
 
-constexpr static const char* const tables[] = {
-	"req_master",
-	"req_slave",
-	"res_master",
-	"res_slave"
-};
-
-enum {
-	REQ_MASTER,
-	REQ_SLAVE,
-	RES_MASTER,
-	RES_SLAVE,
-	N_TABLES
-};
-
 
 RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,  const uint64_t _rule_id,  const QString& _name,  QWidget* parent)
 : QDialog(parent)
@@ -46,11 +31,11 @@ RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,
 	this->l = new QGridLayout;
 	
 	// this->l->addWidget(OBJECT, ROW, COL, ROW_SPAN, COL_SPAN);
-	this->l->addWidget(new QLabel(_name),  0,  0,  1,  N_TABLES * N_COLS_PER_TABLE);
-	this->l->addWidget(new QLabel("[NULL] tag means that the instance inherits the specified tags from the related instance"),  1,  0,  1,  N_TABLES * N_COLS_PER_TABLE);
+	this->l->addWidget(new QLabel(_name),  0,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
+	this->l->addWidget(new QLabel("[NULL] tag means that the instance inherits the specified tags from the related instance"),  1,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
 	
 	int table_n = 0;
-	for (const char* const table : tables){
+	for (const char* const table : rait::tables){
 		this->add_column(table_n++, table);
 	}
 	
@@ -96,7 +81,7 @@ void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* con
 }
 
 void RelationAddInstanceTagsRule::add_tag(){
-	unsigned int i;
+	unsigned int i = 0;
 	for (const QPushButton* btn : this->add_btns){
 		if (btn != sender())
 			++i;
@@ -109,7 +94,7 @@ void RelationAddInstanceTagsRule::add_tag(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO relation_add_instance_tags__", tables[i], "_tags "
+		"INSERT INTO relation_add_instance_tags__", rait::tables[i], "_tags "
 		"(rule, tag) "
 		"VALUES",
 		'(', this->rule_id, ',', tag_id, ')'
@@ -118,7 +103,7 @@ void RelationAddInstanceTagsRule::add_tag(){
 
 void RelationAddInstanceTagsRule::unlink_tag(){
 	uint64_t tag_id;
-	unsigned int i;
+	unsigned int i = 0;
 	for (const UnlinkBtn2TagId x : this->unlink_tag_btns){
 		if (x.btn == sender()){
 			tag_id = x.id;
@@ -132,7 +117,7 @@ void RelationAddInstanceTagsRule::unlink_tag(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"DELETE FROM relation_add_instance_tags__", tables[i], "_tags "
+		"DELETE FROM relation_add_instance_tags__", rait::tables[i], "_tags "
 		"WHERE rule=", this->rule_id,
 		 " AND tag=",  tag_id
 	);

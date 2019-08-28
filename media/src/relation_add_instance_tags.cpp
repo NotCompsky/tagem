@@ -16,15 +16,19 @@ namespace _f {
 }
 
 constexpr static const char* const columns[] = {
+	"req_relation",
 	"req_master",
 	"req_slave",
+	"res_relation",
 	"res_master",
 	"res_slave"
 };
 
 enum {
+	REQ_RELATION,
 	REQ_MASTER,
 	REQ_SLAVE,
+	RES_RELATION,
 	RES_MASTER,
 	RES_SLAVE
 };

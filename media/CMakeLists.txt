@@ -36,7 +36,6 @@ foreach(file_type ${MY_TARGETS})
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
 		src/instance_relation_dialog.cpp
-		src/relation_hub.cpp
 		
 		src/relation_add_instance_tags.cpp
 		src/relation_add_instance_tags_rule.cpp

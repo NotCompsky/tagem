@@ -18,6 +18,28 @@
 #include <vector>
 
 
+namespace rait {
+	constexpr static const char* const tables[] = {
+		"req_relation",
+		"req_master",
+		"req_slave",
+		"res_relation",
+		"res_master",
+		"res_slave"
+	};
+
+	enum {
+		REQ_RELATION,
+		REQ_MASTER,
+		REQ_SLAVE,
+		RES_RELATION,
+		RES_MASTER,
+		RES_SLAVE,
+		N_TABLES
+	};
+}
+
+
 class RelationAddInstanceTagsRule : public QDialog {
   private:
 	void add_column(const int col,  const char* const column);
@@ -28,7 +50,7 @@ class RelationAddInstanceTagsRule : public QDialog {
 	const uint64_t rule_id;
 	MYSQL_RES* mysql_res;
 	MYSQL_ROW mysql_row;
-	QPushButton* add_btns[4];
+	QPushButton* add_btns[rait::N_TABLES];
 	struct UnlinkBtn2TagId {
 		const uint64_t id;
 		QPushButton* const btn;
