@@ -33,6 +33,7 @@ RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,
 	// this->l->addWidget(OBJECT, ROW, COL, ROW_SPAN, COL_SPAN);
 	this->l->addWidget(new QLabel(_name),  0,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
 	this->l->addWidget(new QLabel("[NULL] tag means that the instance inherits the specified tags from the related instance"),  1,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
+#   define TABLE_CONTENTS_STARTING_ROW 2
 	
 	int table_n = 0;
 	for (const char* const table : rait::tables){
@@ -43,7 +44,7 @@ RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,
 }
 
 void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* const table){
-	int row = 2;
+	int row = TABLE_CONTENTS_STARTING_ROW;
 	const int layout_column = table_n * N_COLS_PER_TABLE;
 	this->l->addWidget(new QLabel(table),  row++,  layout_column,  1,  N_COLS_PER_TABLE);
 	compsky::mysql::query(
