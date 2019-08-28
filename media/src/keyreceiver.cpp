@@ -8,6 +8,7 @@
 #ifdef BOXABLE
 # include "instancewidget.hpp"
 #endif
+#include "relation_add_instance_tags.hpp"
 #include "mainwindow.hpp"
 
 
@@ -120,12 +121,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_D:
                     window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                     break;
-                case Qt::Key_L:
-                    window->media_linkfrom();
-                    break;
-                case Qt::Key_R: // Rate
-                    window->media_score();
-                    break;
                 case Qt::Key_I:
                   #ifdef TXT // No need for text editor to select rectangles
                     window->unset_read_only();
@@ -141,18 +136,19 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
 					window->display_info();
                     break;
-                case Qt::Key_Escape:
-                  #ifdef TXT
-                    window->set_read_only();
-                  #endif
+                case Qt::Key_L:
+                    window->media_linkfrom();
                     break;
+                case Qt::Key_N:
+                    window->media_note();
+                    break;
+				case Qt::Key_R: // Rate
+					window->show_settings_dialog();
+					break;
                 case Qt::Key_S: // Save
                   #ifdef TXT
                     window->media_save();
                   #endif
-                    break;
-                case Qt::Key_N:
-                    window->media_note();
                     break;
                 case Qt::Key_T:
                     window->media_tag("");
@@ -160,18 +156,30 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_O:
                     window->media_overwrite();
                     break;
-                case Qt::Key_Q:
-                    window->close();
-                    break;
+				case Qt::Key_Q:
+					window->media_score();
+					break;
                 case Qt::Key_X:
                     window->media_delete();
                     window->media_next();
+                    break;
+                case Qt::Key_Escape:
+                  #ifdef TXT
+                    window->set_read_only();
+                  #endif
                     break;
                 case Qt::Key_Space:
                   #ifdef VID
                     window->playPause();
                   #endif
                     break;
+				case Qt::Key_AsciiTilde:
+				{
+					RelationAddInstanceTags* dialog = new RelationAddInstanceTags(window);
+					dialog->exec();
+					delete dialog;
+					break;
+				}
                 case Qt::Key_BracketLeft:
                   #ifdef VID
                     if (window->volume > 0){
@@ -214,10 +222,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_ParenRight:
                     window->media_tag_new_preset(key2n(keyval) - 10);
                     break;
-				
-				case Qt::Key_AsciiTilde:
-					window->show_settings_dialog();
-					break;
                 
                 default: return QObject::eventFilter(obj, event);
             }

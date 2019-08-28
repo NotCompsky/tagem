@@ -35,7 +35,7 @@ CREATE TABLE instance (
     name VARBINARY(128),
     file_id BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
-    x DOUBLE NOT NULL,  # As proportion of (image|frame)'s width
+    x DOUBLE NOT NULL,  # As proportion of (image|frame) width
     y DOUBLE NOT NULL,
     w DOUBLE NOT NULL,
     h DOUBLE NOT NULL,
@@ -47,6 +47,11 @@ CREATE TABLE instance2tag (
     tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
     PRIMARY KEY `instance2tag` (`instance_id`, `tag_id`)
 );
+
+
+# The following tables populate the tags of relationships, not instances.
+# For instance, a man typing on a keyboard would be represented by (an instance tagged "man") related to (an instance tagged "keyboard") via (a relationship tagged "typing").
+# relationtag2tag generates extra relationship tags based on the master and slave instance tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
 
 CREATE TABLE relation (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -64,11 +69,57 @@ CREATE TABLE relation2tag (
 CREATE TABLE relationtag2tag (
     # Decides on the tags a relation automatically gives rise to, given the tags of the master and slave object instances
     tag BIGINT UNSIGNED NOT NULL,  # ID of the relation's tag (not relation table's ID)
-    master BIGINT UNSIGNED NOT NULL,  # Tag ID of one of the master's tags
+    master BIGINT UNSIGNED NOT NULL,  # Tag ID of one of the master's tags '
     slave BIGINT UNSIGNED NOT NULL,
     result BIGINT UNSIGNED NOT NULL,  # Resulting Tag ID
     PRIMARY KEY `relation2mst` (tag, master, slave, result)
 );
+
+
+
+# The following tables propegate instance tags.
+# For instance, suppose there is (an instance tagged "human" and "male") which is related to (an instance tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
+# The following tables describe the rules. Each rule is of the form (ID,  a = list of master tag IDs,  b = list of slave tag IDs,  c = list of resulting master tags,  d =list of resulting slave tags).
+# If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master instance), then all tags of c are added to the master instance, and all tags of d are added to the slave instance.
+# NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related instance. For instance, (a "body part" instance) related to (a "human" instance) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" instance, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
+
+CREATE TABLE relation_add_instance_tags__rules (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARBINARY(128) NOT NULL,
+	UNIQUE KEY (name),
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE relation_add_instance_tags__req_master_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+
+CREATE TABLE relation_add_instance_tags__req_slave_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+
+CREATE TABLE relation_add_instance_tags__res_master_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+
+CREATE TABLE relation_add_instance_tags__res_slave_tags (
+	rule BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
+	PRIMARY KEY (rule, tag)
+);
+  
+
+
 
 CREATE TABLE settings (
 	name VARBINARY(128) NOT NULL,

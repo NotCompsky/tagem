@@ -6,7 +6,6 @@
  */
 
 #include "unlink_tag_btn.hpp"
-#include "info_dialog.hpp"
 
 #include <compsky/mysql/query.hpp>
 

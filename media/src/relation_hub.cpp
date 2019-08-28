@@ -1,5 +1,4 @@
 #include "relation_hub.hpp"
-#include "name_dialog.hpp"
 
 #include <compsky/mysql/query.hpp>
 

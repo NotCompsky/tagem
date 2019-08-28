@@ -66,8 +66,8 @@ WHERE r.id=r2t.relation_id
 
 # Table of relation tag names to master and slave tag names
 
+CALL descendant_tags_id_rooted(); # Populate root2tag
 CALL descendant_tags_id_from("action_tags", "'Action'");
-CALL ancestor_tags_id_rooted(); # Populate
 
 SELECT relation_id, A.node, B.name as 'relation', E.name as 'master', F.name as 'slave'
 FROM relation2tag
@@ -80,6 +80,86 @@ JOIN instance2tag D ON D.instance_id=slave_id
 JOIN tag E ON E.id=C.tag_id
 JOIN tag F ON F.id=D.tag_id
 ;
+
+
+
+
+
+
+
+
+# Simplify relations by rewriting those ("Person") -"Arm"-> ("Arm") relations to ("Person") -"Body Part"> ("Arm")
+
+CALL descendant_tags_id_rooted(); # Populate root2tag
+CALL descendant_tags_id_from("action_tags", "'Body Part'");
+
+SELECT relation_id, A.node, B.name as 'relation', E.name as 'master', F.name as 'slave'
+FROM relation2tag
+JOIN root2tag A ON A.node=tag_id # Get child tags
+JOIN action_tags actt ON actt.node=A.root # Otherwise get nonsense results if we have a non-action parent for a relation tag
+JOIN tag B ON B.id=A.node
+JOIN relation r ON r.id=relation_id
+JOIN instance2tag C ON C.instance_id=master_id
+JOIN instance2tag D ON D.instance_id=slave_id
+JOIN tag E ON E.id=C.tag_id
+JOIN tag F ON F.id=D.tag_id
+WHERE B.id!=(SELECT id FROM tag WHERE name="Body Part")
+;
+
+
+
+
+
+
+
+
+
+
+
+CALL descendant_tags_id_from("_tmp", "'Species'");
+INSERT INTO relation_add_instance_tags__req_master_tags
+SELECT 1, node
+FROM _tmp
+;
+
+INSERT INTO relation_add_instance_tags__req_master_tags
+SELECT 1, id
+FROM tag
+WHERE name='Body Part';
+;
+
+
+# Display the rules in a human-readable manner
+SELECT CONCAT(t1.name), CONCAT(t2.name), CONCAT(t3.name), CONCAT(t4.name)
+FROM relation_add_instance_tags__rules           rait
+    ,relation_add_instance_tags__req_master_tags rait_req_m_t
+    ,relation_add_instance_tags__req_slave_tags  rait_req_s_t
+    ,relation_add_instance_tags__res_master_tags rait_res_m_t
+    ,relation_add_instance_tags__res_slave_tags  rait_res_s_t
+    ,tag t1
+    ,tag t2
+    ,tag t3
+    ,tag t4
+WHERE rait_req_m_t.rule=rait.id
+  AND rait_req_s_t.rule=rait.id
+  AND rait_res_m_t.rule=rait.id
+  AND rait_res_s_t.rule=rait.id
+  
+  AND t1.id=rait_req_m_t.tag
+  AND t2.id=rait_req_s_t.tag
+  AND t3.id=rait_res_m_t.tag
+  AND t4.id=rait_res_s_t.tag
+;
+
+
+
+
+
+
+
+
+
+
 
 
 # Table of relation ID to all tags and descendant tags

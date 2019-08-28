@@ -37,6 +37,9 @@ foreach(file_type ${MY_TARGETS})
 		src/unlink_tag_btn.cpp
 		src/instance_relation_dialog.cpp
 		src/relation_hub.cpp
+		
+		src/relation_add_instance_tags.cpp
+		src/relation_add_instance_tags_rule.cpp
 	)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" Qt5::Widgets compsky_asciify compsky_mysql)
