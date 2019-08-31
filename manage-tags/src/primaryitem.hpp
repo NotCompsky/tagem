@@ -31,13 +31,13 @@ inline char* uint64_to_str(uint64_t n){
 class StandardItem : public QStandardItem {
  public:
     StandardItem(const QString& s) : QStandardItem(s) {};
-    StandardItem(uint64_t n) : QStandardItem(uint64_to_str(n)) {};
+    StandardItem(const uint64_t n) : QStandardItem(uint64_to_str(n)) {};
 };
 
 class PrimaryItem : public QObject, public StandardItem {
  public:
     PrimaryItem(const QString& s) : StandardItem(s) {};
-    PrimaryItem(uint64_t n) : StandardItem(uint64_to_str(n)) {};
+    PrimaryItem(const uint64_t n) : StandardItem(uint64_to_str(n)) {};
 	void delete_self(); // SLOT
 	void add_subtag(); // SLOT
 	void add_parent(); // SLOT
@@ -48,9 +48,9 @@ class NameItem : public QObject, public StandardItem {
  public:
     const uint64_t tag_id;
     
-    NameItem(const uint64_t id,  QString s) : tag_id(id), StandardItem(s) {}
+    NameItem(const uint64_t id,  const QString& s) : tag_id(id), StandardItem(s) {}
     
-    void setData(const QVariant& value,  int role = Qt::UserRole + 1);
+    void setData(const QVariant& value,  const int role = Qt::UserRole + 1);
 };
 
 #endif
