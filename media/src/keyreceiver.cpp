@@ -1,4 +1,5 @@
 #include "keyreceiver.hpp"
+#include "tag-manager/mainwindow.hpp"
 
 #include <QApplication>
 #include <QEvent>
@@ -9,6 +10,9 @@
 # include "instancewidget.hpp"
 #endif
 #include "mainwindow.hpp"
+
+
+extern TagManager* tag_manager;
 
 
 constexpr static const short SCROLL_INTERVAL = 1;
@@ -138,6 +142,14 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_L:
                     window->media_linkfrom();
                     break;
+				case Qt::Key_M:
+				{
+					static TagManager* tag_manager = nullptr;
+					if (tag_manager == nullptr)
+						tag_manager = new TagManager(window);
+					tag_manager->show();
+					break;
+				}
                 case Qt::Key_N:
                     window->media_note();
                     break;

@@ -43,6 +43,7 @@ foreach(file_type ${MY_TARGETS})
 		src/relation_add_instance_tags.cpp
 		src/relation_add_instance_tags_rule.cpp
 		
+		src/tag-manager/mainwindow.cpp
 		src/tag-manager/primaryitem.cpp
 		src/tag-manager/tagchildtreeview.cpp
 		src/tag-manager/tagparenttreeview.cpp

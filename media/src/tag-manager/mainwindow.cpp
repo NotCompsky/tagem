@@ -7,7 +7,7 @@
 
 #include <compsky/mysql/query.hpp>
 
-#include "name_dialog.hpp"
+#include "../name_dialog.hpp"
 #include "tagchildtreeview.hpp"
 #include "tagparenttreeview.hpp"
 
@@ -15,10 +15,8 @@
 extern QCompleter* tagcompleter;
 
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+TagManager::TagManager(QWidget* parent) : QDialog(parent) {
     // Inlined to avoid multiple definition error
-    this->setWindowTitle("MyTag Tag Manager");
-    QWidget* w = new QWidget();
     QVBoxLayout* vl = new QVBoxLayout();
     QHBoxLayout* hl = new QHBoxLayout();
     this->commit_btn = new QPushButton("Commit (unimplemented)");
@@ -28,12 +26,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     hl->addWidget(tag_parent_tree_view);
     vl->addLayout(hl);
     vl->addWidget(this->commit_btn);
-    w->setLayout(vl);
-    this->setCentralWidget(w);
-    this->show();
+	this->setLayout(vl);
 }
 
-void MainWindow::add_new_tag(){
+void TagManager::add_new_tag(){
     NameDialog* tagdialog = new NameDialog("Tag", "");
     tagdialog->name_edit->setCompleter(tagcompleter);
     

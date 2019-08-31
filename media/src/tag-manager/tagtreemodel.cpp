@@ -11,9 +11,9 @@
 
 namespace _mysql {
 	extern MYSQL* obj;
-	extern MYSQL_RES* res;
-	extern MYSQL_ROW row;
 }
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW ROW1;
 
 extern QCompleter* tagcompleter;
 extern QStringList tagslist;
@@ -24,11 +24,11 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
 :
     QStandardItemModel(a, b, parent)
 {
-    compsky::mysql::query_buffer(_mysql::obj, _mysql::res, "SELECT id, name FROM tag");
+    compsky::mysql::query_buffer(_mysql::obj, RES1, "SELECT id, name FROM tag");
     {
     uint64_t id;
     char* name;
-    while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &id, &name)){
+    while (compsky::mysql::assign_next_row(RES1, &ROW1, &id, &name)){
         const QString s = name;
         this->tag2name[id] = s;
         tagslist << s;

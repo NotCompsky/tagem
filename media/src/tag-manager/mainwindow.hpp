@@ -2,14 +2,14 @@
 #define __MAINWINDOW__
 
 #include <QCompleter>
-#include <QMainWindow>
+#include <QDialog>
 #include <QPushButton>
 #include <QStringList>
 
 
-class MainWindow : public QMainWindow {
+class TagManager : public QDialog {
  public:
-    MainWindow(QWidget* parent = 0);
+	TagManager(QWidget* parent = 0);
 	void add_new_tag();
 	
     QPushButton* commit_btn;

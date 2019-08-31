@@ -16,9 +16,9 @@
 
 namespace _mysql {
 	extern MYSQL* obj;
-	extern MYSQL_RES* res;
-	extern MYSQL_ROW row;
 }
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW ROW1;
 
 
 
@@ -80,7 +80,7 @@ void TagTreeView::place_tags(const uint64_t root){
 	{
 		uint64_t _parent, _tag, _count;
 		char* _name;
-		while (compsky::mysql::assign_next_row__no_free(_mysql::res, &_mysql::row, &_parent, &_tag, &_count, &_name)){
+		while (compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &_parent, &_tag, &_count, &_name)){
 			queue.emplace_back(_tag, _parent, _name, _count);
 		}
 	}
@@ -189,7 +189,7 @@ void TagTreeView::place_tags(const uint64_t root){
         mdl->tag2occurances[parent] += count;
     }
 	
-	while (compsky::mysql::assign_next_row(_mysql::res, &_mysql::row));
+	while (compsky::mysql::assign_next_row(RES1, &ROW1));
 	// Free results
 };
 

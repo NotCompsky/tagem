@@ -12,8 +12,8 @@
 
 namespace _mysql {
 	extern MYSQL* obj;
-	extern MYSQL_RES* res;
 }
+extern MYSQL_RES* RES1;
 
 
 TagParentTreeView::TagParentTreeView(TagChildTreeView* tag_child_tree_view,  QWidget* parent)
@@ -47,7 +47,7 @@ void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSel
 	const QByteArray b = a.toLocal8Bit();
     const char* tag_id_str = b.data();
     compsky::mysql::exec(_mysql::obj,  buf,  sql__call_ancestor_tags_str, tag_id_str, ')');
-    compsky::mysql::query_buffer(_mysql::obj, _mysql::res,  "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
+    compsky::mysql::query_buffer(_mysql::obj, RES1,  "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
     
     this->place_tags(ascii_to_uint64(tag_id_str));
 };
