@@ -47,8 +47,9 @@ void TagTreeView::init_headers(){
     this->model()->setHeaderData(1, Qt::Horizontal, "Name");
     this->model()->setHeaderData(2, Qt::Horizontal, "Occurances");
     if (this->editable){
-		this->model()->setHeaderData(3, Qt::Horizontal, "+Child");
-		this->model()->setHeaderData(4, Qt::Horizontal, "Unchild");
+		this->model()->setHeaderData(3, Qt::Horizontal, "+Parent");
+		this->model()->setHeaderData(4, Qt::Horizontal, "+Child");
+		this->model()->setHeaderData(5, Qt::Horizontal, "Unchild");
     }
 };
 
@@ -141,9 +142,15 @@ void TagTreeView::place_tags(const uint64_t root){
 		
 		QList<QStandardItem*> ls = {(QStandardItem*)entry__id, (QStandardItem*)entry__name, (QStandardItem*)entry__count};
 		
+		QStandardItem* entry__addparent;
 		QStandardItem* entry__addchild;
 		QStandardItem* entry__delete;
 		if (this->editable){
+			entry__addparent = new QStandardItem();
+			entry__addparent->setEditable(false);
+			entry__addparent->setDropEnabled(false);
+			ls << entry__addparent;
+			
 			entry__addchild = new QStandardItem();
 			entry__addchild->setEditable(false);
 			entry__addchild->setDropEnabled(false);
@@ -156,6 +163,12 @@ void TagTreeView::place_tags(const uint64_t root){
 		}
 		mdl->tag2entry[parent]->appendRow(ls);
 		if (this->editable){
+			QToolButton* addparent_btn = new QToolButton();
+			addparent_btn->setText("^");
+			addparent_btn->setMaximumSize(addparent_btn->sizeHint());
+			this->setIndexWidget(entry__addparent->index(), addparent_btn);
+			connect(addparent_btn, &QToolButton::clicked, entry__id, &PrimaryItem::add_parent);
+			
 			QToolButton* addchild_btn = new QToolButton();
 			addchild_btn->setText("+");
 			addchild_btn->setMaximumSize(addchild_btn->sizeHint());

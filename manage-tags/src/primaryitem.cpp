@@ -36,6 +36,9 @@ void PrimaryItem::delete_self(){
 void PrimaryItem::add_subtag(){
 };
 
+void PrimaryItem::add_parent(){
+}
+
 void NameItem::setData(const QVariant& value,  int role){
     QString a = this->data().toString();
     QByteArray b = a.toLocal8Bit();

@@ -40,6 +40,7 @@ class PrimaryItem : public QObject, public StandardItem {
     PrimaryItem(uint64_t n) : StandardItem(uint64_to_str(n)) {};
 	void delete_self(); // SLOT
 	void add_subtag(); // SLOT
+	void add_parent(); // SLOT
     QStandardItem* parent();
 };
 
