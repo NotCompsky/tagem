@@ -24,7 +24,7 @@ extern std::map<uint64_t, QString> tag_id2name;
 
 
 void PrimaryItem::delete_self(){
-    QStandardItem* prnt = QStandardItem::parent();
+	QStandardItem* const prnt = QStandardItem::parent();
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
@@ -41,21 +41,24 @@ void PrimaryItem::delete_self(){
 
 void PrimaryItem::add_subtag(){
 	const uint64_t child = ask_for_tag("Child Tag");
+	if (child == 0)
+		return;
 	tag2parent(child, this->tag_id);
 	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), child, this->tag_id, 0, tag_id2name[child]); // TODO: Get the text of the element to the right, i.e. the name of the tag
 };
 
 void PrimaryItem::add_parent(){
 	const uint64_t parent = ask_for_tag("Parent Tag");
+	if (parent == 0)
+		return;
 	tag2parent(this->tag_id, parent);
 	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), this->tag_id, parent, 123, tag_id2name[this->tag_id]);
 	// TODO: Get the text of the elements to the right, i.e. the name of the tag, and its count
 }
 
-void NameItem::setData(const QVariant& value,  int role){
-    QString a = this->data().toString();
-    QByteArray b = a.toLocal8Bit();
-    
+void NameItem::setData(const QVariant& value,  const int role){
+	const QString a = this->data().toString();
+	const QByteArray b = a.toLocal8Bit();
     const char* s = b.data(); // Equivalent to siblingAtColumn, but that is introduced in Qt 5.11
     
     if (!s)
