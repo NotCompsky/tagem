@@ -423,6 +423,11 @@ void MainWindow::media_open(){
 	
 	QFile f(file);
 	this->file_sz = f.size();
+	if (this->file_sz == 0){
+		fprintf(stderr,  "Cannot load file: %s\n",  file);
+		this->media_next();
+		return;
+	}
 	
 	if (
 		(r.file_sz_min && this->file_sz < r.file_sz_min) ||
