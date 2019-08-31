@@ -31,12 +31,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     w->setLayout(vl);
     this->setCentralWidget(w);
     this->show();
-    
-    this->add_new_tag();
 }
 
 void MainWindow::add_new_tag(){
-    NameDialog* tagdialog = new NameDialog("TagDialog", "TagStr");
+    NameDialog* tagdialog = new NameDialog("Tag", "");
     tagdialog->name_edit->setCompleter(tagcompleter);
     
     if (tagdialog->exec() != QDialog::Accepted)
