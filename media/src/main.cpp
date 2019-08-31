@@ -26,6 +26,12 @@ char** dummy_argv;
 int main(const int argc,  const char** argv){
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
+# ifdef VID
+	QtAV::Widgets::registerRenderers();
+# endif
+	QApplication app(dummy_argc, dummy_argv);
+	MainWindow player;
+	
 	bool show_gui = true;
 	double volume = 1.0;
 	while((*(++argv)) != 0){
@@ -36,9 +42,12 @@ int main(const int argc,  const char** argv){
 		switch(arg[1]){
 			case '-':
 				goto after_opts_parsed;
+			case 'a':
+				player.auto_next = true;
+				break;
 			case 'v':
 				// tmp - common flags such as "-v" and "-q" are misleading
-				volume = atof(*(++argv));
+				player.set_volume(atof(*(++argv)));
 				break;
 			case 's':
 				show_gui = false;
@@ -51,14 +60,8 @@ int main(const int argc,  const char** argv){
 	
 	const char* const inlist_filter_rule = *argv;
 	
-  #ifdef VID
-    QtAV::Widgets::registerRenderers();
-  #endif
-    QApplication app(dummy_argc, dummy_argv);
-    MainWindow player;
 	if (inlist_filter_rule != nullptr)
 		player.inlist_filter_dialog->load_and_apply_from(inlist_filter_rule);
-	player.set_volume(volume);
     player.show();
     
     int rc = app.exec();

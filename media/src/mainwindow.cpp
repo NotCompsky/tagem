@@ -104,7 +104,8 @@ MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
     media_fp_indx(MEDIA_FP_SZ),
-    reached_stdin_end(false)
+    reached_stdin_end(false),
+    auto_next(false)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;
@@ -145,6 +146,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_player,  &QtAV::AVPlayer::started,  this,  [=](){ this->updateSlider(m_player->position()); });
     connect(m_player,  &QtAV::AVPlayer::notifyIntervalChanged, this, &MainWindow::updateSliderUnit);
     connect(m_player,  &QtAV::AVPlayer::started,  this,  &MainWindow::set_player_options_for_img);
+	connect(m_player,  &QtAV::AVPlayer::mediaStatusChanged,  this,  &MainWindow::parse_mediaStatusChanged);
     
    #ifdef TXT
     #error "TXT and VID are mutually exclusive"
@@ -236,6 +238,12 @@ void MainWindow::set_media_dir_len(){
 	for(size_t i = 0;  this->media_fp[i] != 0;  ++i)
 		if(this->media_fp[i] == '/')
 			this->media_dir_len = i + 1;
+}
+
+void MainWindow::parse_mediaStatusChanged(int status){
+	if (status == QtAV::EndOfMedia  &&  this->auto_next){
+		this->media_next();
+	}
 }
 
 void MainWindow::media_next(){

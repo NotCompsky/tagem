@@ -121,11 +121,13 @@ class MainWindow : public QWidget{
     std::map<uint64_t, QString> tag_id2name;
     QCompleter* tagcompleter;
 	InlistFilterDialog* inlist_filter_dialog;
+	bool auto_next;
  private:
   #ifdef VID
 	void updateSlider(qint64 value); // SLOT
 	void updateSliderUnit(); // SLOT
 	void set_player_options_for_img(); // SLOT
+	void parse_mediaStatusChanged(int status); // SLOT
   #endif
   #ifdef TXT
 	void file_modified(); // SLOT
