@@ -9,6 +9,7 @@
 #include <string.h> // for memset
 
 #include <QApplication> // for QApplication::queryKeyboardModifiers
+#include <QCompleter>
 #include <QSlider>
 #include <QLayout>
 #include <QInputDialog>
@@ -57,10 +58,14 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
-MYSQL_RES* RES1;
-MYSQL_ROW ROW1;
-MYSQL_RES* RES2;
-MYSQL_ROW ROW2;
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW ROW1;
+extern MYSQL_RES* RES2;
+extern MYSQL_ROW ROW2;
+
+extern QCompleter* tagcompleter;
+extern QStringList tagslist;
+extern std::map<uint64_t, QString> tag_id2name;
 
 
 constexpr int MIN_FONT_SIZE = 8;
@@ -97,7 +102,6 @@ MainWindow::~MainWindow(){
     delete this->m_player;
   #endif
     delete this->layout();
-    delete this->tagcompleter;
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -111,18 +115,6 @@ MainWindow::MainWindow(QWidget *parent)
   #ifdef BOXABLE
     this->is_mouse_down = false;
   #endif
-    
-    compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
-    {
-    uint64_t id;
-	const char* name;
-    while (compsky::mysql::assign_next_row(RES1,  &ROW1,  &id, &name)){
-        const QString s = name;
-        this->tag_id2name[id] = s;
-        this->tagslist << s;
-    }
-    }
-    this->tagcompleter = new QCompleter(this->tagslist);
     
     QVBoxLayout* vl = new QVBoxLayout();
     vl->setContentsMargins(0, 0, 0, 0); // Makes calculating offset easier
@@ -357,7 +349,7 @@ void MainWindow::init_file_from_db(){
         
         uint64_t tag_id;
         while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
-            iw->tags.append(this->tag_id2name[tag_id]);
+			iw->tags.append(tag_id2name[tag_id]);
         
         iw->set_colour(QColor(255,0,255,100));
       #ifdef SCROLLABLE
@@ -582,7 +574,7 @@ void MainWindow::tag2parent(uint64_t tagid,  uint64_t parid){
 
 uint64_t MainWindow::ask_for_tag(const QString str){
 	NameDialog* tagdialog = new NameDialog("Tag", str);
-	tagdialog->name_edit->setCompleter(this->tagcompleter);
+	tagdialog->name_edit->setCompleter(tagcompleter);
 	const auto rc = tagdialog->exec();
 	const QString tagstr = tagdialog->name_edit->text();
 
@@ -592,25 +584,25 @@ uint64_t MainWindow::ask_for_tag(const QString str){
 	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
 	const char* tagchars = tagstr_ba.data();
 	
-	return  (this->tagslist.contains(tagstr))  ?  this->get_id_from_table("tag", tagchars)  :  this->add_new_tag(tagstr);
+	return  (tagslist.contains(tagstr))  ?  this->get_id_from_table("tag", tagchars)  :  this->add_new_tag(tagstr);
 }
 
 uint64_t MainWindow::add_new_tag(const QString tagstr,  uint64_t tagid){
 	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
     const char* const tagchars = tagstr_ba.data();
     
-    this->tagslist.append(tagstr);
-    delete this->tagcompleter;
-    this->tagcompleter = new QCompleter(this->tagslist);
+	tagslist.append(tagstr);
+	delete tagcompleter;
+	tagcompleter = new QCompleter(tagslist);
     
     if (tagid == 0)
         tagid = this->get_id_from_table("tag", tagchars);
     
-    this->tag_id2name[tagid] = tagstr;
+	tag_id2name[tagid] = tagstr;
     
     /* Get parent tag */
     NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
-    tagdialog->name_edit->setCompleter(this->tagcompleter);
+    tagdialog->name_edit->setCompleter(tagcompleter);
     goto__cannotcancelparenttag:
     if (tagdialog->exec() != QDialog::Accepted)
         goto goto__cannotcancelparenttag;
@@ -638,7 +630,7 @@ uint64_t MainWindow::add_new_tag(const QString tagstr,  uint64_t tagid){
             this->tag2parent(tagid, parid);
             
             QString parstr = QString::fromLocal8Bit(parent_tagchars + lastindx);
-            if (!this->tagslist.contains(parstr))
+            if (!tagslist.contains(parstr))
                 this->add_new_tag(parstr, parid);
             
             if (iszero == 0)
@@ -663,7 +655,7 @@ const QString MainWindow::media_tag(const QString str){
     
     compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
     
-    return this->tag_id2name[tagid];
+	return tag_id2name[tagid];
 }
 
 void MainWindow::media_tag_new_preset(int n){
@@ -834,7 +826,7 @@ void MainWindow::create_instance(){
 		const uint64_t tagid = this->ask_for_tag();
 		if (tagid == 0)
 			break;
-		this->instance_widget->tags.append(this->tag_id2name[tagid]);
+		this->instance_widget->tags.append(tag_id2name[tagid]);
         compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
     }
     

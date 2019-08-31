@@ -1,13 +1,16 @@
+#include "mainwindow.hpp"
+
+#include <compsky/mysql/query.hpp>
+
 #include <QApplication>
+#include <QCompleter>
+#include <QStringList>
 
 #ifdef VID
   #include <QtAVWidgets>
 #endif
 
-#include <compsky/mysql/mysql.hpp> // for compsky::mysql::*, BUF, BUF_INDX
-
-#include "mainwindow.hpp"
-
+#include <map> // for std::map
 #include <cstdlib> // for atof
 
 
@@ -17,10 +20,19 @@ namespace _mysql {
 	constexpr static const size_t auth_sz = 512;
 	char auth[auth_sz];
 }
+MYSQL_RES* RES1;
+MYSQL_ROW ROW1;
+MYSQL_RES* RES2;
+MYSQL_ROW ROW2;
 
 
 int dummy_argc = 0;
 char** dummy_argv;
+
+
+QCompleter* tagcompleter;
+QStringList tagslist;
+std::map<uint64_t, QString> tag_id2name;
 
 
 int main(const int argc,  const char** argv){
@@ -59,6 +71,18 @@ int main(const int argc,  const char** argv){
 		}
 	}
 	after_opts_parsed:
+	
+	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
+	{
+		uint64_t id;
+		const char* name;
+		while (compsky::mysql::assign_next_row(RES1,  &ROW1,  &id, &name)){
+			const QString s = name;
+			tag_id2name[id] = s;
+			tagslist << s;
+		}
+	}
+	tagcompleter = new QCompleter(tagslist);
 	
 	const char* const inlist_filter_rule = *argv;
 	

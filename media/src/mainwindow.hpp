@@ -3,7 +3,6 @@
 
 #include "inlist_filter_dialog.hpp"
 
-#include <QCompleter>
 #include <QLabel>
 #include <QWidget>
 
@@ -117,9 +116,6 @@ class MainWindow : public QWidget{
   #endif
 	uint64_t ask_for_tag(const QString str = "");
 	uint64_t add_new_tag(const QString tagstr,  uint64_t tagid = 0);
-    QStringList tagslist;
-    std::map<uint64_t, QString> tag_id2name;
-    QCompleter* tagcompleter;
 	InlistFilterDialog* inlist_filter_dialog;
 	bool auto_next;
  private:
