@@ -47,8 +47,8 @@ void TagTreeView::init_headers(){
     this->model()->setHeaderData(1, Qt::Horizontal, "Name");
     this->model()->setHeaderData(2, Qt::Horizontal, "Occurances");
     if (this->editable){
-        this->model()->setHeaderData(3, Qt::Horizontal, "Unchild");
-        this->model()->setHeaderData(4, Qt::Horizontal, "+Child");
+		this->model()->setHeaderData(3, Qt::Horizontal, "+Child");
+		this->model()->setHeaderData(4, Qt::Horizontal, "Unchild");
     }
 };
 
@@ -141,33 +141,33 @@ void TagTreeView::place_tags(const uint64_t root){
 		
 		QList<QStandardItem*> ls = {(QStandardItem*)entry__id, (QStandardItem*)entry__name, (QStandardItem*)entry__count};
 		
+		QStandardItem* entry__addchild;
+		QStandardItem* entry__delete;
 		if (this->editable){
-			QStandardItem* entry__addchild = new QStandardItem();
+			entry__addchild = new QStandardItem();
 			entry__addchild->setEditable(false);
 			entry__addchild->setDropEnabled(false);
 			ls << entry__addchild;
 			
-			QStandardItem* entry__delete = new QStandardItem();
+			entry__delete = new QStandardItem();
 			entry__delete->setEditable(false);
 			entry__delete->setDropEnabled(false);
 			ls << entry__delete;
-			
+		}
+		mdl->tag2entry[parent]->appendRow(ls);
+		if (this->editable){
 			QToolButton* addchild_btn = new QToolButton();
 			addchild_btn->setText("+");
 			addchild_btn->setMaximumSize(addchild_btn->sizeHint());
 			this->setIndexWidget(entry__addchild->index(), addchild_btn);
 			connect(addchild_btn, &QToolButton::clicked, entry__id, &PrimaryItem::add_subtag);
-			ls << addchild_btn;
 			
 			QToolButton* delete_btn = new QToolButton();
 			delete_btn->setText("X");
 			delete_btn->setMaximumSize(delete_btn->sizeHint());
 			this->setIndexWidget(entry__delete->index(), delete_btn);
 			connect(delete_btn, &QToolButton::clicked, entry__id, &PrimaryItem::delete_self);
-			ls << delete_btn;
 		}
-		
-		mdl->tag2entry[parent]->appendRow(ls);
 		
 		mdl->tag2entry[tag] = entry__id;
         mdl->tag2parent[tag] = parent;
