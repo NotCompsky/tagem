@@ -144,7 +144,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                     break;
 				case Qt::Key_M:
 				{
-					static TagManager* tag_manager = nullptr;
 					if (tag_manager == nullptr)
 						tag_manager = new TagManager(window);
 					tag_manager->show();

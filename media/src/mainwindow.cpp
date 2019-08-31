@@ -1,6 +1,7 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
 #include "relation_add_instance_tags.hpp"
+#include "tag-manager/mainwindow.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -66,6 +67,8 @@ extern MYSQL_ROW ROW2;
 extern QCompleter* tagcompleter;
 extern QStringList tagslist;
 extern std::map<uint64_t, QString> tag_id2name;
+
+TagManager* tag_manager;
 
 
 constexpr int MIN_FONT_SIZE = 8;
@@ -626,6 +629,9 @@ uint64_t MainWindow::add_new_tag(const QString tagstr,  uint64_t tagid){
             
             PRINTF("parent_tagchars: %s\n",  parent_tagchars + lastindx);
             auto parid = this->get_id_from_table("tag",  parent_tagchars + lastindx);
+			
+			if (tag_manager != nullptr)
+				tag_manager->add_child_to(tagid,  parid,  1,  tagstr);
             
             this->tag2parent(tagid, parid);
             

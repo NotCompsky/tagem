@@ -1,18 +1,21 @@
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
-#include <QCompleter>
+#include "tagchildtreeview.hpp"
+#include "tagtreemodel.hpp"
 #include <QDialog>
-#include <QPushButton>
-#include <QStringList>
 
 
 class TagManager : public QDialog {
+ private:
+	TagChildTreeView* tag_child_tree_view;
  public:
 	TagManager(QWidget* parent = 0);
-	void add_new_tag();
 	
-    QPushButton* commit_btn;
+	template<typename... Args>
+	void add_child_to(Args... args){
+		tag_child_tree_view->add_child_to((TagTreeModel*)tag_child_tree_view->model(), args...);
+	}
 };
 
 #endif
