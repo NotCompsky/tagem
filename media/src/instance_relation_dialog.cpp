@@ -1,6 +1,7 @@
 #include "instance_relation_dialog.hpp"
 #include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
+#include "add_new_tag.hpp"
 
 #include <compsky/mysql/query.hpp>
 
@@ -92,7 +93,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 }
 
 void InstanceRelationDialog::add_tag(){
-	const uint64_t tag_id = this->win->ask_for_tag();
+	const uint64_t tag_id = ask_for_tag();
 	if (tag_id == 0)
 		return;
 	

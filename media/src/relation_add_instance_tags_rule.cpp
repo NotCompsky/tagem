@@ -6,7 +6,7 @@
  */
 
 #include "relation_add_instance_tags_rule.hpp"
-
+#include "add_new_tag.hpp"
 #include <compsky/mysql/query.hpp>
 
 #include <QLabel>
@@ -125,7 +125,7 @@ void RelationAddInstanceTagsRule::add_tag(){
 			break;
 	}
 	
-	const uint64_t tag_id = this->win->ask_for_tag();
+	const uint64_t tag_id = ask_for_tag();
 	
 	compsky::mysql::exec(
 		_mysql::obj,

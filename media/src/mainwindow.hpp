@@ -73,7 +73,6 @@ class MainWindow : public QWidget{
 	void seekBySlider(int value); // SLOT
 	void playPause(); // SLOT
   #endif
-    uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name);
 # ifdef AUDIO
     double volume;
 # endif
@@ -114,8 +113,6 @@ class MainWindow : public QWidget{
     QSize main_widget_orig_size;
     double scale_factor;
   #endif
-	uint64_t ask_for_tag(const QString str = "");
-	uint64_t add_new_tag(const QString tagstr,  uint64_t tagid = 0);
 	InlistFilterDialog* inlist_filter_dialog;
 	bool auto_next;
  private:
@@ -165,7 +162,6 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
-    void tag2parent(uint64_t tag_id,  uint64_t parent_id);
 };
 
 

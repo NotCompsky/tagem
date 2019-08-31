@@ -1,5 +1,5 @@
 #include "instancewidget.hpp"
-
+#include "add_new_tag.hpp"
 #include <QBrush>
 #include <QColor>
 #include <QDialog>
@@ -93,7 +93,7 @@ void InstanceWidget::add_relation_line(InstanceWidget* iw){
     
     // Seems to avoid segfault - presumably because the tagdialog forces a paintEvent of the overlay
     while(true){
-		const uint64_t tagid = this->win->ask_for_tag();
+		const uint64_t tagid = ask_for_tag();
 		if (tagid == 0)
 			break;
         compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES(", ir->id, ',', tagid, ')');
