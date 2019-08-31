@@ -1,4 +1,5 @@
 #include "tagtreeview.hpp"
+#include "primaryitem.hpp"
 
 #include <QDebug> // TMP
 #include <QHeaderView>
@@ -20,19 +21,16 @@ namespace _mysql {
 }
 
 
-AvadaKevadra::AvadaKevadra(const uint64_t tag,  const uint64_t parent,  const char* name,  const uint64_t count) : tag(tag), parent(parent), name(name), count(count) {}
 
-
-
-TagTreeView::TagTreeView(bool editable,  QWidget* parent)
+TagTreeView::TagTreeView(const bool _editable,  QWidget* parent)
 // Inlined to avoid multiple definition error
 :
-    editable(editable),
+    editable(_editable),
     QTreeView(parent)
 {
     this->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     
-    if (editable){
+    if (this->editable){
         TagTreeModel* mdl = new TagTreeModel(0, 5, parent);
         this->setModel(mdl);
     } else {
@@ -48,7 +46,7 @@ void TagTreeView::init_headers(){
     this->model()->setHeaderData(0, Qt::Horizontal, "ID");
     this->model()->setHeaderData(1, Qt::Horizontal, "Name");
     this->model()->setHeaderData(2, Qt::Horizontal, "Occurances");
-    if (editable){
+    if (this->editable){
         this->model()->setHeaderData(3, Qt::Horizontal, "Unchild");
         this->model()->setHeaderData(4, Qt::Horizontal, "+Child");
     }
@@ -60,6 +58,20 @@ void TagTreeView::place_tags(uint64_t root){
     
     mdl->tag2entry.clear();
     mdl->tag2entry[root] = mdl->invisibleRootItem();
+	
+	struct AvadaKevadra {
+		uint64_t tag;
+		const uint64_t parent;
+		const char* const name;
+		const uint64_t count;
+		
+		AvadaKevadra(const uint64_t _tag,  const uint64_t _parent,  const char* const _name,  const uint64_t _count)
+		: tag(_tag)
+		, parent(_parent)
+		, name(_name)
+		, count(_count)
+		{}
+	};
     
     std::vector<AvadaKevadra> queue;
     queue.reserve(4096);
