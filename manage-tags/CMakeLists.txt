@@ -16,7 +16,7 @@ else()
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(tagem-tags src/main.cpp src/mainwindow.cpp src/primaryitem.cpp src/tagchildtreeview.cpp src/tagparenttreeview.cpp src/tagtreemodel.cpp src/tagtreeview.cpp "${CMAKE_CURRENT_SOURCE_DIR}/../media/src/name_dialog.cpp")
 target_compile_definitions(tagem-tags PRIVATE ${MY_DEFINITIONS} QT_GUI_LIB=1)

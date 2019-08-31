@@ -15,8 +15,6 @@ namespace _mysql {
 	extern MYSQL_ROW row;
 }
 
-extern char BUF[];
-
 extern QCompleter* tagcompleter;
 extern QStringList tagslist;
 
@@ -106,8 +104,11 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
 		throw std::runtime_error("parent_tag_id has strangely high value");
 	}
 	
-    compsky::mysql::exec(_mysql::obj, BUF,  "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (",  parent_tag_id,  ',',  tag_id,  ')');
-    compsky::mysql::exec(_mysql::obj, BUF,  "DELETE FROM tag2parent WHERE parent_id=",  current_parent_id,  " AND tag_id=",  tag_id);
+	constexpr static const char* const sql__insert = "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (";
+	constexpr static const char* const sql__delete = "DELETE FROM tag2parent WHERE parent_id=";
+	static char buf[std::char_traits<char>::length(sql__insert) + 19 + 1 + 19 + 1];
+    compsky::mysql::exec(_mysql::obj, buf,  sql__insert,  parent_tag_id,  ',',  tag_id,  ')');
+    compsky::mysql::exec(_mysql::obj, buf,  sql__delete,  current_parent_id,  " AND tag_id=",  tag_id);
     
     qDebug() << "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (" << parent_tag_id << "," << tag_id << ")";
     qDebug() << "DELETE FROM tag2parent WHERE parent_id=" << current_parent_id << " AND tag_id=" << tag_id;

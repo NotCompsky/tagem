@@ -15,10 +15,7 @@ namespace _f {
 
 namespace _mysql {
 	extern MYSQL* obj;
-	extern MYSQL_ROW row;
 }
-
-extern char BUF[];
 
 
 void PrimaryItem::delete_self(){
@@ -26,7 +23,11 @@ void PrimaryItem::delete_self(){
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
-    compsky::mysql::exec(_mysql::obj, BUF, "DELETE FROM tag2parent WHERE parent_id=",  qs,  " AND tag_id=", this->text());
+	constexpr static const char* const sql__delete_from = "DELETE FROM tag2parent WHERE parent_id=";
+	constexpr static const char* const sql__and_tagidq  = " AND tag_id=";
+	constexpr static const size_t foo = std::char_traits<const char>::length(sql__delete_from);
+	static char buf[std::char_traits<char>::length(sql__delete_from) + 19 + std::char_traits<char>::length(sql__and_tagidq) + 19];
+    compsky::mysql::exec(_mysql::obj, buf, sql__delete_from,  qs,  sql__and_tagidq, this->text());
     if (prnt)
         this->model()->removeRow(this->row());
     else
@@ -60,7 +61,8 @@ void NameItem::setData(const QVariant& value,  int role){
     if (neue == mdl->tag2name[this->tag_id])
         return;
     
-    compsky::mysql::exec(_mysql::obj, BUF, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
+	static char buf[4096]; // Though tag name should not be longer than 128 characters
+    compsky::mysql::exec(_mysql::obj, buf, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
     
     QStandardItem::setData(value, role);
 };

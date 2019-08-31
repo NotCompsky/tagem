@@ -15,8 +15,6 @@ namespace _mysql {
 	MYSQL_ROW row;
 }
 
-char BUF[4096];
-
 QCompleter* tagcompleter;
 QStringList tagslist;
 

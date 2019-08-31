@@ -6,25 +6,35 @@
 // Assumes asciify.hpp already included
 
 
-namespace detail {
-    extern char* BUF;
-    extern size_t BUF_INDX;
-    
-    extern void enlarge_buf();
-}
-
-
 inline char* uint64_to_str(uint64_t n){
-    // Inlined to avoid multiple definition error
-    if (detail::BUF_INDX <= 20)
-        detail::enlarge_buf();
-    detail::BUF[--detail::BUF_INDX] = 0;
+	static char* buf = (char*)malloc(4096);
+	static char* itr = nullptr;
+	static size_t buf_sz = 4096;
+	
+	if (itr  <  buf + buf_sz + 19 + 1){
+		buf_sz *= 2;
+		char* _dummy = (char*)realloc(buf, buf_sz);
+		if (_dummy == nullptr)
+			; // TODO: 
+		if (_dummy > buf)
+			itr += _dummy - buf;
+		else
+			itr -= buf - _dummy;
+		buf = _dummy;
+	}
+	size_t n_digits = 0;
+	uint64_t m = n;
+	do {
+		++n_digits;
+		m /= 10;
+	} while(m != 0);
+	itr += n_digits + 1; // Terminating null byte
+	*itr = 0;
     do {
-        --detail::BUF_INDX;
-        detail::BUF[detail::BUF_INDX] = '0' + (n % 10);
+		*(--itr) = '0' + (n % 10);
         n /= 10;
     } while(n != 0);
-    return detail::BUF + detail::BUF_INDX;
+	return itr;
 }
 
 
