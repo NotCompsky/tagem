@@ -103,6 +103,7 @@ MainWindow::~MainWindow(){
 MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
+	volume(1.0),
     media_fp_indx(MEDIA_FP_SZ),
     reached_stdin_end(false),
     auto_next(false)
