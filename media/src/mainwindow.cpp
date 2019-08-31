@@ -629,15 +629,15 @@ uint64_t MainWindow::add_new_tag(const QString tagstr,  uint64_t tagid){
             
             PRINTF("parent_tagchars: %s\n",  parent_tagchars + lastindx);
             auto parid = this->get_id_from_table("tag",  parent_tagchars + lastindx);
-			
-			if (tag_manager != nullptr)
-				tag_manager->add_child_to(tagid,  parid,  1,  tagstr);
             
             this->tag2parent(tagid, parid);
             
             QString parstr = QString::fromLocal8Bit(parent_tagchars + lastindx);
             if (!tagslist.contains(parstr))
                 this->add_new_tag(parstr, parid);
+			
+			if (tag_manager != nullptr)
+				tag_manager->add_child_to(tagid,  parid,  1,  tagstr);
             
             if (iszero == 0)
                 break;
