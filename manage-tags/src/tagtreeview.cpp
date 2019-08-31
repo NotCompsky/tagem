@@ -52,7 +52,7 @@ void TagTreeView::init_headers(){
     }
 };
 
-void TagTreeView::place_tags(uint64_t root){
+void TagTreeView::place_tags(const uint64_t root){
     // Inlined to avoid multiple definition error
     TagTreeModel* mdl = (TagTreeModel*)this->model();
     

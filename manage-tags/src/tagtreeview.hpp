@@ -11,7 +11,7 @@ class TagTreeView : public QTreeView {
  public:
 	TagTreeView(const bool _editable,  QWidget* parent);
     void init_headers();
-    void place_tags(uint64_t root);
+	void place_tags(const uint64_t root);
 };
 
 #endif
