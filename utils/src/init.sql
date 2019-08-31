@@ -66,18 +66,8 @@ CREATE TABLE relation2tag (
     PRIMARY KEY `instance2tag` (`relation_id`, `tag_id`)
 );
 
-CREATE TABLE relationtag2tag (
-    # Decides on the tags a relation automatically gives rise to, given the tags of the master and slave object instances
-    tag BIGINT UNSIGNED NOT NULL,  # ID of the relation's tag (not relation table's ID)
-    master BIGINT UNSIGNED NOT NULL,  # Tag ID of one of the master's tags '
-    slave BIGINT UNSIGNED NOT NULL,
-    result BIGINT UNSIGNED NOT NULL,  # Resulting Tag ID
-    PRIMARY KEY `relation2mst` (tag, master, slave, result)
-);
 
 
-
-# The following tables propegate instance tags.
 # For instance, suppose there is (an instance tagged "human" and "male") which is related to (an instance tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
 # The following tables describe the rules. Each rule is of the form (ID,  a = list of master tag IDs,  b = list of slave tag IDs,  c = list of resulting master tags,  d =list of resulting slave tags).
 # If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master instance), then all tags of c are added to the master instance, and all tags of d are added to the slave instance.
@@ -86,6 +76,13 @@ CREATE TABLE relationtag2tag (
 CREATE TABLE relation_add_instance_tags__rules (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	name VARBINARY(128) NOT NULL,
+	req_relation_operator INT UNSIGNED NOT NULL DEFAULT 0,
+	req_master_operator INT UNSIGNED NOT NULL DEFAULT 0,
+	req_slave_operator INT UNSIGNED NOT NULL DEFAULT 0,
+	compiled_init VARBINARY(1024), # e.g. 'CALL descendant_tags_id_from_ids("foobar", "5,17");'
+	compiled_tbls VARBINARY(1024), # e.g. 'foobar'
+	compiled_fltr VARBINARY(4096), # e.g. ' AND r2t.tag_id=foobar.node'
+	compiled_hvng VARBINARY(4096),
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
@@ -131,7 +128,14 @@ CREATE TABLE relation_add_instance_tags__res_slave_tags (
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
-  
+
+CREATE TABLE operators (
+	id INT UNSIGNED NOT NULL,
+	string VARBINARY(16) NOT NULL,
+	UNIQUE KEY (string),
+	PRIMARY KEY (id)
+);
+INSERT INTO operators (id, string) VALUES (0,"AND"), (1,"OR"), (2,"XOR"), (3,"NOT");
 
 
 

@@ -173,6 +173,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
 				case Qt::Key_AsciiTilde:
+					window->display_relation_hub();
 					break;
                 case Qt::Key_BracketLeft:
                   #ifdef VID

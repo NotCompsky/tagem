@@ -1,6 +1,8 @@
 #ifndef MAINRWINDOW_H
 #define MAINRWINDOW_H
 
+#include "inlist_filter_dialog.hpp"
+
 #include <QCompleter>
 #include <QLabel>
 #include <QWidget>
@@ -31,9 +33,6 @@ constexpr const int MEDIA_FP_SZ = 4096;
 QT_BEGIN_NAMESPACE
 class QSlider;
 QT_END_NAMESPACE
-
-
-class InlistFilterDialog;
 
 
 #ifdef BOXABLE
@@ -67,6 +66,7 @@ class MainWindow : public QWidget{
     void media_note();
 	void show_settings_dialog();
 	void display_info();
+	void display_relation_hub(); // SLOT
   #ifdef VID
 	void seekBySlider(int value); // SLOT
 	void playPause(); // SLOT
@@ -115,6 +115,7 @@ class MainWindow : public QWidget{
     QStringList tagslist;
     std::map<uint64_t, QString> tag_id2name;
     QCompleter* tagcompleter;
+	InlistFilterDialog* inlist_filter_dialog;
  private:
   #ifdef VID
 	void updateSlider(qint64 value); // SLOT
@@ -147,7 +148,6 @@ class MainWindow : public QWidget{
   #endif
 	void set_media_dir_len();
     const char* get_media_fp();
-	InlistFilterDialog* inlist_filter_dialog;
     char media_fp[MEDIA_FP_SZ];
     char media_fp_buf[MEDIA_FP_SZ];
     int media_fp_indx;

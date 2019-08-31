@@ -1,5 +1,6 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
+#include "relation_add_instance_tags.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -46,8 +47,6 @@
 #else
 # define PRINTF(...)
 #endif
-
-#include "inlist_filter_dialog.hpp"
 
 #define STDIN_FILENO 0
 
@@ -114,7 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
     compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
     {
     uint64_t id;
-    char* name;
+	const char* name;
     while (compsky::mysql::assign_next_row(RES1,  &ROW1,  &id, &name)){
         const QString s = name;
         this->tag_id2name[id] = s;
@@ -168,7 +167,6 @@ MainWindow::MainWindow(QWidget *parent)
     this->main_widget->setFrameShape(QFrame::NoFrame);
     this->main_widget->setFrameShadow(QFrame::Plain);
     this->main_widget->setLineWidth(1);
-    this->main_widget->setLineWrapMode(QPlainTextEdit::NoWrap);
     this->main_widget->setTabStopWidth(40);
     this->is_read_only = true;
     this->main_widget->setReadOnly(true);
@@ -242,7 +240,7 @@ void MainWindow::media_next(){
 	switch(r.files_from_which){
 		case files_from_which::sql:
 		{
-			char* _media_fp;
+			const char* _media_fp;
 			if(likely(compsky::mysql::assign_next_row__no_free(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
 				printf("%s\n", _media_fp);
 				memcpy(this->media_fp,  _media_fp,  strlen(_media_fp) + 1);
@@ -537,7 +535,7 @@ void MainWindow::media_note(){
     
     compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT note FROM file WHERE id=", this->file_id);
     
-    char* previous_note;
+	const char* previous_note;
     compsky::mysql::assign_next_row(RES1,  &ROW1,  &previous_note);
     
     bool ok;
@@ -862,4 +860,10 @@ void MainWindow::display_info(){
 	InfoDialog* info_dialog = new InfoDialog(this->file_id, this->file_sz, this);
 	info_dialog->exec();
 	delete info_dialog;
+}
+
+void MainWindow::display_relation_hub(){
+	RelationAddInstanceTags* hub = new RelationAddInstanceTags(this);
+	hub->exec();
+	delete hub;
 }

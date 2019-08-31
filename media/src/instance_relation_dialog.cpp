@@ -1,5 +1,4 @@
 #include "instance_relation_dialog.hpp"
-#include "relation_add_instance_tags.hpp"
 #include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
 
@@ -51,7 +50,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 				"AND t.id=i2t.tag_id "
 				"AND r.id=", _id
 			);
-			char* _tag_name;
+			const char* _tag_name;
 			while(compsky::mysql::assign_next_row(RES2, &ROW2, &_tag_name)){
 				
 				
@@ -69,7 +68,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 	l->addWidget(new QLabel("Tags"));
 	compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT t.id, t.name FROM tag t, relation2tag r2t WHERE t.id=r2t.tag_id AND r2t.relation_id=", _id);
 	uint64_t _tag_id;
-	char* _tag_name;
+	const char* _tag_name;
 	while(compsky::mysql::assign_next_row(RES2, &ROW2, &_tag_id, &_tag_name)){
 		QHBoxLayout* hbox = new QHBoxLayout;
 		
@@ -87,7 +86,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 	
 	{
 		QPushButton* btn = new QPushButton("Hub", this);
-		connect(btn, &QPushButton::clicked, this, &InstanceRelationDialog::display_hub);
+		connect(btn, &QPushButton::clicked, this->win, &MainWindow::display_relation_hub);
 		l->addWidget(btn);
 	}
 }
@@ -98,10 +97,4 @@ void InstanceRelationDialog::add_tag(){
 		return;
 	
 	compsky::mysql::exec(_mysql::obj, BUF, "INSERT IGNORE INTO relation2tag (relation_id, tag_id) VALUES (", this->id, ',', tag_id, ")");
-}
-
-void InstanceRelationDialog::display_hub(){
-	RelationAddInstanceTags* hub = new RelationAddInstanceTags(this->win);
-	hub->exec();
-	delete hub;
 }

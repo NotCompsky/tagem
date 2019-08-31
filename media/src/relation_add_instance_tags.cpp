@@ -41,6 +41,8 @@ RelationAddInstanceTags::RelationAddInstanceTags(MainWindow* const _win,  QWidge
 , win(_win)
 , row(0)
 {
+	this->setWindowTitle("RAIT");
+	
 	this->l = new QGridLayout(this);
 	
 	compsky::mysql::query_buffer(
@@ -50,7 +52,7 @@ RelationAddInstanceTags::RelationAddInstanceTags(MainWindow* const _win,  QWidge
 		"FROM relation_add_instance_tags__rules"
 	);
 	uint64_t _id;
-	char* _name;
+	const char* _name;
 	while(compsky::mysql::assign_next_row(this->mysql_res, &this->mysql_row, &_id, &_name)){
 		this->add_rule(_id, _name);
 	}
@@ -77,7 +79,7 @@ void RelationAddInstanceTags::add_rule(const uint64_t id,  const QString& qstr){
 }
 
 void RelationAddInstanceTags::create(){
-	const QString _name = QInputDialog::getText(this,  "Tag Name",  "");
+	const QString _name = QInputDialog::getText(this,  "Rule Name",  "");
 	
 	compsky::mysql::exec(
 		_mysql::obj,
