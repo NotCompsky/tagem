@@ -42,6 +42,7 @@ int main(const int argc,  const char** argv){
 		switch(arg[1]){
 			case '-':
 				goto after_opts_parsed;
+		  #ifdef VID
 			case 'a':
 				player.auto_next = true;
 				break;
@@ -49,6 +50,7 @@ int main(const int argc,  const char** argv){
 				// tmp - common flags such as "-v" and "-q" are misleading
 				player.set_volume(atof(*(++argv)));
 				break;
+		  #endif
 			case 's':
 				show_gui = false;
 				break;
