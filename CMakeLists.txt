@@ -37,7 +37,6 @@ endforeach()
 # set up include-directories
 include_directories("${PROJECT_SOURCE_DIR}")
 
-add_subdirectory(manage-tags)
 add_subdirectory(media)
 add_subdirectory(utils)
 if(BUILD_PACKAGES)

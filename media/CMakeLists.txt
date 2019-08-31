@@ -5,6 +5,9 @@ find_package(Compsky REQUIRED COMPONENTS asciify mysql)
 set(CMAKE_AUTOMOC ON)
 
 
+set(CMAKE_CXX_STANDARD 17)
+
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug
     set(MY_DEFINITIONS "DEBUG")
@@ -39,6 +42,12 @@ foreach(file_type ${MY_TARGETS})
 		
 		src/relation_add_instance_tags.cpp
 		src/relation_add_instance_tags_rule.cpp
+		
+		src/tag-manager/primaryitem.cpp
+		src/tag-manager/tagchildtreeview.cpp
+		src/tag-manager/tagparenttreeview.cpp
+		src/tag-manager/tagtreemodel.cpp
+		src/tag-manager/tagtreeview.cpp
 	)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" Qt5::Widgets compsky_asciify compsky_mysql)
