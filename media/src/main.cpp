@@ -22,11 +22,16 @@ char** dummy_argv;
 
 int main(const int argc,  const char** argv){
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
+	
+	const char* const inlist_filter_rule = argv[1];
+	
   #ifdef VID
     QtAV::Widgets::registerRenderers();
   #endif
     QApplication app(dummy_argc, dummy_argv);
     MainWindow player;
+	if (inlist_filter_rule != nullptr)
+		player.inlist_filter_dialog->load_and_apply_from(inlist_filter_rule);
     player.show();
     
     int rc = app.exec();

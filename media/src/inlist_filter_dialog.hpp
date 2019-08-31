@@ -68,6 +68,9 @@ struct InlistFilterRules {
 class InlistFilterDialog : public QDialog {
   public:
 	InlistFilterDialog(QWidget* parent = nullptr);
+	
+	void load_and_apply_from(const char* const s);
+	
 	InlistFilterRules rules;
 	
 	MYSQL_RES* files_from_sql__res;
@@ -75,6 +78,7 @@ class InlistFilterDialog : public QDialog {
 	QProcess files_from_bash;
   private:
 	void apply();
+	void get_results();
 	void load();
 	void save();
 	QLineEdit* settings_name;
