@@ -157,12 +157,14 @@ void TagTreeView::place_tags(const uint64_t root){
 			addchild_btn->setMaximumSize(addchild_btn->sizeHint());
 			this->setIndexWidget(entry__addchild->index(), addchild_btn);
 			connect(addchild_btn, &QToolButton::clicked, entry__id, &PrimaryItem::add_subtag);
+			ls << addchild_btn;
 			
 			QToolButton* delete_btn = new QToolButton();
 			delete_btn->setText("X");
 			delete_btn->setMaximumSize(delete_btn->sizeHint());
 			this->setIndexWidget(entry__delete->index(), delete_btn);
 			connect(delete_btn, &QToolButton::clicked, entry__id, &PrimaryItem::delete_self);
+			ls << delete_btn;
 		}
 		
 		mdl->tag2entry[parent]->appendRow(ls);
