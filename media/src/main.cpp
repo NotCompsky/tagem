@@ -8,6 +8,9 @@
 
 #include "mainwindow.hpp"
 
+#include <cstdlib> // for atof
+
+
 
 namespace _mysql {
 	MYSQL* obj;
@@ -23,7 +26,30 @@ char** dummy_argv;
 int main(const int argc,  const char** argv){
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
-	const char* const inlist_filter_rule = argv[1];
+	bool show_gui = true;
+	double volume = 1.0;
+	while((*(++argv)) != 0){
+		const char* const arg = *argv;
+		
+		if (arg[0] != '-'  ||  arg[1] == 0  ||  arg[2] != 0)
+			break; // i.e. goto after_opts_parsed
+		switch(arg[1]){
+			case '-':
+				goto after_opts_parsed;
+			case 'v':
+				// tmp - common flags such as "-v" and "-q" are misleading
+				volume = atof(*(++argv));
+				break;
+			case 's':
+				show_gui = false;
+				break;
+			default:
+				return 33;
+		}
+	}
+	after_opts_parsed:
+	
+	const char* const inlist_filter_rule = *argv;
 	
   #ifdef VID
     QtAV::Widgets::registerRenderers();
@@ -32,6 +58,7 @@ int main(const int argc,  const char** argv){
     MainWindow player;
 	if (inlist_filter_rule != nullptr)
 		player.inlist_filter_dialog->load_and_apply_from(inlist_filter_rule);
+	player.set_volume(volume);
     player.show();
     
     int rc = app.exec();

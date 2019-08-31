@@ -67,12 +67,17 @@ class MainWindow : public QWidget{
 	void show_settings_dialog();
 	void display_info();
 	void display_relation_hub(); // SLOT
+# ifdef AUDIO
+	void set_volume(const double _volume);
+# endif
   #ifdef VID
 	void seekBySlider(int value); // SLOT
 	void playPause(); // SLOT
   #endif
     uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name);
+# ifdef AUDIO
     double volume;
+# endif
     QString tag_preset[10];
     bool reached_stdin_end;
   #ifdef BOXABLE

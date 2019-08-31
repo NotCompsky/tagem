@@ -146,8 +146,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_player,  &QtAV::AVPlayer::notifyIntervalChanged, this, &MainWindow::updateSliderUnit);
     connect(m_player,  &QtAV::AVPlayer::started,  this,  &MainWindow::set_player_options_for_img);
     
-    this->volume = 0.1;
-    this->m_player->audio()->setVolume(this->volume);
    #ifdef TXT
     #error "TXT and VID are mutually exclusive"
    #endif
@@ -216,6 +214,13 @@ MainWindow::MainWindow(QWidget *parent)
 	
 	this->inlist_filter_dialog = new InlistFilterDialog(this);
 }
+
+#ifdef AUDIO
+void MainWindow::set_volume(const double _volume){
+	this->volume = _volume;
+	this->m_player->audio()->setVolume(this->volume);
+}
+#endif
 
 #ifdef VID
 void MainWindow::set_player_options_for_img(){

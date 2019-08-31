@@ -176,7 +176,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 					window->display_relation_hub();
 					break;
                 case Qt::Key_BracketLeft:
-                  #ifdef VID
+                  #ifdef AUDIO
                     if (window->volume > 0){
                         window->volume -= 0.05;
                         window->m_player->audio()->setVolume(window->volume);
@@ -184,7 +184,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
                 case Qt::Key_BracketRight:
-                  #ifdef VID
+                  #ifdef AUDIO
                     if (window->volume < 1.25){
                         window->volume += 0.05;
                         window->m_player->audio()->setVolume(window->volume);
