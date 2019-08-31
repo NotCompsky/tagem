@@ -177,18 +177,12 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 					break;
                 case Qt::Key_BracketLeft:
                   #ifdef AUDIO
-                    if (window->volume > 0){
-                        window->volume -= 0.05;
-                        window->m_player->audio()->setVolume(window->volume);
-                    }
+					window->set_volume(window->volume - 0.05);
                   #endif
                     break;
                 case Qt::Key_BracketRight:
                   #ifdef AUDIO
-                    if (window->volume < 1.25){
-                        window->volume += 0.05;
-                        window->m_player->audio()->setVolume(window->volume);
-                    }
+					window->set_volume(window->volume + 0.05);
                   #endif
                     break;
                 /* Preset Tags */

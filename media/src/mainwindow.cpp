@@ -219,6 +219,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 #ifdef AUDIO
 void MainWindow::set_volume(const double _volume){
+	if (_volume < 0  ||  _volume > 1.25)
+		return;
+	
 	this->volume = _volume;
 	this->m_player->audio()->setVolume(this->volume);
 }
