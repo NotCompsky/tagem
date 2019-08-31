@@ -3,6 +3,10 @@
 
 #include <QStandardItem>
 
+
+class TagTreeView;
+
+
 // Assumes asciify.hpp already included
 
 
@@ -45,9 +49,22 @@ class StandardItem : public QStandardItem {
 };
 
 class PrimaryItem : public QObject, public StandardItem {
+ private:
+	const uint64_t tag_id;
+	TagTreeView* const view;
  public:
-    PrimaryItem(const QString& s) : StandardItem(s) {};
-    PrimaryItem(const uint64_t n) : StandardItem(uint64_to_str(n)) {};
+	PrimaryItem(TagTreeView* const _view,  const uint64_t n,  const QString& s)
+	: view(_view)
+	, tag_id(n)
+	, StandardItem(s)
+	{};
+	
+	PrimaryItem(TagTreeView* const _view,  const uint64_t n)
+	: view(_view)
+	, tag_id(n)
+	, StandardItem(uint64_to_str(n))
+	{};
+	
 	void delete_self(); // SLOT
 	void add_subtag(); // SLOT
 	void add_parent(); // SLOT

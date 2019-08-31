@@ -1,12 +1,15 @@
 #include "primaryitem.hpp"
+#include "../add_new_tag.hpp"
+#include "tagtreeview.hpp"
 
 #include <QStandardItem>
 
 #include <compsky/asciify/flags.hpp>
 #include <compsky/mysql/query.hpp>
 
-
 #include "tagtreemodel.hpp"
+
+#include <map>
 
 
 namespace _f {
@@ -16,6 +19,8 @@ namespace _f {
 namespace _mysql {
 	extern MYSQL* obj;
 }
+
+extern std::map<uint64_t, QString> tag_id2name;
 
 
 void PrimaryItem::delete_self(){
@@ -35,9 +40,16 @@ void PrimaryItem::delete_self(){
 };
 
 void PrimaryItem::add_subtag(){
+	const uint64_t child = ask_for_tag("Child Tag");
+	tag2parent(child, this->tag_id);
+	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), child, this->tag_id, 0, tag_id2name[child]); // TODO: Get the text of the element to the right, i.e. the name of the tag
 };
 
 void PrimaryItem::add_parent(){
+	const uint64_t parent = ask_for_tag("Parent Tag");
+	tag2parent(this->tag_id, parent);
+	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), this->tag_id, parent, 123, tag_id2name[this->tag_id]);
+	// TODO: Get the text of the elements to the right, i.e. the name of the tag, and its count
 }
 
 void NameItem::setData(const QVariant& value,  int role){

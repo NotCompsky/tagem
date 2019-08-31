@@ -38,7 +38,7 @@ class TagTreeView : public QTreeView {
 		const uint64_t count,
 		T name
 	){
-		PrimaryItem* entry__id = new PrimaryItem(QString("%0").arg(tag));
+		PrimaryItem* entry__id = new PrimaryItem(this, tag, QString("%0").arg(tag));
 		entry__id->setEditable(false);
 		entry__id->setDropEnabled(true);
 		
