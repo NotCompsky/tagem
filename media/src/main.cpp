@@ -63,6 +63,8 @@ int main(const int argc,  const char** argv){
 	if (inlist_filter_rule != nullptr)
 		player.inlist_filter_dialog->load_and_apply_from(inlist_filter_rule);
     player.show();
+	if (player.auto_next)
+		player.media_next();
     
     int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
