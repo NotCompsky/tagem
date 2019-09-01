@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QTextEdit>
 #include <QProcess>
 #include <QRadioButton>
@@ -112,6 +113,8 @@ class InlistFilterDialog : public QDialog {
 		
 		compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", f_esc, '"', s, "\"");
 		
+		unsigned int count = 0;
+		
 		const char* _filename_regexp;
 		const char* _files_from;
 		const char* _start_from;
@@ -127,6 +130,8 @@ class InlistFilterDialog : public QDialog {
 		int _h_max;
 		int _h_min;
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
+			++count;
+			
 			this->rules.filename_regexp.setPattern(_filename_regexp);
 			this->rules.files_from = _files_from;
 			this->rules.start_from = _start_from;
@@ -161,6 +166,9 @@ class InlistFilterDialog : public QDialog {
 			this->h_min->setText(QString("%1").arg(_h_min));
 			this->h_max->setText(QString("%1").arg(_h_max));
 		}
+		
+		if (count == 0)
+			QMessageBox::warning(this,  "No such rule",  s);
 	};
 	
 	void load_from_textedit(){
