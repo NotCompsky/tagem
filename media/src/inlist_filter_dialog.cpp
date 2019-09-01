@@ -7,8 +7,6 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 
 #include "inlist_filter_dialog.hpp"
 
-#include <compsky/mysql/query.hpp>
-
 #include <QCompleter>
 #include <QGroupBox>
 #include <QLabel>
@@ -17,17 +15,10 @@ Rules are all stored in a single struct. TODO: and therefore constitute 'profile
 #include <QVBoxLayout>
 
 
-namespace _mysql {
-	extern MYSQL* obj;
-}
-
-extern MYSQL_RES* RES1;
-extern MYSQL_ROW ROW1;
-extern char BUF[];
-
 namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
+
 
 InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 : QDialog(parent)
@@ -52,7 +43,7 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		}
 		{
 			QPushButton* btn = new QPushButton("Load");
-			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::load);
+			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::load_from_textedit);
 			hbox->addWidget(btn);
 		}
 		{
@@ -198,7 +189,7 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		l->addWidget(btn);
 	}
 	
-	this->load(); // Load settings named default_string
+	this->load_from_textedit(); // Load settings named default_string
 }
 
 unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int n_elements) {
@@ -257,82 +248,6 @@ void InlistFilterDialog::apply(){
 	this->get_results();
 	
 	this->close();
-}
-
-void InlistFilterDialog::load_and_apply_from(const char* const s){
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', s, "\"");
-	
-	const char* _filename_regexp;
-	const char* _files_from;
-	const char* _start_from;
-	bool _skip_tagged;
-	bool _skip_trans;
-	bool _skip_grey;
-	unsigned int _files_from_which;
-	unsigned int _start_from_which;
-	size_t _file_sz_min;
-	size_t _file_sz_max;
-	int _w_max;
-	int _w_min;
-	int _h_max;
-	int _h_min;
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
-		this->rules.filename_regexp.setPattern(_filename_regexp);
-		this->rules.files_from = _files_from;
-		this->rules.start_from = _start_from;
-
-		this->rules.skip_tagged = _skip_tagged;
-		this->rules.skip_trans  = _skip_trans;
-		this->rules.skip_grey   = _skip_grey;
-		
-		this->rules.files_from_which = _files_from_which;
-		this->rules.start_from_which = _start_from_which;
-		
-		this->rules.file_sz_min = _file_sz_min;
-		this->rules.file_sz_max = _file_sz_max;
-		
-		this->rules.w_min = _w_min;
-		this->rules.w_max = _w_max;
-		this->rules.h_min = _h_min;
-		this->rules.h_max = _h_max;
-	}
-	
-	this->get_results();
-}
-
-void InlistFilterDialog::load(){
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", _f::esc, '"', this->settings_name->text(), "\"");
-	
-	const char* _filename_regexp;
-	const char* _files_from;
-	const char* _start_from;
-	bool _skip_tagged;
-	bool _skip_trans;
-	bool _skip_grey;
-	unsigned int _files_from_which;
-	unsigned int _start_from_which;
-	const char* _file_sz_min;
-	const char* _file_sz_max;
-	const char* _w_max;
-	const char* _w_min;
-	const char* _h_max;
-	const char* _h_min;
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
-		this->filename_regexp->setText(_filename_regexp);
-		this->files_from->setPlainText(_files_from);
-		this->start_from->setText(_start_from);
-		this->skip_tagged->setChecked(_skip_tagged);
-		this->skip_trans->setChecked(_skip_trans);
-		this->skip_grey->setChecked(_skip_grey);
-		this->files_from_which[_files_from_which]->setChecked(true);
-		this->start_from_which[_start_from_which]->setChecked(true);
-		this->file_sz_min->setText(_file_sz_min);
-		this->file_sz_max->setText(_file_sz_max);
-		this->w_min->setText(_w_min);
-		this->w_max->setText(_w_max);
-		this->h_min->setText(_h_min);
-		this->h_max->setText(_h_max);
-	}
 }
 
 constexpr
