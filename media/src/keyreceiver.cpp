@@ -166,6 +166,9 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_O:
                     window->media_overwrite();
                     break;
+				case Qt::Key_P:
+					// Plugin loading dialog
+					break;
 				case Qt::Key_Q:
 					window->media_score();
 					break;
