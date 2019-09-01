@@ -27,9 +27,8 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
-
 int main(const int argc, const char** argv){
-	// tagemall [OPTIONS] - tag1 ... tagN - filepath1 filepath2 ... filepathM
+	// tagemall [OPTIONS] -- tag1 ... tagN -- filepath1 filepath2 ... filepathM
 	constexpr static const size_t buf_sz = 4 * 1024 * 1024;
 	char* buf = (char*)malloc(buf_sz);
 	if(buf == nullptr)
@@ -54,10 +53,13 @@ int main(const int argc, const char** argv){
 	while (i < argc){
 		const char* arg = argv[++i];
 		
+		if (arg[0] != '-'  ||  arg[1] == 0  ||  arg[2] != 0)
+			break;
+		
 		switch(arg[0]){
 			case '-':
 				switch(arg[1]){
-					case 0:
+					case '-':
 						goto break_all__a;
 					case 's':
 						score = argv[++i];
@@ -78,7 +80,7 @@ int main(const int argc, const char** argv){
 	while (i < argc){
 		const char* arg = argv[++i];
 		
-		if(arg[0] == '-'  &&  arg[1] == 0)
+		if (arg[0] == '-'  &&  arg[1] == '-'  &&  arg[2] == 0)
 			break;
 		
 		++n_tags;
