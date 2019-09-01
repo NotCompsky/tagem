@@ -108,7 +108,7 @@ class InlistFilterDialog : public QDialog {
 	void get_results();
 	
 	template<typename String>
-	void load(String s /*= this->settings_name->text()*/){
+	bool load(String s /*= this->settings_name->text()*/){
 		constexpr static const compsky::asciify::flag::Escape f_esc;
 		
 		compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", f_esc, '"', s, "\"");
@@ -169,6 +169,9 @@ class InlistFilterDialog : public QDialog {
 		
 		if (count == 0)
 			QMessageBox::warning(this,  "No such rule",  s);
+		
+		return count;
+		// WARNING: The int should only ever have the values 1 and 0.
 	};
 	
 	void load_from_textedit(){

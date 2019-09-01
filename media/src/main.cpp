@@ -87,8 +87,8 @@ int main(const int argc,  const char** argv){
 	const char* const inlist_filter_rule = *argv;
 	
 	if (inlist_filter_rule != nullptr){
-		player.inlist_filter_dialog->load(inlist_filter_rule);
-		player.inlist_filter_dialog->get_results();
+		if (player.inlist_filter_dialog->load(inlist_filter_rule))
+			player.inlist_filter_dialog->get_results();
 	}
     player.show();
 	if (player.auto_next)

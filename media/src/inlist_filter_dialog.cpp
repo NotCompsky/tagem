@@ -188,8 +188,6 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::apply);
 		l->addWidget(btn);
 	}
-	
-	this->load_from_textedit(); // Load settings named default_string
 }
 
 unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int n_elements) {
