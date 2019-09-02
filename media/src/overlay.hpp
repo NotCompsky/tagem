@@ -11,7 +11,7 @@ class Overlay : public QWidget{
     Q_OBJECT
  public:
     Overlay(MainWindow* win,  QWidget* parent);
-    bool do_not_update_instances;
+    bool do_not_update_boxes;
  protected:
     void paintEvent(QPaintEvent* e) override;
  private:

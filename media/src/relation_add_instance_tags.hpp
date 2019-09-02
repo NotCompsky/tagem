@@ -24,9 +24,9 @@ struct CannotThinkOfAGoodName_sdfsdffdsdf {
 class MainWindow;
 
 
-class RelationAddInstanceTags : public QDialog {
+class RelationAddBoxTags : public QDialog {
   public:
-	RelationAddInstanceTags(MainWindow* const _win,  QWidget* parent = nullptr);
+	RelationAddBoxTags(MainWindow* const _win,  QWidget* parent = nullptr);
   private:
 	void create(); // SLOT
 	void add_rule(const uint64_t id,  const QString& qstr);

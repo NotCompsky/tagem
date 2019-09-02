@@ -5,12 +5,12 @@
 #include <QString>
 
 
-class InstanceWidget;
+class BoxWidget;
 
-class InstanceWidgetButton : public QPushButton{
+class BoxWidgetButton : public QPushButton{
  public:
-    InstanceWidgetButton(const InstanceWidget* shouldBparent,  QWidget* parent,  QString txt = "");
-    const InstanceWidget* shouldBparent;
+    BoxWidgetButton(const BoxWidget* shouldBparent,  QWidget* parent,  QString txt = "");
+    const BoxWidget* shouldBparent;
 };
 
 #endif

@@ -31,7 +31,7 @@ namespace _f {
 extern char BUF[];
 
 
-RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,  const uint64_t _rule_id,  const QString& _name,  QWidget* parent)
+RelationAddBoxTagsRule::RelationAddBoxTagsRule(MainWindow* const _win,  const uint64_t _rule_id,  const QString& _name,  QWidget* parent)
 : QDialog(parent)
 , win(_win)
 , rule_id(_rule_id)
@@ -42,7 +42,7 @@ RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,
 	this->l = new QGridLayout;
 	
 	// this->l->addWidget(OBJECT, ROW, COL, ROW_SPAN, COL_SPAN);
-	this->l->addWidget(new QLabel("[NULL] tag means that the instance inherits the specified tags from the related instance"),  this->row++,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
+	this->l->addWidget(new QLabel("[NULL] tag means that the box inherits the specified tags from the related tag"),  this->row++,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
 	this->l->addWidget(new QLabel("The checkbox by each tag specifies if the descendant tags are included "),  this->row++,  0,  1,  rait::N_TABLES * N_COLS_PER_TABLE);
 	
 	int table_n = 0;
@@ -52,14 +52,14 @@ RelationAddInstanceTagsRule::RelationAddInstanceTagsRule(MainWindow* const _win,
 	
 	{
 		QPushButton* _btn = new QPushButton("SQL");
-		connect(_btn, &QPushButton::clicked, this, &RelationAddInstanceTagsRule::test);
+		connect(_btn, &QPushButton::clicked, this, &RelationAddBoxTagsRule::test);
 		this->l->addWidget(_btn,  this->row++,  0);
 	}
 	
 	this->setLayout(this->l);
 }
 
-void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* const table){
+void RelationAddBoxTagsRule::add_column(const int table_n,  const char* const table){
 	int row = this->row;
 	const int layout_column = table_n * N_COLS_PER_TABLE;
 	this->l->addWidget(new QLabel(table),  row++,  layout_column,  1,  N_COLS_PER_TABLE);
@@ -73,13 +73,13 @@ void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* con
 			this->mysql_res,
 			BUF,
 			"SELECT ", table, "_operator "
-			"FROM relation_add_instance_tags__rules "
+			"FROM relation_add_box_tags__rules "
 			"WHERE id=", this->rule_id
 		);
 		while(compsky::mysql::assign_next_row(this->mysql_res, &this->mysql_row, &_which_tbl_operator)){
 			this->which_tbl_operator__labels[table_n] = new QLineEdit(rait::operators[_which_tbl_operator]);
 			this->which_tbl_operator__labels[table_n]->setValidator(new QRegExpValidator(QRegExp("AND|X?OR|NOT"), this));
-			connect(this->which_tbl_operator__labels[table_n],  &QLineEdit::editingFinished,  this,  &RelationAddInstanceTagsRule::set_table_logic_operator);
+			connect(this->which_tbl_operator__labels[table_n],  &QLineEdit::editingFinished,  this,  &RelationAddBoxTagsRule::set_table_logic_operator);
 			this->l->addWidget(this->which_tbl_operator__labels[table_n],  row++,  layout_column,  1,  N_COLS_PER_TABLE);
 		}
 	}
@@ -89,7 +89,7 @@ void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* con
 		this->mysql_res,
 		BUF,
 		"SELECT IFNULL(t.id, 0), t.name, a.descendants_too "
-		"FROM relation_add_instance_tags__", table ,"_tags a "
+		"FROM relation_add_box_tags__", table ,"_tags a "
 		"LEFT JOIN tag t ON t.id=a.tag "
 		"WHERE a.rule=", this->rule_id
 	);
@@ -100,23 +100,23 @@ void RelationAddInstanceTagsRule::add_column(const int table_n,  const char* con
 		this->l->addWidget(new QLabel((_tag_name != nullptr) ? _tag_name : "[NULL]"),  row,  layout_column);
 		
 		NamedCheckBox* box = new NamedCheckBox(table, _tag_id, _descendants_too);
-		connect(box, &QCheckBox::stateChanged, this, &RelationAddInstanceTagsRule::tag_descendants_checkbox_changed);
+		connect(box, &QCheckBox::stateChanged, this, &RelationAddBoxTagsRule::tag_descendants_checkbox_changed);
 		this->l->addWidget(box,  row,  layout_column + 1);
 		
 		QPushButton* unlink = new QPushButton("-");
 		this->unlink_tag_btns.emplace_back(_tag_id, unlink, table_n);
-		connect(unlink, &QPushButton::clicked, this, &RelationAddInstanceTagsRule::unlink_tag);
+		connect(unlink, &QPushButton::clicked, this, &RelationAddBoxTagsRule::unlink_tag);
 		this->l->addWidget(unlink,  row,  layout_column + 2);
 		
 		++row;
 	}
 	
 	this->add_btns[table_n] = new QPushButton("+");
-	connect(this->add_btns[table_n], &QPushButton::clicked, this, &RelationAddInstanceTagsRule::add_tag);
+	connect(this->add_btns[table_n], &QPushButton::clicked, this, &RelationAddBoxTagsRule::add_tag);
 	this->l->addWidget(this->add_btns[table_n],  row,  layout_column,  1,  N_COLS_PER_TABLE);
 }
 
-void RelationAddInstanceTagsRule::add_tag(){
+void RelationAddBoxTagsRule::add_tag(){
 	unsigned int i = 0;
 	for (const QPushButton* btn : this->add_btns){
 		if (btn != sender())
@@ -130,14 +130,14 @@ void RelationAddInstanceTagsRule::add_tag(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO relation_add_instance_tags__", rait::tables[i], "_tags "
+		"INSERT INTO relation_add_box_tags__", rait::tables[i], "_tags "
 		"(rule, tag) "
 		"VALUES",
 		'(', this->rule_id, ',', tag_id, ')'
 	);
 }
 
-void RelationAddInstanceTagsRule::unlink_tag(){
+void RelationAddBoxTagsRule::unlink_tag(){
 	uint64_t tag_id;
 	unsigned int i = 0;
 	for (const UnlinkBtn2TagId x : this->unlink_tag_btns){
@@ -153,13 +153,13 @@ void RelationAddInstanceTagsRule::unlink_tag(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"DELETE FROM relation_add_instance_tags__", rait::tables[i], "_tags "
+		"DELETE FROM relation_add_box_tags__", rait::tables[i], "_tags "
 		"WHERE rule=", this->rule_id,
 		 " AND tag=",  tag_id
 	);
 }
 
-void RelationAddInstanceTagsRule::set_table_logic_operator(){
+void RelationAddBoxTagsRule::set_table_logic_operator(){
 	unsigned int i = 0;
 	QString qstr;
 	for (const QLineEdit* x : this->which_tbl_operator__labels){
@@ -186,19 +186,19 @@ void RelationAddInstanceTagsRule::set_table_logic_operator(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"UPDATE relation_add_instance_tags__rules "
+		"UPDATE relation_add_box_tags__rules "
 		"SET ", rait::tables[i], "_operator=", which_tbl_operator, " "
 		"WHERE id=", this->rule_id
 	);
 }
 
-void RelationAddInstanceTagsRule::tag_descendants_checkbox_changed(int state){
+void RelationAddBoxTagsRule::tag_descendants_checkbox_changed(int state){
 	const NamedCheckBox* box = static_cast<const NamedCheckBox*>(sender());
 	
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"UPDATE relation_add_instance_tags__", box->table, "_tags "
+		"UPDATE relation_add_box_tags__", box->table, "_tags "
 		"SET "
 			"descendants_too=",
 				(box->isChecked()) ? '1' : '0', " "
@@ -207,7 +207,7 @@ void RelationAddInstanceTagsRule::tag_descendants_checkbox_changed(int state){
 	);
 }
 #include <stdio.h>
-void RelationAddInstanceTagsRule::compile(){
+void RelationAddBoxTagsRule::compile(){
 	char* _compiled_init = this->compiled_init;
 	char* _compiled_tbls = this->compiled_tbls;
 	char* _compiled_fltr = this->compiled_fltr;
@@ -233,7 +233,7 @@ void RelationAddInstanceTagsRule::compile(){
 			"SELECT "
 				"r.req_", bertrand.tbl, "_operator,"
 				"GROUP_CONCAT(DISTINCT CONCAT(A.tag, ',', A.descendants_too)) " // AS 'Req. Relation'
-			"FROM relation_add_instance_tags__rules r, relation_add_instance_tags__req_", bertrand.tbl, "_tags A "
+			"FROM relation_add_box_tags__rules r, relation_add_box_tags__req_", bertrand.tbl, "_tags A "
 			"WHERE A.rule=r.id "
 			  "AND r.id=", this->rule_id, " "
 			"HAVING SUM(A.tag)" // != 0
@@ -335,7 +335,7 @@ void RelationAddInstanceTagsRule::compile(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"UPDATE relation_add_instance_tags__rules r "
+		"UPDATE relation_add_box_tags__rules r "
 		"SET "
 			"compiled_init=\"", _f::strlen, this->compiled_init, (uintptr_t)_compiled_init - (uintptr_t)compiled_init, "\","
 			"compiled_tbls=\"", _f::strlen, this->compiled_tbls, (uintptr_t)_compiled_tbls - (uintptr_t)compiled_tbls, "\","
@@ -345,7 +345,7 @@ void RelationAddInstanceTagsRule::compile(){
 	);
 }
 
-void RelationAddInstanceTagsRule::test(){
+void RelationAddBoxTagsRule::test(){
 	this->compile();
 	
 	char* itr = BUF;
@@ -362,14 +362,14 @@ void RelationAddInstanceTagsRule::test(){
 			"file f,"
 			"relation r,"
 			"relation2tag r2t,"
-			"instance i_master,"
-			"instance2tag i2m_master,"
-			"instance2tag i2m_slave "
+			"box b_master,"
+			"box2tag b2m_master,"
+			"box2tag b2m_slave "
 		"WHERE r.id=r2t.relation_id "
-		  "AND i_master.id=i2m_master.instance_id "
-		  "AND f.id=i.file_id "
-		  "AND i2m_master.instance_id=r.master_id "
-		  "AND i2m_slave.instance_id=r.slave_id ",
+		  "AND b_master.id=b2m_master.box_id "
+		  "AND f.id=b_master.file_id "
+		  "AND b2m_master.box_id=r.master_id "
+		  "AND i2m_slave.box_id=r.slave_id ",
 		  this->compiled_fltr,
 		"GROUP BY r.id "
 		"HAVING TRUE ",
@@ -379,7 +379,7 @@ void RelationAddInstanceTagsRule::test(){
 	QMessageBox::information(this, "SQL", BUF);
 }
 
-void RelationAddInstanceTagsRule::reject(){
+void RelationAddBoxTagsRule::reject(){
 	// Intercepts close (via the 'X' button) events
 	this->compile();
 	

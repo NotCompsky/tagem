@@ -106,7 +106,9 @@ MainWindow::~MainWindow(){
 MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
+#ifdef AUDIO
 	volume(1.0),
+#endif
     media_fp_indx(MEDIA_FP_SZ),
     reached_stdin_end(false),
     auto_next(false)
@@ -190,7 +192,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->main_widget_overlay = new Overlay(this, this->main_widget);
     this->main_widget_overlay->show();
     
-    this->instance_widget = nullptr;
+    this->box_widget = nullptr;
   #endif
   #ifdef VID
     vl->addWidget(m_slider);
@@ -235,11 +237,13 @@ void MainWindow::set_media_dir_len(){
 			this->media_dir_len = i + 1;
 }
 
+#ifdef AUDIO
 void MainWindow::parse_mediaStatusChanged(int status){
 	if (status == QtAV::EndOfMedia  &&  this->auto_next){
 		this->media_next();
 	}
 }
+#endif
 
 void MainWindow::media_next(){
 	// TODO: Implement in inlist_filter_dialog
@@ -325,26 +329,26 @@ void MainWindow::init_file_from_db(){
     const double H = this->main_widget->size().height();
   #endif
   #ifdef BOXABLE
-    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM instance WHERE file_id=", this->file_id);
+    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM box WHERE file_id=", this->file_id);
     {
-    uint64_t instance_id;
+    uint64_t box_id;
     uint64_t frame_n;
     double x = 0.0;
     double y = 0.0;
     double w = 0.0;
     double h = 0.0;
     
-    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &instance_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
-        InstanceWidget* iw = new InstanceWidget(QRubberBand::Rectangle, this, this->main_widget);
-        iw->id = instance_id;
+    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &box_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
+        BoxWidget* iw = new BoxWidget(QRubberBand::Rectangle, this, this->main_widget);
+        iw->id = box_id;
         
         iw->setGeometry(QRect(QPoint(x*W, y*H),  QSize(w*W, h*H)));
         
         
-        this->instanceid2pointer[instance_id] = iw;
+        this->boxid2pointer[box_id] = iw;
         
         
-        compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM instance2tag WHERE instance_id=", instance_id);
+        compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM box2tag WHERE box_id=", box_id);
         
         uint64_t tag_id;
         while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
@@ -355,7 +359,7 @@ void MainWindow::init_file_from_db(){
         iw->orig_scale_factor = this->scale_factor;
       #endif
         iw->orig_geometry = iw->geometry;
-        this->instance_widgets.push_back(iw);
+        this->box_widgets.push_back(iw);
         
         iw->frame_n = frame_n;
         
@@ -363,8 +367,8 @@ void MainWindow::init_file_from_db(){
     }
     }
     
-    for (auto iter = this->instanceid2pointer.begin();  iter != this->instanceid2pointer.end();  iter++){
-        InstanceWidget* master = iter->second;
+    for (auto iter = this->boxid2pointer.begin();  iter != this->boxid2pointer.end();  iter++){
+        BoxWidget* master = iter->second;
         
         
         compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id, slave_id FROM relation WHERE master_id=", master->id);
@@ -372,10 +376,10 @@ void MainWindow::init_file_from_db(){
         uint64_t relation_id;
         uint64_t slave_id;
         while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &relation_id, &slave_id)){
-            InstanceWidget* slave  = this->instanceid2pointer[slave_id];
+            BoxWidget* slave  = this->boxid2pointer[slave_id];
             
             QPoint middle = (master->geometry.topRight() + slave->geometry.topLeft()) / 2;
-            InstanceRelation* ir = new InstanceRelation(relation_id, middle, this, this->main_widget);
+            BoxRelation* ir = new BoxRelation(relation_id, middle, this, this->main_widget);
             // NOTE: master destruction destroys ir
             
             ir->id = relation_id;
@@ -383,7 +387,7 @@ void MainWindow::init_file_from_db(){
             master->relations[slave] = ir;
         }
     }
-    this->main_widget_overlay->do_not_update_instances = false;
+    this->main_widget_overlay->do_not_update_boxes = false;
     this->main_widget_overlay->update();
   #endif
 }
@@ -394,7 +398,7 @@ const char* MainWindow::get_media_fp(){
 
 void MainWindow::media_open(){
   #ifdef BOXABLE
-    this->clear_instances();
+    this->clear_boxes();
   #endif
     
     this->file_id = is_file_in_db(this->get_media_fp());
@@ -672,7 +676,7 @@ void MainWindow::rescale_main(double factor){
     Q_ASSERT(this->main_widget->pixmap());
   #endif
     this->main_widget->resize(this->main_widget_orig_size * this->scale_factor);
-    foreach(InstanceWidget* iw,  instance_widgets){
+    foreach(BoxWidget* iw,  tag_widgets){
         QRect g = iw->orig_geometry;
         scale(g,  this->scale_factor / iw->orig_scale_factor);
         iw->setGeometry(g);
@@ -689,13 +693,13 @@ QPoint MainWindow::get_scroll_offset(){
 #endif
 
 
-void MainWindow::display_instance_mouseover(){
+void MainWindow::display_box_mouseover(){
 }
 
 
-void MainWindow::add_instance_to_table(const uint64_t frame_n){
-    const QPoint topL = this->instance_widget->geometry.topLeft();
-    const QPoint botR = this->instance_widget->geometry.bottomRight();
+void MainWindow::add_box_to_table(const uint64_t frame_n){
+    const QPoint topL = this->box_widget->geometry.topLeft();
+    const QPoint botR = this->box_widget->geometry.bottomRight();
   #ifdef SCROLLABLE
     const double W = this->main_widget_orig_size.width();
     const double H = this->main_widget_orig_size.height();
@@ -715,11 +719,11 @@ void MainWindow::add_instance_to_table(const uint64_t frame_n){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO instance (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO box (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
 }
 
-void MainWindow::create_instance(){
-    if (this->instance_widget == nullptr)
+void MainWindow::create_box(){
+    if (this->box_widget == nullptr)
         return;
     
     const uint64_t frame_n = 
@@ -729,38 +733,38 @@ void MainWindow::create_instance(){
     0;
   #endif
     
-    this->add_instance_to_table(frame_n);
-    this->instance_widget->id = get_last_insert_id();
+    this->add_box_to_table(frame_n);
+    this->box_widget->id = get_last_insert_id();
     
     while(true){
 		const uint64_t tagid = ask_for_tag();
 		if (tagid == 0)
 			break;
-		this->instance_widget->tags.append(tag_id2name[tagid]);
-        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO instance2tag (instance_id, tag_id) VALUES(", this->instance_widget->id, ',', tagid, ')');
+		this->box_widget->tags.append(tag_id2name[tagid]);
+        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO box2tag (box_id, tag_id) VALUES(", this->box_widget->id, ',', tagid, ')');
     }
     
-    this->instance_widget->set_colour(QColor(255,0,255,100));
+    this->box_widget->set_colour(QColor(255,0,255,100));
   #ifdef SCROLLABLE
-    this->instance_widget->orig_scale_factor = this->scale_factor;
+    this->box_widget->orig_scale_factor = this->scale_factor;
   #endif
-    this->instance_widget->orig_geometry = this->instance_widget->geometry;
-    this->instance_widgets.push_back(this->instance_widget);
+    this->box_widget->orig_geometry = this->box_widget->geometry;
+    this->box_widgets.push_back(this->box_widget);
     
-    this->instance_widget->frame_n = frame_n;
+    this->box_widget->frame_n = frame_n;
     
-    this->instance_widget = nullptr;
+    this->box_widget = nullptr;
 }
 
-void MainWindow::clear_instances(){
-    for (auto i = 0;  i < this->instance_widgets.size();  ++i)
-        delete this->instance_widgets[i];
-    this->instance_widgets.clear();
+void MainWindow::clear_boxes(){
+    for (auto i = 0;  i < this->box_widgets.size();  ++i)
+        delete this->box_widgets[i];
+    this->box_widgets.clear();
     this->relation_line_from = nullptr;
-    this->instanceid2pointer.clear();
+    this->boxid2pointer.clear();
 }
 
-void MainWindow::start_relation_line(InstanceWidget* iw){
+void MainWindow::start_relation_line(BoxWidget* iw){
     if (this->relation_line_from == nullptr){
         this->relation_line_from = iw;
         return;
@@ -769,7 +773,7 @@ void MainWindow::start_relation_line(InstanceWidget* iw){
     this->relation_line_from = nullptr;
 }
 
-void MainWindow::create_relation_line_to(InstanceWidget* iw){
+void MainWindow::create_relation_line_to(BoxWidget* iw){
     if (iw == this->relation_line_from)
         return;
     this->relation_line_from->add_relation_line(iw);
@@ -787,7 +791,7 @@ void MainWindow::display_info(){
 }
 
 void MainWindow::display_relation_hub(){
-	RelationAddInstanceTags* hub = new RelationAddInstanceTags(this);
+	RelationAddBoxTags* hub = new RelationAddBoxTags(this);
 	hub->exec();
 	delete hub;
 }

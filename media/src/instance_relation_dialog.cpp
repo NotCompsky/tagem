@@ -24,7 +24,7 @@ extern MYSQL_ROW ROW2;
 extern char BUF[];
 
 
-InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* const _win,  QWidget* parent)
+BoxRelationDialog::BoxRelationDialog(const uint64_t _id,  MainWindow* const _win,  QWidget* parent)
 : QDialog(parent)
 , id(_id)
 , win(_win)
@@ -45,10 +45,10 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 				RES2,
 				BUF,
 				"SELECT t.name "
-				"FROM tag t, instance2tag i2t, instance i, relation r "
-				"WHERE i.id=r.", s, "_id "
-				"AND i2t.instance_id=i.id "
-				"AND t.id=i2t.tag_id "
+				"FROM tag t, box2tag b2t, box b, relation r "
+				"WHERE b.id=r.", s, "_id "
+				"AND b2t.box_id=b.id "
+				"AND t.id=b2t.tag_id "
 				"AND r.id=", _id
 			);
 			const char* _tag_name;
@@ -81,7 +81,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 	
 	{
 		QPushButton* btn = new QPushButton("+Tag", this);
-		connect(btn, &QPushButton::clicked, this, &InstanceRelationDialog::add_tag);
+		connect(btn, &QPushButton::clicked, this, &BoxRelationDialog::add_tag);
 		l->addWidget(btn);
 	}
 	
@@ -92,7 +92,7 @@ InstanceRelationDialog::InstanceRelationDialog(const uint64_t _id,  MainWindow* 
 	}
 }
 
-void InstanceRelationDialog::add_tag(){
+void BoxRelationDialog::add_tag(){
 	const uint64_t tag_id = ask_for_tag();
 	if (tag_id == 0)
 		return;

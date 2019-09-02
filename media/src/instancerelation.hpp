@@ -10,10 +10,10 @@
 class MainWindow;
 
 
-class InstanceRelation : public QObject{
+class BoxRelation : public QObject{
  public:
-    InstanceRelation(const uint64_t _id,  QPoint middle,  MainWindow* const _win,  QWidget* parent);
-    ~InstanceRelation();
+    BoxRelation(const uint64_t _id,  QPoint middle,  MainWindow* const _win,  QWidget* parent);
+    ~BoxRelation();
     QPushButton* btn;
     uint64_t id;
  private:

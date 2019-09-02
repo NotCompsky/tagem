@@ -104,8 +104,8 @@ int main(int argc,  const char** argv) {
             Descendant tags count as their heirarchical root tag
         -D [TAG]
             Ignore the following descendant tag of one of the specified tags
-            NOTE: Does not ignore instances tagged with this tag, but ensures that, if this subtag is the only subtag of a specified tag, the instance is not added.
-            E.g. if we have three instances, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third instances only.
+            NOTE: Does not ignore boxes tagged with this tag, but ensures that, if this subtag is the only subtag of a specified box, the box is not added.
+            E.g. if we have three tags, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third boxes only.
 		-s [TAG]
 			Split on a tag.
 			For instance, if we split on 'Animal' and 'Image Type', we would end up with the directory structure
@@ -214,8 +214,8 @@ int main(int argc,  const char** argv) {
 		mysql_obj,
 		mysql_res,
 		BUF,
-		"SELECT t.name, A.name, f.name, i.x, i.y, i.w, i.h "
-		"FROM file f, instance i, instance2tag i2t, tmp_tagids tt, tag t "
+		"SELECT t.name, A.name, f.name, b.x, b.y, b.w, b.h "
+		"FROM file f, box b, box2tag b2t, tmp_tagids tt, tag t "
 		"LEFT JOIN ",
 		(split_on_tags.size() == 0) ?
 		"tag A ON FALSE ":
@@ -224,11 +224,11 @@ int main(int argc,  const char** argv) {
 			"FROM tag t, tmp_split_on_tags tmp "
 			"WHERE tmp.root=t.id "
 		") A ON A.node=t.id ",
-		"WHERE i2t.instance_id=i.id "
-		  "AND f.id=i.file_id "
-		  "AND t.id=i2t.tag_id "
+		"WHERE b2t.box_id=b.id "
+		  "AND f.id=b.file_id "
+		  "AND t.id=b2t.box_id "
 		  "AND tt.", (root_tags)?"node":"root", "=t.id "
-		"GROUP BY t.name, f.name, i.x, i.y, i.w, i.h"
+		"GROUP BY t.name, f.name, b.x, b.y, b.w, b.h"
 	);
     
     char* name;

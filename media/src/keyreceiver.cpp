@@ -86,16 +86,16 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
             */
           #endif
             window->is_mouse_down = true;
-            if (window->instance_widget != nullptr){
-                delete window->instance_widget;
-                window->instance_widget = nullptr;
+            if (window->box_widget != nullptr){
+                delete window->box_widget;
+                window->box_widget = nullptr;
                 return true;
             }
-            window->instance_widget = new InstanceWidget(QRubberBand::Rectangle, window, window->main_widget);
+            window->box_widget = new BoxWidget(QRubberBand::Rectangle, window, window->main_widget);
             window->boundingbox_geometry = QRect(window->mouse_dragged_from, QSize());
             QRect r = window->boundingbox_geometry;
-            window->instance_widget->setGeometry(r);
-            window->instance_widget->show();
+            window->box_widget->setGeometry(r);
+            window->box_widget->show();
             return true;
         }
         case QEvent::MouseButtonRelease:{
@@ -108,11 +108,11 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
           #ifdef SCROLLABLE
             window->mouse_dragged_to += window->get_scroll_offset();
           #endif
-            if (!window->is_mouse_down  ||  window->instance_widget == nullptr){
-                window->display_instance_mouseover();
+            if (!window->is_mouse_down  ||  window->box_widget == nullptr){
+                window->display_box_mouseover();
                 return true;
             }
-            window->instance_widget->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
+            window->box_widget->setGeometry(QRect(window->mouse_dragged_from, window->mouse_dragged_to).normalized());
             return true;
         }
       #endif
@@ -132,8 +132,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                    #endif
                   #endif
                   #ifdef BOXABLE
-					if (window->instance_widget != nullptr){
-						window->create_instance();
+					if (window->box_widget != nullptr){
+						window->create_box();
 						break;
 					}
                   #endif

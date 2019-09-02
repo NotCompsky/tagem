@@ -18,7 +18,7 @@
 
 #ifdef BOXABLE
 # include <vector> // for std::vector
-class InstanceWidget;
+class BoxWidget;
 class Overlay;
 #endif
 #ifdef SCROLLABLE
@@ -79,18 +79,18 @@ class MainWindow : public QWidget{
     QString tag_preset[10];
     bool reached_stdin_end;
   #ifdef BOXABLE
-    InstanceWidget* instance_widget; // Selection box
+    BoxWidget* box_widget; // Selection box
     bool is_mouse_down;
     QPoint mouse_dragged_from;
     QPoint mouse_dragged_to;
-    std::vector<InstanceWidget*> instance_widgets; // TODO: Replace this with instanceid2pointer
-    std::map<uint64_t, InstanceWidget*> instanceid2pointer;
+    std::vector<BoxWidget*> box_widgets; // TODO: Replace this with boxid2pointer
+    std::map<uint64_t, BoxWidget*> boxid2pointer;
     QRect boundingbox_geometry;
-    void display_instance_mouseover();
-    void create_instance();
+    void display_box_mouseover();
+    void create_box();
     Overlay* main_widget_overlay;
-    void start_relation_line(InstanceWidget* iw);
-    void add_instance_to_table(const uint64_t frame_n);
+    void start_relation_line(BoxWidget* iw);
+    void add_box_to_table(const uint64_t frame_n);
   #endif
   #ifdef VID
     QtAV::VideoOutput* m_vo;
@@ -132,9 +132,9 @@ class MainWindow : public QWidget{
     QImage image;
   #endif
   #ifdef BOXABLE
-    void create_relation_line_to(InstanceWidget* iw);
-    void clear_instances();
-    InstanceWidget* relation_line_from;
+    void create_relation_line_to(BoxWidget* iw);
+    void clear_boxes();
+    BoxWidget* relation_line_from;
   #endif
   #ifdef SCROLLABLE
     template<typename T>

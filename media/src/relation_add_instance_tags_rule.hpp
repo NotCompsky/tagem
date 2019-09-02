@@ -61,7 +61,7 @@ namespace rait {
 }
 
 
-class RelationAddInstanceTagsRule : public QDialog {
+class RelationAddBoxTagsRule : public QDialog {
   private:
 	void add_column(const int col,  const char* const column);
 	void add_tag();
@@ -108,7 +108,7 @@ class RelationAddInstanceTagsRule : public QDialog {
 	};
 	std::vector<UnlinkBtn2TagId> unlink_tag_btns;
   public:
-	explicit RelationAddInstanceTagsRule(MainWindow* const _win,  const uint64_t _rule_id,  const QString& _name,  QWidget* parent = nullptr);
+	explicit RelationAddBoxTagsRule(MainWindow* const _win,  const uint64_t _rule_id,  const QString& _name,  QWidget* parent = nullptr);
 };
 
 

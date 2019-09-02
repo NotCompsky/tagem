@@ -5,27 +5,27 @@
 #include <QStringList>
 
 
-class InstanceRelation;
-class InstanceWidgetButton;
+class BoxRelation;
+class BoxWidgetButton;
 class MainWindow;
 
 
-class InstanceWidget : public QRubberBand{
+class BoxWidget : public QRubberBand{
  public:
-    InstanceWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent);
-    ~InstanceWidget();
+    BoxWidget(QRubberBand::Shape shape,  MainWindow* win,  QWidget* parent);
+    ~BoxWidget();
     void set_colour(const QColor& cl);
     void show_text();
     void setGeometry(const QRect& r);
-    void add_relation_line(InstanceWidget* iw);
+    void add_relation_line(BoxWidget* iw);
 	void toggle_expand(); // SLOT
     QStringList tags;
-    std::map<InstanceWidget*, InstanceRelation*> relations;
+    std::map<BoxWidget*, BoxRelation*> relations;
     QRect geometry;
     double orig_scale_factor;
     QRect orig_geometry;
-    InstanceWidgetButton* btn;
-    InstanceWidgetButton* relation_btn;
+    BoxWidgetButton* btn;
+    BoxWidgetButton* relation_btn;
     QColor colour;
     QWidget* parent;
     uint64_t id;

@@ -5,9 +5,9 @@
 #include <QDialog>
 
 
-class InstanceRelationDialog : public QDialog {
+class BoxRelationDialog : public QDialog {
   public:
-	InstanceRelationDialog(const uint64_t _id,  MainWindow* const _win,  QWidget* parent = nullptr);
+	BoxRelationDialog(const uint64_t _id,  MainWindow* const _win,  QWidget* parent = nullptr);
   private:
 	void add_tag();
 	MainWindow* const win;

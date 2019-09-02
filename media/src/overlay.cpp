@@ -13,7 +13,7 @@ Overlay::Overlay(MainWindow* win,  QWidget* parent)  :  win(win), QWidget(parent
 };
 
 void Overlay::paintEvent(QPaintEvent* e){
-    if (this->do_not_update_instances)
+    if (this->do_not_update_boxes)
         return;
     QPainter painter(this);
     QPen pen;
@@ -22,7 +22,7 @@ void Overlay::paintEvent(QPaintEvent* e){
     pen.setBrush(Qt::green);
     painter.setPen(pen);
     painter.save();
-    foreach(InstanceWidget* iw,  this->win->instance_widgets){
+    foreach(BoxWidget* iw,  this->win->box_widgets){
         for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
             // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
             QPoint master;

@@ -30,7 +30,7 @@ CREATE TABLE file2tag (
     PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
-CREATE TABLE instance (
+CREATE TABLE box (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     file_id BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
@@ -41,10 +41,10 @@ CREATE TABLE instance (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE instance2tag (
-    instance_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
-    PRIMARY KEY `instance2tag` (`instance_id`, `tag_id`)
+CREATE TABLE box2tag (
+	box_id BIGINT UNSIGNED NOT NULL,
+	tag_id BIGINT UNSIGNED NOT NULL,  # ID of box tag
+	PRIMARY KEY (`box_id`, `tag_id`)
 );
 
 
@@ -64,31 +64,31 @@ CREATE TABLE framestamp2tag (
 
 
 
-# The following tables populate the tags of relationships, not instances.
-# For instance, a man typing on a keyboard would be represented by (an instance tagged "man") related to (an instance tagged "keyboard") via (a relationship tagged "typing").
-# relationtag2tag generates extra relationship tags based on the master and slave instance tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
+# The following tables populate the tags of relationships, not boxes.
+# For instance, a man typing on a keyboard would be represented by (a box tagged "man") related to (a box tagged "keyboard") via (a relationship tagged "typing").
+# relationtag2tag generates extra relationship tags based on the master and slave box tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
 
 CREATE TABLE relation (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    master_id BIGINT UNSIGNED NOT NULL,  # ID of master instance
+    master_id BIGINT UNSIGNED NOT NULL,  # ID of master box
     slave_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE relation2tag (
     relation_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,  # ID of instance tag
-    PRIMARY KEY `instance2tag` (`relation_id`, `tag_id`)
+    tag_id BIGINT UNSIGNED NOT NULL,  # ID of box tag
+    PRIMARY KEY (`relation_id`, `tag_id`)
 );
 
 
 
-# For instance, suppose there is (an instance tagged "human" and "male") which is related to (an instance tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
+# For instance, suppose there is (a box tagged "human" and "male") which is related to (a box tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
 # The following tables describe the rules. Each rule is of the form (ID,  a = list of master tag IDs,  b = list of slave tag IDs,  c = list of resulting master tags,  d =list of resulting slave tags).
-# If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master instance), then all tags of c are added to the master instance, and all tags of d are added to the slave instance.
-# NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related instance. For instance, (a "body part" instance) related to (a "human" instance) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" instance, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
+# If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master box), then all tags of c are added to the master box, and all tags of d are added to the slave box.
+# NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related box. For instance, (a "body part" box) related to (a "human" box) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" box, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
 
-CREATE TABLE relation_add_instance_tags__rules (
+CREATE TABLE relation_add_box_tags__rules (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	name VARBINARY(128) NOT NULL,
 	req_relation_operator INT UNSIGNED NOT NULL DEFAULT 0,
@@ -102,42 +102,42 @@ CREATE TABLE relation_add_instance_tags__rules (
 	PRIMARY KEY (id)
 );
 
-CREATE TABLE relation_add_instance_tags__req_relation_tags (
+CREATE TABLE relation_add_box_tags__req_relation_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_instance_tags__req_master_tags (
+CREATE TABLE relation_add_box_tags__req_master_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_instance_tags__req_slave_tags (
+CREATE TABLE relation_add_box_tags__req_slave_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_instance_tags__res_relation_tags (
+CREATE TABLE relation_add_box_tags__res_relation_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_instance_tags__res_master_tags (
+CREATE TABLE relation_add_box_tags__res_master_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_instance_tags__res_slave_tags (
+CREATE TABLE relation_add_box_tags__res_slave_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
