@@ -1,4 +1,4 @@
-#include "instancewidget.hpp"
+#include "box_widget.hpp"
 #include "add_new_tag.hpp"
 #include <QBrush>
 #include <QColor>
@@ -8,8 +8,8 @@
 
 #include <compsky/mysql/query.hpp>
 
-#include "instancerelation.hpp"
-#include "instancewidgetbutton.hpp"
+#include "box_relation.hpp"
+#include "box_widget_btn.hpp"
 #include "mainwindow.hpp"
 #include "name_dialog.hpp"
 #include "overlay.hpp"

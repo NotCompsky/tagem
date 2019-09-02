@@ -2,8 +2,8 @@
 
 #include <QPainter>
 
-#include "instancerelation.hpp"
-#include "instancewidget.hpp"
+#include "box_relation.hpp"
+#include "box_widget.hpp"
 #include "mainwindow.hpp"
 
 

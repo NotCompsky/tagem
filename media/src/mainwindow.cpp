@@ -1,6 +1,6 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
-#include "relation_add_instance_tags.hpp"
+#include "relation_add_box_tags.hpp"
 #include "add_new_tag.hpp"
 
 #include <cstdio> // for remove
@@ -35,9 +35,9 @@
 
 #ifdef BOXABLE
 # include <vector> // for std::vector
-# include "instancerelation.hpp"
-# include "instancewidget.hpp"
-# include "instancewidgetbutton.hpp"
+# include "box_relation.hpp"
+# include "box_widget.hpp"
+# include "box_widget_btn.hpp"
 # include "overlay.hpp"
 #endif
 

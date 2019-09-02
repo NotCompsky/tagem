@@ -5,7 +5,7 @@
  *     This copyright notice must be included at the beginning of any copied/modified file originating from this project, or at the beginning of any section of code that originates from this project.
  */
 
-#include "relation_add_instance_tags_rule.hpp"
+#include "relation_add_box_tags_rule.hpp"
 #include "add_new_tag.hpp"
 #include <compsky/mysql/query.hpp>
 

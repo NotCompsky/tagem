@@ -1,4 +1,4 @@
-#include "instance_relation_dialog.hpp"
+#include "box_relation_dialog.hpp"
 #include "unlink_tag_btn.hpp"
 #include "name_dialog.hpp"
 #include "add_new_tag.hpp"

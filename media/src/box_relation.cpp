@@ -1,5 +1,5 @@
-#include "instancerelation.hpp"
-#include "instance_relation_dialog.hpp"
+#include "box_relation.hpp"
+#include "box_relation_dialog.hpp"
 
 
 BoxRelation::BoxRelation(const uint64_t _id,  QPoint middle,  MainWindow* const _win,  QWidget* parent)
