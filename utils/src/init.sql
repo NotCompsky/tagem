@@ -49,6 +49,22 @@ CREATE TABLE instance2tag (
 );
 
 
+
+CREATE TABLE framestamp (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	file_id BIGINT UNSIGNED NOT NULL,
+	frame_id BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE framestamp2tag (
+	framestamp_id BIGINT UNSIGNED NOT NULL,
+	tag_id BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (`framestamp_id`, `tag_id`)
+);
+
+
+
 # The following tables populate the tags of relationships, not instances.
 # For instance, a man typing on a keyboard would be represented by (an instance tagged "man") related to (an instance tagged "keyboard") via (a relationship tagged "typing").
 # relationtag2tag generates extra relationship tags based on the master and slave instance tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
