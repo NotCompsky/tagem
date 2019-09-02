@@ -32,7 +32,6 @@ CREATE TABLE file2tag (
 
 CREATE TABLE instance (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARBINARY(128),
     file_id BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
     x DOUBLE NOT NULL,  # As proportion of (image|frame) width
