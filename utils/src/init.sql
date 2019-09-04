@@ -49,14 +49,17 @@ CREATE TABLE box2tag (
 
 
 
-CREATE TABLE framestamp (
+CREATE TABLE era (
+	# Defined by two 'framestamps' - analogous to timestamps
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	file_id BIGINT UNSIGNED NOT NULL,
-	frame_id BIGINT UNSIGNED NOT NULL,
+	frame_a BIGINT UNSIGNED NOT NULL,
+	frame_b BIGINT UNSIGNED NOT NULL,
+	UNIQUE KEY (file_id, frame_a, frame_b),
 	PRIMARY KEY (id)
 );
 
-CREATE TABLE framestamp2tag (
+CREATE TABLE era2tag (
 	framestamp_id BIGINT UNSIGNED NOT NULL,
 	tag_id BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (`framestamp_id`, `tag_id`)
