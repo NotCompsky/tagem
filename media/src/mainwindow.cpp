@@ -676,7 +676,7 @@ void MainWindow::rescale_main(double factor){
     Q_ASSERT(this->main_widget->pixmap());
   #endif
     this->main_widget->resize(this->main_widget_orig_size * this->scale_factor);
-    foreach(BoxWidget* iw,  tag_widgets){
+    foreach(BoxWidget* iw,  box_widgets){
         QRect g = iw->orig_geometry;
         scale(g,  this->scale_factor / iw->orig_scale_factor);
         iw->setGeometry(g);
