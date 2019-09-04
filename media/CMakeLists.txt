@@ -27,6 +27,17 @@ if ("${MY_TARGETS} " STREQUAL " ") # Suffix character is deliberate; simply does
 endif()
 message(STATUS "Targets: ${MY_TARGETS}")
 
+set(BOXABLE_SOURCES
+	src/overlay.cpp
+	src/box_widget_btn.cpp
+	src/box_widget.cpp
+	src/box_relation.cpp
+	
+	src/relation_add_box_tags.cpp
+	src/relation_add_box_tags_rule.cpp
+	src/box_relation_dialog.cpp
+)
+
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
     add_executable("${tgt}"
@@ -38,11 +49,7 @@ foreach(file_type ${MY_TARGETS})
 		src/dropdown_dialog.cpp
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
-		src/box_relation_dialog.cpp
 		src/add_new_tag.cpp
-		
-		src/relation_add_box_tags.cpp
-		src/relation_add_box_tags_rule.cpp
 		
 		src/tag-manager/mainwindow.cpp
 		src/tag-manager/primaryitem.cpp
@@ -65,13 +72,14 @@ if ("txt" IN_LIST MY_TARGETS)
 endif()
 if ("img" IN_LIST MY_TARGETS)
     target_compile_definitions(tagemimg PRIVATE IMG BOXABLE SCROLLABLE)
-    target_sources(tagemimg PRIVATE src/overlay.cpp src/box_widget_btn.cpp src/box_widget.cpp src/box_relation.cpp)
+    target_sources(tagemimg PRIVATE ${BOXABLE_SOURCES})
+    target_sources(tagemimg PRIVATE )
 endif()
 if ("vid" IN_LIST MY_TARGETS)
     target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE)
+    target_sources(tagemvid PRIVATE ${BOXABLE_SOURCES})
     target_include_directories(tagemvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
     target_link_libraries(tagemvid ${QTAVWIDGETS_LIBRARIES})
-    target_sources(tagemvid PRIVATE src/overlay.cpp src/box_widget_btn.cpp src/box_widget.cpp src/box_relation.cpp)
 endif()
 
 

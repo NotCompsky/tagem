@@ -1,6 +1,5 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
-#include "relation_add_box_tags.hpp"
 #include "add_new_tag.hpp"
 
 #include <cstdio> // for remove
@@ -39,6 +38,7 @@
 # include "box_widget.hpp"
 # include "box_widget_btn.hpp"
 # include "overlay.hpp"
+# include "relation_add_box_tags.hpp"
 #endif
 
 #include "utils.hpp"
