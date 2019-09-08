@@ -61,7 +61,7 @@ class MainWindow : public QWidget{
     void media_replace_w_link(const char* src);
     void media_delete();
     void media_linkfrom();
-    void media_score();
+	void assign_value();
     void media_note();
 	void show_settings_dialog();
 	void display_info();

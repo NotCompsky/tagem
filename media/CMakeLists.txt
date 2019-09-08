@@ -53,6 +53,8 @@ foreach(file_type ${MY_TARGETS})
 		src/unlink_tag_btn.cpp
 		src/add_new_tag.cpp
 		
+		src/file2.cpp
+		
 		src/tag-manager/mainwindow.cpp
 		src/tag-manager/primaryitem.cpp
 		src/tag-manager/tagchildtreeview.cpp

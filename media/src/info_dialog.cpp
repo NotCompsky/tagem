@@ -1,5 +1,6 @@
 #include "info_dialog.hpp"
 #include "unlink_tag_btn.hpp"
+#include "file2.hpp"
 
 #include <compsky/mysql/query.hpp>
 
@@ -30,10 +31,12 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	QLocale locale = this->locale();
 	l->addWidget(new QLabel(QString("File size: ") + locale.formattedDataSize(file_sz)));
 	
-	const char* _score_str;
-	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT score FROM file WHERE id=", this->file_id);
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_score_str)){
-		l->addWidget(new QLabel(QString("Score: %1").arg(_score_str)));
+	for (const QString& var_name : file2::names){
+		const char* _x;
+		compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT x FROM file2", var_name, " WHERE file_id=", this->file_id);
+		while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x)){
+			l->addWidget(new QLabel(QString("%1: %2").arg(var_name).arg(_x)));
+		}
 	}
 	
 	const char* _file_path;

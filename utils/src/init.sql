@@ -3,12 +3,21 @@ R"=====(
 CREATE TABLE file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(1024),
-    language_id BIGINT UNSIGNED,
-    score INT,
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
     note VARBINARY(30000),
     UNIQUE KEY (name),
     PRIMARY KEY (id)
+);
+
+
+CREATE TABLE file2 (
+	# Stores the user-defined variable tables
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	n_bits TINYINT UNSIGNED NOT NULL,
+	is_unsigned BOOLEAN NOT NULL,
+	name VARBINARY(128),
+	UNIQUE KEY (name),
+	PRIMARY KEY (id)
 );
 
 

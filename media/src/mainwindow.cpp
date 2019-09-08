@@ -41,6 +41,8 @@
 # include "relation-manager/relation_add_box_tags.hpp"
 #endif
 
+#include "file2.hpp"
+
 #include "utils.hpp"
 
 #ifdef DEBUG
@@ -528,20 +530,25 @@ void MainWindow::updateSliderUnit()
 #endif
 
 
-void MainWindow::media_score(){
-    /*
-    Rating of the unique media object itself. Not aspects unique to the file (such as resolution, or compresssion quality).
-    
-    It is applied to the 'file' table because there is no sense in having multiple files for the same unique media object. These perceptual duplicates will be listed themselves elsewhere.
-    */
-    bool ok;
-    int score_int = QInputDialog::getInt(this, tr("Rating"), tr("Rating"), 0, -100, 100, 1, &ok);
-    if (!ok)
-        return;
-    
-    this->ensure_fileID_set();
-    
-    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET score=", score_int, " WHERE id=", this->file_id);
+void MainWindow::assign_value(){
+	QString var_name;
+	const uint64_t max_value = file2::choose(var_name);
+	if (max_value == 0)
+		return;
+	this->ensure_fileID_set();
+	
+	uint64_t _max_value = max_value;
+	uint8_t n_bits = 0;
+	do {
+		++n_bits;
+	} while(_max_value >>= 1);
+	const uint64_t min_value = (n_bits % 2) ? 0 : -max_value;
+	
+	bool ok;
+	const int x = QInputDialog::getInt(this, "Value", "Value", 0, min_value, max_value, 1, &ok);
+	if (!ok)
+		return;
+	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file2", var_name, " (file_id,x) VALUES (", this->file_id, ',', x, ") ON DUPLICATE KEY UPDATE x=VALUES(x)");
 }
 
 void MainWindow::ensure_fileID_set(){

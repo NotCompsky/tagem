@@ -1,5 +1,5 @@
 #include "mainwindow.hpp"
-
+#include "file2.hpp"
 #include <compsky/mysql/query.hpp>
 
 #include <QApplication>
@@ -37,6 +37,8 @@ std::map<uint64_t, QString> tag_id2name;
 
 int main(const int argc,  const char** argv){
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
+	
+	file2::initialise();
 	
 # ifdef VID
 	QtAV::Widgets::registerRenderers();
