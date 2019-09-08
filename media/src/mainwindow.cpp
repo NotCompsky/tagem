@@ -532,20 +532,13 @@ void MainWindow::updateSliderUnit()
 
 void MainWindow::assign_value(){
 	QString var_name;
-	const uint64_t max_value = file2::choose(var_name);
-	if (max_value == 0)
+	const file2::MinMax minmax = file2::choose(var_name);
+	if (minmax.min == 0  &&  minmax.max == 0)
 		return;
 	this->ensure_fileID_set();
 	
-	uint64_t _max_value = max_value;
-	uint8_t n_bits = 0;
-	do {
-		++n_bits;
-	} while(_max_value >>= 1);
-	const uint64_t min_value = (n_bits % 2) ? 0 : -max_value;
-	
 	bool ok;
-	const int x = QInputDialog::getInt(this, "Value", "Value", 0, min_value, max_value, 1, &ok);
+	const int x = QInputDialog::getInt(this, "Value", "Value", 0, minmax.min, minmax.max, 1, &ok);
 	if (!ok)
 		return;
 	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file2", var_name, " (file_id,x) VALUES (", this->file_id, ',', x, ") ON DUPLICATE KEY UPDATE x=VALUES(x)");

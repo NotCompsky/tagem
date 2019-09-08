@@ -13,8 +13,9 @@ CREATE TABLE file (
 CREATE TABLE file2 (
 	# Stores the user-defined variable tables
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	n_bits TINYINT UNSIGNED NOT NULL,
-	is_unsigned BOOLEAN NOT NULL,
+	min BIGINT NOT NULL,
+	max BIGINT NOT NULL,
+	# NOTE: min and max are only relevant for GUI input. File sizes above 4GB would be impossible to input via Qt5 getInt method, but would be otherwise supported if the int type used is BIGINT or BIGINT UNSIGNED.
 	name VARBINARY(128),
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
