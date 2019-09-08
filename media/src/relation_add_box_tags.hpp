@@ -9,18 +9,6 @@
 #include <vector>
 
 
-struct CannotThinkOfAGoodName_sdfsdffdsdf {
-	QPushButton* const name;
-	QPushButton* const del;
-	const uint64_t id;
-	CannotThinkOfAGoodName_sdfsdffdsdf(QPushButton* const _name,  QPushButton* const _del,  const uint64_t _id)
-	: name(_name)
-	, del(_del)
-	, id(_id)
-	{}
-};
-
-
 class MainWindow;
 
 
@@ -28,6 +16,17 @@ class RelationAddBoxTags : public QDialog {
   public:
 	RelationAddBoxTags(MainWindow* const _win,  QWidget* parent = nullptr);
   private:
+	struct CannotThinkOfAGoodName_sdfsdffdsdf {
+		QPushButton* const name;
+		QPushButton* const del;
+		const uint64_t id;
+		CannotThinkOfAGoodName_sdfsdffdsdf(QPushButton* const _name,  QPushButton* const _del,  const uint64_t _id)
+		: name(_name)
+		, del(_del)
+		, id(_id)
+		{}
+	};
+	
 	void create(); // SLOT
 	void add_rule(const uint64_t id,  const QString& qstr);
 	void display_rule(); // SLOT
