@@ -1,7 +1,7 @@
 #ifndef TAGEM_MEDIA_RELATION_ADD_INSTANCE_TAGS_HPP
 #define TAGEM_MEDIA_RELATION_ADD_INSTANCE_TAGS_HPP
 
-#include "mainwindow.hpp"
+#include "../mainwindow.hpp"
 #include <compsky/mysql/mysql.h>
 #include <QDialog>
 #include <QGridLayout>

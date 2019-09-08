@@ -6,7 +6,7 @@
  */
 
 #include "relation_add_box_tags_rule.hpp"
-#include "add_new_tag.hpp"
+#include "../add_new_tag.hpp"
 #include <compsky/mysql/query.hpp>
 
 #include <QLabel>

@@ -9,7 +9,7 @@
 #define TAGEM_MEDIA_RELATION_ADD_INSTANCE_TAG_RULE_HPP
 
 
-#include "mainwindow.hpp"
+#include "../mainwindow.hpp"
 
 #include <QCheckBox>
 #include <QGridLayout>

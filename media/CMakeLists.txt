@@ -32,10 +32,10 @@ set(BOXABLE_SOURCES
 	src/box_widget_btn.cpp
 	src/box_widget.cpp
 	src/box_relation.cpp
-	
-	src/relation_add_box_tags.cpp
-	src/relation_add_box_tags_rule.cpp
 	src/box_relation_dialog.cpp
+	
+	src/relation-manager/relation_add_box_tags.cpp
+	src/relation-manager/relation_add_box_tags_rule.cpp
 )
 set(ERA_SOURCES
 )
