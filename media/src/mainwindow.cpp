@@ -34,10 +34,10 @@
 
 #ifdef BOXABLE
 # include <vector> // for std::vector
-# include "box_relation.hpp"
-# include "box_widget.hpp"
-# include "box_widget_btn.hpp"
-# include "overlay.hpp"
+# include "boxes/box_relation.hpp"
+# include "boxes/box_widget.hpp"
+# include "boxes/box_widget_btn.hpp"
+# include "boxes/overlay.hpp"
 # include "relation-manager/relation_add_box_tags.hpp"
 #endif
 

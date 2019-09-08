@@ -4,7 +4,7 @@
 
 #include "box_relation.hpp"
 #include "box_widget.hpp"
-#include "mainwindow.hpp"
+#include "../mainwindow.hpp"
 
 
 Overlay::Overlay(MainWindow* win,  QWidget* parent)  :  win(win), QWidget(parent){

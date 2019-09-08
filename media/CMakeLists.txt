@@ -28,11 +28,11 @@ endif()
 message(STATUS "Targets: ${MY_TARGETS}")
 
 set(BOXABLE_SOURCES
-	src/overlay.cpp
-	src/box_widget_btn.cpp
-	src/box_widget.cpp
-	src/box_relation.cpp
-	src/box_relation_dialog.cpp
+	src/boxes/overlay.cpp
+	src/boxes/box_widget_btn.cpp
+	src/boxes/box_widget.cpp
+	src/boxes/box_relation.cpp
+	src/boxes/box_relation_dialog.cpp
 	
 	src/relation-manager/relation_add_box_tags.cpp
 	src/relation-manager/relation_add_box_tags_rule.cpp

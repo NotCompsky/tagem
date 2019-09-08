@@ -1,7 +1,7 @@
 #ifndef TAGEM_MEDIA_INSTANCE_RELATION_DIALOG_HPP
 #define TAGEM_MEDIA_INSTANCE_RELATION_DIALOG_HPP
 
-#include "mainwindow.hpp"
+#include "../mainwindow.hpp"
 #include <QDialog>
 
 

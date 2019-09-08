@@ -7,7 +7,7 @@
 #include <QRubberBand>
 
 #ifdef BOXABLE
-# include "box_widget.hpp"
+# include "boxes/box_widget.hpp"
 #endif
 #include "mainwindow.hpp"
 

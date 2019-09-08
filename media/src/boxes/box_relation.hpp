@@ -1,7 +1,7 @@
 #ifndef __INSTANCERELATION__
 #define __INSTANCERELATION__
 
-#include "mainwindow.hpp"
+#include "../mainwindow.hpp"
 
 #include <QPushButton>
 #include <QStringList>
