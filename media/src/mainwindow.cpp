@@ -491,6 +491,10 @@ void MainWindow::media_open(){
     
     if (this->file_id != 0)
         this->init_file_from_db();
+	
+# ifdef ERA
+	this->era_start = 0;
+# endif
 }
 
 #ifdef VID
@@ -722,16 +726,36 @@ void MainWindow::add_box_to_table(const uint64_t frame_n){
     compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO box (file_id, x, y, w, h, frame_n) VALUES(", f_start, ',', this->file_id, f_g, x, 17, f_g, y, 17, f_g, w, 17, f_g, h, 17, frame_n, f_end, ')');
 }
 
+#ifdef ERA
+void MainWindow::create_era(){
+	const uint64_t t = this->get_framestamp();
+	if (this->era_start == 0){
+		this->era_start = t;
+	} else {
+		this->ensure_fileID_set();
+		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO era (file_id, frame_a, frame_b) VALUES(", this->file_id, ',', this->era_start, ',', t, ")");
+		const uint64_t era_id = get_last_insert_id();
+		this->eras.emplace_back(era_id, this->era_start, t);
+		while(true){
+			const uint64_t tag_id = ask_for_tag();
+			if (tag_id == 0)
+				break;
+			compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO era2tag (era_id, tag_id) VALUES(", era_id, ',', tag_id, ")");
+		}
+		this->era_start = 0;
+	}
+}
+
+void MainWindow::display_eras(){
+	//compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT 
+}
+#endif
+
 void MainWindow::create_box(){
     if (this->box_widget == nullptr)
         return;
     
-    const uint64_t frame_n = 
-  #ifdef VID
-    this->m_player->duration();
-  #else
-    0;
-  #endif
+    const uint64_t frame_n = this->get_framestamp();
     
     this->add_box_to_table(frame_n);
     this->box_widget->id = get_last_insert_id();

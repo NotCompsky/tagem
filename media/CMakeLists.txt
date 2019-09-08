@@ -37,6 +37,8 @@ set(BOXABLE_SOURCES
 	src/relation_add_box_tags_rule.cpp
 	src/box_relation_dialog.cpp
 )
+set(ERA_SOURCES
+)
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
@@ -76,8 +78,9 @@ if ("img" IN_LIST MY_TARGETS)
     target_sources(tagemimg PRIVATE )
 endif()
 if ("vid" IN_LIST MY_TARGETS)
-    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE)
+    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE ERA)
     target_sources(tagemvid PRIVATE ${BOXABLE_SOURCES})
+    target_sources(tagemvid PRIVATE ${ERA_SOURCES})
     target_include_directories(tagemvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
     target_link_libraries(tagemvid ${QTAVWIDGETS_LIBRARIES})
 endif()

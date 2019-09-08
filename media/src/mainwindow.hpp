@@ -97,6 +97,9 @@ class MainWindow : public QWidget{
     QtAV::AVPlayer* m_player;
     QWidget* main_widget;
   #endif
+# ifdef ERA
+	void create_era();
+# endif
   #ifdef TXT
     QPlainTextEdit* main_widget;
     void media_save();
@@ -116,6 +119,14 @@ class MainWindow : public QWidget{
 	InlistFilterDialog* inlist_filter_dialog;
 	bool auto_next;
  private:
+	uint64_t get_framestamp() const {
+		return
+	  #ifdef VID
+		this->m_player->position();
+	  #else
+		0;
+	  #endif
+	}
   #ifdef VID
 	void updateSlider(qint64 value); // SLOT
 	void updateSliderUnit(); // SLOT
@@ -162,6 +173,18 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
+	
+# ifdef ERA
+	struct Era {
+		uint64_t id;
+		uint64_t start;
+		uint64_t end;
+		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
+	};
+	void display_eras();
+	std::vector<Era> eras;
+	uint64_t era_start; // Currently active era, that has not been added to eras array
+# endif
 };
 
 

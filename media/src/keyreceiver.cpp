@@ -124,6 +124,11 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                 case Qt::Key_D:
                     window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                     break;
+				case Qt::Key_E:
+				  #ifdef ERA
+					window->create_era();
+				  #endif
+					break;
                 case Qt::Key_I:
                   #ifdef TXT // No need for text editor to select rectangles
                     window->unset_read_only();

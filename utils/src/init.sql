@@ -11,6 +11,7 @@ CREATE TABLE file (
     PRIMARY KEY (id)
 );
 
+
 CREATE TABLE tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(128),
@@ -60,9 +61,9 @@ CREATE TABLE era (
 );
 
 CREATE TABLE era2tag (
-	framestamp_id BIGINT UNSIGNED NOT NULL,
+	era_id BIGINT UNSIGNED NOT NULL,
 	tag_id BIGINT UNSIGNED NOT NULL,
-	PRIMARY KEY (`framestamp_id`, `tag_id`)
+	PRIMARY KEY (era_id, tag_id)
 );
 
 
