@@ -23,7 +23,6 @@ class RelationAddBoxTags : public QDialog {
 		, id(_id)
 		{}
 	};
-	
 	void create(); // SLOT
 	void add_rule(const uint64_t id,  const QString& qstr);
 	void display_rule(); // SLOT

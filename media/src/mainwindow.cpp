@@ -115,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent)
 #ifdef AUDIO
 	volume(1.0),
 #endif
+	are_relations_visible(true),
 #ifdef ERA
 	are_eras_visible(true),
 #endif

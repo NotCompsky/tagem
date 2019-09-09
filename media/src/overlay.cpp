@@ -23,18 +23,20 @@ void Overlay::paintEvent(QPaintEvent* e){
     painter.setPen(pen);
     painter.save();
 # ifdef BOXABLE
-    foreach(BoxWidget* iw,  this->win->box_widgets){
-        for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
-            // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
-            QPoint master;
-            QPoint slave;
-            master = iw->geometry.topRight();
-            slave  = iter->first->geometry.topLeft();
-            painter.drawLine(master, slave);
-            QPoint p = (master + slave) / 2;
-            iter->second->btn->move(p);
-        }
-    }
+	if (this->win->are_relations_visible){
+		foreach(BoxWidget* iw,  this->win->box_widgets){
+			for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
+				// TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
+				QPoint master;
+				QPoint slave;
+				master = iw->geometry.topRight();
+				slave  = iter->first->geometry.topLeft();
+				painter.drawLine(master, slave);
+				QPoint p = (master + slave) / 2;
+				iter->second->btn->move(p);
+			}
+		}
+	}
 # endif
 # ifdef ERA
 	pen.setStyle(Qt::SolidLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum

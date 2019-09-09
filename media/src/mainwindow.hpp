@@ -131,6 +131,7 @@ class MainWindow : public QWidget{
   #endif
 	InlistFilterDialog* inlist_filter_dialog;
 	uint64_t file_id;
+	bool are_relations_visible;
 	bool auto_next;
  private:
 	uint64_t get_framestamp() const {

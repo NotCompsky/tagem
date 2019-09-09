@@ -2,9 +2,11 @@
 #include "../unlink_tag_btn.hpp"
 #include "../name_dialog.hpp"
 #include "../add_new_tag.hpp"
+#include "../overlay.hpp"
 
 #include <compsky/mysql/query.hpp>
 
+#include <QCheckBox>
 #include <QLabel>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -30,6 +32,13 @@ BoxRelationDialog::BoxRelationDialog(const uint64_t _id,  MainWindow* const _win
 , win(_win)
 {
 	QVBoxLayout* l = new QVBoxLayout(this);
+	
+	{
+		QCheckBox* b = new QCheckBox("Display?");
+		b->setChecked(this->win->are_relations_visible);
+		connect(b, &QCheckBox::toggled, this, &BoxRelationDialog::toggle_display_relations);
+		l->addWidget(b);
+	}
 	
 	{
 		QGridLayout* grid = new QGridLayout;
@@ -90,6 +99,11 @@ BoxRelationDialog::BoxRelationDialog(const uint64_t _id,  MainWindow* const _win
 		connect(btn, &QPushButton::clicked, this->win, &MainWindow::display_relation_hub);
 		l->addWidget(btn);
 	}
+}
+
+void BoxRelationDialog::toggle_display_relations(){
+	this->win->are_relations_visible = !this->win->are_relations_visible;
+	this->win->main_widget_overlay->repaint();
 }
 
 void BoxRelationDialog::add_tag(){
