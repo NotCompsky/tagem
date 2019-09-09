@@ -10,19 +10,12 @@
 
 
 namespace file2 {
-	
-	namespace conversion {
-		static const QStringList types = {
-			"Integer",
-			"String"
-		};
-	}
 
 	QString prev_name = "";
 	QStringList names;
-	std::map<QString, MinMaxCnv> name2mmc;
+	std::map<QString, MinMax> name2max;
 	QCompleter* names_completer;
-	const QRegExpValidator names_validator(QRegExp("|[0-9a-zA-Z$][0-9a-zA-Z$_]*"));
+	const QRegExpValidator names_validator(QRegExp("[0-9a-zA-Z$_]*"));
 	constexpr static const uint64_t int_field_diffs[] = {
 		9223372036854775807,
 		4294967295,
@@ -47,14 +40,13 @@ namespace file2 {
 
 
 	void initialise(){
-		compsky::mysql::query_buffer(_mysql::obj, RES1, "SELECT min, max, conversion, name FROM file2");
+		compsky::mysql::query_buffer(_mysql::obj, RES1, "SELECT min, max, name FROM file2");
 		int64_t min;
 		int64_t max;
-		int unsigned _conversion;
 		const char* name;
-		while(compsky::mysql::assign_next_row(RES1, &ROW1, &min, &max, &_conversion, &name)){
+		while(compsky::mysql::assign_next_row(RES1, &ROW1, &min, &max, &name)){
 			names << name;
-			name2mmc.try_emplace(name, min, max, _conversion);
+			name2max.try_emplace(name, min, max);
 		}
 		names_completer = new QCompleter(names);
 	}
@@ -75,16 +67,15 @@ namespace file2 {
 		return true;
 	}
 
-	const MinMaxCnv zeros(0, 0, 0);
-	MinMaxCnv choose(QString& var_name){
+	const MinMax zeros(0, 0);
+	MinMax choose(QString& var_name){
 		NameDialog* dialog = new NameDialog("Variable", prev_name);
 		dialog->name_edit->setCompleter(names_completer);
 		dialog->name_edit->setValidator(&names_validator);
 		const auto rc = dialog->exec();
 		var_name = dialog->name_edit->text();
-		delete dialog;
 
-		MinMaxCnv minmax = zeros;
+		MinMax minmax = zeros;
 		
 		if (rc != QDialog::Accepted  ||  var_name.isEmpty())
 			return zeros;
@@ -92,17 +83,10 @@ namespace file2 {
 		prev_name = var_name;
 		
 		if(names.contains(var_name)){
-			return name2mmc.at(var_name);
+			return name2max.at(var_name);
 		}
 		
 		{
-			DropdownDialog* conversion_dialog = new DropdownDialog("Type", conversion::types);
-			const auto conversion_dialog_rc = conversion_dialog->exec();
-			const int unsigned _conversion = conversion_dialog->combo_box->currentIndex();
-			delete conversion_dialog;
-			if (conversion_dialog_rc != QDialog::Accepted)
-				return zeros;
-			
 			bool ok;
 			const int64_t min = QInputDialog::getInt(nullptr, "Variable", "Minimum", 0, INT_MIN, INT_MAX, 1, &ok);
 			if (!ok)
@@ -116,7 +100,7 @@ namespace file2 {
 				return zeros;
 			}
 			
-			name2mmc.try_emplace(var_name, min, max, _conversion);
+			name2max.try_emplace(var_name, min, max);
 			
 			const bool is_unsigned = (min >= 0);
 			
@@ -172,44 +156,6 @@ namespace file2 {
 				}
 			}
 			
-			switch(_conversion){
-				case conversion::integer:
-					break;
-				case conversion::string:
-				{
-					bool ok;
-					const int col_sz = QInputDialog::getInt(nullptr, "String Length", "Maximum", 0, 1, 60000, 1, &ok);
-					if (!ok)
-						return zeros;
-						
-					static const QStringList str_data_types = {
-						"VARBINARY",
-						"VARCHAR"
-					};
-					DropdownDialog* _dialog = new DropdownDialog("Data Type", str_data_types);
-					const auto _rc = _dialog->exec();
-					const int _indx = _dialog->combo_box->currentIndex();
-					delete _dialog;
-					if (_rc != QDialog::Accepted)
-						return zeros;
-					
-					compsky::mysql::exec(
-						_mysql::obj,
-						BUF,
-						"CREATE TABLE file2_", var_name, "("
-							"x ", int_fields[int_field_indx], " NOT NULL,"
-							"s ", str_data_types[_indx], "(", col_sz, "),"
-							"UNIQUE KEY (s),"
-							"PRIMARY KEY (file_id)"
-						")"
-					);
-					break;
-				}
-				default:
-					QMessageBox::warning(nullptr, "Invalid Variable Type", "Not implemented yet - please report this as a bug");
-					break;
-			};
-			
 			compsky::mysql::exec(
 				_mysql::obj,
 				BUF,
@@ -236,7 +182,7 @@ namespace file2 {
 			delete names_completer;
 			names_completer = new QCompleter(names);
 			
-			return name2mmc.at(var_name);;
+			return name2max.at(var_name);;
 		}
 	}
 
