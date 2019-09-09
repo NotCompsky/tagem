@@ -197,7 +197,15 @@ unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int
 	// Guaranteed to have returned
 }
 
+char* to_c_str(QString& qstr){
+	QByteArray ba = qstr.toLocal8Bit();
+	char* s = ba.data();
+	return s;
+}
+
 void InlistFilterDialog::get_results(){
+	constexpr static const compsky::asciify::flag::EnvExpand f_env_expand;
+	
 	// Clear previous results
 	if (this->files_from_sql__res != nullptr){
 		const char* _media_fp;
@@ -215,9 +223,9 @@ void InlistFilterDialog::get_results(){
 				return;
 			break;
 		case files_from_which::sql:
-			const QStringList statements = this->rules.files_from.split(";");
+			QStringList statements = this->rules.files_from.split(";");
 			for (auto i = 0;  i < statements.size();  ++i)
-				compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[i]);
+				compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  f_env_expand,  to_c_str(statements[i]));
 			break;
 	}
 }
