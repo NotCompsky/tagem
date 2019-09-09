@@ -40,6 +40,10 @@
 # include "relation-manager/relation_add_box_tags.hpp"
 #endif
 
+#ifdef ERA
+# include "era-manager/era_manager.hpp"
+#endif
+
 #include "file2.hpp"
 
 #include "utils.hpp"
@@ -807,7 +811,9 @@ void MainWindow::create_era(){
 }
 
 void MainWindow::display_eras(){
-	//compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT 
+	EraManager* hub = new EraManager(this);
+	hub->exec();
+	delete hub;
 }
 #endif
 

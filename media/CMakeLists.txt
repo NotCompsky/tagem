@@ -38,6 +38,7 @@ set(BOXABLE_SOURCES
 	src/relation-manager/relation_add_box_tags_rule.cpp
 )
 set(ERA_SOURCES
+	src/era-manager/era_manager.cpp
 )
 
 foreach(file_type ${MY_TARGETS})

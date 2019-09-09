@@ -118,6 +118,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
       #endif
         case QEvent::KeyPress:{
             QKeyEvent* key = static_cast<QKeyEvent*>(event);
+			const bool is_shift_key_down = (key->modifiers() & Qt::ShiftModifier);
+			// For some keys, presumably depending on keyboard layout, the shift key is already accounted for.
             switch(int keyval = key->key()){
                 case Qt::Key_Enter:
                 case Qt::Key_Return:
@@ -126,7 +128,10 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                     break;
 				case Qt::Key_E:
 				  #ifdef ERA
-					window->create_era();
+					if (is_shift_key_down)
+						window->display_eras();
+					else
+						window->create_era();
 				  #endif
 					break;
                 case Qt::Key_I:

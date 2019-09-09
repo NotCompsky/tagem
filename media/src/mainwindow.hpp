@@ -99,6 +99,7 @@ class MainWindow : public QWidget{
   #endif
 # ifdef ERA
 	void create_era();
+	void display_eras();
 # endif
   #ifdef TXT
     QPlainTextEdit* main_widget;
@@ -117,6 +118,7 @@ class MainWindow : public QWidget{
     double scale_factor;
   #endif
 	InlistFilterDialog* inlist_filter_dialog;
+	uint64_t file_id;
 	bool auto_next;
  private:
 	uint64_t get_framestamp() const {
@@ -168,7 +170,6 @@ class MainWindow : public QWidget{
     int media_dir_len;
     int file_id_str_len;
     char file_id_str[16]; // Cache database ID of file. NOT an integer, but rather the string that is inserted into SQL query statements.
-    uint64_t file_id;
     FILE* inf;
     
     void ensure_fileID_set();
@@ -181,7 +182,6 @@ class MainWindow : public QWidget{
 		uint64_t end;
 		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
 	};
-	void display_eras();
 	std::vector<Era> eras;
 	uint64_t era_start; // Currently active era, that has not been added to eras array
 # endif
