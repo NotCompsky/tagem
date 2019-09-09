@@ -33,7 +33,6 @@
 #include "keyreceiver.hpp"
 
 #ifdef BOXABLE
-# include <vector> // for std::vector
 # include "boxes/box_relation.hpp"
 # include "boxes/box_widget.hpp"
 # include "boxes/box_widget_btn.hpp"
