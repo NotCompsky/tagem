@@ -342,6 +342,8 @@ void MainWindow::init_file_from_db(){
     double y = 0.0;
     double w = 0.0;
     double h = 0.0;
+	
+	this->box_widgets.reserve(compsky::mysql::n_results<uint64_t>(RES1));
     
     while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &box_id, &frame_n, f_g, &x, f_g, &y, f_g, &w, f_g, &h)){
         BoxWidget* iw = new BoxWidget(QRubberBand::Rectangle, this, this->main_widget);
