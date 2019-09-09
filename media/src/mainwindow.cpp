@@ -768,20 +768,29 @@ void MainWindow::display_box_mouseover(){
 }
 
 
+auto MainWindow::sizey_obj(){
+# ifdef SCROLLABLE
+	return this->main_widget_orig_size;
+# elif (defined BOXABLE)
+	return this->m_vo->widget()->size();
+# endif
+}
+
+
 void MainWindow::add_box_to_table(const uint64_t frame_n){
     const QPoint topL = this->box_widget->geometry.topLeft();
     const QPoint botR = this->box_widget->geometry.bottomRight();
   #ifdef SCROLLABLE
-    const double W = this->main_widget_orig_size.width();
-    const double H = this->main_widget_orig_size.height();
+    const double W = this->sizey_obj().width();
+    const double H = this->sizey_obj().height();
     double x  =  (topL.x() / W)   /  this->scale_factor;
     double y  =  (topL.y() / H)   /  this->scale_factor;
     double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
     double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
   #elif (defined BOXABLE)
     const QPoint p = this->m_vo->widget()->pos();
-    const double W = this->m_vo->widget()->size().width();
-    const double H = this->m_vo->widget()->size().height();
+    const double W = this->sizey_obj().width();
+    const double H = this->sizey_obj().height();
     double x  =  (topL.x() / W) + p.x();
     double y  =  (topL.y() / H) + p.y();
     double w  =  (botR.x() / W);
