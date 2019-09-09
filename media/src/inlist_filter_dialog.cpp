@@ -216,9 +216,8 @@ void InlistFilterDialog::get_results(){
 			break;
 		case files_from_which::sql:
 			const QStringList statements = this->rules.files_from.split(";");
-			for (auto i = 0;  i < statements.size() - 1;  ++i)
+			for (auto i = 0;  i < statements.size();  ++i)
 				compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[i]);
-			compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  statements[statements.size()-1]);
 			break;
 	}
 }
