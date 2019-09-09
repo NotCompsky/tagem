@@ -135,6 +135,10 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 				  #endif
 					break;
                 case Qt::Key_I:
+					if (is_shift_key_down){
+						window->display_info();
+						break;
+					}
                   #ifdef TXT // No need for text editor to select rectangles
                     window->unset_read_only();
                    #ifdef BOXABLE
@@ -147,7 +151,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 						break;
 					}
                   #endif
-					window->display_info();
                     break;
                 case Qt::Key_L:
                     window->media_linkfrom();
@@ -197,7 +200,9 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
 				case Qt::Key_AsciiTilde:
+				  #ifdef BOXABLE
 					window->display_relation_hub();
+				  #endif
 					break;
                 case Qt::Key_BracketLeft:
                   #ifdef AUDIO

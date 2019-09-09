@@ -39,6 +39,9 @@ set(BOXABLE_SOURCES
 set(ERA_SOURCES
 	src/era-manager/era_manager.cpp
 )
+set(OVERLAY_SOURCES
+	src/overlay.cpp
+)
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
@@ -52,8 +55,6 @@ foreach(file_type ${MY_TARGETS})
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
 		src/add_new_tag.cpp
-		
-		src/overlay.cpp
 		
 		src/file2.cpp
 		
@@ -77,14 +78,15 @@ if ("txt" IN_LIST MY_TARGETS)
     target_compile_definitions(tagemtxt PRIVATE TXT)
 endif()
 if ("img" IN_LIST MY_TARGETS)
-    target_compile_definitions(tagemimg PRIVATE IMG BOXABLE SCROLLABLE)
+    target_compile_definitions(tagemimg PRIVATE IMG BOXABLE SCROLLABLE OVERLAY)
     target_sources(tagemimg PRIVATE ${BOXABLE_SOURCES})
-    target_sources(tagemimg PRIVATE )
+    target_sources(tagemimg PRIVATE ${OVERLAY_SOURCES})
 endif()
 if ("vid" IN_LIST MY_TARGETS)
-    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE ERA)
+    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE ERA OVERLAY)
     target_sources(tagemvid PRIVATE ${BOXABLE_SOURCES})
     target_sources(tagemvid PRIVATE ${ERA_SOURCES})
+    target_sources(tagemvid PRIVATE ${OVERLAY_SOURCES})
     target_include_directories(tagemvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
     target_link_libraries(tagemvid ${QTAVWIDGETS_LIBRARIES})
 endif()

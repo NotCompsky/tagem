@@ -32,7 +32,9 @@
 
 #include "keyreceiver.hpp"
 
-#include "overlay.hpp"
+#ifdef OVERLAY
+# include "overlay.hpp"
+#endif
 
 #ifdef BOXABLE
 # include "boxes/box_relation.hpp"
@@ -505,6 +507,7 @@ void MainWindow::media_open(){
 	
 # ifdef ERA
 	this->era_start = 0;
+	this->eras.clear();
 	if (this->file_id != 0){
 		compsky::mysql::query(
 			_mysql::obj,
@@ -521,8 +524,9 @@ void MainWindow::media_open(){
 			this->eras.emplace_back(id, frame_a, frame_b);
 	}
 # endif
-	
+#ifdef OVERLAY
 	this->main_widget_overlay->repaint();
+#endif
 }
 
 #ifdef VID
@@ -902,20 +906,23 @@ void MainWindow::create_relation_line_to(BoxWidget* iw){
         return;
     this->relation_line_from->add_relation_line(iw);
 }
-#endif // end ifdef BOXABLE
+
+void MainWindow::display_relation_hub(){
+	RelationAddBoxTags* hub = new RelationAddBoxTags(this);
+	hub->exec();
+	delete hub;
+}
+
+#endif // ifdef BOXABLE
 
 void MainWindow::show_settings_dialog(){
 	this->inlist_filter_dialog->show();
 }
 
 void MainWindow::display_info(){
+	if (this->file_id == 0)
+		return;
 	InfoDialog* info_dialog = new InfoDialog(this->file_id, this->file_sz, this);
 	info_dialog->exec();
 	delete info_dialog;
-}
-
-void MainWindow::display_relation_hub(){
-	RelationAddBoxTags* hub = new RelationAddBoxTags(this);
-	hub->exec();
-	delete hub;
 }
