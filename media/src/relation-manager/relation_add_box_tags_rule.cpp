@@ -93,7 +93,6 @@ void RelationAddBoxTagsRule::add_column(const int table_n,  const char* const ta
 		"LEFT JOIN tag t ON t.id=a.tag "
 		"WHERE a.rule=", this->rule_id
 	);
-	this->unlink_tag_btns.reserve(compsky::mysql::n_results<uint64_t>(this->mysql_res));
 	uint64_t _tag_id;
 	const char* _tag_name;
 	uint8_t _descendants_too;

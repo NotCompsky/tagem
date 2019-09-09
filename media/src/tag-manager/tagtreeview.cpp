@@ -70,9 +70,9 @@ void TagTreeView::place_tags(const uint64_t root){
 	};
     
     std::vector<AvadaKevadra> queue;
+    queue.reserve(4096);
     
 	{
-		queue.reserve(compsky::mysql::n_results<uint64_t>(RES1));
 		uint64_t _parent, _tag, _count;
 		char* _name;
 		while (compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &_parent, &_tag, &_count, &_name)){
