@@ -54,10 +54,12 @@ void Overlay::paintEvent(QPaintEvent* e){
 	
 	if (this->win->are_eras_visible){
 		for (const MainWindow::Era era  :  this->win->eras){
+			const int draw_at_w_1 = w * era.start / duration;
+			const int draw_at_w_2 = w * era.end / duration;
 			painter.drawLine(
-				w * era.start / duration,
+				draw_at_w_1,
 				draw_at_h,
-				h * era.end / duration,
+				draw_at_w_2,
 				draw_at_h
 			);
 		}
