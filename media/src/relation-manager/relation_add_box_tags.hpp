@@ -9,9 +9,6 @@
 #include <vector>
 
 
-class MainWindow;
-
-
 class RelationAddBoxTags : public QDialog {
   public:
 	RelationAddBoxTags(MainWindow* const _win,  QWidget* parent = nullptr);
