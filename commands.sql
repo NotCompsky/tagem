@@ -1,3 +1,45 @@
+CALL descendant_tags_id_from_ids("_r1", "86");
+CALL descendant_tags_id_from_ids("_m1", "90");
+#CALL descendant_tags_id_from_ids("_m2", "355");
+CALL descendant_tags_id_from_ids("_s1", "26");
+
+# NOTE: For OR, we can just put csv into these procedure calls.
+
+SELECT
+	r.id
+FROM
+	relation r,
+	relation2tag r2t,
+	instance2tag i2t_m,
+	instance2tag i2t_s,
+	_r1,
+	_m1,
+	_m2,
+	_s1
+WHERE r.id=r2t.relation_id
+  AND i2t_m.instance_id=r.master_id
+  AND i2t_s.instance_id=r.slave_id
+  AND r2t.tag_id IN (SELECT node FROM _r1) # SHOULD BE UNNECESSARY for AND! But speeds it up drastically.
+  AND i2t_m.tag_id IN (SELECT node FROM _m1) # SHOULD BE UNNECESSARY!
+  #AND i2t_m.tag_id IN (SELECT node FROM _m2) # SHOULD BE UNNECESSARY!
+  AND i2t_s.tag_id IN (SELECT node FROM _s1) # SHOULD BE UNNECESSARY!
+GROUP BY r.id
+HAVING COUNT(_r1.node=r2t.tag_id) != 0
+   AND COUNT(_m1.node=i2t_m.tag_id) != 0
+   #AND COUNT(_m2.node=i2t_m.tag_id)
+   AND COUNT(_s1.node=i2t_s.tag_id) != 0
+;
+
+
+
+
+
+
+
+
+
+
+
 # Useful commands
 
 # Insert new relationtag2tag using names in place of IDs
@@ -64,6 +106,61 @@ WHERE r.id=r2t.relation_id
 ;
 
 
+SELECT r.id,  CONCAT(tD.name) AS 'Result: Relation',  CONCAT(tE.name) AS 'Result: Master',  CONCAT(tF.name) AS 'Result: Slave'
+FROM
+	relation r,
+	relation2tag r2t,
+	instance i,
+	instance2tag i2m_master,
+	instance2tag i2m_slave,
+	relation_add_instance_tags__rules rules
+LEFT JOIN relation_add_instance_tags__req_relation_tags A ON A.rule=rules.id
+LEFT JOIN relation_add_instance_tags__req_master_tags   B ON B.rule=rules.id
+LEFT JOIN relation_add_instance_tags__req_slave_tags    C ON C.rule=rules.id
+LEFT JOIN relation_add_instance_tags__res_relation_tags D ON D.rule=rules.id
+LEFT JOIN tag tD ON tD.id=D.tag
+LEFT JOIN relation_add_instance_tags__res_master_tags   E ON E.rule=rules.id
+LEFT JOIN tag tE ON tE.id=E.tag
+LEFT JOIN relation_add_instance_tags__res_slave_tags    F ON F.rule=rules.id
+LEFT JOIN tag tF ON tF.id=F.tag
+WHERE r.id=r2t.relation_id
+  AND i2m_master.instance_id=r.master_id
+  AND i2m_slave.instance_id=r.slave_id
+  AND (
+	(A.tag IS NULL) OR
+	(r2t.tag_id IN (
+		SELECT X.tag
+		FROM relation_add_instance_tags__req_relation_tags X
+		WHERE X.rule=r.id
+	))
+  )
+  AND (
+	(B.tag IS NULL) OR
+	(i2m_master.tag_id=B.tag)
+  )
+  AND (
+	(C.tag IS NULL) OR
+	(i2m_slave.tag_id=C.tag)
+  )
+GROUP BY r.id
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Table of relation tag names to master and slave tag names
 
 CALL descendant_tags_id_rooted(); # Populate root2tag
@@ -116,39 +213,56 @@ WHERE B.id!=(SELECT id FROM tag WHERE name="Body Part")
 
 
 
-CALL descendant_tags_id_from("_tmp", "'Species'");
-INSERT INTO relation_add_instance_tags__req_master_tags
-SELECT 1, node
-FROM _tmp
+
+SELECT
+	r.name,
+	o1.string,
+	GROUP_CONCAT(DISTINCT tA.name) AS 'Req. Relation',
+	o2.string,
+	GROUP_CONCAT(DISTINCT tB.name) AS 'Req. Master',
+	o3.string,
+	GROUP_CONCAT(DISTINCT tC.name) AS 'Req. Slave',
+	GROUP_CONCAT(DISTINCT tD.name) AS 'Res. Relation',
+	GROUP_CONCAT(DISTINCT tE.name) AS 'Res. Master',
+	GROUP_CONCAT(DISTINCT tD.name) AS 'Res. Slave'
+FROM operators o1, operators o2, operators o3, relation_add_instance_tags__rules r
+LEFT JOIN relation_add_instance_tags__req_relation_tags A ON A.rule=r.id
+LEFT JOIN tag tA ON tA.id=A.tag
+LEFT JOIN relation_add_instance_tags__req_master_tags   B ON B.rule=r.id
+LEFT JOIN tag tB ON tB.id=B.tag
+LEFT JOIN relation_add_instance_tags__req_slave_tags    C ON C.rule=r.id
+LEFT JOIN tag tC ON tC.id=C.tag
+LEFT JOIN relation_add_instance_tags__res_relation_tags D ON D.rule=r.id
+LEFT JOIN tag tD ON tD.id=D.tag
+LEFT JOIN relation_add_instance_tags__res_master_tags   E ON E.rule=r.id
+LEFT JOIN tag tE ON tE.id=E.tag
+LEFT JOIN relation_add_instance_tags__res_slave_tags    F ON F.rule=r.id
+LEFT JOIN tag tF ON tF.id=F.tag
+WHERE o1.id=r.req_relation_operator
+  AND o2.id=r.req_master_operator
+  AND o3.id=r.req_slave_operator
+GROUP BY r.id
 ;
 
-INSERT INTO relation_add_instance_tags__req_master_tags
-SELECT 1, id
-FROM tag
-WHERE name='Body Part';
-;
 
-
-# Display the rules in a human-readable manner
-SELECT CONCAT(t1.name), CONCAT(t2.name), CONCAT(t3.name), CONCAT(t4.name)
-FROM relation_add_instance_tags__rules           rait
-    ,relation_add_instance_tags__req_master_tags rait_req_m_t
-    ,relation_add_instance_tags__req_slave_tags  rait_req_s_t
-    ,relation_add_instance_tags__res_master_tags rait_res_m_t
-    ,relation_add_instance_tags__res_slave_tags  rait_res_s_t
-    ,tag t1
-    ,tag t2
-    ,tag t3
-    ,tag t4
-WHERE rait_req_m_t.rule=rait.id
-  AND rait_req_s_t.rule=rait.id
-  AND rait_res_m_t.rule=rait.id
-  AND rait_res_s_t.rule=rait.id
-  
-  AND t1.id=rait_req_m_t.tag
-  AND t2.id=rait_req_s_t.tag
-  AND t3.id=rait_res_m_t.tag
-  AND t4.id=rait_res_s_t.tag
+SELECT
+	r.req_relation_operator,
+	GROUP_CONCAT(DISTINCT A.tag) AS 'Req. Relation',
+	r.req_master_operator,
+	GROUP_CONCAT(DISTINCT B.tag) AS 'Req. Master',
+	r.req_slave_operator,
+	GROUP_CONCAT(DISTINCT C.tag) AS 'Req. Slave',
+	GROUP_CONCAT(DISTINCT D.tag) AS 'Res. Relation',
+	GROUP_CONCAT(DISTINCT E.tag) AS 'Res. Master',
+	GROUP_CONCAT(DISTINCT D.tag) AS 'Res. Slave'
+FROM operators o1, operators o2, operators o3, relation_add_instance_tags__rules r
+LEFT JOIN relation_add_instance_tags__req_relation_tags A ON A.rule=r.id
+LEFT JOIN relation_add_instance_tags__req_master_tags   B ON B.rule=r.id
+LEFT JOIN relation_add_instance_tags__req_slave_tags    C ON C.rule=r.id
+LEFT JOIN relation_add_instance_tags__res_relation_tags D ON D.rule=r.id
+LEFT JOIN relation_add_instance_tags__res_master_tags   E ON E.rule=r.id
+LEFT JOIN relation_add_instance_tags__res_slave_tags    F ON F.rule=r.id
+WHERE r.id=5
 ;
 
 
@@ -331,6 +445,7 @@ JOIN (
 DROP PROCEDURE IF EXISTS descendant_tags_id_init;
 DROP PROCEDURE IF EXISTS descendant_tags_id_preseeded;
 DROP PROCEDURE IF EXISTS descendant_tags_id_from;
+DROP PROCEDURE IF EXISTS descendant_tags_id_from_ids;
 
 delimiter $$
 
@@ -363,6 +478,27 @@ CREATE PROCEDURE descendant_tags_id_from(tbl VARBINARY(1024),  str VARBINARY(102
 BEGIN
     CALL descendant_tags_id_init(tbl);
     set @query = concat("INSERT INTO ", tbl, " (node) SELECT id FROM tag WHERE name IN (", str, ");");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    DROP TABLE IF EXISTS _tmp;
+    
+    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
+    PREPARE stmt FROM @query;
+    EXECUTE stmt;
+    
+    
+    CALL descendant_tags_id_preseeded(tbl);
+    #set @query = concat("SELECT * FROM ", tbl, ";");
+    #PREPARE stmt FROM @query;
+    #EXECUTE stmt;
+END $$
+
+CREATE PROCEDURE descendant_tags_id_from_ids(tbl VARBINARY(1024),  str VARBINARY(1024))
+BEGIN
+    CALL descendant_tags_id_init(tbl);
+    set @query = concat("INSERT INTO ", tbl, " (node) VALUES (", str, ");");
     PREPARE stmt FROM @query;
     EXECUTE stmt;
     
