@@ -423,7 +423,7 @@ void MainWindow::media_open(){
 	QFile f(file);
 	this->file_sz = f.size();
 	if (this->file_sz == 0){
-		fprintf(stderr,  "Cannot load file: %s\n",  file);
+		fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
 		this->media_next();
 		return;
 	}
@@ -440,7 +440,6 @@ void MainWindow::media_open(){
     
   #ifdef VID
     m_player->play(file);
-    PRINTF("Duration: %d\n", this->m_player->duration());
     m_player->setRepeat(-1); // Repeat infinitely
   #elif (defined TXT)
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
