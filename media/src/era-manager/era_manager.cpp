@@ -42,19 +42,49 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 }
 
 void EraManager::add_era(const uint64_t id,  const uint64_t frame_a,  const uint64_t frame_b,  const char* const tags){
-	this->l->addWidget(new QLabel(tags),  this->row,  0);
-	this->l->addWidget(new QLabel(QString::number((double)frame_a/(double)this->win->m_player->duration())),   this->row,  1);
-	this->l->addWidget(new QLabel(QString::number((double)frame_b/(double)this->win->m_player->duration())),   this->row,  2);
+	this->eras.emplace_back(id, frame_a, frame_b);
+	Era* const era_p = &this->eras[this->eras.size()-1];
+	
+	QLabel* tag_label = new QLabel(tags);
+	QLabel* frame_a_label = new QLabel(QString::number((double)frame_a/(double)this->win->m_player->duration()));
+	QLabel* frame_b_label = new QLabel(QString::number((double)frame_b/(double)this->win->m_player->duration()));
+	this->l->addWidget(tag_label,      this->row,  0);
+	this->l->addWidget(frame_a_label,  this->row,  1);
+	this->l->addWidget(frame_b_label,  this->row,  2);
+	this->era2eyecandy.try_emplace(era_p, tag_label, frame_a_label, frame_b_label);
 	
 	QPushButton* btn = new QPushButton("Goto");
 	connect(btn, &QPushButton::clicked, this, &EraManager::goto_era);
-	this->eras.emplace_back(id, frame_a, frame_b);
-	this->goto2era.try_emplace(btn, &this->eras[this->eras.size()-1]);
+	this->goto2era.try_emplace(btn, era_p);
 	this->l->addWidget(btn, this->row, 3);
+	
+	{
+		QPushButton* _btn = new QPushButton("-");
+		connect(_btn, &QPushButton::clicked, this, &EraManager::del_era);
+		this->del2era.try_emplace(_btn, era_p);
+		this->l->addWidget(_btn, this->row, 4);
+	}
 	
 	++this->row;
 }
 
 void EraManager::goto_era(){
 	this->win->m_player->seek((qint64)(*this->goto2era.at(static_cast<QPushButton*>(sender()))).frame_a);
+}
+
+QPushButton* EraManager::reverse_lookup(std::map<QPushButton*, Era*> map,  Era* const era_p){
+	for (const auto paar : map)
+		if (paar.second == era_p)
+			return paar.first;
+}
+
+void EraManager::del_era(){
+	Era* const era_p = this->del2era.at(static_cast<QPushButton*>(sender()));
+	// No need (atm) to set era.id = 0;
+	delete this->reverse_lookup(this->goto2era, era_p);
+	delete sender();
+	EyeCandyOfRow ecod = this->era2eyecandy.at(era_p);
+	delete ecod.tags;
+	delete ecod.frame_a;
+	delete ecod.frame_b;
 }
