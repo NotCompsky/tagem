@@ -32,7 +32,8 @@ class EraManager : public QDialog {
 	int row;
 	MYSQL_RES* mysql_res;
 	MYSQL_ROW mysql_row;
-	std::map<QPushButton*, Era> goto2era;
+	std::vector<Era> eras;
+	std::map<QPushButton*, Era*> goto2era;
 };
 
 

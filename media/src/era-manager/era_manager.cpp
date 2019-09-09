@@ -30,6 +30,8 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 		  "AND file_id=", this->win->file_id, " "
 		"GROUP BY e.id"
 	);
+	const uint64_t n_results = compsky::mysql::n_results<uint64_t>(this->mysql_res);
+	this->eras.reserve(n_results);
 	uint64_t _id;
 	uint64_t _frame_a;
 	uint64_t _frame_b;
@@ -46,12 +48,13 @@ void EraManager::add_era(const uint64_t id,  const uint64_t frame_a,  const uint
 	
 	QPushButton* btn = new QPushButton("Goto");
 	connect(btn, &QPushButton::clicked, this, &EraManager::goto_era);
-	this->goto2era.try_emplace(btn, id, frame_a, frame_b);
+	this->eras.emplace_back(id, frame_a, frame_b);
+	this->goto2era.try_emplace(btn, &this->eras[this->eras.size()-1]);
 	this->l->addWidget(btn, this->row, 3);
 	
 	++this->row;
 }
 
 void EraManager::goto_era(){
-	this->win->m_player->seek((qint64)this->goto2era.at(static_cast<QPushButton*>(sender())).frame_a);
+	this->win->m_player->seek((qint64)(*this->goto2era.at(static_cast<QPushButton*>(sender()))).frame_a);
 }
