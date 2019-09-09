@@ -1,10 +1,10 @@
 #include "overlay.hpp"
-
+#ifdef BOXABLE
+# include "boxes/box_relation.hpp"
+# include "boxes/box_widget.hpp"
+#endif
+#include "mainwindow.hpp"
 #include <QPainter>
-
-#include "box_relation.hpp"
-#include "box_widget.hpp"
-#include "../mainwindow.hpp"
 
 
 Overlay::Overlay(MainWindow* win,  QWidget* parent)  :  win(win), QWidget(parent){
@@ -22,6 +22,7 @@ void Overlay::paintEvent(QPaintEvent* e){
     pen.setBrush(Qt::green);
     painter.setPen(pen);
     painter.save();
+# ifdef BOXABLE
     foreach(BoxWidget* iw,  this->win->box_widgets){
         for (auto iter = iw->relations.begin();  iter != iw->relations.end();  iter++){
             // TODO: Add triangular button along this line that additionally indicates the heirarchy of the relation
@@ -34,5 +35,6 @@ void Overlay::paintEvent(QPaintEvent* e){
             iter->second->btn->move(p);
         }
     }
+# endif
     painter.restore();
 }

@@ -28,7 +28,6 @@ endif()
 message(STATUS "Targets: ${MY_TARGETS}")
 
 set(BOXABLE_SOURCES
-	src/boxes/overlay.cpp
 	src/boxes/box_widget_btn.cpp
 	src/boxes/box_widget.cpp
 	src/boxes/box_relation.cpp
@@ -53,6 +52,8 @@ foreach(file_type ${MY_TARGETS})
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
 		src/add_new_tag.cpp
+		
+		src/overlay.cpp
 		
 		src/file2.cpp
 		
