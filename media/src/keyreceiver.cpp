@@ -204,6 +204,11 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 					window->set_volume(window->volume + 0.05);
                   #endif
                     break;
+				case Qt::Key_F5:
+				  #if (defined VID || defined AUDIO)
+					window->seekBySlider(0);
+					break;
+				  #endif
                 /* Preset Tags */
                 // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
                 case Qt::Key_1:
