@@ -533,15 +533,77 @@ void MainWindow::updateSliderUnit()
 
 void MainWindow::assign_value(){
 	QString var_name;
-	const file2::MinMax minmax = file2::choose(var_name);
+	const file2::MinMaxCnv minmax = file2::choose(var_name);
 	if (minmax.min == 0  &&  minmax.max == 0)
 		return;
 	this->ensure_fileID_set();
 	
 	bool ok;
-	const int x = QInputDialog::getInt(this, "Value", "Value", 0, minmax.min, minmax.max, 1, &ok);
-	if (!ok)
-		return;
+	
+	int x;
+	switch(minmax.cnv){
+		case file2::conversion::integer:
+			x = QInputDialog::getInt(this, "Value", "Value", 0, minmax.min, minmax.max, 1, &ok);
+			if (!ok)
+				return;
+			break;
+		case file2::conversion::string:
+		{
+			compsky::mysql::query(
+				_mysql::obj,
+				RES1,
+				BUF,
+				"SELECT s "
+				"FROM file2_", var_name, " "
+			);
+			QStringList _stringlist;
+			const char* _s;
+			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_s))
+				_stringlist << _s;
+			QCompleter* _completer = new QCompleter(_stringlist);
+			NameDialog* dialog = new NameDialog("Value", "");
+			dialog->name_edit->setCompleter(_completer);
+			const auto rc = dialog->exec();
+			delete _completer;
+			const QString s = dialog->name_edit->text();
+			delete dialog;
+			
+			while(true){
+				compsky::mysql::query(
+					_mysql::obj,
+					RES1,
+					BUF,
+					"SELECT x FROM file2_", var_name, " "
+					"WHERE s=\"",
+						f_esc, '"', s,
+					"\""
+				);
+				
+				unsigned int n_results = 0;
+				
+				while(compsky::mysql::assign_next_row(RES1, &ROW1, &x))
+					++n_results;
+				
+				if (n_results != 0)
+					break;
+				else {
+					compsky::mysql::exec(
+						_mysql::obj,
+						BUF,
+						"INSERT INTO file2_", var_name, " "
+						"(name)"
+						"VALUES"
+							"(\"",
+								f_esc, '"', s,
+							"\")"
+					);
+				}
+			}
+			break;
+		}
+	};
+	
+
 	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file2", var_name, " (file_id,x) VALUES (", this->file_id, ',', x, ") ON DUPLICATE KEY UPDATE x=VALUES(x)");
 }
 
