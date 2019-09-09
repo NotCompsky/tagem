@@ -588,7 +588,7 @@ void MainWindow::assign_value(){
 						_mysql::obj,
 						BUF,
 						"INSERT INTO file2_", var_name, " "
-						"(name)"
+						"(s)"
 						"VALUES"
 							"(\"",
 								f_esc, '"', s,

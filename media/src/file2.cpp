@@ -197,10 +197,10 @@ namespace file2 {
 						_mysql::obj,
 						BUF,
 						"CREATE TABLE file2_", var_name, "("
-							"x ", int_fields[int_field_indx], " NOT NULL,"
+							"x ", int_fields[int_field_indx], " NOT NULL AUTO_INCREMENT,"
 							"s ", str_data_types[_indx], "(", col_sz, "),"
 							"UNIQUE KEY (s),"
-							"PRIMARY KEY (file_id)"
+							"PRIMARY KEY (x)"
 						")"
 					);
 					break;
@@ -223,10 +223,12 @@ namespace file2 {
 			compsky::mysql::exec(
 				_mysql::obj,
 				BUF,
-				"INSERT INTO file2 (min, max, name) VALUES (",
+				"INSERT INTO file2 (min, max, conversion, name) VALUES (",
 				min,
 				",",
 				max,
+				',',
+				_conversion,
 				",\"",
 				var_name,
 				"\")"
