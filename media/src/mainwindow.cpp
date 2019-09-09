@@ -115,6 +115,9 @@ MainWindow::MainWindow(QWidget *parent)
 #ifdef AUDIO
 	volume(1.0),
 #endif
+#ifdef ERA
+	are_eras_visible(true),
+#endif
     media_fp_indx(MEDIA_FP_SZ),
     reached_stdin_end(false),
     auto_next(false)

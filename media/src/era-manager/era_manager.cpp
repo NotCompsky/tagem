@@ -1,4 +1,5 @@
 #include "era_manager.hpp"
+#include "../overlay.hpp"
 #include <compsky/mysql/query.hpp>
 #include <QPushButton>
 
@@ -18,6 +19,14 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 	this->setWindowTitle("Eras");
 	
 	this->l = new QGridLayout(this);
+	
+	{
+		QCheckBox* b = new QCheckBox("Display?");
+		b->setChecked(this->win->are_eras_visible);
+		connect(b, &QCheckBox::toggled, this, &EraManager::toggle_display_eras);
+		this->l->addWidget(b);
+		++this->row;
+	}
 	
 	compsky::mysql::query(
 		_mysql::obj,
@@ -39,6 +48,11 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 	while(compsky::mysql::assign_next_row(this->mysql_res, &this->mysql_row, &_id, &_frame_a, &_frame_b, &_tags)){
 		this->add_era(_id, _frame_a, _frame_b, _tags);
 	}
+}
+
+void EraManager::toggle_display_eras(){
+	this->win->are_eras_visible = !this->win->are_eras_visible;
+	this->win->main_widget_overlay->repaint();
 }
 
 void EraManager::add_era(const uint64_t id,  const uint64_t frame_a,  const uint64_t frame_b,  const char* const tags){

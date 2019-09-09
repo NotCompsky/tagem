@@ -52,13 +52,15 @@ void Overlay::paintEvent(QPaintEvent* e){
 		painter.drawEllipse(w * this->win->era_start / duration,  draw_at_h,  4,  4);
 	}
 	
-	for (const MainWindow::Era era  :  this->win->eras){
-		painter.drawLine(
-			w * era.start / duration,
-			draw_at_h,
-			h * era.end / duration,
-			draw_at_h
-		);
+	if (this->win->are_eras_visible){
+		for (const MainWindow::Era era  :  this->win->eras){
+			painter.drawLine(
+				w * era.start / duration,
+				draw_at_h,
+				h * era.end / duration,
+				draw_at_h
+			);
+		}
 	}
 # endif
     painter.restore();

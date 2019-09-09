@@ -36,6 +36,7 @@ class EraManager : public QDialog {
 		, frame_b(_frame_b)
 		{}
 	};
+	void toggle_display_eras(); // SLOT
 	void add_era(const uint64_t id,  const uint64_t frame_a,  const uint64_t frame_b,  const char* const tags);
 	void goto_era(); // SLOT
 	void del_era(); // SLOT

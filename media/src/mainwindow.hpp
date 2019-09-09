@@ -110,6 +110,8 @@ class MainWindow : public QWidget{
 		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
 	};
 	std::vector<Era> eras;
+	
+	bool are_eras_visible;
 # endif
   #ifdef TXT
     QPlainTextEdit* main_widget;
