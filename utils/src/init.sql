@@ -16,6 +16,7 @@ CREATE TABLE file2 (
 	min BIGINT NOT NULL,
 	max BIGINT NOT NULL,
 	# NOTE: min and max are only relevant for GUI input. File sizes above 4GB would be impossible to input via Qt5 getInt method, but would be otherwise supported if the int type used is BIGINT or BIGINT UNSIGNED.
+	conversion INT UNSIGNED NOT NULL, # 0 if no conversion (i.e. the end data type is integer), otherwise the integer is not input directly by a human but relates to something else like a string
 	name VARBINARY(128),
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
