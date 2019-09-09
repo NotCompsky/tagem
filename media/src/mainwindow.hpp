@@ -66,7 +66,7 @@ class MainWindow : public QWidget{
 	void show_settings_dialog();
 	void display_info();
 	void display_relation_hub(); // SLOT
-	auto sizey_obj();
+	QSize sizey_obj();
 # ifdef AUDIO
 	void set_volume(const double _volume);
 # endif
@@ -102,6 +102,14 @@ class MainWindow : public QWidget{
 	void create_era();
 	void display_eras();
 	uint64_t era_start; // Currently active era, that has not been added to eras array
+	
+	struct Era {
+		uint64_t id;
+		uint64_t start;
+		uint64_t end;
+		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
+	};
+	std::vector<Era> eras;
 # endif
   #ifdef TXT
     QPlainTextEdit* main_widget;
@@ -176,16 +184,6 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
-	
-# ifdef ERA
-	struct Era {
-		uint64_t id;
-		uint64_t start;
-		uint64_t end;
-		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
-	};
-	std::vector<Era> eras;
-# endif
 };
 
 

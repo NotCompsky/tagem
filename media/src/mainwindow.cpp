@@ -194,7 +194,7 @@ MainWindow::MainWindow(QWidget *parent)
     vl->addWidget(this->main_widget);
   #endif
     
-  #ifdef BOXABLE
+  #if (defined BOXABLE  || defined ERA)
     this->main_widget_overlay = new Overlay(this, this->main_widget);
     this->main_widget_overlay->show();
     
@@ -501,7 +501,24 @@ void MainWindow::media_open(){
 	
 # ifdef ERA
 	this->era_start = 0;
+	if (this->file_id != 0){
+		compsky::mysql::query(
+			_mysql::obj,
+			RES1,
+			BUF,
+			"SELECT id, frame_a, frame_b "
+			"FROM era "
+			"WHERE file_id=", this->file_id
+		);
+		uint64_t id;
+		uint64_t frame_a;
+		uint64_t frame_b;
+		while(compsky::mysql::assign_next_row(RES1, &ROW1, &id, &frame_a, &frame_b))
+			this->eras.emplace_back(id, frame_a, frame_b);
+	}
 # endif
+	
+	this->main_widget_overlay->repaint();
 }
 
 #ifdef VID
@@ -768,7 +785,7 @@ void MainWindow::display_box_mouseover(){
 }
 
 
-auto MainWindow::sizey_obj(){
+QSize MainWindow::sizey_obj(){
 # ifdef SCROLLABLE
 	return this->main_widget_orig_size;
 # elif (defined BOXABLE)
@@ -820,6 +837,7 @@ void MainWindow::create_era(){
 		}
 		this->era_start = 0;
 	}
+	this->main_widget_overlay->repaint();
 }
 
 void MainWindow::display_eras(){
