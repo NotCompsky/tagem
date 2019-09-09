@@ -87,4 +87,14 @@ void EraManager::del_era(){
 	delete ecod.tags;
 	delete ecod.frame_a;
 	delete ecod.frame_b;
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"DELETE FROM era WHERE id=", era_p->id
+	);
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"DELETE FROM era2tag WHERE era_id=", era_p->id
+	);
 }
