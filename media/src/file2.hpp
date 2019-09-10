@@ -11,6 +11,7 @@ namespace file2 {
 		enum {
 			integer,
 			string,
+			datetime,
 			n
 		};
 	}

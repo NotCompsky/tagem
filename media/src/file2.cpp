@@ -14,7 +14,8 @@ namespace file2 {
 	namespace conversion {
 		static const QStringList types = {
 			"Integer",
-			"String"
+			"String",
+			"Datetime"
 		};
 	}
 
@@ -174,6 +175,8 @@ namespace file2 {
 			
 			switch(_conversion){
 				case conversion::integer:
+					break;
+				case conversion::datetime:
 					break;
 				case conversion::string:
 				{

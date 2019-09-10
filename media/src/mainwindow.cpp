@@ -51,6 +51,8 @@
 
 #include "utils.hpp"
 
+#include "get_datetime.hpp"
+
 #ifdef DEBUG
 # define PRINTF printf
 #else
@@ -569,13 +571,26 @@ void MainWindow::assign_value(){
 	
 	bool ok;
 	
-	int x;
+	int64_t x;
 	switch(minmax.cnv){
 		case file2::conversion::integer:
 			x = QInputDialog::getInt(this, "Value", "Value", 0, minmax.min, minmax.max, 1, &ok);
 			if (!ok)
 				return;
 			break;
+		case file2::conversion::datetime:
+		{
+			GetDatetime* _dialog = new GetDatetime();
+			const auto _rc = _dialog->exec();
+			const QDateTime _qstr = _dialog->date_edit->dateTime();
+			delete _dialog;
+			if (_rc != QDialog::Accepted)
+				return;
+			
+			x = _qstr.toSecsSinceEpoch();
+			
+			break;
+		}
 		case file2::conversion::string:
 		{
 			compsky::mysql::query(
