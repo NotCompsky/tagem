@@ -10,7 +10,8 @@ namespace file2 {
 	namespace conversion {
 		enum {
 			integer,
-			string
+			string,
+			n
 		};
 	}
 	
