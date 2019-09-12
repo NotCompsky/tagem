@@ -1,5 +1,3 @@
-#include "mainwindow.hpp"
-
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
