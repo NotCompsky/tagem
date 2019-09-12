@@ -202,7 +202,6 @@ namespace file2 {
 						"CREATE TABLE file2_", var_name, "("
 							"x ", int_fields[int_field_indx], " NOT NULL AUTO_INCREMENT,"
 							"s ", str_data_types[_indx], "(", col_sz, "),"
-							"UNIQUE KEY (s),"
 							"PRIMARY KEY (x)"
 						")"
 					);
