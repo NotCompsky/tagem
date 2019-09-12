@@ -1,5 +1,6 @@
 #include "box_widget.hpp"
 #include "../add_new_tag.hpp"
+#include "../mainwindow.hpp"
 #include <QBrush>
 #include <QColor>
 #include <QDialog>
@@ -14,9 +15,6 @@
 #include "../overlay.hpp"
 
 #include "../utils.hpp"
-
-
-class MainWindow;
 
 
 namespace _mysql {

@@ -60,14 +60,23 @@ CREATE TABLE box2tag (
 );
 
 
+CREATE TABLE method (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARBINARY(128),
+	UNIQUE KEY (name),
+	PRIMARY KEY (id)
+);
+INSERT IGNORE INTO method (name) VALUES ("next_subtitle");
 
 CREATE TABLE era (
 	# Defined by two 'framestamps' - analogous to timestamps
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	file_id BIGINT UNSIGNED NOT NULL,
-	frame_a BIGINT UNSIGNED NOT NULL,
-	frame_b BIGINT UNSIGNED NOT NULL,
-	UNIQUE KEY (file_id, frame_a, frame_b),
+	start BIGINT UNSIGNED NOT NULL,
+	end BIGINT UNSIGNED NOT NULL,
+	start_method_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	end_method_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	UNIQUE KEY (file_id, start, end),
 	PRIMARY KEY (id)
 );
 

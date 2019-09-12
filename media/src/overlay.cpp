@@ -4,6 +4,9 @@
 # include "boxes/box_widget.hpp"
 #endif
 #include "mainwindow.hpp"
+#ifdef ERA
+# include "era.hpp"
+#endif
 #include <QPainter>
 
 
@@ -55,7 +58,7 @@ void Overlay::paintEvent(QPaintEvent* e){
 	}
 	
 	if (this->win->are_eras_visible){
-		for (const MainWindow::Era era  :  this->win->eras){
+		for (const Era era  :  this->win->eras){
 			const int draw_at_w_1 = w * era.start / duration;
 			const int draw_at_w_2 = w * era.end / duration;
 			painter.drawLine(

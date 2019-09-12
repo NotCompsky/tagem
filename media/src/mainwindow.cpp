@@ -150,12 +150,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_slider->setOrientation(Qt::Horizontal);
     connect(m_slider,  &QSlider::sliderMoved,     this,  &MainWindow::seekBySlider);
     connect(m_slider,  &QSlider::sliderPressed,   this,  [=]() { this->seekBySlider(m_slider->value()); });
-    connect(m_player,  &QtAV::AVPlayer::positionChanged, this, &MainWindow::updateSlider);
+	connect(m_player,  &QtAV::AVPlayer::positionChanged, this, &MainWindow::position_changed);
     connect(m_player,  &QtAV::AVPlayer::started,  this,  [=](){ this->updateSlider(m_player->position()); });
     connect(m_player,  &QtAV::AVPlayer::notifyIntervalChanged, this, &MainWindow::updateSliderUnit);
     connect(m_player,  &QtAV::AVPlayer::started,  this,  &MainWindow::set_player_options_for_img);
 	connect(m_player,  &QtAV::AVPlayer::mediaStatusChanged,  this,  &MainWindow::parse_mediaStatusChanged);
-    
    #ifdef TXT
     #error "TXT and VID are mutually exclusive"
    #endif
@@ -223,6 +222,22 @@ MainWindow::MainWindow(QWidget *parent)
         tag_preset[i] = "";
 	
 	this->inlist_filter_dialog = new InlistFilterDialog(this);
+	
+# ifdef ERA
+	this->method_names.push_back(nullptr);
+	compsky::mysql::query_buffer(
+		_mysql::obj,
+		RES1,
+		"SELECT name FROM method"
+	);
+	const char* _method_name;
+	this->qmethod_names << "NONE";
+	while(compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &_method_name)){
+		// Leave the strings in memory, to avoid another malloc
+		this->method_names.push_back(_method_name);
+		this->qmethod_names << _method_name;
+	}
+# endif
 }
 
 #ifdef AUDIO
@@ -241,6 +256,33 @@ void MainWindow::set_player_options_for_img(){
         PRINTF("Auto paused\n");
         this->m_player->pause(true);
     }
+}
+
+void MainWindow::position_changed(qint64 position){
+# ifdef ERA
+	for (Era& era : this->eras){
+		switch(era.methods_yet_triggered){
+			case 1:
+				if (era.end <= position){
+					if (era.end_method != 0)
+						QMetaObject::invokeMethod(this, this->method_names[era.end_method]);
+					--era.methods_yet_triggered;
+				}
+				break;
+			case 2:
+				if (era.start <= position){
+					if (era.start_method != 0)
+						QMetaObject::invokeMethod(this, this->method_names[era.start_method]);
+					--era.methods_yet_triggered;
+				}
+				break;
+			default:
+				// Should only be case: 0
+				break;
+		}
+	}
+# endif
+	this->updateSlider(position);
 }
 #endif
 
@@ -515,15 +557,17 @@ void MainWindow::media_open(){
 			_mysql::obj,
 			RES1,
 			BUF,
-			"SELECT id, frame_a, frame_b "
+			"SELECT id, start, end, start_method_id, end_method_id "
 			"FROM era "
 			"WHERE file_id=", this->file_id
 		);
 		uint64_t id;
-		uint64_t frame_a;
-		uint64_t frame_b;
-		while(compsky::mysql::assign_next_row(RES1, &ROW1, &id, &frame_a, &frame_b))
-			this->eras.emplace_back(id, frame_a, frame_b);
+		uint64_t start;
+		uint64_t end;
+		uint64_t _start_method_id;
+		uint64_t _end_method_id;
+		while(compsky::mysql::assign_next_row(RES1, &ROW1, &id, &start, &end, &_start_method_id, &_end_method_id))
+			this->eras.emplace_back(id, start, end, _start_method_id, _end_method_id);
 	}
 # endif
 #ifdef OVERLAY
@@ -849,7 +893,7 @@ void MainWindow::create_era(){
 		this->era_start = t;
 	} else {
 		this->ensure_fileID_set();
-		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO era (file_id, frame_a, frame_b) VALUES(", this->file_id, ',', this->era_start, ',', t, ")");
+		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO era (file_id, start, end) VALUES(", this->file_id, ',', this->era_start, ',', t, ")");
 		const uint64_t era_id = get_last_insert_id();
 		this->eras.emplace_back(era_id, this->era_start, t);
 		while(true){
@@ -941,3 +985,12 @@ void MainWindow::display_info(){
 	info_dialog->exec();
 	delete info_dialog;
 }
+
+
+
+// Q_SLOTS
+
+#ifdef ERA
+void MainWindow::next_subtitle(){
+}
+#endif

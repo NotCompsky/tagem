@@ -15,6 +15,9 @@
 #ifdef VID
   #include <QtAV>
 #endif
+#ifdef ERA
+# include "era.hpp"
+#endif
 
 #ifdef BOXABLE
 # include <vector> // for std::vector
@@ -49,6 +52,7 @@ void scale(QRect& rect,  T scale){
 
 
 class MainWindow : public QWidget{
+	Q_OBJECT
  public:
     ~MainWindow();
     explicit MainWindow(QWidget *parent = 0);
@@ -97,19 +101,16 @@ class MainWindow : public QWidget{
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
     QWidget* main_widget;
+	void position_changed(qint64 position);
   #endif
 # ifdef ERA
 	void create_era();
 	void display_eras();
 	uint64_t era_start; // Currently active era, that has not been added to eras array
 	
-	struct Era {
-		uint64_t id;
-		uint64_t start;
-		uint64_t end;
-		Era(uint64_t _id,  uint64_t _start,  uint64_t _end) : id(_id), start(_start), end(_end) {}
-	};
 	std::vector<Era> eras;
+	std::vector<const char*> method_names;
+	QStringList qmethod_names;
 	
 	bool are_eras_visible;
 # endif
@@ -187,6 +188,10 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
+public Q_SLOTS:
+#ifdef ERA
+	void next_subtitle();
+#endif
 };
 
 
