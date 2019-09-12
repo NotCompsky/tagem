@@ -3,6 +3,7 @@
 #include "../name_dialog.hpp"
 #include "../add_new_tag.hpp"
 #include "../overlay.hpp"
+#include "../mainwindow.hpp"
 
 #include <compsky/mysql/query.hpp>
 
