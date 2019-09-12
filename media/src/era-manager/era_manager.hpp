@@ -1,11 +1,13 @@
 #ifndef TAGEM_MEDIA_ERA_MANAGER_HPP
 #define TAGEM_MEDIA_ERA_MANAGER_HPP
 
-#include "../mainwindow.hpp"
 #include <compsky/mysql/mysql.h>
 #include <QDialog>
 #include <QGridLayout>
 #include <vector>
+
+
+class MainWindow;
 
 
 class QLabel;
@@ -40,6 +42,8 @@ class EraManager : public QDialog {
 	void add_era(const uint64_t id,  const uint64_t frame_a,  const uint64_t frame_b,  const char* const tags);
 	void goto_era(); // SLOT
 	void del_era(); // SLOT
+	void change_start_method_name(int indx); // SLOT
+	void change_end_method_name(int indx); // SLOT
 	QPushButton* reverse_lookup(std::map<QPushButton*, Era*> map,  Era* const era_p);
 	MainWindow* const win;
 	QGridLayout* l;
@@ -50,6 +54,7 @@ class EraManager : public QDialog {
 	std::map<Era*, EyeCandyOfRow> era2eyecandy;
 	std::map<QPushButton*, Era*> goto2era;
 	std::map<QPushButton*, Era*> del2era;
+	std::map<QComboBox*, Era*> dropdown2era;
 };
 
 
