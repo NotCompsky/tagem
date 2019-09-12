@@ -14,8 +14,9 @@ namespace file2 {
 	namespace conversion {
 		static const QStringList types = {
 			"Integer",
-			"String",
-			"Datetime"
+			"String (Single Line)",
+			"Datetime",
+			"String (Multi-Line)"
 		};
 	}
 
@@ -179,6 +180,7 @@ namespace file2 {
 				case conversion::datetime:
 					break;
 				case conversion::string:
+				case conversion::multiline_string:
 				{
 					bool ok;
 					const int col_sz = QInputDialog::getInt(nullptr, "String Length", "Maximum", 0, 1, 60000, 1, &ok);

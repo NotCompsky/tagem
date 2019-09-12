@@ -41,6 +41,11 @@ void Overlay::paintEvent(QPaintEvent* e){
 		}
 	}
 # endif
+
+	const int w = this->win->sizey_obj().width();
+	const int h = this->win->sizey_obj().height();
+	const double duration = this->win->m_player->duration();
+
 # ifdef ERA
 	pen.setStyle(Qt::SolidLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum
 	pen.setWidth(2);
@@ -48,10 +53,7 @@ void Overlay::paintEvent(QPaintEvent* e){
 	painter.setPen(pen);
 	painter.save();
 	
-	const int w = this->win->sizey_obj().width();
-	const int h = this->win->sizey_obj().height();
 	const int draw_at_h = h - 10;
-	const double duration = this->win->m_player->duration();
 	if (this->win->era_start != 0){
 		// We have selected one end of an Era, and the next press of 'e' will finalise that Era.
 		painter.drawEllipse(w * this->win->era_start / duration,  draw_at_h,  4,  4);
@@ -70,5 +72,15 @@ void Overlay::paintEvent(QPaintEvent* e){
 		}
 	}
 # endif
+
+	pen.setBrush(Qt::white);
+	if (this->win->subtitle_line != nullptr){ // nullptr + 1
+		painter.drawText(
+			10,
+			10,
+			this->win->subtitle_line
+		);
+	}
+
     painter.restore();
 }

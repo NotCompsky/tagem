@@ -67,6 +67,7 @@ CREATE TABLE method (
 	PRIMARY KEY (id)
 );
 INSERT IGNORE INTO method (name) VALUES ("next_subtitle");
+INSERT IGNORE INTO method (name) VALUES ("wipe_subtitle");
 
 CREATE TABLE era (
 	# Defined by two 'framestamps' - analogous to timestamps

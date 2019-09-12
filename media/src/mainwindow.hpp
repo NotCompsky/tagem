@@ -134,6 +134,10 @@ class MainWindow : public QWidget{
 	uint64_t file_id;
 	bool are_relations_visible;
 	bool auto_next;
+# ifdef OVERLAY
+	char* subtitle_line;
+	bool exhausted_subtitle;
+# endif
  private:
 	uint64_t get_framestamp() const {
 		return
@@ -188,9 +192,14 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
+# ifdef OVERLAY
+	MYSQL_RES* subtitle_res;
+	MYSQL_ROW subtitle_row;
+# endif
 public Q_SLOTS:
 #ifdef ERA
 	void next_subtitle();
+	void wipe_subtitle();
 #endif
 };
 

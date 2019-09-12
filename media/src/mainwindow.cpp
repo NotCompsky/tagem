@@ -53,6 +53,8 @@
 
 #include "get_datetime.hpp"
 
+#include <QDebug>
+
 #ifdef DEBUG
 # define PRINTF printf
 #else
@@ -124,6 +126,10 @@ MainWindow::MainWindow(QWidget *parent)
 	are_eras_visible(true),
 #endif
     media_fp_indx(MEDIA_FP_SZ),
+# ifdef OVERLAY
+	subtitle_line(nullptr),
+	subtitle_res(nullptr),
+# endif
     reached_stdin_end(false),
     auto_next(false)
 {
@@ -559,7 +565,8 @@ void MainWindow::media_open(){
 			BUF,
 			"SELECT id, start, end, start_method_id, end_method_id "
 			"FROM era "
-			"WHERE file_id=", this->file_id
+			"WHERE file_id=", this->file_id, " "
+			"ORDER BY start ASC"
 		);
 		uint64_t id;
 		uint64_t start;
@@ -569,9 +576,35 @@ void MainWindow::media_open(){
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &id, &start, &end, &_start_method_id, &_end_method_id))
 			this->eras.emplace_back(id, start, end, _start_method_id, _end_method_id);
 	}
+
 # endif
 #ifdef OVERLAY
+	this->subtitle_line = nullptr;
+	this->exhausted_subtitle = true;
+	
 	this->main_widget_overlay->repaint();
+	
+	/* Get Subtitles */
+	if (this->subtitle_res != nullptr)
+		mysql_free_result(this->subtitle_res);
+	this->subtitle_res = nullptr;
+	if (this->file_id != 0){
+		try {
+			compsky::mysql::query(
+				_mysql::obj,
+				this->subtitle_res,
+				BUF,
+				"SELECT s.s "
+				"FROM file2_Subtitle s, file2Subtitle x "
+				"WHERE s.x=x.x "
+				"AND x.file_id=", this->file_id
+			);
+			this->exhausted_subtitle = false;
+		} catch(compsky::mysql::except::SQLExec& e){
+			qDebug() << "Cannot execute SQL: " << e.what();
+			qDebug() << "Ensure that the file2Subtitle and file2_Subtitle tables exist. If not, create them by assigning a subtitle as a string value to a file.";
+		}
+	}
 #endif
 }
 
@@ -636,25 +669,53 @@ void MainWindow::assign_value(){
 			break;
 		}
 		case file2::conversion::string:
+		case file2::conversion::multiline_string:
 		{
+			std::map<uint64_t, int> x2s_id;
+			
 			compsky::mysql::query(
 				_mysql::obj,
 				RES1,
 				BUF,
-				"SELECT s "
+				"SELECT x, s "
 				"FROM file2_", var_name, " "
 			);
 			QStringList _stringlist;
+			uint64_t _x;
 			const char* _s;
-			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_s))
+			int s_id = 0;
+			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x, &_s)){
 				_stringlist << _s;
-			QCompleter* _completer = new QCompleter(_stringlist);
-			NameDialog* dialog = new NameDialog("Value", "");
-			dialog->name_edit->setCompleter(_completer);
-			const auto rc = dialog->exec();
-			delete _completer;
-			const QString s = dialog->name_edit->text();
-			delete dialog;
+				x2s_id[_x] = s_id++;
+			}
+			
+			compsky::mysql::query(
+				_mysql::obj,
+				RES1,
+				BUF,
+				"SELECT x "
+				"FROM file2", var_name, " "
+				"WHERE file_id=", this->file_id
+			);
+			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x));
+			
+			QString s;
+			if (minmax.cnv == file2::conversion::string){
+				QCompleter* _completer = new QCompleter(_stringlist);
+				NameDialog* dialog = new NameDialog("Value", _stringlist[x2s_id[_x]]);
+				dialog->name_edit->setCompleter(_completer);
+				const auto rc = dialog->exec();
+				delete _completer;
+				s = dialog->name_edit->text();
+				delete dialog;
+				if (rc != QDialog::Accepted)
+					return;
+			} else {
+				bool ok;
+				s = QInputDialog::getMultiLineText(this, "Value", "Value", _stringlist[x2s_id[_x]], &ok);
+				if (!ok)
+					return;
+			}
 			
 			while(true){
 				compsky::mysql::query(
@@ -988,9 +1049,61 @@ void MainWindow::display_info(){
 
 
 
+char* next_of(const char c,  char* itr){
+	while(true){
+		if (*itr == c)
+			return itr;
+		if (*itr == 0)
+			return nullptr;
+		++itr;
+	}
+}
+
+
+
 // Q_SLOTS
 
-#ifdef ERA
+#ifdef OVERLAY
 void MainWindow::next_subtitle(){
+	if (this->exhausted_subtitle)
+		return;
+	
+	char* current_line = this->subtitle_line;
+	if (current_line == nullptr){ // nullptr + 1
+		mysql_data_seek(this->subtitle_res, 0); // Reset to first index // WARNING: Assumes that there is only one subtitle text per file! This will not be the case for long.
+		compsky::mysql::assign_next_row__no_free(this->subtitle_res, &this->subtitle_row, &current_line);
+		// TODO: Support multiple subtitle stri
+	}
+	if (current_line == nullptr)
+		return;
+	
+	char* next_line = current_line;
+	while(true){
+		next_line = next_of('\n', next_line);
+		
+		if (next_line == nullptr){
+			this->exhausted_subtitle = true;
+			break;
+		}
+		
+		*next_line = 0;
+		
+		while(*(++next_line) == '\n'); // Skip to the next character (ensuring it isn't newline)
+		
+		if (*next_line == '#')
+			// Skip lines beginning with a hash
+			continue;
+		
+		break;
+	}
+	this->subtitle_line = current_line;
+	qDebug() << this->subtitle_line;
+	this->main_widget_overlay->repaint();
+	this->subtitle_line = next_line;
+}
+
+void MainWindow::wipe_subtitle(){
+	this->subtitle_line = nullptr;
+	this->main_widget_overlay->repaint();
 }
 #endif

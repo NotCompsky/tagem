@@ -12,6 +12,7 @@ namespace file2 {
 			integer,
 			string,
 			datetime,
+			multiline_string,
 			n
 		};
 	}
