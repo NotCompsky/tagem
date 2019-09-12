@@ -8,9 +8,6 @@
 #ifndef TAGEM_MEDIA_RELATION_ADD_INSTANCE_TAG_RULE_HPP
 #define TAGEM_MEDIA_RELATION_ADD_INSTANCE_TAG_RULE_HPP
 
-
-#include "../mainwindow.hpp"
-
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QDialog>
@@ -18,6 +15,9 @@
 #include <QPushButton>
 #include <compsky/mysql/mysql.h>
 #include <vector>
+
+
+class MainWindow;
 
 
 namespace rait {
