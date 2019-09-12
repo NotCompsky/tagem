@@ -51,6 +51,11 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::save);
 			hbox->addWidget(btn);
 		}
+		{
+			QPushButton* btn = new QPushButton("Delete");
+			connect(btn, &QPushButton::clicked, this, &InlistFilterDialog::del);
+			hbox->addWidget(btn);
+		}
 		l->addLayout(hbox);
 	}
 	
@@ -292,5 +297,24 @@ void InlistFilterDialog::save(){
 			"w_min=VALUES(w_min),"
 			"h_max=VALUES(h_max),"
 			"h_min=VALUES(h_min)"
+	);
+}
+
+void InlistFilterDialog::del(){
+	const QMessageBox::StandardButton reply = QMessageBox::question(
+		this,
+		"Delete Rule",
+		"Proceed?",
+		QMessageBox::Yes | QMessageBox::No
+	);
+	if (reply != QMessageBox::Yes)
+		return;
+	
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"DELETE FROM settings WHERE name=\"",
+			_f::esc, '"', this->settings_name->text(),
+		"\""
 	);
 }
