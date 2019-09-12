@@ -10,11 +10,13 @@
 
 #include "box_relation.hpp"
 #include "box_widget_btn.hpp"
-#include "../mainwindow.hpp"
 #include "../name_dialog.hpp"
 #include "../overlay.hpp"
 
 #include "../utils.hpp"
+
+
+class MainWindow;
 
 
 namespace _mysql {
