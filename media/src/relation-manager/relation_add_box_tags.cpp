@@ -1,6 +1,7 @@
 #include "relation_add_box_tags.hpp"
 #include "relation_add_box_tags_rule.hpp"
 #include "../overlay.hpp"
+#include "../mainwindow.hpp"
 #include <compsky/mysql/query.hpp>
 
 #include <QInputDialog>
