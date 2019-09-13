@@ -2,7 +2,9 @@
 #include "../add_new_tag.hpp"
 #include "tagtreeview.hpp"
 
+#include <QCompleter>
 #include <QStandardItem>
+#include <QStringList>
 
 #include <compsky/asciify/flags.hpp>
 #include <compsky/mysql/query.hpp>
@@ -21,6 +23,8 @@ namespace _mysql {
 }
 
 extern std::map<uint64_t, QString> tag_id2name;
+extern QCompleter* tagcompleter;
+extern QStringList tagslist;
 
 
 void PrimaryItem::delete_self(){
@@ -75,6 +79,11 @@ void NameItem::setData(const QVariant& value,  const int role){
     
     if (neue == mdl->tag2name[this->tag_id])
         return;
+	
+	tagslist[tagslist.indexOf(tag_id2name[this->tag_id])] = neue;
+	tag_id2name[this->tag_id] = neue;
+	delete tagcompleter;
+	tagcompleter = new QCompleter(tagslist);
     
 	static char buf[4096]; // Though tag name should not be longer than 128 characters
     compsky::mysql::exec(_mysql::obj, buf, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
