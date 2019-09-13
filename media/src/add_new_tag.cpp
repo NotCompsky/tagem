@@ -63,21 +63,22 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	tag_id2name[tagid] = tagstr;
 
 	/* Get parent tag */
-	NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
-	tagdialog->name_edit->setCompleter(tagcompleter);
-	goto__cannotcancelparenttag:
-	if (tagdialog->exec() != QDialog::Accepted)
-		goto goto__cannotcancelparenttag;
-
-	QString parent_tagstr = tagdialog->name_edit->text();
-
-	if (parent_tagstr.isEmpty()){
-		tag2parent(tagid, 0);
-		return tagid;
+	char* parent_tagchars;
+	while(true){
+		NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
+		tagdialog->name_edit->setCompleter(tagcompleter);
+		const int _rc = tagdialog->exec();
+		QString parent_tagstr = tagdialog->name_edit->text();
+		if (_rc != QDialog::Accepted  ||  parent_tagstr == tagstr)
+			continue;
+		if (parent_tagstr.isEmpty()){
+			tag2parent(tagid, 0);
+			return tagid;
+		}
+		QByteArray parent_tagstr_ba = parent_tagstr.toLocal8Bit();
+		parent_tagchars = parent_tagstr_ba.data();
+		break;
 	}
-
-	QByteArray parent_tagstr_ba = parent_tagstr.toLocal8Bit();
-	char* parent_tagchars = parent_tagstr_ba.data();
 
 	/* Insert parent-child relations */
 	int lastindx = 0;
