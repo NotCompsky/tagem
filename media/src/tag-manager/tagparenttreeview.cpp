@@ -64,7 +64,7 @@ void TagParentTreeView::set_root_from(const uint64_t tag_id){
 };
 
 void TagParentTreeView::jump_to(){
-	const uint64_t tag = ask_for_tag("Tag");
+	const uint64_t tag = ask_for_tag("");
 	this->set_root_from(tag);
 	this->tag_child_tree_view->scrollTo(static_cast<TagTreeModel*>(this->tag_child_tree_view->model())->tag2entry[tag]->index());
 }
