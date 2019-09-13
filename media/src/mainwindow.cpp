@@ -36,6 +36,10 @@
 # include "overlay.hpp"
 #endif
 
+#ifdef SUBTITLES
+# include "textbox.hpp"
+#endif
+
 #ifdef BOXABLE
 # include "boxes/box_relation.hpp"
 # include "boxes/box_widget.hpp"
@@ -126,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
 	are_eras_visible(true),
 #endif
     media_fp_indx(MEDIA_FP_SZ),
-# ifdef OVERLAY
+# ifdef SUBTITLES
 	subtitle_line(nullptr),
 	subtitle_res(nullptr),
 # endif
@@ -244,6 +248,10 @@ MainWindow::MainWindow(QWidget *parent)
 		this->qmethod_names << _method_name;
 	}
 # endif
+
+# ifdef SUBTITLES
+	this->textbox = new Textbox(this);
+# endif
 }
 
 #ifdef AUDIO
@@ -308,6 +316,8 @@ void MainWindow::parse_mediaStatusChanged(int status){
 #endif
 
 void MainWindow::media_next(){
+	this->wipe_subtitle();
+	
 	// TODO: Implement in inlist_filter_dialog
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
 	
@@ -578,7 +588,7 @@ void MainWindow::media_open(){
 	}
 
 # endif
-#ifdef OVERLAY
+#ifdef SUBTITLES
 	this->subtitle_line = nullptr;
 	this->exhausted_subtitle = true;
 	
@@ -1063,7 +1073,7 @@ char* next_of(const char c,  char* itr){
 
 // Q_SLOTS
 
-#ifdef OVERLAY
+#ifdef SUBTITLES
 void MainWindow::next_subtitle(){
 	if (this->exhausted_subtitle)
 		return;
@@ -1098,12 +1108,12 @@ void MainWindow::next_subtitle(){
 	}
 	this->subtitle_line = current_line;
 	qDebug() << this->subtitle_line;
-	this->main_widget_overlay->repaint();
+	this->textbox->set_text(this->subtitle_line);
+	this->textbox->show();
 	this->subtitle_line = next_line;
 }
 
 void MainWindow::wipe_subtitle(){
-	this->subtitle_line = nullptr;
-	this->main_widget_overlay->repaint();
+	this->textbox->hide();
 }
 #endif

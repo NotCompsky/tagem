@@ -42,6 +42,9 @@ set(ERA_SOURCES
 set(OVERLAY_SOURCES
 	src/overlay.cpp
 )
+set(SUBTITLES_SOURCES
+	src/textbox.cpp
+)
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
@@ -83,10 +86,11 @@ if ("img" IN_LIST MY_TARGETS)
     target_sources(tagemimg PRIVATE ${OVERLAY_SOURCES})
 endif()
 if ("vid" IN_LIST MY_TARGETS)
-    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE ERA OVERLAY)
+    target_compile_definitions(tagemvid PRIVATE VID AUDIO BOXABLE ERA OVERLAY SUBTITLES)
     target_sources(tagemvid PRIVATE ${BOXABLE_SOURCES})
     target_sources(tagemvid PRIVATE ${ERA_SOURCES})
     target_sources(tagemvid PRIVATE ${OVERLAY_SOURCES})
+	target_sources(tagemvid PRIVATE ${SUBTITLES_SOURCES})
     target_include_directories(tagemvid PRIVATE ${QTAVWIDGETS_INCLUDE_DIRS})
     target_link_libraries(tagemvid ${QTAVWIDGETS_LIBRARIES})
 endif()

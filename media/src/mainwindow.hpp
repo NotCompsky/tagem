@@ -18,6 +18,9 @@
 #ifdef ERA
 # include "era.hpp"
 #endif
+#ifdef SUBTITLES
+# include "textbox.hpp"
+#endif
 
 #ifdef BOXABLE
 # include <vector> // for std::vector
@@ -134,7 +137,8 @@ class MainWindow : public QWidget{
 	uint64_t file_id;
 	bool are_relations_visible;
 	bool auto_next;
-# ifdef OVERLAY
+# ifdef SUBTITLES
+	Textbox* textbox;
 	char* subtitle_line;
 	bool exhausted_subtitle;
 # endif
@@ -192,12 +196,12 @@ class MainWindow : public QWidget{
     
     void ensure_fileID_set();
     void set_table_attr_by_id(const char* tbl,  const char* id,  const int id_len,  const char* col,  const char* val);
-# ifdef OVERLAY
+# ifdef SUBTITLES
 	MYSQL_RES* subtitle_res;
 	MYSQL_ROW subtitle_row;
 # endif
 public Q_SLOTS:
-#ifdef ERA
+#ifdef SUBTITLES
 	void next_subtitle();
 	void wipe_subtitle();
 #endif

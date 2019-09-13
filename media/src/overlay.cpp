@@ -73,14 +73,5 @@ void Overlay::paintEvent(QPaintEvent* e){
 	}
 # endif
 
-	pen.setBrush(Qt::white);
-	if (this->win->subtitle_line != nullptr){ // nullptr + 1
-		painter.drawText(
-			10,
-			10,
-			this->win->subtitle_line
-		);
-	}
-
     painter.restore();
 }
