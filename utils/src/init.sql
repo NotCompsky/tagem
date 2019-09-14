@@ -68,6 +68,7 @@ CREATE TABLE method (
 );
 INSERT IGNORE INTO method (name) VALUES ("next_subtitle");
 INSERT IGNORE INTO method (name) VALUES ("wipe_subtitle");
+INSERT IGNORE INTO method (name) VALUES ("skip");
 
 CREATE TABLE era (
 	# Defined by two 'framestamps' - analogous to timestamps

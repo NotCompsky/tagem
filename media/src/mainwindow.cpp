@@ -127,6 +127,7 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 	are_relations_visible(true),
 #ifdef ERA
+	method_called_from_era(0, 0, 0), // NOTE: Always set to another Era's value before use
 	are_eras_visible(true),
 #endif
     media_fp_indx(MEDIA_FP_SZ),
@@ -278,15 +279,19 @@ void MainWindow::position_changed(qint64 position){
 		switch(era.methods_yet_triggered){
 			case 1:
 				if (era.end <= position){
-					if (era.end_method != 0)
+					if (era.end_method != 0){
+						this->method_called_from_era = era;
 						QMetaObject::invokeMethod(this, this->method_names[era.end_method]);
+					}
 					--era.methods_yet_triggered;
 				}
 				break;
 			case 2:
 				if (era.start <= position){
-					if (era.start_method != 0)
+					if (era.start_method != 0){
+						this->method_called_from_era = era;
 						QMetaObject::invokeMethod(this, this->method_names[era.start_method]);
+					}
 					--era.methods_yet_triggered;
 				}
 				break;
@@ -1115,5 +1120,18 @@ void MainWindow::next_subtitle(){
 
 void MainWindow::wipe_subtitle(){
 	this->textbox->hide();
+}
+#endif
+
+
+
+#ifdef ERA
+void MainWindow::skip(){
+	const uint64_t end = this->method_called_from_era.end;
+	if (end > this->get_framestamp()){
+# ifdef VID
+		this->m_player->seek(qint64(end));
+# endif
+	}
 }
 #endif

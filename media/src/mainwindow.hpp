@@ -109,7 +109,8 @@ class MainWindow : public QWidget{
 # ifdef ERA
 	void create_era();
 	void display_eras();
-	uint64_t era_start; // Currently active era, that has not been added to eras array
+	uint64_t era_start; // Currently active input era, that has not been added to eras array
+	Era method_called_from_era;
 	
 	std::vector<Era> eras;
 	std::vector<const char*> method_names;
@@ -204,6 +205,9 @@ public Q_SLOTS:
 #ifdef SUBTITLES
 	void next_subtitle();
 	void wipe_subtitle();
+#endif
+#ifdef ERA
+	void skip();
 #endif
 };
 

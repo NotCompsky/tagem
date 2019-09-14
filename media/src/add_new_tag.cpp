@@ -63,19 +63,23 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	tag_id2name[tagid] = tagstr;
 
 	/* Get parent tag */
+	QString parent_tagstr;
+	QByteArray parent_tagstr_ba;
 	char* parent_tagchars;
 	while(true){
 		NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
 		tagdialog->name_edit->setCompleter(tagcompleter);
 		const int _rc = tagdialog->exec();
-		QString parent_tagstr = tagdialog->name_edit->text();
+		parent_tagstr = tagdialog->name_edit->text();
+		delete tagdialog;
+		
 		if (_rc != QDialog::Accepted  ||  parent_tagstr == tagstr)
 			continue;
 		if (parent_tagstr.isEmpty()){
 			tag2parent(tagid, 0);
 			return tagid;
 		}
-		QByteArray parent_tagstr_ba = parent_tagstr.toLocal8Bit();
+		parent_tagstr_ba = parent_tagstr.toLocal8Bit();
 		parent_tagchars = parent_tagstr_ba.data();
 		break;
 	}
