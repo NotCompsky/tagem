@@ -17,36 +17,6 @@ extern TagManager* tag_manager;
 
 constexpr static const short SCROLL_INTERVAL = 1;
 
-constexpr static const int numeric_keys[20] = {
-	Qt::Key_0,
-	Qt::Key_1,
-	Qt::Key_2,
-	Qt::Key_3,
-	Qt::Key_4,
-	Qt::Key_5,
-	Qt::Key_6,
-	Qt::Key_7,
-	Qt::Key_8,
-	Qt::Key_9,
-	Qt::Key_ParenRight, // 0
-	Qt::Key_Exclam,
-	Qt::Key_QuoteDbl,
-	Qt::Key_sterling,
-	Qt::Key_Dollar,
-	Qt::Key_Percent,
-	Qt::Key_AsciiCircum,
-	Qt::Key_Ampersand,
-	Qt::Key_Asterisk,
-	Qt::Key_ParenLeft
-};
-
-int key2n(const int key){
-	for (auto i = 0;  i < 20;  ++i)
-		if (numeric_keys[i] == key)
-			return i;
-	return -1;
-}
-
 
 bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 // src: https://wiki.qt.io/How_to_catch_enter_key
@@ -120,6 +90,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
             QKeyEvent* key = static_cast<QKeyEvent*>(event);
 			const bool is_shift_key_down = (key->modifiers() & Qt::ShiftModifier);
 			// For some keys, presumably depending on keyboard layout, the shift key is already accounted for.
+			unsigned int n = 1;
             switch(int keyval = key->key()){
                 case Qt::Key_Enter:
                 case Qt::Key_Return:
@@ -221,30 +192,50 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 				  #endif
                 /* Preset Tags */
                 // N to open tag dialog and paste Nth preset into tag field, SHIFT+N to open tag dialog and set user input as Nth preset
-                case Qt::Key_1:
-                case Qt::Key_2:
-                case Qt::Key_3:
-                case Qt::Key_4:
-                case Qt::Key_5:
-                case Qt::Key_6:
-                case Qt::Key_7:
-                case Qt::Key_8:
-                case Qt::Key_9:
-                case Qt::Key_0:
-                    window->media_tag(window->tag_preset[key2n(keyval)]);
-                    break;
-                case Qt::Key_Exclam:
-                case Qt::Key_QuoteDbl:
-                case Qt::Key_sterling:
-                case Qt::Key_Dollar:
-                case Qt::Key_Percent:
-                case Qt::Key_AsciiCircum:
-                case Qt::Key_Ampersand:
-                case Qt::Key_Asterisk:
-                case Qt::Key_ParenLeft:
-                case Qt::Key_ParenRight:
-                    window->media_tag_new_preset(key2n(keyval) - 10);
-                    break;
+				
+				case Qt::Key_0:
+					++n;
+				case Qt::Key_9:
+					++n;
+				case Qt::Key_8:
+					++n;
+				case Qt::Key_7:
+					++n;
+				case Qt::Key_6:
+					++n;
+				case Qt::Key_5:
+					++n;
+				case Qt::Key_4:
+					++n;
+				case Qt::Key_3:
+					++n;
+				case Qt::Key_2:
+					++n;
+				case Qt::Key_1:
+					window->media_tag(window->tag_preset[n]);
+					break;
+				
+				case Qt::Key_ParenRight:
+					++n;
+				case Qt::Key_ParenLeft:
+					++n;
+				case Qt::Key_Asterisk:
+					++n;
+				case Qt::Key_Ampersand:
+					++n;
+				case Qt::Key_AsciiCircum:
+					++n;
+				case Qt::Key_Percent:
+					++n;
+				case Qt::Key_Dollar:
+					++n;
+				case Qt::Key_sterling:
+					++n;
+				case Qt::Key_QuoteDbl:
+					++n;
+				case Qt::Key_Exclam:
+					window->media_tag_new_preset(n);
+					break;
                 
                 default: return QObject::eventFilter(obj, event);
             }
