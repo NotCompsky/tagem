@@ -23,6 +23,24 @@ CREATE TABLE file2 (
 );
 
 
+
+CREATE TABLE runtime_action (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	era BIGINT UNSIGNED NOT NULL,
+	method BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (era) REFERENCES era(id),
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE runtime_action_args (
+	action BIGINT UNSIGNED NOT NULL,
+	pos INT UNSIGNED NOT NULL, # Position of argument. Usually determines whether it itself is being modified, or modifying another variable.
+	var VARBINARY(128) NOT NULL, # Can be a raw number, or [A-Za-z_]+ denoting a variable.
+	FOREIGN KEY (action) REFERENCES runtime_action(id),
+	PRIMARY KEY (action, var)
+);
+
+
 CREATE TABLE tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(128),
@@ -69,6 +87,7 @@ CREATE TABLE method (
 INSERT IGNORE INTO method (name) VALUES ("next_subtitle");
 INSERT IGNORE INTO method (name) VALUES ("wipe_subtitle");
 INSERT IGNORE INTO method (name) VALUES ("skip");
+INSERT IGNORE INTO method (name) VALUES ("runtime_action");
 
 CREATE TABLE era (
 	# Defined by two 'framestamps' - analogous to timestamps

@@ -1146,6 +1146,78 @@ void MainWindow::skip(){
 #endif
 
 
+void MainWindow::runtime_action(){
+	compsky::mysql::query(
+		_mysql::obj,
+		RES1,
+		BUF,
+		"SELECT a.method, CONCAT(b.var) "
+		"FROM runtime_action a, runtime_action_args b "
+		"WHERE b.action=a.id "
+		  "AND a.era=", this->method_called_from_era.id, " "
+		"ORDER BY b.pos ASC"
+	);
+	uint64_t method;
+	char* _vars;
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &method, &_vars)){
+		char* const var_1 = _vars;
+		char* var_2;
+		
+		while(*_vars != 0){
+			if (*_vars == ','){
+				*_vars = 0;
+				var_2 = _vars + 1;
+				break;
+			}
+			++_vars;
+		}
+		
+		switch(runtime_method::vars::var2type[var_1]){
+			case runtime_method::vars::integer:
+				const int64_t n = (is_number(var_2)) ? my_atoi(var_2) : runtime_method::vars::integers[var_2];
+				switch(method){
+					case runtime_method::method::add:
+						runtime_method::vars::integers[var_1] += n;
+						break;
+					case runtime_method::method::assign:
+						runtime_method::vars::integers[var_1] = n;
+						break;
+					default:
+						throw std::runtime_error("Not implemented yet");
+				}
+			case runtime_method::vars::floating_point:
+				const double x = (is_number(var_2)) ? my_atof(var_2) : runtime_method::vars::floats[var_2];
+				switch(method){
+					case runtime_method::method::add:
+						runtime_method::vars::floats[var_1] += x;
+						break;
+					case runtime_method::method::assign:
+						runtime_method::vars::floats[var_1] = n;
+						break;
+					default:
+						throw std::runtime_error("Not implemented yet");
+				}
+			case runtime_method::vars::string:
+				switch(method){
+					case runtime_method::method::add:
+						runtime_method::vars::strings[var_1] += var_2;
+						break;
+					case runtime_method::method::assign:
+						runtime_method::vars::strings[var_1] = var_2;
+						break;
+					default:
+						throw std::runtime_error("Not implemented yet");
+				}
+			default:
+				throw std::runtime_error("Not implemented yet");
+		};
+	}
+}
+
+
+
+
+
 #ifdef VID
 void MainWindow::jump(const qint64 n){
 	this->m_player->seek(qint64(this->get_framestamp() + n));
