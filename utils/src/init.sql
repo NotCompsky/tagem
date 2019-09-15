@@ -76,10 +76,11 @@ CREATE TABLE method (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
-INSERT IGNORE INTO method (name) VALUES ("next_subtitle");
-INSERT IGNORE INTO method (name) VALUES ("wipe_subtitle");
-INSERT IGNORE INTO method (name) VALUES ("skip");
-INSERT IGNORE INTO method (name) VALUES ("python_script");
+INSERT IGNORE INTO method (name) VALUES
+("next_subtitle"),
+("wipe_subtitle"),
+("skip"),
+("python_script");
 
 CREATE TABLE era (
 	# Defined by two 'framestamps' - analogous to timestamps
