@@ -24,6 +24,7 @@ class EraManager : public QDialog {
 	void del_era(); // SLOT
 	void change_start_method_name(int indx); // SLOT
 	void change_end_method_name(int indx); // SLOT
+	void edit_python_script(); // SLOT
 	QObject* reverse_lookup(Era* const era_p);
 	MainWindow* const win;
 	QGridLayout* l;

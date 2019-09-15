@@ -1,3 +1,7 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+// WARNING: Must be included before any Qt includes, because Qt is greedy and slots is a macro name.
+
 #include "mainwindow.hpp"
 #include "file2.hpp"
 #include <compsky/mysql/query.hpp>
@@ -36,6 +40,8 @@ std::map<uint64_t, QString> tag_id2name;
 
 
 int main(const int argc,  const char** argv){
+	Py_Initialize();
+	
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
 	file2::initialise();
@@ -98,5 +104,6 @@ int main(const int argc,  const char** argv){
     
     int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	Py_Finalize(); // Frees
     return rc;
 }

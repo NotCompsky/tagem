@@ -3,11 +3,16 @@
 #include "../mainwindow.hpp"
 #include <compsky/mysql/query.hpp>
 #include <QComboBox>
+#include <QInputDialog>
 #include <QPushButton>
 
 
 namespace _mysql {
 	extern MYSQL* obj;
+}
+
+namespace _f {
+	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
 extern char BUF[];
@@ -89,10 +94,17 @@ void EraManager::add_era(Era* const era_p){
 	}
 	
 	{
+		QPushButton* _btn = new QPushButton("Python");
+		connect(_btn, &QPushButton::clicked, this, &EraManager::edit_python_script);
+		this->qobj2era.try_emplace(_btn, era_p);
+		this->l->addWidget(_btn, this->row, 6);
+	}
+	
+	{
 		QPushButton* _btn = new QPushButton("-");
 		connect(_btn, &QPushButton::clicked, this, &EraManager::del_era);
 		this->qobj2era.try_emplace(_btn, era_p);
-		this->l->addWidget(_btn, this->row, 6);
+		this->l->addWidget(_btn, this->row, 7);
 	}
 	
 	++this->row;
@@ -148,4 +160,31 @@ void EraManager::change_end_method_name(int indx){
 		BUF,
 		"UPDATE era SET end_method_id=", indx, " WHERE id=", era_p->id
 	);
+}
+
+void EraManager::edit_python_script(){
+	Era* era_p = this->qobj2era[sender()];
+	compsky::mysql::query(
+		_mysql::obj,
+		RES1,
+		BUF,
+		"SELECT python "
+		"FROM era2python "
+		"WHERE era=", era_p->id
+	);
+	const char* prev_s = nullptr;
+	while(compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &prev_s));
+	bool ok;
+	const QString s = QInputDialog::getMultiLineText(this, "Python Script", "Python Script", prev_s, &ok);
+	if (ok){
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"INSERT INTO era2python (era,python) VALUES(",
+				era_p->id, ",\"", _f::esc, '"', s, "\""
+			") "
+			"ON DUPLICATE KEY UPDATE python=VALUES(python)"
+		);
+	}
+	mysql_free_result(RES1);
 }

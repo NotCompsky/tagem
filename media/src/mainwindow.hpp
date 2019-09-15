@@ -203,6 +203,9 @@ class MainWindow : public QWidget{
 	MYSQL_ROW subtitle_row;
 # endif
 public Q_SLOTS:
+# ifdef PYTHON
+	void python_script();
+# endif
 #ifdef SUBTITLES
 	void next_subtitle();
 	void wipe_subtitle();

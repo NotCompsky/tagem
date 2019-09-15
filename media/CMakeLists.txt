@@ -73,7 +73,14 @@ foreach(file_type ${MY_TARGETS})
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
     endforeach(dfn)
+	if(NOT "${PYTHON_DIR} " STREQUAL " ")
+		target_include_directories("${tgt}" PRIVATE "${PYTHON_DIR}")
+		target_link_libraries("${tgt}" "${PYTHON}")
+		target_compile_definitions("${tgt}" PRIVATE PYTHON)
+	endif()
 endforeach(file_type)
+
+
 
 
 # The only difference between these three targets
