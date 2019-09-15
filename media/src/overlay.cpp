@@ -44,7 +44,10 @@ void Overlay::paintEvent(QPaintEvent* e){
 
 	const int w = this->win->sizey_obj().width();
 	const int h = this->win->sizey_obj().height();
+
+# ifdef VID
 	const double duration = this->win->m_player->duration();
+# endif
 
 # ifdef ERA
 	pen.setStyle(Qt::SolidLine); // https://doc.qt.io/qt-5/qt.html#PenStyle-enum

@@ -321,8 +321,9 @@ void MainWindow::parse_mediaStatusChanged(int status){
 #endif
 
 void MainWindow::media_next(){
+# ifdef SUBTITLES
 	this->wipe_subtitle();
-	
+# endif
 	// TODO: Implement in inlist_filter_dialog
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
 	
