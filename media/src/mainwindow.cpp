@@ -1090,6 +1090,7 @@ char* next_of(const char c,  char* itr){
 
 
 // Q_SLOTS
+#ifdef ERA
 
 #ifdef SUBTITLES
 void MainWindow::next_subtitle(){
@@ -1134,11 +1135,10 @@ void MainWindow::next_subtitle(){
 void MainWindow::wipe_subtitle(){
 	this->textbox->hide();
 }
-#endif
+#endif // #ifdef SUBTITLES
 
 
 
-#ifdef ERA
 void MainWindow::skip(){
 	const uint64_t end = this->method_called_from_era.end;
 	if (end > this->get_framestamp()){
@@ -1147,7 +1147,7 @@ void MainWindow::skip(){
 # endif
 	}
 }
-#endif
+
 
 
 #ifdef PYTHON
@@ -1165,8 +1165,9 @@ void MainWindow::python_script(){
 		PyRun_SimpleString(python);
 	}
 }
-#endif
+#endif // #ifdef PYTHON
 
+#endif // #ifdef ERA
 
 
 
@@ -1174,4 +1175,4 @@ void MainWindow::python_script(){
 void MainWindow::jump(const qint64 n){
 	this->m_player->seek(qint64(this->get_framestamp() + n));
 }
-#endif
+#endif // #ifdef VID

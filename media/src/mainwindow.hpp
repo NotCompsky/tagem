@@ -55,7 +55,9 @@ void scale(QRect& rect,  T scale){
 
 
 class MainWindow : public QWidget{
+# ifdef ERA
 	Q_OBJECT
+# endif
  public:
     ~MainWindow();
     explicit MainWindow(QWidget *parent = 0);
@@ -202,17 +204,18 @@ class MainWindow : public QWidget{
 	MYSQL_RES* subtitle_res;
 	MYSQL_ROW subtitle_row;
 # endif
-public Q_SLOTS:
-# ifdef PYTHON
-	void python_script();
-# endif
-#ifdef SUBTITLES
+
+# ifdef ERA
+  public Q_SLOTS:
+#  ifdef SUBTITLES
 	void next_subtitle();
 	void wipe_subtitle();
-#endif
-#ifdef ERA
+#  endif
 	void skip();
-#endif
+#  ifdef PYTHON
+	void python_script();
+#  endif
+# endif
 };
 
 
