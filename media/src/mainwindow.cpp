@@ -1135,3 +1135,10 @@ void MainWindow::skip(){
 	}
 }
 #endif
+
+
+#ifdef VID
+void MainWindow::jump(const qint64 n){
+	this->m_player->seek(qint64(this->get_framestamp() + n));
+}
+#endif

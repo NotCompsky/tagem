@@ -91,6 +91,7 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 			const bool is_shift_key_down = (key->modifiers() & Qt::ShiftModifier);
 			// For some keys, presumably depending on keyboard layout, the shift key is already accounted for.
 			unsigned int n = 1;
+			int sign = 1;
             switch(int keyval = key->key()){
                 case Qt::Key_Enter:
                 case Qt::Key_Return:
@@ -235,6 +236,14 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 					++n;
 				case Qt::Key_Exclam:
 					window->media_tag_new_preset(n);
+					break;
+				
+				case Qt::Key_Left:
+					sign = -1;
+				case Qt::Key_Right:
+				  #ifdef VID
+					window->jump(sign * 1000);
+				  #endif
 					break;
                 
                 default: return QObject::eventFilter(obj, event);
