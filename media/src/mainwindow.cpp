@@ -321,6 +321,13 @@ void MainWindow::parse_mediaStatusChanged(int status){
 #endif
 
 void MainWindow::media_next(){
+# ifdef TXT
+	if (this->is_file_modified){
+		const int _rc = QMessageBox::question(this,  "Unsaved Changes",  "Save changes?",  QMessageBox::Yes | QMessageBox::No);
+		if (_rc == QMessageBox::Yes)
+			this->media_save();
+	}
+# endif
 # ifdef SUBTITLES
 	this->wipe_subtitle();
 # endif
@@ -889,6 +896,8 @@ void MainWindow::media_save(){
     out << this->main_widget->document()->toPlainText();
     out.flush();
     file.close();
+	
+	QMessageBox::information(this,  "Saved",  "Saved");
     
     this->is_file_modified = false;
 }
