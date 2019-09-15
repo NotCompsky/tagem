@@ -664,7 +664,11 @@ void MainWindow::updateSliderUnit()
     m_unit = m_player->notifyInterval();
 	this->updateSlider(m_player->position());
 }
-#endif
+
+void MainWindow::jump(const qint64 n){
+	this->m_player->seek(qint64(this->get_framestamp() + n));
+}
+#endif // #ifdef VID
 
 
 void MainWindow::assign_value(){
@@ -1168,11 +1172,3 @@ void MainWindow::python_script(){
 #endif // #ifdef PYTHON
 
 #endif // #ifdef ERA
-
-
-
-#ifdef VID
-void MainWindow::jump(const qint64 n){
-	this->m_player->seek(qint64(this->get_framestamp() + n));
-}
-#endif // #ifdef VID
