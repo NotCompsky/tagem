@@ -5,13 +5,9 @@
 #include <compsky/mysql/mysql.h>
 #include <QDialog>
 #include <QGridLayout>
-#include <vector>
 
 
 class MainWindow;
-class QComboBox;
-class QLabel;
-class QPushButton;
 
 
 class EraManager : public QDialog {
