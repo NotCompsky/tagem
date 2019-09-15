@@ -38,6 +38,8 @@ namespace file2 {
 	};
 
 	void initialise();
+	void create_table(const QString& var_name,  const unsigned int int_field_indx,  const int64_t min,  const int64_t max,  const unsigned int _conversion);
+	void create_table_stringlookup(const QString& var_name,  const unsigned int int_field_indx,  const int _indx,  const int col_sz);
 	MinMaxCnv choose(QString& var_name);
 
 } // namespace file2

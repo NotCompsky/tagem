@@ -46,6 +46,10 @@ namespace file2 {
 		"TINYINT",
 		"BOOLEAN"
 	};
+	static const QStringList str_data_types = {
+		"VARBINARY",
+		"VARCHAR"
+	};
 
 
 	void initialise(){
@@ -75,6 +79,48 @@ namespace file2 {
 		if (max > int_field_diff  &&  -min > int_field_diff)
 			return false;
 		return true;
+	}
+	
+	void create_table(const QString& var_name,  const unsigned int int_field_indx,  const int64_t min,  const int64_t max,  const unsigned int _conversion){
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"CREATE TABLE file2", var_name, "("
+				"file_id BIGINT UNSIGNED NOT NULL,"
+				"x ", int_fields[int_field_indx], " NOT NULL,"
+				"PRIMARY KEY (file_id)"
+			")"
+		);
+		
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"INSERT INTO file2 (min, max, conversion, name) VALUES (",
+			min,
+			",",
+			max,
+			',',
+			_conversion,
+			",\"",
+			var_name,
+			"\")"
+		);
+		
+		names << var_name;
+		delete names_completer;
+		names_completer = new QCompleter(names);
+	}
+	
+	void create_table_stringlookup(const QString& var_name,  const unsigned int int_field_indx,  const int _indx,  const int col_sz){
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"CREATE TABLE file2_", var_name, "("
+				"x ", int_fields[int_field_indx], " NOT NULL AUTO_INCREMENT,"
+				"s ", str_data_types[_indx], "(", col_sz, "),"
+				"PRIMARY KEY (x)"
+			")"
+		);
 	}
 
 	const MinMaxCnv zeros(0, 0, 0);
@@ -186,11 +232,7 @@ namespace file2 {
 					const int col_sz = QInputDialog::getInt(nullptr, "String Length", "Maximum", 0, 1, 60000, 1, &ok);
 					if (!ok)
 						return zeros;
-						
-					static const QStringList str_data_types = {
-						"VARBINARY",
-						"VARCHAR"
-					};
+					
 					DropdownDialog* _dialog = new DropdownDialog("Data Type", str_data_types);
 					const auto _rc = _dialog->exec();
 					const int _indx = _dialog->combo_box->currentIndex();
@@ -198,15 +240,7 @@ namespace file2 {
 					if (_rc != QDialog::Accepted)
 						return zeros;
 					
-					compsky::mysql::exec(
-						_mysql::obj,
-						BUF,
-						"CREATE TABLE file2_", var_name, "("
-							"x ", int_fields[int_field_indx], " NOT NULL AUTO_INCREMENT,"
-							"s ", str_data_types[_indx], "(", col_sz, "),"
-							"PRIMARY KEY (x)"
-						")"
-					);
+					create_table_stringlookup(var_name, int_field_indx, _indx, col_sz);
 					break;
 				}
 				default:
@@ -214,33 +248,7 @@ namespace file2 {
 					break;
 			};
 			
-			compsky::mysql::exec(
-				_mysql::obj,
-				BUF,
-				"CREATE TABLE file2", var_name, "("
-					"file_id BIGINT UNSIGNED NOT NULL,"
-					"x ", int_fields[int_field_indx], " NOT NULL,"
-					"PRIMARY KEY (file_id)"
-				")"
-			);
-			
-			compsky::mysql::exec(
-				_mysql::obj,
-				BUF,
-				"INSERT INTO file2 (min, max, conversion, name) VALUES (",
-				min,
-				",",
-				max,
-				',',
-				_conversion,
-				",\"",
-				var_name,
-				"\")"
-			);
-			
-			names << var_name;
-			delete names_completer;
-			names_completer = new QCompleter(names);
+			create_table(var_name, int_field_indx, min, max, _conversion);
 			
 			return name2mmc.at(var_name);;
 		}

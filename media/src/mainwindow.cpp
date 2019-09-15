@@ -190,7 +190,6 @@ MainWindow::MainWindow(QWidget *parent)
     this->main_widget->setReadOnly(true);
     
     this->connect(this->main_widget, &QPlainTextEdit::textChanged, this, &MainWindow::file_modified, Qt::UniqueConnection);
-    this->is_file_modified = false;
    #ifdef IMG
     #error "IMG and TXT are mutually exclusive"
    #endif
@@ -540,6 +539,8 @@ void MainWindow::media_open(){
 
     // Scroll to top
     this->main_widget->scroll(0, 0);
+	
+	this->is_file_modified = false;
   #elif (defined IMG)
     QImageReader imgreader(file);
     imgreader.setAutoTransform(true);
@@ -624,8 +625,8 @@ void MainWindow::media_open(){
 			);
 			this->exhausted_subtitle = false;
 		} catch(compsky::mysql::except::SQLExec& e){
-			qDebug() << "Cannot execute SQL: " << e.what();
-			qDebug() << "Ensure that the file2Subtitle and file2_Subtitle tables exist. If not, create them by assigning a subtitle as a string value to a file.";
+			file2::create_table("Subtitle", 0, 0, 0, file2::conversion::multiline_string);
+			file2::create_table_stringlookup("Subtitle", 0, 1, 60000);
 		}
 	}
 #endif
@@ -896,8 +897,6 @@ void MainWindow::media_save(){
     out << this->main_widget->document()->toPlainText();
     out.flush();
     file.close();
-	
-	QMessageBox::information(this,  "Saved",  "Saved");
     
     this->is_file_modified = false;
 }
