@@ -1160,9 +1160,9 @@ void MainWindow::python_script(){
 		_mysql::obj,
 		RES1,
 		BUF,
-		"SELECT python "
-		"FROM era2python "
-		"WHERE era=", this->method_called_from_era.id
+		"SELECT s "
+		"FROM era "
+		"WHERE id=", this->method_called_from_era.id
 	);
 	const char* python;
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &python)){

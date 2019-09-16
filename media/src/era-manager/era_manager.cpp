@@ -1,6 +1,7 @@
 #include "era_manager.hpp"
 #include "../overlay.hpp"
 #include "../mainwindow.hpp"
+#include "../menu.hpp"
 #include <compsky/mysql/query.hpp>
 #include <QComboBox>
 #include <QInputDialog>
@@ -168,11 +169,11 @@ void EraManager::edit_python_script(){
 		_mysql::obj,
 		RES1,
 		BUF,
-		"SELECT python "
-		"FROM era2python "
-		"WHERE era=", era_p->id
+		"SELECT s "
+		"FROM era "
+		"WHERE id=", era_p->id
 	);
-	const char* prev_s = nullptr;
+	const char* prev_s;
 	while(compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &prev_s));
 	bool ok;
 	const QString s = QInputDialog::getMultiLineText(this, "Python Script", "Python Script", prev_s, &ok);
@@ -180,10 +181,10 @@ void EraManager::edit_python_script(){
 		compsky::mysql::exec(
 			_mysql::obj,
 			BUF,
-			"INSERT INTO era2python (era,python) VALUES(",
-				era_p->id, ",\"", _f::esc, '"', s, "\""
-			") "
-			"ON DUPLICATE KEY UPDATE python=VALUES(python)"
+			"UPDATE era "
+			"SET s=\"",
+				_f::esc, '"', s,
+			"\" WHERE id=", era_p->id
 		);
 	}
 	mysql_free_result(RES1);
