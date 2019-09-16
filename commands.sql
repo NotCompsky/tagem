@@ -42,6 +42,34 @@ HAVING COUNT(_r1.node=r2t.tag_id) != 0
 
 # Useful commands
 
+
+
+
+# View the mean score of each tag
+SELECT t.name, COUNT(f2s.x), SUM(f2s.x) / COUNT(f2s.x) AS `n`
+FROM tag t, file2tag f2t, file2Score f2s
+WHERE t.id=f2t.tag_id
+  AND f2t.file_id=f2s.file_id
+GROUP BY t.id
+ORDER BY n DESC
+;
+
+# View the mean score of each tag, including its descendants
+CALL descendant_tags_id_rooted();
+SELECT t.name, COUNT(f2s.x), SUM(f2s.x) / COUNT(f2s.x) AS `n`
+FROM tag t, root2tag r2t, file2tag f2t, file2Score f2s
+WHERE t.id=r2t.node
+  AND r2t.root=f2t.tag_id
+  AND f2t.file_id=f2s.file_id
+GROUP BY t.id
+ORDER BY n DESC
+;
+
+
+
+
+
+
 # Insert new relationtag2tag using names in place of IDs
 
 INSERT INTO relationtag2tag
