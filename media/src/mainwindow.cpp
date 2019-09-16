@@ -242,7 +242,9 @@ MainWindow::MainWindow(QWidget *parent)
 	compsky::mysql::query_buffer(
 		_mysql::obj,
 		RES1,
-		"SELECT name FROM method"
+		"SELECT name "
+		"FROM method "
+		"ORDER BY id ASC"
 	);
 	const char* _method_name;
 	this->qmethod_names << "NONE";
