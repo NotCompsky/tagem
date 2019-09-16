@@ -15,6 +15,8 @@ namespace _mysql {
 	extern MYSQL* obj;
 }
 
+constexpr static const compsky::asciify::flag::Escape f_esc;
+
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
 extern char BUF[];
@@ -42,7 +44,9 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	const char* _file_path;
 	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT name FROM file WHERE id=", this->file_id);
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_file_path)){
-		l->addWidget(new QLineEdit(_file_path));
+		QLineEdit* _file_path_line_edit = new QLineEdit(_file_path);
+		connect(_file_path_line_edit, &QLineEdit::editingFinished, this, &InfoDialog::update_file_path);
+		l->addWidget(_file_path_line_edit);
 	}
 	
 	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT t.id, t.name FROM file2tag f2t, tag t WHERE t.id=f2t.tag_id AND f2t.file_id=", this->file_id);
@@ -56,4 +60,21 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 		
 		l->addLayout(hbox);
 	}
+}
+
+void InfoDialog::update_file_path(){
+	const QString s = static_cast<QLineEdit*>(sender())->text();
+	
+	if (s.isEmpty())
+		return;
+	
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"UPDATE file "
+		"SET name=\"",
+			f_esc, '"', s,
+		"\" "
+		"WHERE id=", this->file_id
+	);
 }

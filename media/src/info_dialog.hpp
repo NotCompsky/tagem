@@ -10,6 +10,7 @@ class InfoDialog : public QDialog {
 	InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* parent = nullptr);
 	uint64_t file_id;
   private:
+	void update_file_path(); // SLOT
 	void unlink_tag();
 };
 
