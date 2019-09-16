@@ -211,6 +211,9 @@ class MainWindow : public QWidget{
 	void next_subtitle();
 	void wipe_subtitle();
 #  endif
+#  ifdef MENUS
+	void menu();
+#  endif
 	void skip();
 #  ifdef PYTHON
 	void python_script();

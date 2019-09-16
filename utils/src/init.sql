@@ -70,6 +70,7 @@ INSERT IGNORE INTO method (name) VALUES
 ("next_subtitle"),
 ("wipe_subtitle"),
 ("skip"),
+("menu"),
 ("python_script");
 
 CREATE TABLE era (

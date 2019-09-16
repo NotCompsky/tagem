@@ -2,6 +2,7 @@
 #include <Python.h>
 // WARNING: Must be included before any Qt includes, because Qt is greedy and slots is a macro name.
 
+#include "menu.hpp"
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
 #include "add_new_tag.hpp"
@@ -1142,6 +1143,68 @@ void MainWindow::wipe_subtitle(){
 	this->textbox->hide();
 }
 #endif // #ifdef SUBTITLES
+
+
+#ifdef MENUS
+void MainWindow::menu(){
+	/*
+	 * The Python script is evaluated in full.
+	 * The menu opens with options as defined as strings in the list variable 'menu_options'.
+	 * All after a line containing "# MENU" is executed AFTER the menu has been selected, with the index set as the global variable 'n'.
+	 */
+	compsky::mysql::query(
+		_mysql::obj,
+		RES2, // Avoids clash with MainWindow::python_script. // WARNING: Both can still clash with themselves.
+		BUF,
+		"SELECT s "
+		"FROM era "
+		"WHERE id=", this->method_called_from_era.id
+	);
+	char* python;
+	if(compsky::mysql::assign_next_row(RES2, &ROW2, &python));
+	
+	char* const python_pre_menu = python;
+	while(
+		python[0] != 0  &&  (
+			    python[0] != '\n'
+			||  python[1] != '#'
+			||  python[2] != ' '
+			||  python[3] != 'M'
+			||  python[4] != 'E'
+			||  python[5] != 'N'
+			||  python[6] != 'U'
+			||  python[7] != '\n'
+		)
+	)
+		++python;
+	
+	char* python_post_menu = python;
+	if (*python_post_menu != 0){
+		// i.e. == '\n'
+		*python_post_menu = 0;
+		python_post_menu += 8;
+	}
+	
+	PyRun_SimpleString(python_pre_menu);
+	
+	Menu* menu = new Menu;
+	int indx = menu->exec();
+	delete menu;
+	
+	/* Write indx as 'n = <VALUE>' */
+	*(--python_post_menu) = '\n';
+	do {
+		*(--python_post_menu) = '0' + (indx % 10);
+		indx /= 10;
+	} while(indx != 0);
+	*(--python_post_menu) = '=';
+	*(--python_post_menu) = 'n';
+	
+	PyRun_SimpleString(python_post_menu);
+	
+	mysql_free_result(RES2);
+}
+#endif // #ifdef MENUS
 
 
 
