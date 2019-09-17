@@ -1,6 +1,7 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#ifdef PYTHON
+# include <Python.h>
 // WARNING: Must be included before any Qt includes, because Qt is greedy and slots is a macro name.
+#endif
 
 #include "menu.hpp"
 #include "mainwindow.hpp"

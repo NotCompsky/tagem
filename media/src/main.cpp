@@ -1,6 +1,7 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#ifdef PYTHON
+# include <Python.h>
 // WARNING: Must be included before any Qt includes, because Qt is greedy and slots is a macro name.
+#endif
 
 #include "mainwindow.hpp"
 #include "file2.hpp"
@@ -40,8 +41,10 @@ std::map<uint64_t, QString> tag_id2name;
 
 
 int main(const int argc,  const char** argv){
+# ifdef PYTHON
 	Py_SetProgramName(L"tagem");
 	Py_Initialize();
+# endif
 	
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
@@ -116,6 +119,8 @@ int main(const int argc,  const char** argv){
     
     int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+# ifdef PYTHON
 	Py_Finalize(); // Frees
+# endif
     return rc;
 }
