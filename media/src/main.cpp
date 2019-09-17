@@ -56,22 +56,21 @@ PyObject* pymodule_tagem_jump_to_file(PyObject* self,  PyObject* args){
 }
 
 static
-PyObject* pymodule_tagem_jump_to_file_at_era(PyObject* self,  PyObject* args){
-	uint64_t file_id;
+PyObject* pymodule_tagem_jump_to_era(PyObject* self,  PyObject* args){
 	uint64_t  era_id;
 	
-	if (!PyArg_ParseTuple(args, "KK", &file_id, &era_id))
+	if (!PyArg_ParseTuple(args, "K", &era_id))
 		return nullptr;
 	
-	player_ptr->jump_to_file_at_era(file_id, era_id);
+	player_ptr->jump_to_era(era_id);
 	
 	Py_RETURN_NONE;
 }
 
 static
 PyMethodDef pymodule_tagem_methods[] = {
-	{"jump_to_file",        (PyCFunction)pymodule_tagem_jump_to_file,        METH_VARARGS, "Description."},
-	{"jump_to_file_at_era", (PyCFunction)pymodule_tagem_jump_to_file_at_era, METH_VARARGS, "Description."},
+	{"jump_to_file", (PyCFunction)pymodule_tagem_jump_to_file, METH_VARARGS, "Description."},
+	{"jump_to_era",  (PyCFunction)pymodule_tagem_jump_to_era,  METH_VARARGS, "Description."},
 	{nullptr, nullptr, 0, nullptr}
 };
 

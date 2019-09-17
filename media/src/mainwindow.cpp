@@ -1285,18 +1285,17 @@ void MainWindow::jump_to_file(const uint64_t file_id){
 	this->media_open();
 }
 
-void MainWindow::jump_to_file_at_era(const uint64_t file_id,  const uint64_t era_id){
+void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	char buf[std::char_traits<char>::length("SELECT f.name, e.start FROM file f, era e WHERE e.file_id=f.id AND f.id= AND e.id=") + 19 + 19 + 1];
+	char buf[std::char_traits<char>::length("SELECT f.name, e.start FROM file f, era e WHERE f.id=e.file_id AND e.id=") + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
 		res,
 		buf,
 		"SELECT f.name, e.start "
 		"FROM file f, era e "
-		"WHERE e.file_id=f.id "
-		  "AND f.id=", file_id, " "
+		"WHERE f.id=e.file_id "
 		  "AND e.id=", era_id
 	);
 	const char* _fp;
