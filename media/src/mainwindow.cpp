@@ -1177,6 +1177,7 @@ void MainWindow::menu(){
 	 * The menu opens with options as defined as strings in the list variable 'menu_options'.
 	 * All after a line containing "# MENU" is executed AFTER the menu has been selected, with the index set as the global variable 'n'.
 	 */
+	this->m_player->pause(true);
 	compsky::mysql::query(
 		_mysql::obj,
 		RES2, // Avoids clash with MainWindow::python_script. // WARNING: Both can still clash with themselves.
@@ -1228,6 +1229,8 @@ void MainWindow::menu(){
 	PyRun_SimpleString(python_post_menu);
 	
 	mysql_free_result(RES2);
+	
+	this->m_player->pause(false);
 }
 #endif // #ifdef MENUS
 
