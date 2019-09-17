@@ -1246,18 +1246,66 @@ void MainWindow::skip(){
 
 #ifdef PYTHON
 void MainWindow::python_script(){
+	MYSQL_RES* res;
+	MYSQL_ROW row;
 	compsky::mysql::query(
 		_mysql::obj,
-		RES1,
+		res,
 		BUF,
 		"SELECT s "
 		"FROM era "
 		"WHERE id=", this->method_called_from_era.id
 	);
 	const char* python;
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &python)){
+	while(compsky::mysql::assign_next_row(res, &row, &python)){
 		PyRun_SimpleString(python);
 	}
+}
+
+void MainWindow::jump_to_file(const uint64_t file_id){
+	MYSQL_RES* res;
+	MYSQL_ROW row;
+	char buf[std::char_traits<char>::length("SELECT name FROM file WHERE id=") + 19 + 1];
+	compsky::mysql::query(
+		_mysql::obj,
+		res,
+		buf,
+		"SELECT name "
+		"FROM file "
+		"WHERE id=", file_id
+	);
+	const char* _fp;
+	while(compsky::mysql::assign_next_row(res, &row, &_fp)){
+		memcpy(this->media_fp, _fp, strlen(_fp));
+	}
+	this->set_media_dir_len();
+	this->media_open();
+}
+
+void MainWindow::jump_to_file_at_era(const uint64_t file_id,  const uint64_t era_id){
+	MYSQL_RES* res;
+	MYSQL_ROW row;
+	char buf[std::char_traits<char>::length("SELECT f.name, e.start FROM file f, era e WHERE e.file_id=f.id AND f.id= AND e.id=") + 19 + 19 + 1];
+	compsky::mysql::query(
+		_mysql::obj,
+		res,
+		buf,
+		"SELECT f.name, e.start "
+		"FROM file f, era e "
+		"WHERE e.file_id=f.id "
+		  "AND f.id=", file_id, " "
+		  "AND e.id=", era_id
+	);
+	const char* _fp;
+	uint64_t _position;
+	while(compsky::mysql::assign_next_row(res, &row, &_fp, &_position)){
+		memcpy(this->media_fp, _fp, strlen(_fp));
+	}
+	this->set_media_dir_len();
+	this->media_open();
+# ifdef VID
+	this->m_player->seek(qint64(_position));
+# endif
 }
 #endif // #ifdef PYTHON
 

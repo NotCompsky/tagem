@@ -218,6 +218,8 @@ class MainWindow : public QWidget{
 	void skip();
 #  ifdef PYTHON
 	void python_script();
+	void jump_to_file(const uint64_t file_id);
+	void jump_to_file_at_era(const uint64_t file_id,  const uint64_t era_id);
 #  endif
 # endif
 };

@@ -40,9 +40,68 @@ QStringList tagslist;
 std::map<uint64_t, QString> tag_id2name;
 
 
+MainWindow* player_ptr;
+
+
+static
+PyObject* pymodule_tagem_jump_to_file(PyObject* self,  PyObject* args){
+	uint64_t file_id;
+	
+	if (!PyArg_ParseTuple(args, "K", &file_id))
+		return nullptr;
+	
+	player_ptr->jump_to_file(file_id);
+	
+	Py_RETURN_NONE;
+}
+
+static
+PyObject* pymodule_tagem_jump_to_file_at_era(PyObject* self,  PyObject* args){
+	uint64_t file_id;
+	uint64_t  era_id;
+	
+	if (!PyArg_ParseTuple(args, "KK", &file_id, &era_id))
+		return nullptr;
+	
+	player_ptr->jump_to_file_at_era(file_id, era_id);
+	
+	Py_RETURN_NONE;
+}
+
+static
+PyMethodDef pymodule_tagem_methods[] = {
+	{"jump_to_file",        (PyCFunction)pymodule_tagem_jump_to_file,        METH_VARARGS, "Description."},
+	{"jump_to_file_at_era", (PyCFunction)pymodule_tagem_jump_to_file_at_era, METH_VARARGS, "Description."},
+	{nullptr, nullptr, 0, nullptr}
+};
+
+struct module_state {
+	PyObject *error;
+};
+
+static
+struct PyModuleDef pymodule_tagem = {
+	PyModuleDef_HEAD_INIT,
+	"tagem",
+	nullptr,
+	sizeof(struct module_state),
+	pymodule_tagem_methods,
+	nullptr,
+	0,
+	0,
+	nullptr
+};
+
+static
+PyObject* PyInit_tagem(){
+	return PyModule_Create(&pymodule_tagem);
+}
+
+
 int main(const int argc,  const char** argv){
 # ifdef PYTHON
 	Py_SetProgramName(L"tagem");
+	PyImport_AppendInittab("tagem", &PyInit_tagem);
 	Py_Initialize();
 # endif
 	
@@ -55,6 +114,7 @@ int main(const int argc,  const char** argv){
 # endif
 	QApplication app(dummy_argc, dummy_argv);
 	MainWindow player;
+	player_ptr = &player;
 	
 	bool show_gui = true;
 	double volume = 1.0;
