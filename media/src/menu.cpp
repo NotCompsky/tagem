@@ -8,10 +8,7 @@
 Menu::Menu()
 {
 	PyObject* __main__ = PyImport_AddModule("__main__");
-	PyObject* globals = PyModule_GetDict(__main__);
-	if (!globals)
-		qDebug() << "globals == NULL";
-	PyObject* options = PyDict_GetItemString(globals, "menu_options");
+	PyObject* options = PyObject_GetAttrString(__main__, "menu_options");
 	if (!options)
 		qDebug() << "options == NULL";
 	
@@ -22,16 +19,22 @@ Menu::Menu()
 	
 	for (auto i = 0;  i < n_options;  ++i){
 		PyObject* option_pystr = PyList_GetItem(options, i);
-		const char* const option = PyBytes_AsString(option_pystr);
+		
+		PyObject* option_pyutf8str = PyUnicode_AsUTF8String(option_pystr);
+		const char* const option = PyBytes_AsString(option_pyutf8str);
+		
 		QPushButton* btn = new QPushButton(option);
 		this->btns.push_back(btn);
 		connect(btn, &QPushButton::clicked, this, &Menu::option_chosen);
 		l->addWidget(btn);
+		
+		Py_DECREF(option_pyutf8str);
+		Py_DECREF(option_pystr);
 	}
 	
 	this->setLayout(l);
 	
-	Py_DECREF(__main__);
+	Py_DECREF(options);
 }
 
 
