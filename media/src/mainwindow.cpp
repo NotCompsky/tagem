@@ -127,6 +127,11 @@ MainWindow::~MainWindow(){
 MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
+	main_widget(nullptr),
+	main_widget_overlay(nullptr),
+#ifdef VID
+	m_vo(nullptr),
+#endif
 #ifdef AUDIO
 	volume(1.0),
 #endif
@@ -155,13 +160,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_unit = 1000;
     setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new QtAV::AVPlayer(this);
-    m_vo = new QtAV::VideoOutput(this);
-    this->main_widget = this->m_vo->widget();
-    if (!this->main_widget){
-        fprintf(stderr, "Cannot create QtAV renderer\n");
-        return;
-    }
-    m_player->setRenderer(m_vo);
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
     connect(m_slider,  &QSlider::sliderMoved,     this,  &MainWindow::seekBySlider);
@@ -204,6 +202,8 @@ MainWindow::MainWindow(QWidget *parent)
     this->main_widget->setBackgroundRole(QPalette::Base);
     this->main_widget->setScaledContents(true);
     this->main_widget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+	this->main_widget_overlay = new Overlay(this, this->main_widget);
+	this->main_widget_overlay->show();
   #endif
     
     
@@ -213,13 +213,11 @@ MainWindow::MainWindow(QWidget *parent)
     this->scrollArea->setWidget(this->main_widget);
     vl->addWidget(this->scrollArea);
   #else
-    vl->addWidget(this->main_widget);
+	if (this->main_widget != nullptr)
+		vl->addWidget(this->main_widget);
   #endif
     
   #if (defined BOXABLE  || defined ERA)
-    this->main_widget_overlay = new Overlay(this, this->main_widget);
-    this->main_widget_overlay->show();
-    
     this->box_widget = nullptr;
   #endif
   #ifdef VID
@@ -268,6 +266,21 @@ void MainWindow::set_volume(const double _volume){
 	
 	this->volume = _volume;
 	this->m_player->audio()->setVolume(this->volume);
+}
+#endif
+
+#ifdef VID
+void MainWindow::init_video_output(){
+	this->m_vo = new QtAV::VideoOutput(this);
+	this->main_widget = this->m_vo->widget();
+	this->main_widget_overlay = new Overlay(this, this->main_widget);
+	this->main_widget_overlay->show();
+	if (!this->main_widget){
+		fprintf(stderr, "Cannot create QtAV renderer\n");
+		return;
+	}
+	this->m_player->setRenderer(this->m_vo);
+	this->layout()->addWidget(this->main_widget);
 }
 #endif
 
@@ -412,13 +425,17 @@ void MainWindow::media_next(){
 }
 
 void MainWindow::init_file_from_db(){
-  #ifdef SCROLLABLE
-    const double W = this->main_widget_orig_size.width();
-    const double H = this->main_widget_orig_size.height();
-  #else
-    const double W = this->main_widget->size().width();
-    const double H = this->main_widget->size().height();
-  #endif
+	double W;
+	double H;
+	if (this->main_widget != nullptr){
+	  #ifdef SCROLLABLE
+		W = this->main_widget_orig_size.width();
+		H = this->main_widget_orig_size.height();
+	  #else
+		W = this->main_widget->size().width();
+		H = this->main_widget->size().height();
+	  #endif
+	}
   #ifdef BOXABLE
     compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM box WHERE file_id=", this->file_id);
     {
@@ -480,8 +497,10 @@ void MainWindow::init_file_from_db(){
             master->relations[slave] = ir;
         }
     }
-    this->main_widget_overlay->do_not_update_boxes = false;
-    this->main_widget_overlay->update();
+	if (this->main_widget_overlay != nullptr){
+		this->main_widget_overlay->do_not_update_boxes = false;
+		this->main_widget_overlay->update();
+	}
   #endif
 }
 
@@ -580,7 +599,8 @@ void MainWindow::media_open(){
     this->scale_factor = 1.0;
   #endif
   #ifdef BOXABLE
-    this->main_widget_overlay->setGeometry(this->main_widget->geometry());
+	if (this->main_widget != nullptr)
+		this->main_widget_overlay->setGeometry(this->main_widget->geometry());
   #endif
     
     if (this->file_id != 0)
@@ -613,7 +633,8 @@ void MainWindow::media_open(){
 	this->subtitle_line = nullptr;
 	this->exhausted_subtitle = true;
 	
-	this->main_widget_overlay->repaint();
+	if (this->main_widget_overlay != nullptr)
+		this->main_widget_overlay->repaint();
 	
 	/* Get Subtitles */
 	if (this->subtitle_res != nullptr)
@@ -968,6 +989,8 @@ void MainWindow::add_box_to_table(const uint64_t frame_n){
     double w  =  ((botR.x() / W)  /  this->scale_factor) - x;
     double h  =  ((botR.y() / H)  /  this->scale_factor) - y;
   #elif (defined BOXABLE)
+	if (this->m_vo == nullptr)
+		return;
     const QPoint p = this->m_vo->widget()->pos();
     const double W = this->sizey_obj().width();
     const double H = this->sizey_obj().height();
@@ -1000,7 +1023,8 @@ void MainWindow::create_era(){
 		}
 		this->era_start = 0;
 	}
-	this->main_widget_overlay->repaint();
+	if (this->main_widget_overlay != nullptr)
+		this->main_widget_overlay->repaint();
 }
 
 void MainWindow::display_eras(){
@@ -1048,7 +1072,7 @@ void MainWindow::clear_boxes(){
 }
 
 void MainWindow::start_relation_line(BoxWidget* iw){
-    if (this->relation_line_from == nullptr){
+    if (this->relation_line_from != nullptr){
         this->relation_line_from = iw;
         return;
     }

@@ -80,6 +80,7 @@ class MainWindow : public QWidget{
 	void set_volume(const double _volume);
 # endif
   #ifdef VID
+	void init_video_output();
 	void seekBySlider(int value); // SLOT
 	void playPause(); // SLOT
 	void jump(const qint64 n);

@@ -55,6 +55,9 @@ int main(const int argc,  const char** argv){
 	
 	bool show_gui = true;
 	double volume = 1.0;
+# ifdef VID
+	bool display_video = true;
+# endif
 	while((*(++argv)) != 0){
 		const char* const arg = *argv;
 		
@@ -71,6 +74,9 @@ int main(const int argc,  const char** argv){
 				// tmp - common flags such as "-v" and "-q" are misleading
 				player.set_volume(atof(*(++argv)));
 				break;
+			case 'V':
+				display_video = false;
+				break;
 		  #endif
 			case 's':
 				show_gui = false;
@@ -80,6 +86,11 @@ int main(const int argc,  const char** argv){
 		}
 	}
 	after_opts_parsed:
+
+# ifdef VID
+	if (display_video)
+		player.init_video_output();
+# endif
 	
 	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
 	{
