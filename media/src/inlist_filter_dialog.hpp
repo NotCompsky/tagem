@@ -15,11 +15,18 @@
 #include <QRegularExpression>
 
 
+namespace _mysql {
+	extern MYSQL* obj;
+}
+
+extern char BUF[];
+
+
 class InlistFilterDialog : public QDialog {
   public:
 	InlistFilterDialog(QWidget* parent = nullptr);
 	
-	InlistFilterRules rules;
+	InlistFilterRules rules{_mysql::obj, BUF};
 	
 	MYSQL_RES* files_from_sql__res;
 	MYSQL_ROW files_from_sql__row;

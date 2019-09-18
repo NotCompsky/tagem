@@ -513,18 +513,17 @@ void MainWindow::media_open(){
   #ifdef BOXABLE
     this->clear_boxes();
   #endif
+	
+	const InlistFilterRules r = this->inlist_filter_dialog->rules;
+	
+	if (r.reject_name(this->get_media_fp()))
+		return this->media_next();
     
     this->file_id = is_file_in_db(this->get_media_fp());
-	const InlistFilterRules r = this->inlist_filter_dialog->rules;
 	
     if (r.skip_tagged  &&  this->file_id){
 		PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
 		return this->media_next();
-	}
-	if (!r.filename_regexp.pattern().isEmpty()){
-		const QRegularExpressionMatch m = r.filename_regexp.match(this->get_media_fp());
-		if (m.captured().isEmpty())
-			return this->media_next();
 	}
     
     // WARNING: fp MUST be initialised, unless called via signal button press
@@ -538,10 +537,7 @@ void MainWindow::media_open(){
 		return;
 	}
 	
-	if (
-		(r.file_sz_min && this->file_sz < r.file_sz_min) ||
-		(r.file_sz_max && this->file_sz > r.file_sz_max)
-	)
+	if (r.reject_size(this->file_sz))
 		return this->media_next();
 	
     /* Set window title */
@@ -581,17 +577,10 @@ void MainWindow::media_open(){
     if (r.skip_trans){
 		
 	}
-	const int w = this->image.width();
-	const int h = this->image.height();
-	if (
-		(r.w_min && w < r.w_min) ||
-		(r.w_max && w > r.w_max) ||
-		(r.h_min && h < r.h_min) ||
-		(r.h_max && h > r.h_max) ||
-		(r.skip_grey && this->image.allGray()) ||
-		(r.skip_trans && this->image.hasAlphaChannel() && false /* && this->image_has_transparent_pixel() : hasAlpha only detects whether an alpha channel exists, not whether it is used. */ )
-	)
+	
+	if (r.reject_dimensions(this->image))
 		return this->media_next();
+	
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
     this->main_widget->adjustSize();
   #endif

@@ -26,6 +26,7 @@ extern MYSQL_ROW  ROW1;
 
 InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 : QDialog(parent)
+, rules(_mysql::obj, BUF)
 , files_from_sql__res(nullptr)
 {
 	constexpr static const char* const default_string = "[DEFAULT]";
@@ -206,39 +207,6 @@ unsigned int get_checked_radio_btn_index(QRadioButton** arr,  const unsigned int
 	// Guaranteed to have returned
 }
 
-char* to_c_str(QString& qstr){
-	QByteArray ba = qstr.toLocal8Bit();
-	char* s = ba.data();
-	return s;
-}
-
-void InlistFilterDialog::get_results(){
-	constexpr static const compsky::asciify::flag::EnvExpand f_env_expand;
-	
-	// Clear previous results
-	if (this->files_from_sql__res != nullptr){
-		const char* _media_fp;
-		while(compsky::mysql::assign_next_row(this->files_from_sql__res,  &this->files_from_sql__row,  &_media_fp));
-		this->files_from_sql__res = nullptr;
-	}
-	
-	switch(this->rules.files_from_which){
-		case files_from_which::bash:
-			if (this->files_from_bash.state() == QProcess::Running)
-				this->files_from_bash.kill();
-			this->files_from_bash.start("bash",  {"-c", this->rules.files_from});
-			if (!this->files_from_bash.waitForStarted())
-				// Errored
-				return;
-			break;
-		case files_from_which::sql:
-			QStringList statements = this->rules.files_from.split(";");
-			for (auto i = 0;  i < statements.size();  ++i)
-				compsky::mysql::query(_mysql::obj,  this->files_from_sql__res,  BUF,  f_env_expand,  to_c_str(statements[i]));
-			break;
-	}
-}
-
 void InlistFilterDialog::apply(){
 	this->rules.filename_regexp.setPattern(this->filename_regexp->text());
 	this->rules.files_from = this->files_from->toPlainText();
@@ -259,7 +227,7 @@ void InlistFilterDialog::apply(){
 	this->rules.h_min = this->h_min->text().toInt();
 	this->rules.h_max = this->h_max->text().toInt();
 	
-	this->get_results();
+	this->rules.get_results();
 	
 	this->close();
 }
