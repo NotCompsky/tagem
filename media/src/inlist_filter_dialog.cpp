@@ -20,6 +20,10 @@ namespace _f {
 }
 
 
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW  ROW1;
+
+
 InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 : QDialog(parent)
 , files_from_sql__res(nullptr)

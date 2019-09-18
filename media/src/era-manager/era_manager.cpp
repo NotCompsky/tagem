@@ -16,6 +16,8 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
+extern MYSQL_RES* RES1;
+extern MYSQL_ROW  ROW1;
 extern char BUF[];
 
 
