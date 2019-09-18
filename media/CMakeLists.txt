@@ -85,6 +85,10 @@ endforeach(file_type)
 
 
 
+add_executable(cli src/cli.cpp)
+target_link_libraries(cli Qt5::Widgets compsky_asciify compsky_mysql)
+
+
 
 # The only difference between these three targets
 if ("txt" IN_LIST MY_TARGETS)
