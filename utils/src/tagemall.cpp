@@ -3,6 +3,8 @@ Usage:
     ./bulk-tag {MYSQL_CONFIG_FILE} {{OPTIONS}} {{RELATIVE_PATHS}} - {{TAGS}}
 */
 
+//#include "../../media/src/file2.hpp"
+
 #include <string.h> // for strlen
 #include <unistd.h> // for getcwd
 #include <cstdlib> // for malloc and getenv
@@ -34,7 +36,7 @@ int main(const int argc, const char** argv){
 	if(buf == nullptr)
 		return ERR::MALLOC;
 	
-	const char* score = "NULL";
+	std::vector<std::pair<const char*,  const char*>> variable_values;
 	
 	char cwd[4096]; // For the cncatenation later
 	if (getcwd(cwd,  4096 - 1) == NULL)
@@ -61,8 +63,10 @@ int main(const int argc, const char** argv){
 				switch(arg[1]){
 					case '-':
 						goto break_all__a;
-					case 's':
-						score = argv[++i];
+					case 'v':
+						// TODO: Find a less confusing short code for this
+						variable_values.emplace_back(argv[i+1], argv[i+2]);
+						i += 2;
 						break;
 					default:
 						return ERR::BAD_OPTION;
@@ -116,21 +120,19 @@ int main(const int argc, const char** argv){
 	itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"INSERT IGNORE INTO file (name, score) "
+		"INSERT IGNORE INTO file (name) "
 		"VALUES "
 	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
 		const char* const name = argv[j];
 		compsky::asciify::asciify(
 			itr,
-			'(',
-				'"',
+			"("
+				"\"",
 					_f::esc, '"',  (name[0] == '/') ? "" : cwd,
 					_f::esc, '"', name,
-				'"', ',',
-				score,
-			')',
-			','
+				"\""
+			"),"
 		);
 	}
 	--itr; // Ignore trailing comma
@@ -174,4 +176,45 @@ int main(const int argc, const char** argv){
 		")"
 	);
 	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+	
+	for (auto i = 0;  i < variable_values.size();  ++i){
+		/*MYSQL_RES* res;
+		MYSQL_ROW  row;
+		compsky::mysql::query(
+			mysql_obj,
+			res,
+			buf,
+			"SELECT conversion "
+			"FROM file2 "
+			"WHERE name=\"", variable_values[i].first, "\""
+		);
+		unsigned int _conversion;
+		while(compsky::mysql::assign_next_row(res, &row, &_conversion));*/
+		
+		itr = buf;
+		compsky::asciify::asciify(
+			itr,
+			"INSERT IGNORE INTO file2", variable_values[i].first, " "
+			"(file_id, x) "
+			"SELECT id, ", variable_values[i].second, " "
+			"FROM file "
+			"WHERE name IN ("
+		);
+		for (auto j = file_offset;  j < file_offset + n_files;  ++j){
+			const char* const name = argv[j];
+			compsky::asciify::asciify(
+				itr,
+				"\"",
+					_f::esc, '"',  (name[0] == '/') ? "" : cwd,
+					_f::esc, '"', name,
+				"\","
+			);
+		}
+		--itr; // Overwrite trailing comma
+		compsky::asciify::asciify(
+			itr,
+			")"
+		);
+		compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+	}
 }
