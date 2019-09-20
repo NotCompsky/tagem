@@ -43,6 +43,7 @@ std::map<uint64_t, QString> tag_id2name;
 MainWindow* player_ptr;
 
 
+#ifdef PYTHON
 static
 PyObject* pymodule_tagem_jump_to_file(PyObject* self,  PyObject* args){
 	uint64_t file_id;
@@ -95,6 +96,7 @@ static
 PyObject* PyInit_tagem(){
 	return PyModule_Create(&pymodule_tagem);
 }
+#endif
 
 
 int main(const int argc,  const char** argv){
