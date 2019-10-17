@@ -5,6 +5,9 @@
 #include <stdio.h> // for fprintf
 
 
+#define MAX_HASH_NAME_LENGTH 10
+
+
 namespace _mysql {
 	MYSQL* obj;
 	constexpr static const size_t auth_sz = 512;
@@ -28,6 +31,7 @@ struct Image{};
 struct Video{};
 struct Audio{};
 struct SHA256_FLAG{};
+struct Size{};
 
 
 template<typename FileType,  typename Int>
@@ -71,8 +75,8 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 		
 		compsky::asciify::asciify(
 			itr,
-			"INSERT IGNORE INTO file2", hash_name, "_hash "
-			"(file,hash)"
+			"INSERT IGNORE INTO file2", hash_name, " "
+			"(file,x)"
 			"VALUES"
 			"("
 		);
@@ -117,6 +121,19 @@ uint64_t get_hash_of_image(const char* const fp){
 	uint64_t hash;
 	const int rc = ph_dct_imagehash(fp, hash);
 	return (rc == 0) ? 0 : hash;
+}
+
+void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+	FILE* f = fopen(fp, "rb");
+	if (f == nullptr){
+		fprintf(stderr,  "Cannot read file: %s\n",  fp);
+		return;
+	}
+	
+	fseek(f, 0, SEEK_END);
+	const size_t sz = ftell(f);
+	
+	insert_hashes_into_db(file_type_flag, file_id, &sz, hash_name, 1);
 }
 
 void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
@@ -188,23 +205,49 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 }
 
 
-template<typename FileType>
-void hash_all_from_db(const FileType file_type_flag,  const char* const file_ext_regexp,  const char* const hash_name){
+void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
+	compsky::asciify::asciify(
+		itr,
+		"AND name REGEXP '\\.(", file_ext_regexp, ")$'"
+	);
+#define ADD_NAME_REGEXP_SZ (23+128)
+}
+
+void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
+
+template<typename FileType,  typename String>
+void hash_all_from_db(const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name){
 	const char* _id;
 	const char* _fp;
 	
-	compsky::mysql::query(
-		// TODO: Compile-time string concatenation would be nice here, to use query_buffer instead.
-		_mysql::obj,
-		_mysql::res,
-		BUF,
+	constexpr static const char* const qry_1 = 
 		"SELECT id, name "
 		"FROM file "
 		"WHERE id NOT IN ("
 			"SELECT file "
-			"FROM file2", hash_name, "_hash"
-		") AND name REGEXP '\\.(", file_ext_regexp, ")$'"
+			"FROM file2" /*, hash_name, */
+	;
+	
+	constexpr static const char* const qry_2 = 
+		")"
+	;
+	
+	static char buf[std::char_traits<char>::length(qry_1) + MAX_HASH_NAME_LENGTH + std::char_traits<char>::length(qry_2) + ADD_NAME_REGEXP_SZ]; // NOTE: Requires C++17+ // = qry_1;
+	char* itr = buf; // + std::char_traits<char>::length(qry_1);
+	
+	compsky::asciify::asciify(
+		// TODO: Compile-time string concatenation would be nice here, to use query_buffer instead.
+		itr,
+		qry_1, hash_name, qry_2
 	);
+	and_name_regexp(itr, file_ext_regexp);
+	compsky::mysql::query_buffer(
+		_mysql::obj,
+		_mysql::res,
+		buf,
+		(uintptr_t)itr - (uintptr_t)buf
+	);
+	
 	while(compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &_id, &_fp)){
 		try {
 			save_hash(file_type_flag, hash_name, _id, _fp);
@@ -213,8 +256,8 @@ void hash_all_from_db(const FileType file_type_flag,  const char* const file_ext
 			compsky::mysql::exec(
 				// Remove existing hashes so that file appears in the above result next time
 				_mysql::obj,
-				BUF,
-				"DELETE FROM file2", hash_name, "_hash WHERE file=", _id
+				buf,
+				"DELETE FROM file2", hash_name, " WHERE file=", _id
 			);
 		}
 	}
@@ -232,25 +275,30 @@ int main(const int argc,  const char** const argv){
 	constexpr static const Video  video_flag;
 	constexpr static const Audio  audio_flag;
 	constexpr static const SHA256_FLAG sha256_flag;
+	constexpr static const Size   size_flag;
 	
 	const char* const file_types = argv[1];
 	for (auto i = 0;  i < strlen(file_types);  ++i){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from_db(audio_flag,  "mp3|webm|mp4|mkv|avi", "audio");
+				hash_all_from_db(audio_flag,  "mp3|webm|mp4|mkv|avi", "audio_hash");
 				break;
 			case 'i':
-				hash_all_from_db(image_flag,  "png|jpe?g|webp|bmp",   "dct");
+				hash_all_from_db(image_flag,  "png|jpe?g|webp|bmp",   "dct_hash");
 				break;
 			case 'v':
-				hash_all_from_db(video_flag,  "gif|webm|mp4|mkv|avi", "dct");
+				hash_all_from_db(video_flag,  "gif|webm|mp4|mkv|avi", "dct_hash");
 				break;
 			case 's':
-				hash_all_from_db(sha256_flag, ".*", "sha256");
+				hash_all_from_db(sha256_flag, nullptr, "sha256");
+				break;
+			case 'S':
+				hash_all_from_db(size_flag,   nullptr, "size");
 				break;
 		}
 	}
+	static_assert(MAX_HASH_NAME_LENGTH == 10);
 	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 }
