@@ -639,7 +639,7 @@ void MainWindow::media_open(){
 				"SELECT s.s "
 				"FROM file2_Subtitle s, file2Subtitle x "
 				"WHERE s.x=x.x "
-				"AND x.file_id=", this->file_id
+				"AND x.file=", this->file_id
 			);
 			this->exhausted_subtitle = false;
 		} catch(compsky::mysql::except::SQLExec& e){
@@ -741,7 +741,7 @@ void MainWindow::assign_value(){
 				BUF,
 				"SELECT x "
 				"FROM file2", var_name, " "
-				"WHERE file_id=", this->file_id
+				"WHERE file=", this->file_id
 			);
 			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x));
 			
@@ -799,7 +799,7 @@ void MainWindow::assign_value(){
 	};
 	
 
-	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file2", var_name, " (file_id,x) VALUES (", this->file_id, ',', x, ") ON DUPLICATE KEY UPDATE x=VALUES(x)");
+	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file2", var_name, " (file,x) VALUES (", this->file_id, ',', x, ") ON DUPLICATE KEY UPDATE x=VALUES(x)");
 }
 
 void MainWindow::ensure_fileID_set(){
@@ -844,7 +844,7 @@ const QString MainWindow::media_tag(const QString str){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file, tag_id) VALUES(", this->file_id, ',', tagid, ")");
     
 	return tag_id2name[tagid];
 }

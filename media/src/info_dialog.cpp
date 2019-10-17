@@ -35,7 +35,7 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	
 	for (const QString& var_name : file2::names){
 		const char* _x;
-		compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT x FROM file2", var_name, " WHERE file_id=", this->file_id);
+		compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT x FROM file2", var_name, " WHERE file=", this->file_id);
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x)){
 			l->addWidget(new QLabel(QString("%1: %2").arg(var_name).arg(_x)));
 		}

@@ -86,9 +86,9 @@ namespace file2 {
 			_mysql::obj,
 			BUF,
 			"CREATE TABLE file2", var_name, "("
-				"file_id BIGINT UNSIGNED NOT NULL,"
+				"file BIGINT UNSIGNED NOT NULL,"
 				"x ", int_fields[int_field_indx], " NOT NULL,"
-				"PRIMARY KEY (file_id)"
+				"PRIMARY KEY (file)"
 			")"
 		);
 		
