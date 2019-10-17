@@ -66,7 +66,7 @@ class MainWindow : public QWidget{
     void media_overwrite();
     void media_next();
     void media_open();
-	void init_boxes();
+    void init_file_from_db();
     void media_replace_w_link(const char* src);
     void media_delete();
     void media_linkfrom();
@@ -107,7 +107,7 @@ class MainWindow : public QWidget{
   #ifdef VID
     QtAV::VideoOutput* m_vo;
     QtAV::AVPlayer* m_player;
-    QWidget* vid_widget;
+    QWidget* main_widget;
 	void position_changed(qint64 position);
   #endif
 # ifdef ERA
@@ -123,7 +123,7 @@ class MainWindow : public QWidget{
 	bool are_eras_visible;
 # endif
   #ifdef TXT
-    QPlainTextEdit* txt_widget;
+    QPlainTextEdit* main_widget;
     void media_save();
     void set_read_only();
     void unset_read_only();
@@ -134,7 +134,7 @@ class MainWindow : public QWidget{
     void rescale_main(double factor);
     QPoint get_scroll_offset();
     QScrollArea* scrollArea;
-    QLabel* img_widget;
+    QLabel* main_widget;
     QSize main_widget_orig_size;
     double scale_factor;
   #endif
