@@ -2,6 +2,10 @@
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
+extern "C" {
+# include <libavformat/avformat.h>
+# include <libavcodec/avcodec.h>
+}
 #include <stdio.h> // for fprintf
 
 
@@ -22,8 +26,33 @@ namespace _f {
 }
 
 
-char* BUF;
+static char* BUF;
 constexpr static const size_t BUF_SZ = 1024 * 4096;
+
+
+static AVFormatContext* av_fmt_ctx;
+
+
+uint64_t duration_of(const char* fp){
+	uint64_t n = 0;
+	
+	if (avformat_open_input(&av_fmt_ctx, fp, NULL, NULL) != 0){
+		fprintf(stderr,  "Unable to open video file: %s\n",  fp);
+		return 0;
+	}
+	
+	if (avformat_find_stream_info(av_fmt_ctx, NULL) < 0){
+		fprintf(stderr,  "Unknown error processing file: %s\n",  fp);
+		goto cleanup;
+	}
+	
+	n = av_fmt_ctx->duration / 1000000;
+	
+	cleanup:
+	avformat_close_input(&av_fmt_ctx);
+	
+	return n;
+}
 
 
 /* For function overloading */
@@ -32,6 +61,7 @@ struct Video{};
 struct Audio{};
 struct SHA256_FLAG{};
 struct Size{};
+struct Duration{};
 
 
 template<typename FileType,  typename Int>
@@ -205,6 +235,12 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 }
 
 
+void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+	const uint64_t hash = duration_of(fp);
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+}
+
+
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 	compsky::asciify::asciify(
 		itr,
@@ -252,7 +288,6 @@ void hash_all_from_db(const FileType file_type_flag,  const String file_ext_rege
 		try {
 			save_hash(file_type_flag, hash_name, _id, _fp);
 		} catch (...){
-			fprintf(stderr,  "Killed\n");
 			compsky::mysql::exec(
 				// Remove existing hashes so that file appears in the above result next time
 				_mysql::obj,
@@ -271,11 +306,14 @@ int main(const int argc,  const char** const argv){
 	if (BUF == nullptr)
 		return 4096;
 	
+	av_fmt_ctx = avformat_alloc_context();
+	
 	constexpr static const Image  image_flag;
 	constexpr static const Video  video_flag;
 	constexpr static const Audio  audio_flag;
 	constexpr static const SHA256_FLAG sha256_flag;
 	constexpr static const Size   size_flag;
+	constexpr static const Duration duration_flag;
 	
 	const char* const file_types = argv[1];
 	for (auto i = 0;  i < strlen(file_types);  ++i){
@@ -283,6 +321,11 @@ int main(const int argc,  const char** const argv){
 		switch(c){
 			case 'a':
 				hash_all_from_db(audio_flag,  "mp3|webm|mp4|mkv|avi", "audio_hash");
+				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
+				break;
+			case 'd':
+				hash_all_from_db(duration_flag,   "mp3|webm|mp4|mkv|avi|gif", "duration");
+				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
 				hash_all_from_db(image_flag,  "png|jpe?g|webp|bmp",   "dct_hash");
