@@ -42,6 +42,24 @@ CREATE TABLE file2tag (
     PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
+CREATE TABLE file2dct_hash (
+	file BIGINT UNSIGNED NOT NULL,
+	hash BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (file, hash)
+);
+
+CREATE TABLE file2audio_hash (
+	file BIGINT UNSIGNED NOT NULL,
+	hash BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (file, hash)
+);
+
+CREATE TABLE file2sha256_hash (
+	file BIGINT UNSIGNED NOT NULL,
+	hash BINARY(32) NOT NULL,
+	PRIMARY KEY (file)
+);
+
 CREATE TABLE box (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     file_id BIGINT UNSIGNED NOT NULL,

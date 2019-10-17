@@ -42,6 +42,18 @@ target_include_directories(tagem-init PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-init compsky_mysql_create_config compsky_asciify)
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
+if ("${CIMG_H_DIR} " STREQUAL " ")
+	message(FATAL_ERROR "Please set CIMG_H_DIR to the directory containing CImg.h (for instance, underneath the third_party of pHash, if you built that from source.")
+endif()
+add_executable(tagem-hash src/hash.cpp)
+target_include_directories(tagem-hash PRIVATE ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
+target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto)
+
+find_package(Qt5Widgets REQUIRED)
+add_executable(tagem-mk-playlist src/mk_playlist.cpp)
+target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
+target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets)
+
 install(
     TARGETS tagem-instances tagemall tagem-srch tagem-init
     EXPORT tagemTargets
