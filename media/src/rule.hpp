@@ -122,7 +122,7 @@ public:
 		// WARNING: The int should only ever have the value 1 or 0
 	};
 	
-	bool reject_name(const char* const fp){
+	bool reject_name(const char* const fp) const {
 		if (!this->filename_regexp.pattern().isEmpty()){
 			const QRegularExpressionMatch m = this->filename_regexp.match(fp);
 			if (m.captured().isEmpty())
@@ -131,14 +131,14 @@ public:
 		return false;
 	};
 	
-	bool reject_size(const size_t fsize){
+	bool reject_size(const size_t fsize) const {
 		return (
 			(this->file_sz_min && fsize < this->file_sz_min) ||
 			(this->file_sz_max && fsize > this->file_sz_max)
 		);
 	};
 	
-	bool reject_image(const QImage& img){
+	bool reject_image(const QImage& img) const {
 		const int w = img.width();
 		const int h = img.height();
 		return (

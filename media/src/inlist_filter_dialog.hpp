@@ -52,7 +52,9 @@ class InlistFilterDialog : public QDialog {
 	QCheckBox* skip_trans;
 	QCheckBox* skip_grey;
  public:
-	void get_results();
+	void get_results(){
+		this->rules.get_results(this->files_from_sql__res, this->files_from_bash);
+	};
 	
 	template<typename String>
 	bool load(String s /*= this->settings_name->text()*/){

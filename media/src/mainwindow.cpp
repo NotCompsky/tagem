@@ -844,7 +844,7 @@ const QString MainWindow::media_tag(const QString str){
     
     this->ensure_fileID_set();
     
-    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file, tag_id) VALUES(", this->file_id, ',', tagid, ")");
+    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
     
 	return tag_id2name[tagid];
 }

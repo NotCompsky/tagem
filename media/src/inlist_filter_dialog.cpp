@@ -227,7 +227,7 @@ void InlistFilterDialog::apply(){
 	this->rules.h_min = this->h_min->text().toInt();
 	this->rules.h_max = this->h_max->text().toInt();
 	
-	this->rules.get_results();
+	this->get_results();
 	
 	this->close();
 }
