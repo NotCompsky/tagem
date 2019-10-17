@@ -7,6 +7,7 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
 #include "add_new_tag.hpp"
+#include "type_of_file.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -170,40 +171,34 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_player,  &QtAV::AVPlayer::notifyIntervalChanged, this, &MainWindow::updateSliderUnit);
     connect(m_player,  &QtAV::AVPlayer::started,  this,  &MainWindow::set_player_options_for_img);
 	connect(m_player,  &QtAV::AVPlayer::mediaStatusChanged,  this,  &MainWindow::parse_mediaStatusChanged);
-   #ifdef TXT
-    #error "TXT and VID are mutually exclusive"
-   #endif
-   #ifdef IMG
-    #error "IMG and VID are mutually exclusive"
-   #endif
   #endif
   #ifdef TXT
-    this->main_widget = new QPlainTextEdit(this);
+    this->txt_widget = new QPlainTextEdit(this);
     QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
     sizePolicy1.setHorizontalStretch(0);
     sizePolicy1.setVerticalStretch(0);
-    sizePolicy1.setHeightForWidth(this->main_widget->sizePolicy().hasHeightForWidth());
-    this->main_widget->setSizePolicy(sizePolicy1);
-    this->main_widget->viewport()->setProperty("cursor", QVariant(QCursor(Qt::IBeamCursor)));
-    this->main_widget->setContextMenuPolicy(Qt::DefaultContextMenu);
-    this->main_widget->setFrameShape(QFrame::NoFrame);
-    this->main_widget->setFrameShadow(QFrame::Plain);
-    this->main_widget->setLineWidth(1);
-    this->main_widget->setTabStopWidth(40);
+    sizePolicy1.setHeightForWidth(this->txt_widget->sizePolicy().hasHeightForWidth());
+    this->txt_widget->setSizePolicy(sizePolicy1);
+    this->txt_widget->viewport()->setProperty("cursor", QVariant(QCursor(Qt::IBeamCursor)));
+    this->txt_widget->setContextMenuPolicy(Qt::DefaultContextMenu);
+    this->txt_widget->setFrameShape(QFrame::NoFrame);
+    this->txt_widget->setFrameShadow(QFrame::Plain);
+    this->txt_widget->setLineWidth(1);
+    this->txt_widget->setTabStopWidth(40);
     this->is_read_only = true;
-    this->main_widget->setReadOnly(true);
+    this->txt_widget->setReadOnly(true);
     
-    this->connect(this->main_widget, &QPlainTextEdit::textChanged, this, &MainWindow::file_modified, Qt::UniqueConnection);
+    this->connect(this->txt_widget, &QPlainTextEdit::textChanged, this, &MainWindow::file_modified, Qt::UniqueConnection);
    #ifdef IMG
     #error "IMG and TXT are mutually exclusive"
    #endif
   #endif
   #ifdef IMG
-    this->main_widget = new QLabel;
-    this->main_widget->setBackgroundRole(QPalette::Base);
-    this->main_widget->setScaledContents(true);
-    this->main_widget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-	this->main_widget_overlay = new Overlay(this, this->main_widget);
+    this->img_widget = new QLabel;
+    this->img_widget->setBackgroundRole(QPalette::Base);
+    this->img_widget->setScaledContents(true);
+    this->img_widget->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+	this->main_widget_overlay = new Overlay(this, this->img_widget);
 	this->main_widget_overlay->show();
   #endif
     
@@ -211,12 +206,12 @@ MainWindow::MainWindow(QWidget *parent)
   #ifdef SCROLLABLE
     this->scrollArea = new QScrollArea(this);
     this->scrollArea->setBackgroundRole(QPalette::Dark);
-    this->scrollArea->setWidget(this->main_widget);
+    this->scrollArea->setWidget(this->img_widget);
     vl->addWidget(this->scrollArea);
-  #else
-	if (this->main_widget != nullptr)
-		vl->addWidget(this->main_widget);
   #endif
+# ifdef TXT
+	vl->addWidget(this->txt_widget);
+# endif
     
   #if (defined BOXABLE  || defined ERA)
     this->box_widget = nullptr;
@@ -273,15 +268,15 @@ void MainWindow::set_volume(const double _volume){
 #ifdef VID
 void MainWindow::init_video_output(){
 	this->m_vo = new QtAV::VideoOutput(this);
-	this->main_widget = this->m_vo->widget();
-	this->main_widget_overlay = new Overlay(this, this->main_widget);
+	this->vid_widget = this->m_vo->widget();
+	this->main_widget_overlay = new Overlay(this, this->vid_widget);
 	this->main_widget_overlay->show();
-	if (!this->main_widget){
+	if (!this->vid_widget){
 		fprintf(stderr, "Cannot create QtAV renderer\n");
 		return;
 	}
 	this->m_player->setRenderer(this->m_vo);
-	this->layout()->addWidget(this->main_widget);
+	this->layout()->addWidget(this->vid_widget);
 }
 #endif
 
@@ -425,7 +420,7 @@ void MainWindow::media_next(){
     this->media_open();
 }
 
-void MainWindow::init_file_from_db(){
+void MainWindow::init_boxes(){
 	double W;
 	double H;
 	if (this->main_widget != nullptr){
@@ -594,7 +589,7 @@ void MainWindow::media_open(){
   #endif
     
     if (this->file_id != 0)
-        this->init_file_from_db();
+        this->init_boxes();
 	
 # ifdef ERA
 	this->era_start = 0;
