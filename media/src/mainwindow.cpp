@@ -808,22 +808,6 @@ void MainWindow::ensure_fileID_set(){
     }
 }
 
-void MainWindow::media_note(){
-    this->ensure_fileID_set();
-    
-    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT note FROM file WHERE id=", this->file_id);
-    
-	const char* previous_note;
-    compsky::mysql::assign_next_row(RES1,  &ROW1,  &previous_note);
-    
-    bool ok;
-    QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), previous_note, &ok);
-    if (!ok || str.isEmpty())
-        return;
-    
-    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET note=\"", f_esc, '"', str, "\" WHERE id=", this->file_id);
-}
-
 const QString MainWindow::media_tag(const QString str){
     if (media_fp[0] == 0)
         return "";

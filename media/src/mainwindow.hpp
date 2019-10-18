@@ -71,7 +71,6 @@ class MainWindow : public QWidget{
     void media_delete();
     void media_linkfrom();
 	void assign_value();
-    void media_note();
 	void show_settings_dialog();
 	void display_info();
 	void display_relation_hub(); // SLOT

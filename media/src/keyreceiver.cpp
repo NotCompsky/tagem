@@ -134,9 +134,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 					tag_manager->show();
 					break;
 				}
-                case Qt::Key_N:
-                    window->media_note();
-                    break;
 				case Qt::Key_R: // Rate
 					window->show_settings_dialog();
 					break;
