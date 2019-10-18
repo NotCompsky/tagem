@@ -12,6 +12,15 @@ inline uint64_t ascii_to_uint64(const char* s){
     return n;
 }
 
+inline uint64_t ascii_to_uint64(const QString& s){
+	uint64_t n = 0;
+	for (auto i = 0;  i < s.size();  ++i){
+		n *= 10;
+		n += s.at(i).toLatin1() - '0';
+	}
+	return n;
+}
+
 inline uint64_t ascii_to_uint64(char*& s){
     // Inlined to avoid multiple definition error
     uint64_t n = 0;

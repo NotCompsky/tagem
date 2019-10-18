@@ -46,9 +46,7 @@ void TagParentTreeView::set_root(const QItemSelection& selected,  const QItemSel
     
     auto indx = selected.indexes()[0]; // TODO: Allow display of multiple heirarchies (drag to select multiple)
     
-	const QString a = indx.sibling(indx.row(), 0).data().toString();
-	const QByteArray b = a.toLocal8Bit();
-    const char* tag_id_str = b.data();
+	const QString tag_id_str = indx.sibling(indx.row(), 0).data().toString();
     compsky::mysql::exec(_mysql::obj,  buf,  sql__call_ancestor_tags_str, tag_id_str, ')');
     compsky::mysql::query_buffer(_mysql::obj, RES1,  "SELECT node, parent, -1, name FROM tmp_tag_parents JOIN tag ON id=parent WHERE node");
     
