@@ -61,11 +61,7 @@ void PrimaryItem::add_parent(){
 }
 
 void NameItem::setData(const QVariant& value,  const int role){
-	const QString a = this->data().toString();
-	const QByteArray b = a.toLocal8Bit();
-    const char* s = b.data(); // Equivalent to siblingAtColumn, but that is introduced in Qt 5.11
-    
-    if (!s)
+	if (this->data().toString().isNull())
         return;
     
     const QString neue = value.toString();
