@@ -83,6 +83,7 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	}
 
 	/* Insert parent-child relations */
+	// TODO: Replace this crude system with the option to add textboxes to name more parents
 	int lastindx = 0;
 	for (auto i = 0;  ;  ++i)
 		if (parent_tagchars[i] == '|'  ||  parent_tagchars[i] == 0){
