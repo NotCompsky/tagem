@@ -81,7 +81,7 @@ void NameItem::setData(const QVariant& value,  const int role){
 	delete tagcompleter;
 	tagcompleter = new QCompleter(tagslist);
     
-	static char buf[4096]; // Though tag name should not be longer than 128 characters
+	static char buf[21 + 2*128 + 11 + 19]; // Though tag name should not be longer than 128 characters
     compsky::mysql::exec(_mysql::obj, buf, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);
     
     QStandardItem::setData(value, role);
