@@ -60,7 +60,7 @@ void process_rule(InlistFilterRules& r,  const char* const rule_name,  const cha
 	memcpy(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN,  out_name,  out_name_len);
 	memcpy(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN + out_name_len,  FILE_EXT,  FILE_EXT_LEN + 1);
 	
-	if (r.load(rule_name) == 0){
+	if (unlikely(r.load(rule_name) == 0)){
 		fprintf(stderr,  "No such rule: %s\n",  rule_name);
 		if (likely(remove(OUTPUT_FILENAME) == 0))
 			fprintf(stderr,  "Deleted");
