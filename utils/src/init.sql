@@ -21,6 +21,9 @@ CREATE TABLE file2 (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
+INSERT INTO file2 (min, max, conversion, name) VALUES
+(0, 9223372036854775807, 0, "duration")
+;
 
 
 CREATE TABLE tag (
