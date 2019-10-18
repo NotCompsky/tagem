@@ -98,7 +98,6 @@ constexpr static const compsky::asciify::flag::concat::End f_end;
 #define BUF_SZ (2 * 4096)
 char BUF[BUF_SZ];
 char* ITR = BUF;
-char NOTE[30000];
 
 
 
@@ -821,16 +820,8 @@ void MainWindow::media_note(){
     QString str = QInputDialog::getMultiLineText(this, tr("Note"), tr("Note"), previous_note, &ok);
     if (!ok || str.isEmpty())
         return;
-    QByteArray  bstr = str.toLocal8Bit();
-    const char* cstr = bstr.data();
-    auto j = 0;
-    for (auto i = 0;  i < cstr[i] != 0;  ++i){
-        if (cstr[i] == '"'  ||  cstr[i] == '\\')
-            NOTE[j++] = '\\';
-        NOTE[j++] = cstr[i];
-    }
-    NOTE[j] = 0;
-    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET note=\"", f_esc, '"', NOTE, "\" WHERE id=", this->file_id);
+    
+    compsky::mysql::exec(_mysql::obj,  BUF,  "UPDATE file SET note=\"", f_esc, '"', str, "\" WHERE id=", this->file_id);
 }
 
 const QString MainWindow::media_tag(const QString str){
