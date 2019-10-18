@@ -119,19 +119,11 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
 };
     
 bool TagTreeModel::removeRows(int row,  int count,  QModelIndex parent){
-    QString a = this->index(row, 0, parent).data().toString();
-    QByteArray b = a.toLocal8Bit();
-    const char* tag_id_str = b.data();
-    
+	const QString tag_id = this->index(row, 0, parent).data().toString();
+	const QString parent_id = parent.data().toString();
+	
     if (!QStandardItemModel::removeRows(row, count, parent))
         return false;
     
-    char* parent_tag_id_str;
-    if (parent_tag_id_str){
-        a = parent.data().toString();
-        b = a.toLocal8Bit();
-        parent_tag_id_str = b.data();
-    } else parent_tag_id_str = "0";
-    
-    qDebug() << "DELETE FROM tag2parent WHERE parent_id=", parent_tag_id_str, " AND tag_id=", tag_id_str;
+	qDebug() << "DELETE FROM tag2parent WHERE parent_id=", parent_id, " AND tag_id=", tag_id;
 };
