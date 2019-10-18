@@ -7,14 +7,6 @@
 #include <QString>
 
 
-inline
-char* to_c_str(QString& qstr){
-	QByteArray ba = qstr.toLocal8Bit();
-	char* s = ba.data();
-	return s;
-}
-
-
 namespace files_from_which {
 	enum {
 		stdin,
@@ -169,9 +161,9 @@ public:
 					return;
 				break;
 			case files_from_which::sql:
-				QStringList statements = this->files_from.split(";");
+				const QStringList statements = this->files_from.split(";");
 				for (auto i = 0;  i < statements.size();  ++i)
-					compsky::mysql::query(this->mysql,  res,  this->buf,  f_env_expand,  to_c_str(statements[i]));
+					compsky::mysql::query(this->mysql,  res,  this->buf,  f_env_expand,  statements[i]);
 				break;
 		}
 	}
