@@ -27,7 +27,8 @@ TagManager* tag_manager;
 
 
 
-uint64_t get_id_from_table(const char* const table_name,  const char* const entry_name){
+template<typename String>
+uint64_t get_id_from_table(const char* const table_name,  const String entry_name){
 	uint64_t value = 0;
 
 	goto__returnresultsofthegetidfromtablequery:
@@ -41,7 +42,7 @@ uint64_t get_id_from_table(const char* const table_name,  const char* const entr
 
 	compsky::mysql::exec(_mysql::obj,  buf,  "INSERT INTO ", table_name, " (name) VALUES (\"", f_esc, '"', entry_name, "\")");
 	goto goto__returnresultsofthegetidfromtablequery;
-}
+};
 
 void tag2parent(const uint64_t tagid,  const uint64_t parid){
 	constexpr static const char* const sql__insert = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
@@ -50,15 +51,12 @@ void tag2parent(const uint64_t tagid,  const uint64_t parid){
 }
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
-	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
-	const char* const tagchars = tagstr_ba.data();
-
 	tagslist.append(tagstr);
 	delete tagcompleter;
 	tagcompleter = new QCompleter(tagslist);
 
 	if (tagid == 0)
-		tagid = get_id_from_table("tag", tagchars);
+		tagid = get_id_from_table("tag", tagstr);
 
 	tag_id2name[tagid] = tagstr;
 
@@ -119,9 +117,6 @@ uint64_t ask_for_tag(const QString& str){
 
 	if (rc != QDialog::Accepted  ||  tagstr.isEmpty())
 		return 0;
-
-	const QByteArray tagstr_ba = tagstr.toLocal8Bit();
-	const char* tagchars = tagstr_ba.data();
 	
-	return  (tagslist.contains(tagstr))  ?  get_id_from_table("tag", tagchars)  :  add_new_tag(tagstr);
+	return  (tagslist.contains(tagstr))  ?  get_id_from_table("tag", tagstr)  :  add_new_tag(tagstr);
 }
