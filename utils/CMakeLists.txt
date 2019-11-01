@@ -50,6 +50,10 @@ add_executable(tagem-hash src/hash.cpp)
 target_include_directories(tagem-hash PRIVATE ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
 target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec)
 
+add_executable(tagem-mv src/mv.cpp)
+target_include_directories(tagem-mv PRIVATE ${COMPSKY_INCLUDE_DIRS})
+target_link_libraries(tagem-mv compsky_mysql compsky_asciify)
+
 find_package(Qt5Widgets REQUIRED)
 add_executable(tagem-mk-playlist src/mk_playlist.cpp)
 target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
