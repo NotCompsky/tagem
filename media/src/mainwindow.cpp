@@ -128,7 +128,9 @@ MainWindow::MainWindow(QWidget *parent)
 :
     QWidget(parent),
 	main_widget(nullptr),
+# ifdef BOXABLE
 	main_widget_overlay(nullptr),
+# endif
 #ifdef VID
 	m_vo(nullptr),
 #endif
@@ -573,11 +575,8 @@ void MainWindow::media_open(){
         this->media_next();
         return;
     }
-    if (r.skip_trans){
-		
-	}
 	
-	if (r.reject_dimensions(this->image))
+	if (r.reject_image(this->image))
 		return this->media_next();
 	
     this->main_widget->setPixmap(QPixmap::fromImage(this->image));
@@ -1229,26 +1228,6 @@ void MainWindow::python_script(){
 	}
 }
 
-void MainWindow::jump_to_file(const uint64_t file_id){
-	MYSQL_RES* res;
-	MYSQL_ROW row;
-	char buf[std::char_traits<char>::length("SELECT name FROM file WHERE id=") + 19 + 1];
-	compsky::mysql::query(
-		_mysql::obj,
-		res,
-		buf,
-		"SELECT name "
-		"FROM file "
-		"WHERE id=", file_id
-	);
-	const char* _fp;
-	while(compsky::mysql::assign_next_row(res, &row, &_fp)){
-		memcpy(this->media_fp, _fp, strlen(_fp));
-	}
-	this->set_media_dir_len();
-	this->media_open();
-}
-
 void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
@@ -1276,3 +1255,26 @@ void MainWindow::jump_to_era(const uint64_t era_id){
 #endif // #ifdef PYTHON
 
 #endif // #ifdef ERA
+
+
+#ifdef PYTHON
+void MainWindow::jump_to_file(const uint64_t file_id){
+	MYSQL_RES* res;
+	MYSQL_ROW row;
+	char buf[std::char_traits<char>::length("SELECT name FROM file WHERE id=") + 19 + 1];
+	compsky::mysql::query(
+		_mysql::obj,
+		res,
+		buf,
+		"SELECT name "
+		"FROM file "
+		"WHERE id=", file_id
+	);
+	const char* _fp;
+	while(compsky::mysql::assign_next_row(res, &row, &_fp)){
+		memcpy(this->media_fp, _fp, strlen(_fp));
+	}
+	this->set_media_dir_len();
+	this->media_open();
+}
+#endif

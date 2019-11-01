@@ -55,7 +55,7 @@ void scale(QRect& rect,  T scale){
 
 
 class MainWindow : public QWidget{
-# ifdef ERA
+# if (defined ERA || defined PYTHON)
 	Q_OBJECT
 # endif
  public:
@@ -205,8 +205,11 @@ class MainWindow : public QWidget{
 	MYSQL_ROW subtitle_row;
 # endif
 
-# ifdef ERA
   public Q_SLOTS:
+# ifdef PYTHON
+	void jump_to_file(const uint64_t file_id);
+# endif
+# ifdef ERA
 #  ifdef SUBTITLES
 	void next_subtitle();
 	void wipe_subtitle();
@@ -217,7 +220,6 @@ class MainWindow : public QWidget{
 	void skip();
 #  ifdef PYTHON
 	void python_script();
-	void jump_to_file(const uint64_t file_id);
 	void jump_to_era(const uint64_t era_id);
 #  endif
 # endif

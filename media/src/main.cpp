@@ -56,6 +56,7 @@ PyObject* pymodule_tagem_jump_to_file(PyObject* self,  PyObject* args){
 	Py_RETURN_NONE;
 }
 
+# ifdef ERA
 static
 PyObject* pymodule_tagem_jump_to_era(PyObject* self,  PyObject* args){
 	uint64_t  era_id;
@@ -67,11 +68,14 @@ PyObject* pymodule_tagem_jump_to_era(PyObject* self,  PyObject* args){
 	
 	Py_RETURN_NONE;
 }
+# endif
 
 static
 PyMethodDef pymodule_tagem_methods[] = {
 	{"jump_to_file", (PyCFunction)pymodule_tagem_jump_to_file, METH_VARARGS, "Description."},
+# ifdef ERA
 	{"jump_to_era",  (PyCFunction)pymodule_tagem_jump_to_era,  METH_VARARGS, "Description."},
+# endif
 	{nullptr, nullptr, 0, nullptr}
 };
 
