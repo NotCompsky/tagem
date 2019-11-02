@@ -178,7 +178,6 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 						break;
                     window->media_delete();
                     window->media_next();
-                    break;
                 case Qt::Key_Escape:
                   #ifdef TXT
                     window->set_read_only();
