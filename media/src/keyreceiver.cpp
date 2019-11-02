@@ -99,6 +99,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                     window->media_next(); // Causes SEGFAULT, even though clicking on "Next" button is fine.
                     break;
 				case Qt::Key_E:
+					if (window->readonly)
+						break;
 				  #ifdef ERA
 					if (is_shift_key_down)
 						window->display_eras();
@@ -107,6 +109,9 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 				  #endif
 					break;
                 case Qt::Key_I:
+					if (window->readonly)
+						break;
+					
 					if (is_shift_key_down){
 						window->display_info();
 						break;
@@ -125,36 +130,52 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
                 case Qt::Key_L:
+					if (window->readonly)
+						break;
                     window->media_linkfrom();
                     break;
 				case Qt::Key_M:
 				{
+					if (window->readonly)
+						break;
 					if (tag_manager == nullptr)
 						tag_manager = new TagManager(window);
 					tag_manager->show();
 					break;
 				}
 				case Qt::Key_R: // Rate
+					if (window->readonly)
+						break;
 					window->show_settings_dialog();
 					break;
                 case Qt::Key_S: // Save
                   #ifdef TXT
+					if (window->readonly)
+						break;
                     window->media_save();
                   #endif
                     break;
                 case Qt::Key_T:
+					if (window->readonly)
+						break;
                     window->media_tag("");
                     break;
                 case Qt::Key_O:
+					if (window->readonly)
+						break;
                     window->media_overwrite();
                     break;
 				case Qt::Key_P:
 					// Plugin loading dialog
 					break;
 				case Qt::Key_V:
+					if (window->readonly)
+						break;
 					window->assign_value();
 					break;
                 case Qt::Key_X:
+					if (window->readonly)
+						break;
                     window->media_delete();
                     window->media_next();
                     break;
@@ -169,6 +190,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
                   #endif
                     break;
 				case Qt::Key_AsciiTilde:
+					if (window->readonly)
+						break;
 				  #ifdef BOXABLE
 					window->display_relation_hub();
 				  #endif
@@ -210,6 +233,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 				case Qt::Key_2:
 					++n;
 				case Qt::Key_1:
+					if (window->readonly)
+						break;
 					window->media_tag(window->tag_preset[n]);
 					break;
 				
@@ -232,6 +257,8 @@ bool KeyReceiver::eventFilter(QObject* obj, QEvent* event)
 				case Qt::Key_QuoteDbl:
 					++n;
 				case Qt::Key_Exclam:
+					if (window->readonly)
+						break;
 					window->media_tag_new_preset(n);
 					break;
 				

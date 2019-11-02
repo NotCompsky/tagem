@@ -148,7 +148,8 @@ MainWindow::MainWindow(QWidget *parent)
 	subtitle_res(nullptr),
 # endif
     reached_stdin_end(false),
-    auto_next(false)
+    auto_next(false),
+    readonly(true)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;

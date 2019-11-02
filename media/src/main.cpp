@@ -134,6 +134,9 @@ int main(const int argc,  const char** argv){
 		switch(arg[1]){
 			case '-':
 				goto after_opts_parsed;
+			case 'e':
+				player.readonly = false;
+				break;
 		  #ifdef VID
 			case 'a':
 				player.auto_next = true;
