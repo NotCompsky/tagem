@@ -147,6 +147,7 @@ class MainWindow : public QWidget{
 	bool exhausted_subtitle;
 # endif
 	bool readonly;
+	bool titles;
  private:
 	uint64_t get_framestamp() const {
 		return
