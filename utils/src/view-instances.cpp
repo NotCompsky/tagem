@@ -238,8 +238,9 @@ int main(int argc,  const char** argv) {
     constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
 	int i = 0;
-    while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &root_tag_name, &fp, f, &x, f, &y, f, &w, f, &h))
+	while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &root_tag_name, &fp, f, &x, f, &y, f, &w, f, &h)){
         view_img(name, root_tag_name, fp, x, y, w, h, ++i);
+	}
     
     compsky::mysql::wipe_auth(mysql_auth, mysql_auth_sz);
     
