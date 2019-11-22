@@ -33,10 +33,6 @@ add_executable(tagemall src/tagemall.cpp)
 target_link_libraries(tagemall PRIVATE compsky_asciify compsky_mysql)
 target_compile_definitions(tagemall PRIVATE ${MY_DEFINES})
 
-add_executable(tagem-srch src/fmt-sql-tags.cpp)
-target_link_libraries(tagem-srch PRIVATE compsky_asciify compsky_mysql)
-target_compile_definitions(tagem-srch PRIVATE ${MY_DEFINES})
-
 add_executable(tagem-init src/init.cpp)
 target_include_directories(tagem-init PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-init compsky_mysql_create_config compsky_asciify)
@@ -60,7 +56,7 @@ target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets)
 
 install(
-    TARGETS tagem-instances tagemall tagem-srch tagem-init
+    TARGETS tagem-instances tagemall tagem-init
     EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
