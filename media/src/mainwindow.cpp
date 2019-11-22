@@ -150,7 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
     reached_stdin_end(false),
     auto_next(false),
     readonly(true)
-	, titles(true)
+	, titles(false)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;
@@ -162,8 +162,6 @@ MainWindow::MainWindow(QWidget *parent)
     /* Define this->main_widget */
   #ifdef VID
     m_unit = 1000;
-	if (this->titles)
-		setWindowTitle(QString::fromLatin1("Media Tagger"));
     m_player = new QtAV::AVPlayer(this);
     m_slider = new QSlider();
     m_slider->setOrientation(Qt::Horizontal);
