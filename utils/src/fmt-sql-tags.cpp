@@ -47,7 +47,6 @@ TODO: Aim is to include other tables, not just tags, and allow arbitrary deeply 
 
 #include <compsky/mysql/mysql.hpp> // for compsky::mysql::*
 #include <compsky/mysql/query.hpp> // for ROW, RES, COL, ERR
-#include <compsky/asciify/init.hpp>
 
 
 MYSQL_RES* RES;
