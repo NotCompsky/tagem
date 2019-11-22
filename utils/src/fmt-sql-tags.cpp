@@ -58,9 +58,9 @@ namespace compsky::asciify {
     constexpr static const size_t BUF_SZ = 4096;
         
     void ensure_buf_can_fit(size_t n){
-        if (get_index() + n  >  BUF_SZ){
-            fwrite(BUF, 1, get_index(), stderr);
-            reset_index();
+        if (get_index(BUF, ITR) + n  >  BUF_SZ){
+            fwrite(BUF, 1, get_index(BUF, ITR), stderr);
+            ITR = BUF;
         }
     }
 }
@@ -88,7 +88,7 @@ void increment_tmptbl_postfix(){
 }
 
 void add_union_start(){
-    compsky::asciify::asciify("\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_", TMPTBL_POSTFIX, ')');
+    compsky::asciify::asciify(ITR, "\n\t\t(\n\t\t\tSELECT DISTINCT f2t.file_id\n\t\t\tFROM file2tag f2t\n\t\t\tWHERE f2t.tag_id\n\t\t\tIN (SELECT node FROM _tmp_tagids_", TMPTBL_POSTFIX, ')');
     
     SQL__CALL_DESC_TAGS_FROM[strlen("CALL descendant_tags_id_from(\"_tmp_tagids_")] = TMPTBL_POSTFIX;
     
@@ -107,20 +107,20 @@ void add_union_end(){
     
     SQL__CALL_DESC_TAGS_FROM__INDX = strlen("CALL descendant_tags_id_from(\"_tmp_tagids_a\",  \"");
     
-    compsky::asciify::asciify("\n\t\t)\n\t");
+    compsky::asciify::asciify(ITR, "\n\t\t)\n\t");
 }
 
 void add_union_unionness(){
-    compsky::asciify::asciify("\n\t\t\tUNION ALL");
+    compsky::asciify::asciify(ITR, "\n\t\t\tUNION ALL");
 }
 
 void construct_stmt(const char** argv,  const char* score_condition){
-    compsky::asciify::reset_index();
+    ITR = BUF;
     
     bool add_comma = false;
     
     
-    compsky::asciify::asciify("SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t"); 
+    compsky::asciify::asciify(ITR, "SELECT f.name\nFROM file f\nJOIN (\n\tSELECT file_id FROM (\n\t\t"); 
     
     add_union_start();
     
@@ -163,8 +163,8 @@ void construct_stmt(const char** argv,  const char* score_condition){
     
     add_union_end();
     
-    compsky::asciify::asciify(") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
-	compsky::asciify::asciify(
+    compsky::asciify::asciify(ITR, ") AS u\n\tGROUP BY file_id\n\tHAVING count(*) >= ",  count_str,  "\n) F ON f.id = F.file_id");
+	compsky::asciify::asciify(ITR, 
 		(score_condition) ? " WHERE f.score " : "",
 		(score_condition) ? score_condition : ""
 	);
@@ -193,19 +193,19 @@ int main(const int argc,  const char** argv){
     
     construct_stmt(argv, score_condition);
     
-    compsky::asciify::BUF[compsky::asciify::get_index()] = '\n';
-    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index()+1, stderr);
+    compsky::asciify::BUF[compsky::asciify::get_index(BUF, ITR)] = '\n';
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(BUF, ITR)+1, stderr);
     
-    compsky::mysql::query_buffer(&RES, compsky::asciify::BUF, compsky::asciify::get_index());
+    compsky::mysql::query_buffer(&RES, compsky::asciify::BUF, compsky::asciify::get_index(BUF, ITR));
     
-    compsky::asciify::reset_index();
+    ITR = BUF;
     
     char* fp;
     while (compsky::mysql::assign_next_row(RES, &ROW, &fp)){
         const size_t fp_sz = strlen(fp);
         compsky::asciify::ensure_buf_can_fit(fp_sz + 1);
-        compsky::asciify::asciify(_f::strlen, fp, fp_sz, '\n');
+        compsky::asciify::asciify(ITR, _f::strlen, fp, fp_sz, '\n');
     }
     
-    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(), stdout);
+    fwrite(compsky::asciify::BUF, 1, compsky::asciify::get_index(BUF, ITR), stdout);
 }
