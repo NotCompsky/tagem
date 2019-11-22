@@ -1,5 +1,5 @@
 #include <compsky/mysql/create_config.hpp>
-
+#include <cstdlib> // for malloc
 #include <string.h> // for strlen
 
 
@@ -16,7 +16,8 @@ int main(){
 		#include "init.sql"
 	;
 
-	if(compsky::asciify::alloc(strlen(sql) + 1024))
+	void* dummy = malloc(strlen(sql) + 1024);
+	if (dummy == nullptr)
 		return 1;
 
     compsky::mysql::create_config(
