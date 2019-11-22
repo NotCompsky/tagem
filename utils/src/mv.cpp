@@ -12,6 +12,7 @@ namespace _err {
 		bad_arg,
 		syntax,
 		cannot_rename,
+		getcwd,
 		n
 	};
 }
@@ -53,7 +54,7 @@ int main(const int argc,  char** argv){
 	
 	char cwd[4096]; // For the cncatenation later
 	if (getcwd(cwd,  4096 - 1) == NULL)
-		return ERR::GETCWD;
+		return _err::getcwd;
 	const size_t cwd_len = strlen(cwd);
 	cwd[cwd_len] = '/';
 	cwd[cwd_len+1] = 0;
