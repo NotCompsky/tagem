@@ -300,6 +300,21 @@ void hash_all_from_db(const FileType file_type_flag,  const String file_ext_rege
 
 
 int main(const int argc,  const char** const argv){
+	if (argc == 1){
+		printf(
+			"Usage: %s HASH_TYPES\n"
+			"	HASH_TYPES a concatenation of any of\n"
+			"		a	Audio\n"
+			"		d	Duration\n"
+			"		i	Image DCT\n"
+			"		v	Video DCT\n"
+			"		s	SHA256\n"
+			"		S	Size\n"
+			, argv[0]
+		);
+		return 1;
+	}
+	
 	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
 	BUF = (char*)malloc(BUF_SZ);
