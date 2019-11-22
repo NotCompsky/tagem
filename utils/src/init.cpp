@@ -1,5 +1,4 @@
 #include <compsky/mysql/create_config.hpp>
-#include <compsky/asciify/init.hpp>
 
 #include <string.h> // for strlen
 
