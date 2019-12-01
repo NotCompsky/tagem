@@ -2,9 +2,9 @@
 #include "name_dialog.hpp"
 #include "tag-manager/mainwindow.hpp"
 #include <compsky/mysql/query.hpp>
-#include <QCompleter>
-#include <QStringList>
 #include <map>
+#include "completer/completer.hpp"
+#include <QStringList>
 
 
 constexpr static const compsky::asciify::flag::Escape f_esc;
@@ -19,7 +19,7 @@ extern MYSQL_RES* RES2;
 extern MYSQL_ROW ROW2;
 
 
-extern QCompleter* tagcompleter;
+extern Completer* tagcompleter;
 extern QStringList tagslist;
 extern std::map<uint64_t, QString> tag_id2name;
 
@@ -53,7 +53,7 @@ void tag2parent(const uint64_t tagid,  const uint64_t parid){
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	tagslist.append(tagstr);
 	delete tagcompleter;
-	tagcompleter = new QCompleter(tagslist);
+	tagcompleter = new Completer(tagslist);
 
 	if (tagid == 0)
 		tagid = get_id_from_table("tag", tagstr);

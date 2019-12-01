@@ -8,7 +8,6 @@
 #include <compsky/mysql/query.hpp>
 
 #include <QApplication>
-#include <QCompleter>
 #include <QStringList>
 
 #ifdef VID
@@ -17,6 +16,8 @@
 
 #include <map> // for std::map
 #include <cstdlib> // for atof
+
+#include "completer/completer.hpp"
 
 
 
@@ -35,7 +36,7 @@ int dummy_argc = 0;
 char** dummy_argv;
 
 
-QCompleter* tagcompleter;
+Completer* tagcompleter;
 QStringList tagslist;
 std::map<uint64_t, QString> tag_id2name;
 
@@ -176,7 +177,7 @@ int main(const int argc,  const char** argv){
 			tagslist << s;
 		}
 	}
-	tagcompleter = new QCompleter(tagslist);
+	tagcompleter = new Completer(tagslist);
 	
 	const char* const inlist_filter_rule = *argv;
 	

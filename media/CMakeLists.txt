@@ -48,6 +48,9 @@ set(SUBTITLES_SOURCES
 set(MENU_SOURCES
 	src/menu.cpp
 )
+set(COMPLETER_SOURCES
+	src/completer/simplify_str.cpp
+)
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
@@ -81,6 +84,7 @@ foreach(file_type ${MY_TARGETS})
 		target_link_libraries("${tgt}" "${PYTHON}")
 		target_compile_definitions("${tgt}" PRIVATE PYTHON)
 	endif()
+	target_sources("${tgt}" PRIVATE ${COMPLETER_SOURCES})
 endforeach(file_type)
 
 

@@ -1,12 +1,13 @@
 #include "tagtreemodel.hpp"
 
 #include <QByteArray>
-#include <QCompleter>
 #include <QDebug> // TMP
 #include <QStandardItem>
 #include <QStringList>
 
 #include <compsky/mysql/query.hpp>
+
+#include "../completer/completer.hpp"
 
 
 namespace _mysql {
@@ -15,7 +16,7 @@ namespace _mysql {
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
 
-extern QCompleter* tagcompleter;
+extern Completer* tagcompleter;
 extern QStringList tagslist;
 
 
@@ -35,7 +36,7 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
     }
     }
 	delete tagcompleter;
-	tagcompleter = new QCompleter(tagslist);
+	tagcompleter = new Completer(tagslist);
 }
 
 
