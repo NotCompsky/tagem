@@ -225,6 +225,7 @@ CREATE TABLE settings (
 	skip_tagged BOOLEAN NOT NULL,
 	skip_trans BOOLEAN NOT NULL,
 	skip_grey BOOLEAN NOT NULL,
+	stpetersburger INT UNSIGNED NOT NULL,
 	files_from_which INT UNSIGNED NOT NULL,
 	start_from_which INT UNSIGNED NOT NULL,
 	file_sz_min BIGINT UNSIGNED NOT NULL,

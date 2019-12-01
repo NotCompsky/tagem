@@ -65,7 +65,22 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 	}
 	
 	{
-		QGroupBox* group_box = new QGroupBox("Files from");
+		QGroupBox* group_box = new QGroupBox("Data is");
+		
+		this->stpetersburger[stpetersburger::fp]        = new QRadioButton("File Path");
+		this->stpetersburger[stpetersburger::era]       = new QRadioButton("Era ID");
+		this->stpetersburger[0]->setChecked(true);
+		QHBoxLayout* hbox = new QHBoxLayout;
+		for (auto i = 0;  i < stpetersburger::COUNT;  ++i)
+			hbox->addWidget(this->stpetersburger[i]);
+		hbox->addStretch(1);
+		
+		group_box->setLayout(hbox);
+		l->addWidget(group_box);
+	}
+	
+	{
+		QGroupBox* group_box = new QGroupBox("from");
 		QVBoxLayout* vbox = new QVBoxLayout;
 		{
 			QHBoxLayout* hbox = new QHBoxLayout;
@@ -216,6 +231,7 @@ void InlistFilterDialog::apply(){
 	this->rules.skip_trans  = this->skip_trans->isChecked();
 	this->rules.skip_grey   = this->skip_grey->isChecked();
 	
+	this->rules.stpetersburger   = get_checked_radio_btn_index(this->stpetersburger, stpetersburger::COUNT);
 	this->rules.files_from_which = get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT);
 	this->rules.start_from_which = get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT);
 	
@@ -241,7 +257,7 @@ void InlistFilterDialog::save(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min) VALUES (",
+		"INSERT INTO settings (name, filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, stpetersburger, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min) VALUES (",
 			'"', _f::esc, '"', this->settings_name->text(), '"', ',',
 			'"', _f::esc, '"', this->filename_regexp->text(), '"', ',',
 			'"', _f::esc, '"', this->files_from->toPlainText(), '"', ',',
@@ -249,6 +265,7 @@ void InlistFilterDialog::save(){
 			bool2char(this->skip_tagged->isChecked()), ',',
 			bool2char(this->skip_trans->isChecked()), ',',
 			bool2char(this->skip_grey->isChecked()), ',',
+			get_checked_radio_btn_index(this->stpetersburger,   stpetersburger::COUNT), ',',
 			get_checked_radio_btn_index(this->files_from_which, files_from_which::COUNT), ',',
 			get_checked_radio_btn_index(this->start_from_which, start_from_which::COUNT), ',',
 			this->file_sz_min->text().toInt(), ',',
@@ -263,6 +280,7 @@ void InlistFilterDialog::save(){
 			"skip_tagged=VALUES(skip_tagged),"
 			"skip_trans=VALUES(skip_trans),"
 			"skip_grey=VALUES(skip_grey),"
+			"stpetersburger=VALUES(stpetersburger),"
 			"files_from_which=VALUES(files_from_which),"
 			"start_from_which=VALUES(start_from_which),"
 			"w_max=VALUES(w_max),"

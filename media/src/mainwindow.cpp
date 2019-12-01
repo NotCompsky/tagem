@@ -60,6 +60,7 @@
 #include "file2.hpp"
 
 #include "utils.hpp"
+#include "str2n.hpp"
 
 #include "get_datetime.hpp"
 
@@ -149,6 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
 # endif
     reached_stdin_end(false),
     auto_next(false),
+    seek(0),
     readonly(true)
 	, titles(false)
 {
@@ -293,6 +295,10 @@ void MainWindow::set_player_options_for_img(){
         PRINTF("Auto paused\n");
         this->m_player->pause(true);
     }
+    if (this->seek != 0){
+		this->m_player->seek((qint64)this->seek);
+		this->seek = 0;
+	}
 }
 
 void MainWindow::position_changed(qint64 position){
@@ -337,7 +343,7 @@ void MainWindow::set_media_dir_len(){
 #ifdef AUDIO
 void MainWindow::parse_mediaStatusChanged(int status){
 	if (status == QtAV::EndOfMedia  &&  this->auto_next){
-		this->media_next();
+		return this->media_next();
 	}
 }
 #endif
@@ -355,6 +361,20 @@ void MainWindow::media_next(){
 # endif
 	// TODO: Implement in inlist_filter_dialog
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
+	
+	switch(r.stpetersburger){
+	  #ifdef ERA
+		case stpetersburger::era:
+		{
+			this->media_fp_is_media_fp = false;
+			break;
+		}
+	  #endif
+		default:
+			// stpetersburger::fp
+			this->media_fp_is_media_fp = true;
+			break;
+	};
 	
 	switch(r.files_from_which){
 		case files_from_which::sql:
@@ -517,6 +537,22 @@ void MainWindow::media_open(){
   #endif
 	
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
+	
+	if (!this->media_fp_is_media_fp){
+		switch(r.stpetersburger){
+		#ifdef ERA
+			case stpetersburger::era:
+			{
+				const uint64_t era_id = str2n<uint64_t,  char>(this->media_fp);
+				this->jump_to_era(era_id);
+				break;
+			}
+		#endif
+			default:
+				// Impossible
+				break;
+		};
+	}
 	
 	if (r.reject_name(this->get_media_fp()))
 		return this->media_next();
@@ -1229,32 +1265,38 @@ void MainWindow::python_script(){
 		PyRun_SimpleString(python);
 	}
 }
+#endif // #ifdef PYTHON
 
 void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	char buf[std::char_traits<char>::length("SELECT f.name, e.start FROM file f, era e WHERE f.id=e.file_id AND e.id=") + 19 + 1];
+	char buf[std::char_traits<char>::length("SELECT f.name, f.id, e.start FROM file f, era e WHERE f.id=e.file_id AND e.id=") + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
 		res,
 		buf,
-		"SELECT f.name, e.start "
+		"SELECT f.name, f.id, e.start "
 		"FROM file f, era e "
 		"WHERE f.id=e.file_id "
 		  "AND e.id=", era_id
 	);
+	uint64_t _f_id;
+	uint64_t _seek;
 	const char* _fp;
-	uint64_t _position;
-	while(compsky::mysql::assign_next_row(res, &row, &_fp, &_position)){
-		memcpy(this->media_fp, _fp, strlen(_fp));
+	while(compsky::mysql::assign_next_row(res, &row, &_fp, &_f_id, &_seek));
+	if (_f_id != this->file_id){
+		memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
+		this->set_media_dir_len();
+		this->media_fp_is_media_fp = true;
+		this->seek = _seek;
+		// QtAV doesn't support play(offset) directly, so need to wait for playback signal, and then skip
+		this->media_open();
+	} else {
+#ifdef AUDIO
+		this->m_player->seek((qint64)_seek);
+#endif
 	}
-	this->set_media_dir_len();
-	this->media_open();
-# ifdef VID
-	this->m_player->seek(qint64(_position));
-# endif
 }
-#endif // #ifdef PYTHON
 
 #endif // #ifdef ERA
 
@@ -1274,7 +1316,7 @@ void MainWindow::jump_to_file(const uint64_t file_id){
 	);
 	const char* _fp;
 	while(compsky::mysql::assign_next_row(res, &row, &_fp)){
-		memcpy(this->media_fp, _fp, strlen(_fp));
+		memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
 	}
 	this->set_media_dir_len();
 	this->media_open();

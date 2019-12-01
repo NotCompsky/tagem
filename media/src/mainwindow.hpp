@@ -146,6 +146,9 @@ class MainWindow : public QWidget{
 	char* subtitle_line;
 	bool exhausted_subtitle;
 # endif
+	uint64_t seek;
+	
+	bool media_fp_is_media_fp;
 	bool readonly;
 	bool titles;
  private:
@@ -222,8 +225,8 @@ class MainWindow : public QWidget{
 	void skip();
 #  ifdef PYTHON
 	void python_script();
-	void jump_to_era(const uint64_t era_id);
 #  endif
+	void jump_to_era(const uint64_t era_id);
 # endif
 };
 

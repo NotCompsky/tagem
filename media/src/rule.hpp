@@ -7,6 +7,14 @@
 #include <QString>
 
 
+namespace stpetersburger {
+	enum {
+		fp,
+		era,
+		COUNT
+	};
+} // namespace stpetersburger
+
 namespace files_from_which {
 	enum {
 		stdin,
@@ -39,6 +47,7 @@ public:
 	int w_max;
 	int h_min;
 	int h_max;
+	unsigned int stpetersburger;
 	unsigned int files_from_which;
 	unsigned int start_from_which;
 	bool skip_tagged;
@@ -55,6 +64,7 @@ public:
 	,	w_max(0)
 	,	h_min(0)
 	,	h_max(0)
+	,	stpetersburger(stpetersburger::fp)
 	,	files_from_which(files_from_which::stdin)
 	,	start_from_which(start_from_which::literal)
 	,	skip_tagged(false)
@@ -69,7 +79,7 @@ public:
 		MYSQL_RES* res;
 		MYSQL_ROW  row;
 		
-		compsky::mysql::query(this->mysql,  res,  buf,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", f_esc, '"', s, "\"");
+		compsky::mysql::query(this->mysql,  res,  buf,  "SELECT  filename_regexp, files_from, start_from, skip_tagged, skip_trans, skip_grey, stpetersburger, files_from_which, start_from_which, file_sz_min, file_sz_max, w_max, w_min, h_max, h_min  FROM settings  WHERE name=\"", f_esc, '"', s, "\"");
 		
 		unsigned int count = 0;
 		
@@ -79,6 +89,7 @@ public:
 		bool _skip_tagged;
 		bool _skip_trans;
 		bool _skip_grey;
+		unsigned int _stpetersburger;
 		unsigned int _files_from_which;
 		unsigned int _start_from_which;
 		size_t _file_sz_min;
@@ -87,7 +98,7 @@ public:
 		int _w_min;
 		int _h_max;
 		int _h_min;
-		while(compsky::mysql::assign_next_row(res, &row, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
+		while(compsky::mysql::assign_next_row(res, &row, &_filename_regexp, &_files_from, &_start_from, &_skip_tagged, &_skip_trans, &_skip_grey, &_stpetersburger, &_files_from_which, &_start_from_which, &_file_sz_min, &_file_sz_max, &_w_max, &_w_min, &_h_max, &_h_min)){
 			++count;
 			
 			this->filename_regexp.setPattern(_filename_regexp);
@@ -98,6 +109,7 @@ public:
 			this->skip_trans  = _skip_trans;
 			this->skip_grey   = _skip_grey;
 			
+			this->stpetersburger   = _stpetersburger;
 			this->files_from_which = _files_from_which;
 			this->start_from_which = _start_from_which;
 			

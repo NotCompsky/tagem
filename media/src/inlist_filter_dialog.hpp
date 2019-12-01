@@ -46,6 +46,7 @@ class InlistFilterDialog : public QDialog {
 	QTextEdit* files_from;
 	QLineEdit* start_from;
 	QStringList settings_names;
+	QRadioButton* stpetersburger[stpetersburger::COUNT];
 	QRadioButton* files_from_which[files_from_which::COUNT];
 	QRadioButton* start_from_which[start_from_which::COUNT];
 	QCheckBox* skip_tagged;
@@ -69,6 +70,7 @@ class InlistFilterDialog : public QDialog {
 		this->skip_tagged->setChecked(this->rules.skip_tagged);
 		this->skip_trans->setChecked(this->rules.skip_trans);
 		this->skip_grey->setChecked(this->rules.skip_grey);
+		this->stpetersburger[this->rules.stpetersburger]->setChecked(true);
 		this->files_from_which[this->rules.files_from_which]->setChecked(true);
 		this->start_from_which[this->rules.start_from_which]->setChecked(true);
 		this->file_sz_min->setText(QString("%1").arg(this->rules.file_sz_min));
