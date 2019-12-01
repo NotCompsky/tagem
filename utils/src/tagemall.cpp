@@ -30,7 +30,13 @@ namespace _f {
 }
 
 int main(const int argc, const char** argv){
-	// tagemall [OPTIONS] -- tag1 ... tagN -- filepath1 filepath2 ... filepathM
+	/*
+	tagemall [OPTIONS] -- tag1 ... tagN -- filepath1 filepath2 ... filepathM
+	
+	OPTIONS
+		v VAR_NAME VAR_VALUE
+	*/
+	
 	constexpr static const size_t buf_sz = 4 * 1024 * 1024;
 	char* buf = (char*)malloc(buf_sz);
 	if(buf == nullptr)
