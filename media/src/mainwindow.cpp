@@ -364,6 +364,7 @@ void MainWindow::media_next(){
 	
 	switch(r.stpetersburger){
 	  #ifdef ERA
+		case stpetersburger::fp_and_era:
 		case stpetersburger::era:
 		{
 			this->media_fp_is_media_fp = false;
@@ -371,7 +372,7 @@ void MainWindow::media_next(){
 		}
 	  #endif
 		default:
-			// stpetersburger::fp
+			// stpetersburger::fp or ::fp_and_era
 			this->media_fp_is_media_fp = true;
 			break;
 	};
@@ -539,12 +540,20 @@ void MainWindow::media_open(){
 	const InlistFilterRules r = this->inlist_filter_dialog->rules;
 	
 	if (!this->media_fp_is_media_fp){
+		char* _stpetersburg_string = this->media_fp;
 		switch(r.stpetersburger){
 		#ifdef ERA
+			case stpetersburger::fp_and_era:
+				while(*_stpetersburg_string != '\n')
+					++_stpetersburg_string;
+				*_stpetersburg_string = 0;
+				++_stpetersburg_string;
 			case stpetersburger::era:
 			{
-				const uint64_t era_id = str2n<uint64_t,  char>(this->media_fp);
-				this->jump_to_era(era_id);
+				const uint64_t era_id = str2n<uint64_t,  char>(_stpetersburg_string);
+				if (era_id != 0)
+					// era_id==0 only happens in case stpetersburger::fp_and_era
+					this->jump_to_era(era_id);
 				break;
 			}
 		#endif
@@ -1288,14 +1297,10 @@ void MainWindow::jump_to_era(const uint64_t era_id){
 		memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
 		this->set_media_dir_len();
 		this->media_fp_is_media_fp = true;
-		this->seek = _seek;
-		// QtAV doesn't support play(offset) directly, so need to wait for playback signal, and then skip
-		this->media_open();
-	} else {
-#ifdef AUDIO
-		this->m_player->seek((qint64)_seek);
-#endif
 	}
+	this->seek = _seek;
+	// QtAV doesn't support play(offset) directly, so need to wait for playback signal, and then skip
+	this->media_open();
 }
 
 #endif // #ifdef ERA

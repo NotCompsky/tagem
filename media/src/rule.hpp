@@ -11,6 +11,7 @@ namespace stpetersburger {
 	enum {
 		fp,
 		era,
+		fp_and_era,
 		COUNT
 	};
 } // namespace stpetersburger

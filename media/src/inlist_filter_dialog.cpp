@@ -69,6 +69,8 @@ InlistFilterDialog::InlistFilterDialog(QWidget* parent)
 		
 		this->stpetersburger[stpetersburger::fp]        = new QRadioButton("File Path");
 		this->stpetersburger[stpetersburger::era]       = new QRadioButton("Era ID");
+		this->stpetersburger[stpetersburger::fp_and_era]= new QRadioButton("Both");
+		// NOTE: "Both" option still requires that a single string is returned - but the data is newline partitioned (file_path, era_id)
 		this->stpetersburger[0]->setChecked(true);
 		QHBoxLayout* hbox = new QHBoxLayout;
 		for (auto i = 0;  i < stpetersburger::COUNT;  ++i)
