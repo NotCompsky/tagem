@@ -154,7 +154,7 @@ int main(const int argc,  const char** argv){
 				show_gui = false;
 				break;
 			case 'T':
-				player.titles = false;
+				player.titles = true;
 				break;
 			default:
 				return 33;
