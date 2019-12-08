@@ -6,8 +6,7 @@
 
 
 #pragma once
-#include <QRegularExpression>
 #include <QString>
 
 
-QString simplify_str(const QString& str);
+void simplify_str(const QString& in,  QString& out);

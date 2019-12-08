@@ -9,34 +9,32 @@
 #include <QString>
 
 
-QString simplify_str(const QString& str){
-	QString s = str;
+void simplify_str(const QString& in,  QString& out){
+	out = in;
 	// Performance: Eliminate characters you do not wish to have. 
-	s.remove(QRegularExpression("[" + QRegularExpression::escape("`'!*,?|¡¿") + "]"));
+	out.remove(QRegularExpression("[" + QRegularExpression::escape("`'!*,?|¡¿") + "]"));
 
 	// Performance: Check for characters
-	if (s.contains(QRegularExpression("[" + QRegularExpression::escape("$/:ÀÁÄÙÛÜàáäçèéêëïñóöùûüś") + "]"))){
+	if (out.contains(QRegularExpression("[" + QRegularExpression::escape("$/:ÀÁÄÙÛÜàáäçèéêëïñóöùûüś") + "]"))){
 		// Special Characters 
-		s.replace(QRegularExpression("[" + QRegularExpression::escape(":/") + "]"), "-");
-		s.replace(QRegularExpression("[$]"), "s");
+		out.replace(QRegularExpression("[" + QRegularExpression::escape(":/") + "]"), "-");
+		out.replace(QRegularExpression("[$]"), "s");
 
 		// Upper Case
-		s.replace(QRegularExpression("[ÁÀ]"),   "A");
-		s.replace(QRegularExpression("[Ä]"),    "Ae");
-		s.replace(QRegularExpression("[ÜÛÙ]"),  "U");
+		out.replace(QRegularExpression("[ÁÀ]"),   "A");
+		out.replace(QRegularExpression("[Ä]"),    "Ae");
+		out.replace(QRegularExpression("[ÜÛÙ]"),  "U");
 
 		// Lower Case
-		s.replace(QRegularExpression("[áà]"),   "a");
-		s.replace(QRegularExpression("[ä]"),    "ae");
-		s.replace(QRegularExpression("[ç]"),    "c");
-		s.replace(QRegularExpression("[ëêéè]"), "e");
-		s.replace(QRegularExpression("[ï]"),    "i");
-		s.replace(QRegularExpression("[ñ]"),    "n");
-		s.replace(QRegularExpression("[óö]"),   "o");
-		s.replace(QRegularExpression("[ûù]"),   "u");
-		s.replace(QRegularExpression("[ü]"),    "ue");
-		s.replace(QRegularExpression("[ś]"),    "s");
+		out.replace(QRegularExpression("[áà]"),   "a");
+		out.replace(QRegularExpression("[ä]"),    "ae");
+		out.replace(QRegularExpression("[ç]"),    "c");
+		out.replace(QRegularExpression("[ëêéè]"), "e");
+		out.replace(QRegularExpression("[ï]"),    "i");
+		out.replace(QRegularExpression("[ñ]"),    "n");
+		out.replace(QRegularExpression("[óö]"),   "o");
+		out.replace(QRegularExpression("[ûù]"),   "u");
+		out.replace(QRegularExpression("[ü]"),    "ue");
+		out.replace(QRegularExpression("[ś]"),    "s");
 	}
-	
-	return s;
 }

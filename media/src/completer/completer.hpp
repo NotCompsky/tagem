@@ -8,21 +8,58 @@
 #pragma once
 #include <QCompleter>
 #include "simplify_str.hpp"
+#include <QDebug>
 
 
-class Completer : public QCompleter {
+class Completer {
 public:
-	Completer(QStringList& l,  QObject* parent = nullptr)
-		: QCompleter(l, parent)
-	{}
-
+	QStringList stringlist;
 private:
-	QStringList splitPath(const QString &path) const {
-		return QStringList() << simplify_str(path);
+	void populate(QStringList& _stringlist){
+		this->stringlist.clear();
+		this->str2index.clear();
+		for (auto i = 0;  i < _stringlist.size();  ++i){
+			const QString qstr = _stringlist.at(i);
+			this->str2index[qstr] = i;
+			this->stringlist << qstr;
+		}
+		for (auto i = 0;  i < _stringlist.size();  ++i){
+			const QString qstr = _stringlist.at(i);
+			
+			QString s1;
+			simplify_str(qstr, s1);
+			if (s1 != qstr){
+				this->str2index[s1] = i;
+				this->stringlist << s1;
+			}
+		}
 	}
-
-	QString pathFromIndex(const QModelIndex &index) const {
-		// Need to use original value when value is selected
-		return index.data().toString();
+	void new_completer(){
+		this->completer = new QCompleter(this->stringlist);
+	}
+public:
+	std::map<QString,  unsigned int> str2index;
+	QCompleter* completer;
+	
+	Completer()
+	{
+		this->new_completer();
+	}
+	
+	~Completer(){
+		delete this->completer;
+	}
+	
+	void reset(QStringList& _stringlist){
+		delete this->completer;
+		this->populate(_stringlist);
+		this->new_completer();
+	};
+	
+	QString get_orig_str(const QString& s){
+		qDebug() << s;
+		qDebug() << this->str2index[s];
+		qDebug() << this->stringlist.at(this->str2index[s]);
+		return this->stringlist.at(this->str2index[s]);
 	}
 };

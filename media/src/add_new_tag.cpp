@@ -19,7 +19,7 @@ extern MYSQL_RES* RES2;
 extern MYSQL_ROW ROW2;
 
 
-extern Completer* tagcompleter;
+extern Completer tagcompleter;
 extern QStringList tagslist;
 extern std::map<uint64_t, QString> tag_id2name;
 
@@ -52,8 +52,7 @@ void tag2parent(const uint64_t tagid,  const uint64_t parid){
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	tagslist.append(tagstr);
-	delete tagcompleter;
-	tagcompleter = new Completer(tagslist);
+	tagcompleter.reset(tagslist);
 
 	if (tagid == 0)
 		tagid = get_id_from_table("tag", tagstr);
@@ -66,9 +65,9 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 	char* parent_tagchars;
 	while(true){
 		NameDialog* tagdialog = new NameDialog("Parent Tag of", tagstr);
-		tagdialog->name_edit->setCompleter(tagcompleter);
+		tagdialog->name_edit->setCompleter(tagcompleter.completer);
 		const int _rc = tagdialog->exec();
-		parent_tagstr = tagdialog->name_edit->text();
+		parent_tagstr = tagcompleter.get_orig_str(tagdialog->name_edit->text());
 		delete tagdialog;
 		
 		if (_rc != QDialog::Accepted  ||  parent_tagstr == tagstr)
@@ -112,9 +111,9 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 
 uint64_t ask_for_tag(const QString& str){
 	NameDialog* tagdialog = new NameDialog("Tag", str);
-	tagdialog->name_edit->setCompleter(tagcompleter);
+	tagdialog->name_edit->setCompleter(tagcompleter.completer);
 	const auto rc = tagdialog->exec();
-	const QString tagstr = tagdialog->name_edit->text();
+	const QString tagstr = tagcompleter.get_orig_str(tagdialog->name_edit->text());
 
 	if (rc != QDialog::Accepted  ||  tagstr.isEmpty())
 		return 0;

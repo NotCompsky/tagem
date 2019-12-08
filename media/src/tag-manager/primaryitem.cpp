@@ -23,7 +23,7 @@ namespace _mysql {
 }
 
 extern std::map<uint64_t, QString> tag_id2name;
-extern Completer* tagcompleter;
+extern Completer tagcompleter;
 extern QStringList tagslist;
 
 
@@ -78,8 +78,7 @@ void NameItem::setData(const QVariant& value,  const int role){
 	
 	tagslist[tagslist.indexOf(tag_id2name[this->tag_id])] = neue;
 	tag_id2name[this->tag_id] = neue;
-	delete tagcompleter;
-	tagcompleter = new Completer(tagslist);
+	tagcompleter.reset(tagslist);
     
 	static char buf[21 + 2*128 + 11 + 19]; // Though tag name should not be longer than 128 characters
     compsky::mysql::exec(_mysql::obj, buf, "UPDATE tag SET name=\"",  _f::esc,  '"',  neue,  "\" WHERE id=",  this->tag_id);

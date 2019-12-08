@@ -16,7 +16,7 @@ namespace _mysql {
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
 
-extern Completer* tagcompleter;
+extern Completer tagcompleter;
 extern QStringList tagslist;
 
 
@@ -35,8 +35,7 @@ TagTreeModel::TagTreeModel(int a,  int b,  QObject* parent)
         tagslist << s;
     }
     }
-	delete tagcompleter;
-	tagcompleter = new Completer(tagslist);
+	tagcompleter.reset(tagslist);
 }
 
 

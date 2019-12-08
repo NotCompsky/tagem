@@ -36,7 +36,7 @@ int dummy_argc = 0;
 char** dummy_argv;
 
 
-Completer* tagcompleter;
+Completer tagcompleter;
 QStringList tagslist;
 std::map<uint64_t, QString> tag_id2name;
 
@@ -177,7 +177,7 @@ int main(const int argc,  const char** argv){
 			tagslist << s;
 		}
 	}
-	tagcompleter = new Completer(tagslist);
+	tagcompleter.reset(tagslist);
 	
 	const char* const inlist_filter_rule = *argv;
 	
