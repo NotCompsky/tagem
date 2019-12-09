@@ -10,6 +10,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+#include <cstdio> // for rename
+
 
 namespace _mysql {
 	extern MYSQL* obj;
@@ -45,6 +47,7 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT name FROM file WHERE id=", this->file_id);
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_file_path)){
 		QLineEdit* _file_path_line_edit = new QLineEdit(_file_path);
+		memcpy(this->file_path,  _file_path,  strlen(_file_path) + 1);
 		connect(_file_path_line_edit, &QLineEdit::editingFinished, this, &InfoDialog::update_file_path);
 		l->addWidget(_file_path_line_edit);
 	}
@@ -63,10 +66,23 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 }
 
 void InfoDialog::update_file_path(){
-	const QString s = static_cast<QLineEdit*>(sender())->text();
+	QLineEdit* const line_edit = static_cast<QLineEdit*>(sender());
+	const QString s = line_edit->text();
 	
-	if (s.isEmpty())
+	if (s.isEmpty()){
+		line_edit->setText(this->file_path);
 		return;
+	}
+	
+	const QByteArray ba = s.toLocal8Bit();
+	const char* const _file_path = ba.data();
+	
+	const int rc = rename(this->file_path, _file_path);
+	
+	if (rc != 0){
+		line_edit->setText(this->file_path);
+		return;
+	}
 	
 	compsky::mysql::exec(
 		_mysql::obj,
@@ -77,4 +93,6 @@ void InfoDialog::update_file_path(){
 		"\" "
 		"WHERE id=", this->file_id
 	);
+	
+	memcpy(this->file_path,  _file_path,  strlen(_file_path) + 1);
 }
