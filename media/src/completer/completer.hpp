@@ -56,10 +56,12 @@ public:
 		this->new_completer();
 	};
 	
-	QString get_orig_str(const QString& s){
-		qDebug() << s;
-		qDebug() << this->str2index[s];
-		qDebug() << this->stringlist.at(this->str2index[s]);
-		return this->stringlist.at(this->str2index[s]);
+	QString get_orig_str(const QString& s) const {
+		try {
+			const auto i = this->str2index.at(s);
+			return this->stringlist.at(i);
+		} catch (const std::out_of_range&){
+			return s;
+		}
 	}
 };
