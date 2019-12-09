@@ -8,7 +8,6 @@
 #pragma once
 #include <QCompleter>
 #include "simplify_str.hpp"
-#include <QDebug>
 
 
 class Completer {
