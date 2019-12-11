@@ -226,7 +226,7 @@ int main(int argc,  const char** argv) {
 		") A ON A.node=t.id ",
 		"WHERE b2t.box_id=b.id "
 		  "AND f.id=b.file_id "
-		  "AND t.id=b2t.box_id "
+		  "AND t.id=b2t.tag_id "
 		  "AND tt.", (root_tags)?"node":"root", "=t.id "
 		"GROUP BY t.name, f.name, b.x, b.y, b.w, b.h"
 	);
