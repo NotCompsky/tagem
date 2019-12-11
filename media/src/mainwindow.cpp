@@ -641,6 +641,17 @@ void MainWindow::media_open(){
     if (this->file_id != 0)
         this->init_file_from_db();
 	
+  #if (defined SCROLLABLE  &&  defined BOXABLE)
+	{
+		const float _w_ratio = (float)this->size().width()  / (float)this->main_widget_orig_size.width();
+		const float _h_ratio = (float)this->size().height() / (float)this->main_widget_orig_size.height();
+		const float _min_rat = (_w_ratio > _h_ratio) ? _h_ratio : _w_ratio;
+		
+		if (_min_rat != 0)
+			this->rescale_main(_min_rat);
+	}
+  #endif
+	
 # ifdef ERA
 	this->era_start = 0;
 	this->eras.clear();
