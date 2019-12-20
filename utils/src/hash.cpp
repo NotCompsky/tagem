@@ -1,4 +1,5 @@
 #include <compsky/mysql/query.hpp>
+#include <boost/regex.hpp>
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
@@ -6,6 +7,7 @@ extern "C" {
 # include <libavformat/avformat.h>
 # include <libavcodec/avcodec.h>
 }
+#include <stdexcept>
 #include <stdio.h> // for fprintf
 
 
@@ -251,8 +253,118 @@ void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 
 void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
 
+
+struct Options {
+	const char* directory;
+	bool recursive;
+};
+
+
+struct IncompatibleOptions : public std::runtime_error {
+	IncompatibleOptions(const char* const s)
+	: std::runtime_error(s)
+	{}
+};
+
+
+constexpr
+bool check_regex(const nullptr_t regex,  const char* const file_name,  const size_t file_name_len){
+	return true;
+}
+
+bool check_regex(const boost::regex* regex,  const char* const file_name,  const size_t file_name_len){
+	static boost::match_results<const char*> what;
+	return (boost::regex_search(file_name,  file_name + strlen(file_name),  what,  *regex));
+}
+
+
+template<typename FileType,  typename BoostRegex>
+void hash_all_from_dir(const char* const dirpath,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name){
+	static char file_path[4096];
+	static size_t dir_prefix_len = 0;
+	
+	const size_t dir_len = strlen(dirpath);
+	memcpy(file_path + dir_prefix_len,  dirpath,  dir_len);
+	dir_prefix_len += dir_len;
+	file_path[dir_prefix_len] = '/';
+	++dir_prefix_len;
+	
+	DIR* dir = opendir(dirpath);
+	if (dir == nullptr)
+		return;
+	struct dirent* e;
+	while((e = readdir(dir)) != nullptr){
+		const char* const ename = e->d_name;
+		if (ename == nullptr)
+			continue;
+		if (
+			(ename[0] == '.') &&
+			(ename[1] == 0)   || (ename[1] == '.'  &&  ename[2] == 0)
+		)
+			// Skip . and ..
+			continue;
+		if (!(check_regex(regex,  ename,  strlen(ename)))){
+			printf("Failed regex: %s\n", ename);
+			continue;
+		}
+		if (e->d_type == DT_DIR){
+			if (recursive)
+				hash_all_from_dir(ename, recursive, regex, file_type_flag, hash_name);
+			continue;
+		}
+		
+		static char buf[128 + 2*4096];
+		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
+		
+		compsky::mysql::exec(
+			_mysql::obj,
+			buf,
+			"INSERT INTO file (name) VALUES (\"", _f::esc, '"', file_path, "\") "
+			"ON DUPLICATE KEY UPDATE id=id"
+		);
+		compsky::mysql::query(
+			_mysql::obj,
+			_mysql::res,
+			buf,
+			"SELECT id FROM file WHERE name=\"", _f::esc, '"', file_path, "\""
+		);
+		const char* file_id;
+		while(compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &file_id)){
+			save_hash(file_type_flag, hash_name, file_id, file_path);
+		}
+	}
+	closedir(dir);
+	dir_prefix_len -= (dir_len + 1);
+}
+
+
+template<typename FileType>
+void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const char* const file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name){
+	static char regexp[1 + ADD_NAME_REGEXP_SZ + 2 + 1] = {'('};
+	const size_t file_ext_regexp_len = strlen(file_ext_regexp);
+	memcpy(regexp + 1,  file_ext_regexp,  file_ext_regexp_len);
+	regexp[1 + file_ext_regexp_len + 0] = ')';
+	regexp[1 + file_ext_regexp_len + 1] = '$';
+	regexp[1 + file_ext_regexp_len + 2] = 0;
+	boost::regex regex(regexp, boost::regex::extended); // POSIX extended is the MySQL regex engine
+	
+	hash_all_from_dir(dirpath, recursive, &regex, file_type_flag, hash_name);
+}
+
+
+template<typename FileType>
+void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name){
+	hash_all_from_dir(dirpath, recursive, nullptr, file_type_flag, hash_name);
+}
+
+
 template<typename FileType,  typename String>
-void hash_all_from_db(const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name){
+void hash_all_from(const Options opts,  const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name){
+	if (opts.directory != nullptr){
+		hash_all_from_dir_root(opts.directory, opts.recursive, file_ext_regexp, file_type_flag, hash_name);
+		return;
+	}
+	
 	const char* _id;
 	const char* _fp;
 	
@@ -299,27 +411,51 @@ void hash_all_from_db(const FileType file_type_flag,  const String file_ext_rege
 };
 
 
-int main(const int argc,  const char** const argv){
-	if (argc == 1){
-		printf(
-			"Usage: %s HASH_TYPES\n"
-			"	HASH_TYPES a concatenation of any of\n"
-			"		a	Audio\n"
-			"		d	Duration\n"
-			"		i	Image DCT\n"
-			"		v	Video DCT\n"
-			"		s	SHA256\n"
-			"		S	Size\n"
-			, argv[0]
-		);
-		return 1;
-	}
-	
+int main(const int argc,  const char* const* argv){
 	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
 	BUF = (char*)malloc(BUF_SZ);
 	if (BUF == nullptr)
 		return 4096;
+	
+	Options opts;
+	const char* directory = nullptr;
+	bool recursive = false;
+	do {
+		++argv;
+		const char* const arg = *argv;
+		if (arg == nullptr){
+			printf(
+				"Usage: %s [OPTIONS] HASH_TYPES\n"
+				"	OPTIONS\n"
+				"		-d DIRECTORY\n"
+				"			Tag all files in a directory (adding them to the database if necessary)\n"
+				"		-R\n"
+				"	HASH_TYPES a concatenation of any of\n"
+				"		a	Audio\n"
+				"		d	Duration\n"
+				"		i	Image DCT\n"
+				"		v	Video DCT\n"
+				"		s	SHA256\n"
+				"		S	Size\n"
+				, *argv
+			);
+			return 1;
+		}
+		if (arg[0] != '-')
+			break;
+		switch(arg[1]){
+			case 'd':
+				opts.directory = *(++argv);
+				break;
+			case 'R':
+				opts.recursive = true;
+				break;
+			default:
+				// case 0:
+				break;
+		}
+	} while (true);
 	
 	av_fmt_ctx = avformat_alloc_context();
 	
@@ -330,29 +466,29 @@ int main(const int argc,  const char** const argv){
 	constexpr static const Size   size_flag;
 	constexpr static const Duration duration_flag;
 	
-	const char* const file_types = argv[1];
+	const char* const file_types = *argv;
 	for (auto i = 0;  i < strlen(file_types);  ++i){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from_db(audio_flag,  "mp3|webm|mp4|mkv|avi", "audio_hash");
+				hash_all_from(opts,  audio_flag,  "mp3|webm|mp4|mkv|avi", "audio_hash");
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from_db(duration_flag,   "mp3|webm|mp4|mkv|avi|gif", "duration");
+				hash_all_from(opts,  duration_flag,   "mp3|webm|mp4|mkv|avi|gif", "duration");
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from_db(image_flag,  "png|jpe?g|webp|bmp",   "dct_hash");
+				hash_all_from(opts,  image_flag,  "png|jpe?g|webp|bmp",   "dct_hash");
 				break;
 			case 'v':
-				hash_all_from_db(video_flag,  "gif|webm|mp4|mkv|avi", "dct_hash");
+				hash_all_from(opts,  video_flag,  "gif|webm|mp4|mkv|avi", "dct_hash");
 				break;
 			case 's':
-				hash_all_from_db(sha256_flag, nullptr, "sha256");
+				hash_all_from(opts,  sha256_flag, nullptr, "sha256");
 				break;
 			case 'S':
-				hash_all_from_db(size_flag,   nullptr, "size");
+				hash_all_from(opts,  size_flag,   nullptr, "size");
 				break;
 		}
 	}

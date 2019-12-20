@@ -44,7 +44,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 add_executable(tagem-hash src/hash.cpp)
 target_include_directories(tagem-hash PRIVATE ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
-target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec)
+target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec boost_regex)
 
 add_executable(tagem-mv src/mv.cpp)
 target_include_directories(tagem-mv PRIVATE ${COMPSKY_INCLUDE_DIRS})
