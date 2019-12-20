@@ -246,7 +246,7 @@ void save_hash(const Duration file_type_flag,  const char* const hash_name,  con
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 	compsky::asciify::asciify(
 		itr,
-		"AND name REGEXP '\\.(", file_ext_regexp, ")$'"
+		"AND name REGEXP '\\.", file_ext_regexp, "'"
 	);
 #define ADD_NAME_REGEXP_SZ (23+128)
 }
@@ -340,14 +340,7 @@ void hash_all_from_dir(const char* const dirpath,  const bool recursive,  const 
 
 template<typename FileType>
 void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const char* const file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name){
-	static char regexp[1 + ADD_NAME_REGEXP_SZ + 2 + 1] = {'('};
-	const size_t file_ext_regexp_len = strlen(file_ext_regexp);
-	memcpy(regexp + 1,  file_ext_regexp,  file_ext_regexp_len);
-	regexp[1 + file_ext_regexp_len + 0] = ')';
-	regexp[1 + file_ext_regexp_len + 1] = '$';
-	regexp[1 + file_ext_regexp_len + 2] = 0;
-	boost::regex regex(regexp, boost::regex::extended); // POSIX extended is the MySQL regex engine
-	
+	boost::regex regex(file_ext_regexp, boost::regex::extended); // POSIX extended is the MySQL regex engine
 	hash_all_from_dir(dirpath, recursive, &regex, file_type_flag, hash_name);
 }
 
@@ -471,18 +464,18 @@ int main(const int argc,  const char* const* argv){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,  "mp3|webm|mp4|mkv|avi", "audio_hash");
+				hash_all_from(opts,  audio_flag,  "(mp3|webm|mp4|mkv|avi)$", "audio_hash");
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from(opts,  duration_flag,   "mp3|webm|mp4|mkv|avi|gif", "duration");
+				hash_all_from(opts,  duration_flag,   "(mp3|webm|mp4|mkv|avi|gif)$", "duration");
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,  "png|jpe?g|webp|bmp",   "dct_hash");
+				hash_all_from(opts,  image_flag,  "(png|jpe?g|webp|bmp)$",   "dct_hash");
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,  "gif|webm|mp4|mkv|avi", "dct_hash");
+				hash_all_from(opts,  video_flag,  "(gif|webm|mp4|mkv|avi)$", "dct_hash");
 				break;
 			case 's':
 				hash_all_from(opts,  sha256_flag, nullptr, "sha256");
