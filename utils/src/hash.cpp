@@ -260,13 +260,6 @@ struct Options {
 };
 
 
-struct IncompatibleOptions : public std::runtime_error {
-	IncompatibleOptions(const char* const s)
-	: std::runtime_error(s)
-	{}
-};
-
-
 constexpr
 bool check_regex(const nullptr_t regex,  const char* const file_name,  const size_t file_name_len){
 	return true;
