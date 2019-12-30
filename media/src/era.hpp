@@ -3,6 +3,9 @@
 #include <inttypes.h> // for uint64_t
 
 
+extern char era2s_tblname[128];
+
+
 struct Era {
 	uint64_t id;
 	uint64_t start;

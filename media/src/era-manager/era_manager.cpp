@@ -8,6 +8,9 @@
 #include <QPushButton>
 
 
+// CREATE TABLE era2s_<NAME> ( era BIGINT UNSIGNED NOT NULL PRIMARY KEY,  s VARCHAR(60000) NOT NULL );
+
+
 namespace _mysql {
 	extern MYSQL* obj;
 }
@@ -31,6 +34,13 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 	this->l = new QGridLayout(this);
 	
 	{
+		this->era2string_tbl_name = new QLineEdit(era2s_tblname);
+		connect(this->era2string_tbl_name, &QLineEdit::textChanged, this, &EraManager::change_era2s_tblname);
+		this->l->addWidget(this->era2string_tbl_name);
+		++this->row;
+	}
+	
+	{
 		QCheckBox* b = new QCheckBox("Display?");
 		b->setChecked(this->win->are_eras_visible);
 		connect(b, &QCheckBox::toggled, this, &EraManager::toggle_display_eras);
@@ -41,6 +51,12 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 	for (Era& era : this->win->eras){
 		this->add_era(&era);
 	}
+}
+
+void EraManager::change_era2s_tblname() const {
+	const QByteArray ba = this->era2string_tbl_name->text().toLocal8Bit();
+	const char* const s = ba.data();
+	memcpy(era2s_tblname,  s,  strlen(s) + 1);
 }
 
 void EraManager::toggle_display_eras(){
@@ -167,14 +183,19 @@ void EraManager::change_end_method_name(int indx){
 
 void EraManager::edit_python_script(){
 	Era* era_p = this->qobj2era[sender()];
-	compsky::mysql::query(
-		_mysql::obj,
-		RES1,
-		BUF,
-		"SELECT s "
-		"FROM era "
-		"WHERE id=", era_p->id
-	);
+	try {
+		compsky::mysql::query(
+			_mysql::obj,
+			RES1,
+			BUF,
+			"SELECT s "
+			"FROM era2s_", era2s_tblname, " "
+			"WHERE era=", era_p->id
+		);
+	} catch (const compsky::mysql::except::SQLExec&){
+		QMessageBox::warning(this,  "No such table",  era2s_tblname);
+		return;
+	}
 	const char* prev_s;
 	while(compsky::mysql::assign_next_row__no_free(RES1, &ROW1, &prev_s));
 	bool ok;
@@ -183,10 +204,16 @@ void EraManager::edit_python_script(){
 		compsky::mysql::exec(
 			_mysql::obj,
 			BUF,
-			"UPDATE era "
-			"SET s=\"",
-				_f::esc, '"', s,
-			"\" WHERE id=", era_p->id
+			"INSERT INTO era2s_", era2s_tblname, " "
+			"(era,s)"
+			"VALUES "
+			"(",
+				era_p->id, ","
+				"\"",
+					_f::esc, '"', s,
+				"\""
+			")"
+			"ON DUPLICATE KEY UPDATE s=VALUES(s)"
 		);
 	}
 	mysql_free_result(RES1);

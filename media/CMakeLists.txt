@@ -37,6 +37,7 @@ set(BOXABLE_SOURCES
 	src/relation-manager/relation_add_box_tags_rule.cpp
 )
 set(ERA_SOURCES
+	src/era.cpp
 	src/era-manager/era_manager.cpp
 )
 set(OVERLAY_SOURCES

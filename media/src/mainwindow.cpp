@@ -1204,8 +1204,8 @@ void MainWindow::menu(){
 		RES2, // Avoids clash with MainWindow::python_script. // WARNING: Both can still clash with themselves.
 		BUF,
 		"SELECT s "
-		"FROM era "
-		"WHERE id=", this->method_called_from_era.id
+		"FROM era2s_", era2s_tblname, " "
+		"WHERE era=", this->method_called_from_era.id
 	);
 	char* python;
 	if(compsky::mysql::assign_next_row(RES2, &ROW2, &python));
@@ -1277,8 +1277,8 @@ void MainWindow::python_script(){
 		res,
 		BUF,
 		"SELECT s "
-		"FROM era "
-		"WHERE id=", this->method_called_from_era.id
+		"FROM era2s_", era2s_tblname, " "
+		"WHERE era=", this->method_called_from_era.id
 	);
 	const char* python;
 	while(compsky::mysql::assign_next_row(res, &row, &python)){
@@ -1312,6 +1312,80 @@ void MainWindow::jump_to_era(const uint64_t era_id){
 	this->seek = _seek;
 	// QtAV doesn't support play(offset) directly, so need to wait for playback signal, and then skip
 	this->media_open();
+}
+
+void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const tagstrs){
+	MYSQL_RES* res;
+	MYSQL_ROW row;
+	char buf[4096];
+	for (auto i = tagstrs.size();  i != 0;  ){
+		--i;
+		compsky::mysql::exec(
+			_mysql::obj,
+			buf,
+			"CALL descendant_tags_id_from(\"_tmp_tagids", i, "\",\"", f_esc, '"', tagstrs.at(i).tagstr, "\")"
+		);
+	}
+	char* itr = buf;
+	compsky::asciify::asciify(
+		itr,
+		"SELECT f.name, f.id, IFNULL(e.start, 0) "
+		"FROM file f "
+		"LEFT JOIN era e ON e.file_id=f.id "
+		"WHERE TRUE "
+	);
+	for (auto i = tagstrs.size();  i != 0;  ){
+		--i;
+		compsky::asciify::asciify(
+			itr,
+			"AND ", tagstrs.at(i).andnot, " ("
+				"f.id IN (SELECT a.file_id FROM file2tag a, _tmp_tagids", i, " b WHERE a.tag_id=b.node)"
+				" OR "
+				"e.id IN (SELECT a.era_id  FROM era2tag a,  _tmp_tagids", i, " b WHERE a.tag_id=b.node)"
+			")"
+		);
+	}
+	compsky::asciify::asciify(
+		itr,
+		"ORDER BY RAND()",
+		'\0'
+	);
+	printf("jump_to_era_tagged: %s\n", buf);
+	compsky::mysql::query_buffer(
+		_mysql::obj,
+		res,
+		buf,
+		(size_t)itr - (size_t)buf
+	);
+	
+	
+	const uint64_t _orig_file_id = this->file_id;
+	
+	const char* _fp;
+	uint64_t _f_id = this->file_id;
+	uint64_t _seek;
+	
+	bool need_to_free_res = true;
+	while(need_to_free_res){
+		need_to_free_res = compsky::mysql::assign_next_row(res, &row, &_fp, &_f_id, &_seek);
+		if (_f_id != this->file_id){
+			memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
+			this->set_media_dir_len();
+			this->media_fp_is_media_fp = true;
+		}
+		this->seek = _seek;
+		// QtAV doesn't support play(offset) directly, so need to wait for playback signal, and then skip
+		this->media_open();
+		if (this->file_id != _orig_file_id){
+			// File was not opened successfully
+			if (need_to_free_res)
+				mysql_free_result(res);
+			break;
+		}
+	}
+	if (unlikely(this->file_id == _orig_file_id)){
+		throw std::runtime_error("No era satisfying conditions"));
+	}
 }
 
 #endif // #ifdef ERA

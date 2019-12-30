@@ -69,6 +69,36 @@ PyObject* pymodule_tagem_jump_to_era(PyObject* self,  PyObject* args){
 	
 	Py_RETURN_NONE;
 }
+
+static
+PyObject* pymodule_tagem_jump_to_era_tagged(PyObject* self,  PyObject* args){
+	/*
+	Python call:
+	jump_to_era_tagged( [REQUIRED_TAGS], [FORBIDDEN_TAGS] )
+	*/
+	
+	std::vector<MainWindow::TagstrAndNot> tagstrs;
+	
+	constexpr static const char* const reverse_indx__to__andnot[2] = {"", "NOT"};
+	Py_ssize_t n_args = PyTuple_Size(args);
+	
+	while(n_args != 0){
+		--n_args;
+		const char* const andnot = reverse_indx__to__andnot[n_args];
+		
+		PyObject* const py_list = PyTuple_GetItem(args, n_args);
+		
+		Py_ssize_t n = PyList_Size(py_list);
+		while (n != 0) {
+			PyObject* const py_item = PyList_GetItem(py_list, --n);
+			const char* const tagstr = const_cast<const char*>(PyUnicode_AsUTF8(py_item));
+			tagstrs.emplace_back(tagstr, andnot);
+		}
+	}
+	
+	player_ptr->jump_to_era_tagged(tagstrs);
+	Py_RETURN_NONE;
+}
 # endif
 
 static
@@ -76,6 +106,7 @@ PyMethodDef pymodule_tagem_methods[] = {
 	{"jump_to_file", (PyCFunction)pymodule_tagem_jump_to_file, METH_VARARGS, "Description."},
 # ifdef ERA
 	{"jump_to_era",  (PyCFunction)pymodule_tagem_jump_to_era,  METH_VARARGS, "Description."},
+	{"jump_to_era_tagged",  (PyCFunction)pymodule_tagem_jump_to_era_tagged,  METH_VARARGS, "Description."},
 # endif
 	{nullptr, nullptr, 0, nullptr}
 };
@@ -138,6 +169,13 @@ int main(const int argc,  const char** argv){
 			case 'e':
 				player.readonly = false;
 				break;
+		  #ifdef ERA
+			case 'E': {
+				const char* const _tblname = *(++argv);
+				memcpy(era2s_tblname,  _tblname,  strlen(_tblname) + 1);
+				break;
+			}
+		  #endif
 		  #ifdef VID
 			case 'a':
 				player.auto_next = true;

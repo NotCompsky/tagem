@@ -59,6 +59,15 @@ class MainWindow : public QWidget{
 	Q_OBJECT
 # endif
  public:
+	struct TagstrAndNot {
+		const char* const tagstr;
+		const char* const andnot;
+		TagstrAndNot(const char* const _tagstr,  const char* const _andnot)
+		: tagstr(_tagstr)
+		, andnot(_andnot)
+		{}
+	};
+	
     ~MainWindow();
     explicit MainWindow(QWidget *parent = 0);
 	const QString media_tag(const QString str);
@@ -227,6 +236,7 @@ class MainWindow : public QWidget{
 	void python_script();
 #  endif
 	void jump_to_era(const uint64_t era_id);
+	void jump_to_era_tagged(std::vector<TagstrAndNot> const tagstrs);
 # endif
 };
 
