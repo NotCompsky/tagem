@@ -194,8 +194,10 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
 	const uint64_t hash = get_hash_of_image(fp);
 	
-	if (hash == 0)
+	if (unlikely(hash == 0)){
+		fprintf(stderr, "Cannot get DCT hash: %s\n", fp);
 		return;
+	}
 	
 	insert_hashes_into_db_then_free(file_type_flag, file_id, &hash, hash_name, 1);
 }
@@ -257,6 +259,11 @@ void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
 struct Options {
 	const char* directory;
 	bool recursive;
+	
+	Options()
+	: directory(nullptr)
+	, recursive(false)
+	{}
 };
 
 
@@ -272,17 +279,18 @@ bool check_regex(const boost::regex* regex,  const char* const file_name,  const
 
 
 template<typename FileType,  typename BoostRegex>
-void hash_all_from_dir(const char* const dirpath,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name){
+void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name){
 	static char file_path[4096];
 	static size_t dir_prefix_len = 0;
 	
-	const size_t dir_len = strlen(dirpath);
-	memcpy(file_path + dir_prefix_len,  dirpath,  dir_len);
+	const size_t dir_len = strlen(dir_name);
+	memcpy(file_path + dir_prefix_len,  dir_name,  dir_len);
 	dir_prefix_len += dir_len;
 	file_path[dir_prefix_len] = '/';
 	++dir_prefix_len;
+	file_path[dir_prefix_len] = 0;
 	
-	DIR* dir = opendir(dirpath);
+	DIR* dir = opendir(file_path);
 	if (dir == nullptr)
 		return;
 	struct dirent* e;
@@ -296,33 +304,45 @@ void hash_all_from_dir(const char* const dirpath,  const bool recursive,  const 
 		)
 			// Skip . and ..
 			continue;
-		if (!(check_regex(regex,  ename,  strlen(ename)))){
-			printf("Failed regex: %s\n", ename);
-			continue;
-		}
+		
 		if (e->d_type == DT_DIR){
 			if (recursive)
 				hash_all_from_dir(ename, recursive, regex, file_type_flag, hash_name);
 			continue;
 		}
 		
-		static char buf[128 + 2*4096];
+		if (e->d_type == DT_LNK)
+			continue;
+		
+		if (!(check_regex(regex,  ename,  strlen(ename)))){
+			printf("Failed regex: %s\n", ename);
+			continue;
+		}
+		
+		static char buf[128 + 4*4096];
 		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
 		
 		compsky::mysql::exec(
 			_mysql::obj,
 			buf,
-			"INSERT INTO file (name) VALUES (\"", _f::esc, '"', file_path, "\") "
-			"ON DUPLICATE KEY UPDATE id=id"
+			"INSERT INTO file (name) "
+			"SELECT \"", _f::esc, '"', file_path, "\" "
+			"FROM file "
+			"WHERE NOT EXISTS (SELECT id FROM file WHERE name=\"", _f::esc, '"', file_path, "\") "
+			"LIMIT 1"
+			// NOTE: ON DUPLICATE KEY skips IDs on duplicate entries due to AUTO_INCREMENT
 		);
 		compsky::mysql::query(
 			_mysql::obj,
 			_mysql::res,
 			buf,
-			"SELECT id FROM file WHERE name=\"", _f::esc, '"', file_path, "\""
+			"SELECT id FROM file "
+			"WHERE name=\"", _f::esc, '"', file_path, "\" "
+			  "AND id NOT IN (SELECT file FROM file2", hash_name, ")"
 		);
 		const char* file_id;
 		while(compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &file_id)){
+			// This can only have 0 or 1 iterations
 			save_hash(file_type_flag, hash_name, file_id, file_path);
 		}
 	}
@@ -405,8 +425,6 @@ int main(const int argc,  const char* const* argv){
 		return 4096;
 	
 	Options opts;
-	const char* directory = nullptr;
-	bool recursive = false;
 	do {
 		++argv;
 		const char* const arg = *argv;
