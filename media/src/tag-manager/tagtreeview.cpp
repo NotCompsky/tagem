@@ -99,7 +99,6 @@ void TagTreeView::place_tags(const uint64_t root){
 			name = kevadra.name;
 			count = kevadra.count;
 			if (kevadra.tag != 0){
-				qDebug() << "Good:" << tag << parent << name << count;
 				if (mdl->tag2entry[queue[i].parent] == nullptr){
 					++n_non_null_kevadras_skipped;
 					continue;
