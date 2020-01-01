@@ -1384,7 +1384,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 		}
 	}
 	if (unlikely(this->file_id == _orig_file_id)){
-		throw std::runtime_error("No era satisfying conditions"));
+		throw std::runtime_error("No era satisfying conditions");
 	}
 }
 
