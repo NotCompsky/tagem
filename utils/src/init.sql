@@ -1,10 +1,10 @@
 R"=====(
 
-CREATE TABLE file (
+CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
-    note VARBINARY(30000),
+    permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
     UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
@@ -26,12 +26,15 @@ INSERT INTO file2 (min, max, conversion, name) VALUES
 ;
 
 
-CREATE TABLE tag (
+CREATE TABLE _tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(128),
+	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
     UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
+# NOTE: Permissions are AND (each non-zero bit is another required permission)
+# NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
 CREATE TABLE tag2parent (
     tag_id BIGINT UNSIGNED NOT NULL,
@@ -236,5 +239,36 @@ CREATE TABLE settings (
 	h_min INT UNSIGNED NOT NULL,
 	PRIMARY KEY (name)
 );
+
+# Row-level security for modern MySQL/MariaDB
+# Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
+CREATE TABLE permission (
+	id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+	name VARCHAR(32) NOT NULL UNIQUE KEY
+);
+CREATE TABLE user2permissions (
+	user VARBINARY(32) NOT NULL PRIMARY KEY,
+	permissions BIGINT UNSIGNED NOT NULL
+);
+CREATE SQL SECURITY DEFINER
+VIEW tag
+AS
+	SELECT t.*
+	FROM _tag t
+	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	WHERE u2p.permissions & t.permissions=t.permissions
+WITH CHECK OPTION
+;
+CREATE SQL SECURITY DEFINER
+VIEW file
+AS
+	SELECT f.*
+	FROM _file f
+	JOIN file2tag f2t ON f2t.file_id=f.id
+	JOIN tag t ON t.id=f2t.tag_id
+	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	WHERE u2p.permissions & t.permissions=t.permissions
+WITH CHECK OPTION
+;
 
 )====="
