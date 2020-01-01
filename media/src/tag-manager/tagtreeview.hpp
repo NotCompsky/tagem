@@ -71,7 +71,7 @@ class TagTreeView : public QTreeView {
 			entry__delete->setDropEnabled(false);
 			ls << entry__delete;
 		}
-		mdl->tag2entry[parent]->appendRow(ls);
+		mdl->tag2entry.at(parent)->appendRow(ls);
 		if (this->editable){
 			QToolButton* addparent_btn = new QToolButton();
 			addparent_btn->setText("^");
