@@ -860,7 +860,7 @@ void MainWindow::assign_value(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\")");
+        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\") ON DUPLICATE KEY UPDATE name=VALUES(name)");
         this->file_id = get_last_insert_id();
     }
 }
