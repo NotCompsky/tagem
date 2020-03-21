@@ -152,7 +152,7 @@ void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char*
 uint64_t get_hash_of_image(const char* const fp){
 	uint64_t hash;
 	const int rc = ph_dct_imagehash(fp, hash);
-	return (rc == 0) ? 0 : hash;
+	return (rc == 0) ? hash : 0; // rc == 0 is success
 }
 
 void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
