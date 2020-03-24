@@ -20,6 +20,7 @@ namespace ERR {
         UNKNOWN,
 		MALLOC,
 		BAD_OPTION,
+		NO_DBL_DASH_AFTER_OPTIONS,
         GETCWD
     };
 }
@@ -29,12 +30,31 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 }
 
+struct Variable {
+	const char* const name;
+	const char* const value;
+	const char type;
+	Variable(const char* const _name,  const char* const _value,  const char _type)
+	: name(_name)
+	, value(_value)
+	, type(_type)
+	{}
+};
+
 int main(const int argc, const char** argv){
 	/*
 	tagemall [OPTIONS] -- tag1 ... tagN -- filepath1 filepath2 ... filepathM
 	
 	OPTIONS
-		v VAR_NAME VAR_VALUE
+		v VAR_TYPE VAR_NAME VAR_VALUE
+			This is the file2VAR_NAME
+			Valid VAR_TYPES are:
+				i (integer)
+				s (string)
+	
+	EXAMPLE
+		tagemall -v size 4098 -v duration 109 -- -- /media/sars2/co/vid.mp4
+			Assigns no tags, only registers the file and assigns file2size and file2duration values
 	*/
 	
 	constexpr static const size_t buf_sz = 4 * 1024 * 1024;
@@ -42,7 +62,7 @@ int main(const int argc, const char** argv){
 	if(buf == nullptr)
 		return ERR::MALLOC;
 	
-	std::vector<std::pair<const char*,  const char*>> variable_values;
+	std::vector<Variable> variable_values;
 	
 	char cwd[4096]; // For the cncatenation later
 	if (getcwd(cwd,  4096 - 1) == NULL)
@@ -62,7 +82,7 @@ int main(const int argc, const char** argv){
 		const char* arg = argv[++i];
 		
 		if (arg[0] != '-'  ||  arg[1] == 0  ||  arg[2] != 0)
-			break;
+			return ERR::NO_DBL_DASH_AFTER_OPTIONS;
 		
 		switch(arg[0]){
 			case '-':
@@ -71,8 +91,8 @@ int main(const int argc, const char** argv){
 						goto break_all__a;
 					case 'v':
 						// TODO: Find a less confusing short code for this
-						variable_values.emplace_back(argv[i+1], argv[i+2]);
-						i += 2;
+						variable_values.emplace_back(argv[i+2], argv[i+3], argv[i+1][0]);
+						i += 3;
 						break;
 					default:
 						return ERR::BAD_OPTION;
@@ -126,7 +146,7 @@ int main(const int argc, const char** argv){
 	itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"INSERT IGNORE INTO file (name) "
+		"INSERT INTO _file (name) "
 		"VALUES "
 	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
@@ -142,6 +162,10 @@ int main(const int argc, const char** argv){
 		);
 	}
 	--itr; // Ignore trailing comma
+	compsky::asciify::asciify(
+		itr,
+		" ON DUPLICATE KEY UPDATE name=name" // i.e. IGNORE
+	);
 	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	
 	itr = buf;
@@ -183,7 +207,7 @@ int main(const int argc, const char** argv){
 	);
 	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	
-	for (auto i = 0;  i < variable_values.size();  ++i){
+	for (const Variable var : variable_values){
 		/*MYSQL_RES* res;
 		MYSQL_ROW  row;
 		compsky::mysql::query(
@@ -200,9 +224,38 @@ int main(const int argc, const char** argv){
 		itr = buf;
 		compsky::asciify::asciify(
 			itr,
-			"INSERT IGNORE INTO file2", variable_values[i].first, " "
-			"(file_id, x) "
-			"SELECT id, ", variable_values[i].second, " "
+			"INSERT IGNORE INTO file2", var.name, " "
+			"(file, x) "
+			"SELECT id, "
+		);
+		switch(var.type){
+			case 'i':
+				compsky::asciify::asciify(itr, var.value);
+				break;
+			case 's':
+				char _insert_string_var[1024];
+				compsky::mysql::exec(
+					mysql_obj,
+					_insert_string_var,
+					"INSERT IGNORE INTO file2_", var.name, " "
+					"(s)"
+					"VALUES"
+					"("
+						"\"", _f::esc, '"', var.value, "\""
+					")"
+				);
+				compsky::asciify::asciify(
+					itr,
+					"("
+						"SELECT x "
+						"FROM file2_", var.name, " "
+						"WHERE s=\"", _f::esc, '"', var.value, "\""
+					")"
+				);
+				break;
+		}
+		compsky::asciify::asciify(itr,
+			" "
 			"FROM file "
 			"WHERE name IN ("
 		);
