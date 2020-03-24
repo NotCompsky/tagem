@@ -35,6 +35,9 @@ constexpr static const size_t BUF_SZ = 1024 * 4096;
 static AVFormatContext* av_fmt_ctx;
 
 
+static int verbosity = 0;
+
+
 uint64_t duration_of(const char* fp){
 	uint64_t n = 0;
 	
@@ -142,10 +145,24 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 };
 
 
-template<typename FileType,  typename Int>
-void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char* const file_id,  const Int* hashes,  const char* const hash_name,  int length_to_go){
-	insert_hashes_into_db(file_type_flag, file_id, hashes, hash_name, length_to_go);
-	free((void*)hashes); // Just a quirk of the C standard
+template<typename Int>
+void freemajig(Int hash){}
+template<typename Int>
+void freemajig(Int* hashes){
+	free((void*)hashes);
+}
+template<typename Int>
+Int* get_ptr_to_if_not_already(Int& hash){
+	return &hash;
+}
+template<typename Int>
+Int* get_ptr_to_if_not_already(Int* hashes){
+	return hashes;
+}
+template<typename FileType,  typename IntOrIntPtr>
+void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go){
+	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go);
+	freemajig(hashes); // Just a quirk of the C standard
 };
 
 
@@ -199,7 +216,7 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, &hash, hash_name, 1);
+	insert_hashes_into_db_then_free(file_type_flag, file_id, hash, hash_name, 1);
 }
 
 
@@ -435,6 +452,8 @@ int main(const int argc,  const char* const* argv){
 				"		-d DIRECTORY\n"
 				"			Tag all files in a directory (adding them to the database if necessary)\n"
 				"		-R\n"
+				"		-v\n"
+				"			Add verbosity\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
 				"		d	Duration\n"
@@ -455,6 +474,8 @@ int main(const int argc,  const char* const* argv){
 			case 'R':
 				opts.recursive = true;
 				break;
+			case 'v':
+				++verbosity;
 			default:
 				// case 0:
 				break;
