@@ -783,7 +783,7 @@ void MainWindow::assign_value(){
 				"FROM file2_", var_name, " "
 			);
 			QStringList _stringlist;
-			uint64_t _x;
+			uint64_t _x = 0;
 			const char* _s;
 			int s_id = 0;
 			while(compsky::mysql::assign_next_row(RES1, &ROW1, &_x, &_s)){
@@ -791,6 +791,7 @@ void MainWindow::assign_value(){
 				x2s_id[_x] = s_id++;
 			}
 			
+			_x = 0;
 			compsky::mysql::query(
 				_mysql::obj,
 				RES1,
@@ -860,7 +861,7 @@ void MainWindow::assign_value(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-        compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\") ON DUPLICATE KEY UPDATE name=VALUES(name)");
+		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\") ON DUPLICATE KEY UPDATE name=VALUES(name)");
         this->file_id = get_last_insert_id();
     }
 }
