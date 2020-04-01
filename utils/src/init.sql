@@ -263,10 +263,15 @@ VIEW file
 AS
 	SELECT f.*
 	FROM _file f
-	LEFT JOIN file2tag f2t ON f2t.file_id=f.id
-	LEFT JOIN tag t ON t.id=f2t.tag_id
-	LEFT JOIN user2permissions u2p ON u2p.user=SESSION_USER()
-	WHERE (f2t.tag_id IS NULL) OR (u2p.permissions & t.permissions=t.permissions)
+	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	WHERE (
+		f.id NOT IN (
+			SELECT file_id
+			FROM file2tag
+			JOIN tag t ON t.id=tag_id
+			WHERE u2p.permissions & t.permissions != t.permissions
+		)
+	)
 ;
 
 )====="
