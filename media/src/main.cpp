@@ -45,7 +45,9 @@ MYSQL_RES* RES2;
 MYSQL_ROW ROW2;
 
 
+#if (defined TAG_MANAGER || defined MAINWINDOW)
 TagManager* tag_manager;
+#endif
 
 
 int dummy_argc = 0;
