@@ -159,6 +159,7 @@ class MainWindow : public QWidget{
 	
 	bool media_fp_is_media_fp;
 	bool readonly;
+	bool file_stuff_to_stdout_not_db;
 	bool titles;
  private:
 	uint64_t get_framestamp() const {
@@ -205,7 +206,6 @@ class MainWindow : public QWidget{
     char media_fp_buf[MEDIA_FP_SZ];
     int media_fp_indx;
     int media_fp_len;
-    char media_fname[1024];
 	qint64 file_sz;
     int media_dir_len;
     int file_id_str_len;

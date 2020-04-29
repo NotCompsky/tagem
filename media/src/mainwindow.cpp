@@ -153,6 +153,7 @@ MainWindow::MainWindow(QWidget *parent)
     seek(0),
     readonly(true)
 	, titles(false)
+	, file_stuff_to_stdout_not_db(false)
 {
   #ifdef BOXABLE
     this->is_mouse_down = false;
@@ -742,6 +743,9 @@ void MainWindow::jump(const qint64 n){
 
 
 void MainWindow::assign_value(){
+	if (this->file_stuff_to_stdout_not_db)
+		return;
+	
 	QString var_name;
 	const file2::MinMaxCnv minmax = file2::choose(var_name);
 	if (minmax.min == 0  &&  minmax.max == 0)
@@ -875,10 +879,13 @@ const QString MainWindow::media_tag(const QString str){
 	if (tagid == 0)
 		return "";
     
-    this->ensure_fileID_set();
-    
-    compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
-    
+	if (this->file_stuff_to_stdout_not_db){
+		printf("%lu %s\n", tagid, this->get_media_fp());
+	} else {
+		this->ensure_fileID_set();
+		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
+	}
+	
 	return tag_id2name[tagid];
 }
 
