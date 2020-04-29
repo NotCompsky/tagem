@@ -23,8 +23,9 @@ extern Completer tagcompleter;
 extern QStringList tagslist;
 extern std::map<uint64_t, QString> tag_id2name;
 
-TagManager* tag_manager;
-
+#if (defined TAG_MANAGER || defined MAINWINDOW)
+extern TagManager* tag_manager;
+#endif
 
 
 template<typename String>
@@ -97,9 +98,10 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 			if (!tagslist.contains(parstr))
 				add_new_tag(parstr, parid);
 			
+		#if (defined TAG_MANAGER || defined MAINWINDOW)
 			if (tag_manager != nullptr)
 				tag_manager->add_child_to(tagid,  parid,  1,  tagstr);
-			
+		#endif
 			if (iszero == 0)
 				break;
 			

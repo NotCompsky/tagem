@@ -15,10 +15,7 @@
 #ifdef FILE2
 # include "file2.hpp"
 #endif
-#ifdef TAG_MANAGER
-# ifdef MAINWINDOW
-#  error "TagManager is already included under MainWindow's keyreceiver"
-# endif
+#if (defined TAG_MANAGER || defined MAINWINDOW)
 # include "tag-manager/mainwindow.hpp"
 #endif
 #include <compsky/mysql/query.hpp>
@@ -46,6 +43,9 @@ MYSQL_RES* RES1;
 MYSQL_ROW ROW1;
 MYSQL_RES* RES2;
 MYSQL_ROW ROW2;
+
+
+TagManager* tag_manager;
 
 
 int dummy_argc = 0;
@@ -149,6 +149,8 @@ PyObject* PyInit_tagem(){
 	return PyModule_Create(&pymodule_tagem);
 }
 #endif
+#else
+nullptr_t player_ptr;
 #endif // #ifdef MAINWINDOW
 
 
@@ -169,9 +171,6 @@ int main(const int argc,  const char** argv){
 # endif
 	QApplication app(dummy_argc, dummy_argv);
 	
-#ifdef TAG_MANAGER
-	TagManager tag_manager;
-#endif
 #ifdef MAINWINDOW
 	MainWindow player;
 	player_ptr = &player;
@@ -230,6 +229,8 @@ int main(const int argc,  const char** argv){
 	if (display_video)
 		player.init_video_output();
 # endif
+#else
+	player_ptr = nullptr; // For use with tag_manager
 #endif // #ifdef MAINWINDOW
 	
 	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
@@ -245,7 +246,8 @@ int main(const int argc,  const char** argv){
 	tagcompleter.reset(tagslist);
 	
 #ifdef TAG_MANAGER
-	tag_manager.show();
+	tag_manager = new TagManager(player_ptr);
+	tag_manager->show();
 #endif
 #ifdef MAINWINDOW
 	const char* const inlist_filter_rule = *argv;
