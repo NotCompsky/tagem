@@ -17,6 +17,8 @@
 #endif
 #if (defined TAG_MANAGER || defined MAINWINDOW)
 # include "tag-manager/mainwindow.hpp"
+#else
+# include "add_new_tag.hpp"
 #endif
 #include <compsky/mysql/query.hpp>
 
@@ -262,7 +264,9 @@ int main(const int argc,  const char** argv){
 	if (player.auto_next)
 		player.media_next();
 #endif
-	
+#if !(defined TAG_MANAGER || defined MAINWINDOW)
+	while(ask_for_tag("Add tag"));
+#endif
     int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 # ifdef PYTHON

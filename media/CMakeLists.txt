@@ -76,6 +76,15 @@ target_link_libraries(tagem-tag-manager Qt5::Widgets compsky_asciify compsky_mys
 target_sources(tagem-tag-manager PRIVATE ${TAG_MANAGER_SOURCES})
 target_sources(tagem-tag-manager PRIVATE ${COMPLETER_SOURCES})
 
+add_executable(tagem-add-tag
+	src/main.cpp
+	src/name_dialog.cpp
+	src/add_new_tag.cpp
+)
+target_include_directories(tagem-add-tag PRIVATE "../include")
+target_link_libraries(tagem-add-tag Qt5::Widgets compsky_asciify compsky_mysql)
+target_sources(tagem-add-tag PRIVATE ${COMPLETER_SOURCES})
+
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
     add_executable("${tgt}"
