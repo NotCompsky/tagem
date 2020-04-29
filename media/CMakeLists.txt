@@ -69,13 +69,6 @@ add_executable(tagem-tag-manager
 	src/dropdown_dialog.cpp
 	src/unlink_tag_btn.cpp
 	src/add_new_tag.cpp
-	
-	src/tag-manager/mainwindow.cpp
-	src/tag-manager/primaryitem.cpp
-	src/tag-manager/tagchildtreeview.cpp
-	src/tag-manager/tagparenttreeview.cpp
-	src/tag-manager/tagtreemodel.cpp
-	src/tag-manager/tagtreeview.cpp
 )
 target_compile_definitions(tagem-tag-manager PRIVATE TAG_MANAGER)
 target_include_directories(tagem-tag-manager PRIVATE "../include")
