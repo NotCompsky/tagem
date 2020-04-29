@@ -52,6 +52,36 @@ set(MENU_SOURCES
 set(COMPLETER_SOURCES
 	src/completer/simplify_str.cpp
 )
+set(TAG_MANAGER_SOURCES
+	src/tag-manager/mainwindow.cpp
+	src/tag-manager/primaryitem.cpp
+	src/tag-manager/tagchildtreeview.cpp
+	src/tag-manager/tagparenttreeview.cpp
+	src/tag-manager/tagtreemodel.cpp
+	src/tag-manager/tagtreeview.cpp
+)
+
+add_executable(tagem-tag-manager
+	src/main.cpp
+	
+	src/add_new_tag.cpp
+	src/name_dialog.cpp
+	src/dropdown_dialog.cpp
+	src/unlink_tag_btn.cpp
+	src/add_new_tag.cpp
+	
+	src/tag-manager/mainwindow.cpp
+	src/tag-manager/primaryitem.cpp
+	src/tag-manager/tagchildtreeview.cpp
+	src/tag-manager/tagparenttreeview.cpp
+	src/tag-manager/tagtreemodel.cpp
+	src/tag-manager/tagtreeview.cpp
+)
+target_compile_definitions(tagem-tag-manager PRIVATE TAG_MANAGER)
+target_include_directories(tagem-tag-manager PRIVATE "../include")
+target_link_libraries(tagem-tag-manager Qt5::Widgets compsky_asciify compsky_mysql)
+target_sources(tagem-tag-manager PRIVATE ${TAG_MANAGER_SOURCES})
+target_sources(tagem-tag-manager PRIVATE ${COMPLETER_SOURCES})
 
 foreach(file_type ${MY_TARGETS})
     set(tgt "tagem${file_type}")
@@ -67,14 +97,9 @@ foreach(file_type ${MY_TARGETS})
 		src/add_new_tag.cpp
 		
 		src/file2.cpp
-		
-		src/tag-manager/mainwindow.cpp
-		src/tag-manager/primaryitem.cpp
-		src/tag-manager/tagchildtreeview.cpp
-		src/tag-manager/tagparenttreeview.cpp
-		src/tag-manager/tagtreemodel.cpp
-		src/tag-manager/tagtreeview.cpp
 	)
+	target_sources("${tgt}" PRIVATE ${TAG_MANAGER_SOURCES})
+	target_compile_definitions("${tgt}" PRIVATE MAINWINDOW FILE2)
     target_include_directories("${tgt}" PRIVATE "../include")
     target_link_libraries("${tgt}" Qt5::Widgets compsky_asciify compsky_mysql)
     foreach(dfn ${MY_DEFINITIONS})

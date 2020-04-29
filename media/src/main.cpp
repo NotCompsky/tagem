@@ -1,10 +1,26 @@
 #ifdef PYTHON
+# ifndef MAINWINDOW
+#  error "So far Python functions only exist for MainWindow"
+# endif
 # include <Python.h>
 // WARNING: Must be included before any Qt includes, because Qt is greedy and slots is a macro name.
 #endif
 
-#include "mainwindow.hpp"
-#include "file2.hpp"
+#ifdef MAINWINDOW
+# include "mainwindow.hpp"
+#else
+# define BUF_SZ (2 * 4096)
+  char BUF[BUF_SZ];
+#endif
+#ifdef FILE2
+# include "file2.hpp"
+#endif
+#ifdef TAG_MANAGER
+# ifdef MAINWINDOW
+#  error "TagManager is already included under MainWindow's keyreceiver"
+# endif
+# include "tag-manager/mainwindow.hpp"
+#endif
 #include <compsky/mysql/query.hpp>
 
 #include <QApplication>
@@ -41,8 +57,8 @@ QStringList tagslist;
 std::map<uint64_t, QString> tag_id2name;
 
 
+#ifdef MAINWINDOW
 MainWindow* player_ptr;
-
 
 #ifdef PYTHON
 static
@@ -133,6 +149,7 @@ PyObject* PyInit_tagem(){
 	return PyModule_Create(&pymodule_tagem);
 }
 #endif
+#endif // #ifdef MAINWINDOW
 
 
 int main(const int argc,  const char** argv){
@@ -143,13 +160,19 @@ int main(const int argc,  const char** argv){
 # endif
 	
     compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
-	
+
+#ifdef FILE2
 	file2::initialise();
-	
+#endif
 # ifdef VID
 	QtAV::Widgets::registerRenderers();
 # endif
 	QApplication app(dummy_argc, dummy_argv);
+	
+#ifdef TAG_MANAGER
+	TagManager tag_manager;
+#endif
+#ifdef MAINWINDOW
 	MainWindow player;
 	player_ptr = &player;
 	
@@ -188,6 +211,9 @@ int main(const int argc,  const char** argv){
 				display_video = false;
 				break;
 		  #endif
+			case 'o':
+				player.file_stuff_to_stdout_not_db = true;
+				break;
 			case 's':
 				show_gui = false;
 				break;
@@ -204,6 +230,7 @@ int main(const int argc,  const char** argv){
 	if (display_video)
 		player.init_video_output();
 # endif
+#endif // #ifdef MAINWINDOW
 	
 	compsky::mysql::query_buffer(_mysql::obj,  RES1,  "SELECT id, name FROM tag");
 	{
@@ -217,6 +244,10 @@ int main(const int argc,  const char** argv){
 	}
 	tagcompleter.reset(tagslist);
 	
+#ifdef TAG_MANAGER
+	tag_manager.show();
+#endif
+#ifdef MAINWINDOW
 	const char* const inlist_filter_rule = *argv;
 	
 	if (inlist_filter_rule != nullptr){
@@ -226,7 +257,8 @@ int main(const int argc,  const char** argv){
     player.show();
 	if (player.auto_next)
 		player.media_next();
-    
+#endif
+	
     int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 # ifdef PYTHON
