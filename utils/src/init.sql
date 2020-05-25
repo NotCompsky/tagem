@@ -1,10 +1,15 @@
 R"=====(
 
 CREATE TABLE protocol (
-	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(16) NOT NULL UNIQUE KEY
 );
-INSERT INTO protocol (name) VALUES ("file://"), ("http://"), ("https://");
+INSERT INTO protocol (id, name) VALUES
+(0, "NONE!"),
+(1, "file://"),
+(2, "http://"),
+(3, "https://"),
+(4, "youtube-dl");
 
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -51,18 +56,24 @@ CREATE TABLE _tag (
     UNIQUE KEY (name),
     PRIMARY KEY (id)
 );
+INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!");
+UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
 # NOTE: Permissions are AND (each non-zero bit is another required permission)
 # NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
 CREATE TABLE tag2parent (
     tag_id BIGINT UNSIGNED NOT NULL,
     parent_id BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (tag_id) REFERENCES _tag (id),
+	FOREIGN KEY (parent_id) REFERENCES _tag (id),
     PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
 );
 
 CREATE TABLE file2tag (
     file_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (file_id) REFERENCES file (id),
+	FOREIGN KEY (tag_id) REFERENCES _tag (id),
     PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
