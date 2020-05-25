@@ -175,8 +175,9 @@ public:
 				break;
 			case files_from_which::sql:
 				const QStringList statements = this->files_from.split(";");
-				for (auto i = 0;  i < statements.size();  ++i)
-					compsky::mysql::query(this->mysql,  res,  this->buf,  f_env_expand,  statements[i]);
+				for (auto i = 0;  i < statements.size() - 1;  ++i)
+					compsky::mysql::exec(this->mysql,  this->buf,  f_env_expand,  statements[i]);
+				compsky::mysql::query(this->mysql,  res,  this->buf,  f_env_expand,  statements[statements.size() - 1]);
 				break;
 		}
 	}
