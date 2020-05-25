@@ -484,6 +484,7 @@ void MainWindow::init_file_from_db(){
         
         
         compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM box2tag WHERE box_id=", box_id);
+		// TODO: Integrate this into the first query, to reduce network overhead
         
         uint64_t tag_id;
         while(compsky::mysql::assign_next_row(RES2, &ROW2, &tag_id))
