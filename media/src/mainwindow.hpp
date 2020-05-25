@@ -218,6 +218,7 @@ class MainWindow : public QWidget{
 	MYSQL_RES* subtitle_res;
 	MYSQL_ROW subtitle_row;
 # endif
+	unsigned protocol;
 
   public Q_SLOTS:
 # ifdef PYTHON

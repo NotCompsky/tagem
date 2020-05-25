@@ -15,6 +15,7 @@ namespace protocol {
 		local_filesystem,
 		http,
 		https,
+		youtube_dl,
 		COUNT
 	};
 }
@@ -52,6 +53,12 @@ size_t pardir_length(const QString& s){
 
 inline
 unsigned guess_protocol(const char* url){
+	if (*url == '/')
+		return protocol::local_filesystem;
+	
+	// Now follows an *extremely* crude method for guessing the protocol
+	
+	unsigned ultimate_protocol = protocol::NONE;
 	switch(*url){
 		case 'h':
 			switch(*(++url)){
@@ -62,17 +69,37 @@ unsigned guess_protocol(const char* url){
 								case 'p':
 									switch(*(++url)){
 										case 's':
-											return protocol::https;
+											ultimate_protocol = protocol::https;
 										case '/':
-											return protocol::http;
+											ultimate_protocol = protocol::http;
 									}
 							}
 					}
 			}
-		case '/':
-			return protocol::local_filesystem;
 	}
-	return protocol::NONE;
+	if (ultimate_protocol == protocol::NONE)
+		return ultimate_protocol;
+	
+	while(*url != 0)
+		++url;
+	unsigned n_periods = 0;
+	for (auto i = 0;  i < 5;  ++i){
+		switch(*(--url)){
+			// Match likely media extensions
+			case '.':
+				++n_periods;
+			case 'A' ... 'Z':
+			case 'a' ... 'z':
+			case '0' ... '9':
+				continue;
+			default:
+				break;
+		}
+	}
+	if (n_periods == 0)
+		return protocol::youtube_dl;
+	
+	return ultimate_protocol;
 }
 
 
@@ -83,8 +110,10 @@ void record_dir_from_filepath(const char* const _file_path){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO dir (name) "
-		"SELECT \"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
+		"INSERT INTO dir (protocol, name) "
+		"SELECT ",
+			guess_protocol(_file_path), ","
+			"\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
 		"FROM dir "
 		"WHERE NOT EXISTS ("
 			"SELECT id "

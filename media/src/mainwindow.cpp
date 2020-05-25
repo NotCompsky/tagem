@@ -66,6 +66,7 @@
 #include "get_datetime.hpp"
 
 #include <QDebug>
+#include <QProcess>
 
 #ifdef DEBUG
 # define PRINTF printf
@@ -575,18 +576,32 @@ void MainWindow::media_open(){
     
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file = this->get_media_fp();
+	QString external_audio_url; // Initialised as null
 	
-	if (guess_protocol(this->media_fp_buf) == protocol::local_filesystem){
-		QFile f(file);
-		this->file_sz = f.size();
-		if (this->file_sz == 0){
-			fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
-			this->media_next();
-			return;
+	switch(this->protocol){
+		case protocol::local_filesystem: {
+			QFile f(file);
+			this->file_sz = f.size();
+			if (this->file_sz == 0){
+				fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
+				this->media_next();
+				return;
+			}
+			
+			if (r.reject_size(this->file_sz))
+				return this->media_next();
 		}
-		
-		if (r.reject_size(this->file_sz))
-			return this->media_next();
+		case protocol::youtube_dl: {
+			QProcess ytdl;
+			ytdl.start("youtube-dl", {"-g", this->get_media_fp()});
+			if (!ytdl.waitForFinished()){
+				QMessageBox::warning(0,  "Cannot execute youtube-dl",  "Is it installed?");
+				return;
+			}
+			file = ytdl.readLine();
+			external_audio_url = ytdl.readLine();
+			// Sometimes youtube-dl returns multiple urls. I have encountered this for youtube.com - separate video and audio streams
+		}
 	}
 	
     /* Set window title */
@@ -596,6 +611,8 @@ void MainWindow::media_open(){
     
   #ifdef VID
     m_player->play(file);
+	if (not external_audio_url.isNull())
+		m_player->setAudioStream(external_audio_url);
     m_player->setRepeat(-1); // Repeat infinitely
   #elif (defined TXT)
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
@@ -1300,7 +1317,7 @@ void MainWindow::python_script(){
 void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	constexpr static const char* const qry = "SELECT CONCAT(d.name, '/', f.name), f.id, e.start FROM file f JOIN dir d ON d.id=f.dir JOIN era e ON e.file_id=f.id AND e.id=";
+	constexpr static const char* const qry = "SELECT d.protocol, CONCAT(d.name, f.name), f.id, e.start FROM file f JOIN dir d ON d.id=f.dir JOIN era e ON e.file_id=f.id AND e.id=";
 	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
@@ -1308,11 +1325,13 @@ void MainWindow::jump_to_era(const uint64_t era_id){
 		buf,
 		qry, era_id
 	);
+	unsigned _protocol;
 	uint64_t _f_id;
 	uint64_t _seek;
 	const char* _fp;
-	while(compsky::mysql::assign_next_row(res, &row, &_fp, &_f_id, &_seek));
+	while(compsky::mysql::assign_next_row(res, &row, &_protocol, &_fp, &_f_id, &_seek));
 	if (_f_id != this->file_id){
+		this->protocol = _protocol;
 		memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
 		this->set_media_dir_len();
 		this->media_fp_is_media_fp = true;
@@ -1337,7 +1356,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 	char* itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"SELECT CONCAT(d.name, '/', f.name), f.id, IFNULL(e.start, 0) "
+		"SELECT CONCAT(d.name, f.name), f.id, IFNULL(e.start, 0) "
 		"FROM file f "
 		"JOIN dir d ON d.id=f.dir "
 		"LEFT JOIN era e ON e.file_id=f.id "
@@ -1404,7 +1423,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 void MainWindow::jump_to_file(const uint64_t file_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	constexpr static const char* const qry = "SELECT CONCAT(d.name, '/', f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=";
+	constexpr static const char* const qry = "SELECT d.protocol, CONCAT(d.name, f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=";
 	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
@@ -1413,7 +1432,7 @@ void MainWindow::jump_to_file(const uint64_t file_id){
 		qry, file_id
 	);
 	const char* _fp;
-	while(compsky::mysql::assign_next_row(res, &row, &_fp)){
+	while(compsky::mysql::assign_next_row(res, &row, &this->protocol, &_fp)){
 		memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
 	}
 	this->set_media_dir_len();

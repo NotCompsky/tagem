@@ -46,7 +46,7 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	}
 	
 	const char* _file_path;
-	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT CONCAT(d.name, '/', f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=", this->file_id);
+	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT CONCAT(d.name, f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=", this->file_id);
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_file_path)){
 		QLineEdit* _file_path_line_edit = new QLineEdit(_file_path);
 		memcpy(this->file_path,  _file_path,  strlen(_file_path) + 1);
