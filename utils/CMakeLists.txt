@@ -53,7 +53,7 @@ target_link_libraries(tagem-mv compsky_mysql compsky_asciify)
 find_package(Qt5Widgets REQUIRED)
 add_executable(tagem-mk-playlist src/mk_playlist.cpp)
 target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
-target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets)
+target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets avformat avcodec avutil)
 
 install(
     TARGETS tagem-instances tagemall tagem-init

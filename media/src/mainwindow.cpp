@@ -7,6 +7,7 @@
 #include "mainwindow.hpp"
 #include "info_dialog.hpp"
 #include "add_new_tag.hpp"
+#include "basename.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -335,10 +336,7 @@ void MainWindow::position_changed(qint64 position){
 #endif
 
 void MainWindow::set_media_dir_len(){
-	this->media_dir_len = 0;
-	for(size_t i = 0;  this->media_fp[i] != 0;  ++i)
-		if(this->media_fp[i] == '/')
-			this->media_dir_len = i + 1;
+	this->media_dir_len = pardir_length(this->media_fp);
 }
 
 #ifdef AUDIO
@@ -1299,15 +1297,13 @@ void MainWindow::python_script(){
 void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	char buf[std::char_traits<char>::length("SELECT f.name, f.id, e.start FROM file f, era e WHERE f.id=e.file_id AND e.id=") + 19 + 1];
+	constexpr static const char* const qry = "SELECT CONCAT(d.name, '/', f.name), f.id, e.start FROM file f JOIN dir d ON d.id=f.dir JOIN era e ON e.file_id=f.id AND e.id=";
+	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
 		res,
 		buf,
-		"SELECT f.name, f.id, e.start "
-		"FROM file f, era e "
-		"WHERE f.id=e.file_id "
-		  "AND e.id=", era_id
+		qry, era_id
 	);
 	uint64_t _f_id;
 	uint64_t _seek;
@@ -1338,8 +1334,9 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 	char* itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"SELECT f.name, f.id, IFNULL(e.start, 0) "
+		"SELECT CONCAT(d.name, '/', f.name), f.id, IFNULL(e.start, 0) "
 		"FROM file f "
+		"JOIN dir d ON d.id=f.dir "
 		"LEFT JOIN era e ON e.file_id=f.id "
 		"WHERE TRUE "
 	);
@@ -1404,14 +1401,13 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 void MainWindow::jump_to_file(const uint64_t file_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	char buf[std::char_traits<char>::length("SELECT name FROM file WHERE id=") + 19 + 1];
+	constexpr static const char* const qry = "SELECT CONCAT(d.name, '/', f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=";
+	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
 		res,
 		buf,
-		"SELECT name "
-		"FROM file "
-		"WHERE id=", file_id
+		qry, file_id
 	);
 	const char* _fp;
 	while(compsky::mysql::assign_next_row(res, &row, &_fp)){

@@ -1,6 +1,7 @@
 #include "info_dialog.hpp"
 #include "unlink_tag_btn.hpp"
 #include "file2.hpp"
+#include "basename.hpp"
 
 #include <compsky/mysql/query.hpp>
 
@@ -18,6 +19,7 @@ namespace _mysql {
 }
 
 constexpr static const compsky::asciify::flag::Escape f_esc;
+constexpr static const compsky::asciify::flag::StrLen f_strlen;
 
 extern MYSQL_RES* RES1;
 extern MYSQL_ROW ROW1;
@@ -44,7 +46,7 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 	}
 	
 	const char* _file_path;
-	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT name FROM file WHERE id=", this->file_id);
+	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT CONCAT(d.name, '/', f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=", this->file_id);
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_file_path)){
 		QLineEdit* _file_path_line_edit = new QLineEdit(_file_path);
 		memcpy(this->file_path,  _file_path,  strlen(_file_path) + 1);
@@ -87,10 +89,25 @@ void InfoDialog::update_file_path(){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
+		"INSERT INTO dir "
+		"SELECT \"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
+		"FROM dir "
+		"WHERE NOT EXISTS ("
+			"SELECT id "
+			"FROM dir "
+			"WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\""
+		")"
+		"LIMIT 1"
+	);
+	// WARNING: What happens if user tries to insert a directory which already exists in '_dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
+	
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
 		"UPDATE file "
 		"SET name=\"",
-			f_esc, '"', s,
-		"\" "
+			f_esc, '"', basename(_file_path),
+		"\", dir=(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\")"
 		"WHERE id=", this->file_id
 	);
 	

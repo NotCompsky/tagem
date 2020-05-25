@@ -1,13 +1,23 @@
 R"=====(
 
+CREATE TABLE _dir (
+	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARBINARY(1024) NOT NULL UNIQUE KEY,
+	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0
+);
+
 CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	dir BIGINT UNSIGNED NOT NULL,
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
     permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    UNIQUE KEY (name),
+    UNIQUE KEY (dir, name),
+	FOREIGN KEY (dir) REFERENCES _dir (id),
     PRIMARY KEY (id)
 );
+
+# Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
 
 
 CREATE TABLE file2 (
@@ -272,6 +282,14 @@ AS
 			WHERE u2p.permissions & t.permissions != t.permissions
 		)
 	)
+;
+CREATE SQL SECURITY DEFINER
+VIEW dir
+AS
+	SELECT d.*
+	FROM _dir d
+	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	WHERE u2p.permissions & d.permissions = d.permissions
 ;
 
 )====="
