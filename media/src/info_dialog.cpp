@@ -86,30 +86,8 @@ void InfoDialog::update_file_path(){
 		return;
 	}
 	
-	compsky::mysql::exec(
-		_mysql::obj,
-		BUF,
-		"INSERT INTO dir "
-		"SELECT \"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
-		"FROM dir "
-		"WHERE NOT EXISTS ("
-			"SELECT id "
-			"FROM dir "
-			"WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\""
-		")"
-		"LIMIT 1"
-	);
-	// WARNING: What happens if user tries to insert a directory which already exists in '_dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
-	
-	compsky::mysql::exec(
-		_mysql::obj,
-		BUF,
-		"UPDATE file "
-		"SET name=\"",
-			f_esc, '"', basename(_file_path),
-		"\", dir=(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\")"
-		"WHERE id=", this->file_id
-	);
+	record_dir_from_filepath(_file_path);
+	update_file_from_path(this->file_id, _file_path);
 	
 	memcpy(this->file_path,  _file_path,  strlen(_file_path) + 1);
 }

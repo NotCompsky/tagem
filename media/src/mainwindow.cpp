@@ -576,16 +576,18 @@ void MainWindow::media_open(){
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file = this->get_media_fp();
 	
-	QFile f(file);
-	this->file_sz = f.size();
-	if (this->file_sz == 0){
-		fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
-		this->media_next();
-		return;
+	if (guess_protocol(this->media_fp_buf) == protocol::local_filesystem){
+		QFile f(file);
+		this->file_sz = f.size();
+		if (this->file_sz == 0){
+			fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
+			this->media_next();
+			return;
+		}
+		
+		if (r.reject_size(this->file_sz))
+			return this->media_next();
 	}
-	
-	if (r.reject_size(this->file_sz))
-		return this->media_next();
 	
     /* Set window title */
     QString fname = this->get_media_fp() + this->media_dir_len;
@@ -864,7 +866,8 @@ void MainWindow::assign_value(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO file (name) VALUES(\"", f_esc, '"', this->get_media_fp(), "\") ON DUPLICATE KEY UPDATE name=VALUES(name)");
+		record_dir_from_filepath(this->get_media_fp());
+		insert_file_from_path(this->get_media_fp());
         this->file_id = get_last_insert_id();
     }
 }
