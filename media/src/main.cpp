@@ -266,8 +266,10 @@ int main(const int argc,  const char** argv){
 #endif
 #if !(defined TAG_MANAGER || defined MAINWINDOW)
 	while(ask_for_tag("Add tag"));
+	const int rc = 0;
+#else
+	int rc = app.exec();
 #endif
-    int rc = app.exec();
     compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 # ifdef PYTHON
 	Py_Finalize(); // Frees
