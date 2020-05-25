@@ -381,7 +381,7 @@ void MainWindow::media_next(){
 		case files_from_which::sql:
 		{
 			const char* _media_fp;
-			if(likely(compsky::mysql::assign_next_row__no_free(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &_media_fp))){
+			if(likely(compsky::mysql::assign_next_row__no_free(this->inlist_filter_dialog->files_from_sql__res,  &(this->inlist_filter_dialog->files_from_sql__row),  &this->protocol,  &_media_fp))){
 				printf("%s\n", _media_fp);
 				memcpy(this->media_fp,  _media_fp,  strlen(_media_fp) + 1);
 				this->set_media_dir_len();
@@ -408,13 +408,16 @@ void MainWindow::media_next(){
 			}
 			this->media_fp[_sz - 1] = 0; // Remove trailing newline
 			this->set_media_dir_len();
-			printf("media_fp: %s\n", this->media_fp);
+// 			printf("media_fp: %s\n", this->media_fp);
+			this->protocol = guess_protocol(this->media_fp);
 			this->media_open();
 			return;
 		}
 		case files_from_which::stdin:
 			break;
 	}
+	
+	// The following section is only for files_from_which::stdin
 	
     auto i = this->media_fp_indx;
     this->media_fp_len = 0;
@@ -444,6 +447,8 @@ void MainWindow::media_next(){
     write(1,  this->media_fp,  this->media_fp_len + 1);
     
     this->media_fp[this->media_fp_len] = 0;
+	
+	this->protocol = guess_protocol(this->media_fp);
     
     this->media_open();
 }
@@ -1356,7 +1361,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 	char* itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"SELECT CONCAT(d.name, f.name), f.id, IFNULL(e.start, 0) "
+		"SELECT d.protocol, CONCAT(d.name, f.name), f.id, IFNULL(e.start, 0) "
 		"FROM file f "
 		"JOIN dir d ON d.id=f.dir "
 		"LEFT JOIN era e ON e.file_id=f.id "
@@ -1395,7 +1400,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 	
 	bool need_to_free_res = true;
 	while(need_to_free_res){
-		need_to_free_res = compsky::mysql::assign_next_row(res, &row, &_fp, &_f_id, &_seek);
+		need_to_free_res = compsky::mysql::assign_next_row(res, &row, &this->protocol, &_fp, &_f_id, &_seek);
 		if (_f_id != this->file_id){
 			memcpy(this->media_fp,  _fp,  strlen(_fp) + 1);
 			this->set_media_dir_len();
