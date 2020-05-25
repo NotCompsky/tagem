@@ -1,3 +1,4 @@
+#include "extract-audio.hpp" // for extract_audio
 #include "../../media/src/rule.hpp"
 #include <compsky/mysql/query.hpp>
 #include <stdio.h> // for fprintf
@@ -20,6 +21,9 @@ namespace _err {
 bool STRIP_TO_FILENAMES = false;
 const char* PREFIX = nullptr;
 size_t PREFIX_LEN;
+const char* EXTRACT_AUDIO_INTO_DIR = nullptr;
+bool PRINT_EXTRACTED_AUDI_OUTFILE_PATHS = false;
+bool EXTRACT_AUDIO = false;
 
 
 namespace _mysql {
@@ -89,6 +93,16 @@ void process_rule(InlistFilterRules& r,  const char* const rule_name,  const cha
 			memcpy(buf + PREFIX_LEN,  fp_,  strlen(fp_) + 1);
 			fp_ = buf;
 		}
+		if (EXTRACT_AUDIO_INTO_DIR != nullptr){
+			static char buf[4096];
+			memcpy(buf, EXTRACT_AUDIO_INTO_DIR, strlen(EXTRACT_AUDIO_INTO_DIR));
+			memcpy(buf + strlen(EXTRACT_AUDIO_INTO_DIR),  jump_to_filename(_fp),  strlen(jump_to_filename(_fp)) + 1); // TODO: Reduce number of memcpy calls (the first one only needed once, not every iteration)
+			int rc;
+			if (rc = extract_audio(buf, _fp, EXTRACT_AUDIO, PRINT_EXTRACTED_AUDI_OUTFILE_PATHS)){
+				fprintf(stderr,  "Cannot extract audio: error #%d\nFrom %s\nTo   %s\n",  rc,  _fp,  buf);
+				continue;
+			}
+		}
 #ifdef EXEC_CMD
 		if (COMMAND_ARGS.size() != 0){
 			for (auto i = 0;  i < COMMAND_ARGS.size();  ++i){
@@ -153,6 +167,12 @@ int main(const int argc,  char** argv){
 	 *     WARNING: Bug: %f substitutes only the first assigned result - the same string for each iteration.
 	 *   -p
 	 *     Prefix
+	 *   -x [DIRECTORY]
+	 *     *Prepare* to extract audio into the given directory. Only useful in conjunction with -X and/or -v
+	 *   -X
+	 *     Extract the audio
+	 *   -v
+	 *     Print the file paths of the extracted audio
 	 * E.g.
 	 * tagem-mk-playlist /tmp/playlists .m3u -- X=tag1 'Rule Name' output_name -- X=tag1 Y=tag2 'Rule Name' output_name -- X='SELECT name FROM file' 'Rule that passes X into SQL query'
 	 */
@@ -184,6 +204,15 @@ int main(const int argc,  char** argv){
 			case 'p':
 				PREFIX = *(++argv);
 				PREFIX_LEN = strlen(PREFIX);
+				break;
+			case 'x':
+				EXTRACT_AUDIO_INTO_DIR = *(++argv);
+				break;
+			case 'X':
+				EXTRACT_AUDIO = true;
+				break;
+			case 'v':
+				PRINT_EXTRACTED_AUDI_OUTFILE_PATHS = true;
 				break;
 			default:
 				return _err::bad_arg;
