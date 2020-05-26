@@ -409,7 +409,7 @@ void MainWindow::media_next(){
 			this->media_fp[_sz - 1] = 0; // Remove trailing newline
 			this->set_media_dir_len();
 // 			printf("media_fp: %s\n", this->media_fp);
-			this->protocol = guess_protocol(this->media_fp);
+			this->protocol = protocol::NONE;
 			this->media_open();
 			return;
 		}
@@ -448,7 +448,7 @@ void MainWindow::media_next(){
     
     this->media_fp[this->media_fp_len] = 0;
 	
-	this->protocol = guess_protocol(this->media_fp);
+	this->protocol = protocol::NONE;
     
     this->media_open();
 }
@@ -572,7 +572,7 @@ void MainWindow::media_open(){
 	if (r.reject_name(this->get_media_fp()))
 		return this->media_next();
     
-    this->file_id = is_file_in_db(this->get_media_fp());
+    this->file_id = is_file_in_db(this->get_media_fp(), this->protocol);
 	
     if (r.skip_tagged  &&  this->file_id){
 		PRINTF("Skipped previously tagged: %s\n", this->get_media_fp()); // TODO: Look into possible issues around this
@@ -582,6 +582,9 @@ void MainWindow::media_open(){
     // WARNING: fp MUST be initialised, unless called via signal button press
     QString file = this->get_media_fp();
 	QString external_audio_url; // Initialised as null
+	
+	if (this->protocol == protocol::NONE)
+		this->protocol = guess_protocol(this->media_fp);
 	
 	switch(this->protocol){
 		case protocol::local_filesystem: {

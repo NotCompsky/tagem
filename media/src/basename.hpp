@@ -1,6 +1,7 @@
 #pragma once
 
 #include <compsky/mysql/query.hpp>
+#include "dropdown_dialog.hpp"
 
 
 namespace _mysql {
@@ -104,8 +105,12 @@ unsigned guess_protocol(const char* url){
 				break;
 		}
 	}
-	if (n_periods == 0)
-		return protocol::youtube_dl;
+	if (n_periods == 0){
+		DropdownDialog* const dialog = new DropdownDialog(QString("Protocol of ") + QString(url), {protocol::strings[ultimate_protocol], protocol::strings[protocol::youtube_dl]}, nullptr);
+		dialog->exec();
+		ultimate_protocol = (dialog->combo_box->currentIndex()) ? protocol::youtube_dl : ultimate_protocol;
+		delete dialog;
+	}
 	
 	return ultimate_protocol;
 }

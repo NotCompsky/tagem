@@ -27,12 +27,12 @@ uint64_t get_last_insert_id(){
 }
 
 inline
-uint64_t is_file_in_db(const char* fp){
+uint64_t is_file_in_db(const char* const fp,  unsigned& protocol){
 	constexpr static const compsky::asciify::flag::Escape _f_esc;
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\"");
+	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT f.id, d.protocol FROM file f JOIN dir d ON d.id=f.dir WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\"");
     
     uint64_t id = 0;
-    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id));
+    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id,  &protocol));
     
     return id;
 }
