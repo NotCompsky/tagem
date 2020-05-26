@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+
+source tagem-auth
+
+
+iffy(){
+	if [ "$1" ]; then
+		echo "$2"
+	fi
+}
+check_value_tbl_exists(){
+	mysql "${tagem_auth[@]}" -e "SELECT x FROM file2$1 LIMIT 1" tagem >/dev/null
+	if [ "$?" -gt 0 ]; then
+		echo "No such value table: file2$1" >&2
+		exit
+	fi
+}
+
+
+opts=("$@")
+declare -i i=0
+while true; do
+	opt="${opts[$i]}"
+	((++i))
+	if [ "$opt" = "" ]; then
+		break
+	
+	elif [ "$opt" = "--name" ]; then
+		NAME="${opts[$i]}"
+		((++i))
+		continue
+	
+	elif [ "$opt" = "--value" ]; then
+		min="${opts[$i]}"
+		((++i))
+		max="${opts[$i]}"
+		((++i))
+		WHERE="$WHERE
+  AND f.id IN ("
+		continue
+	elif [ "$opt" = "value--" ]; then
+		min=""
+		max=""
+		WHERE="${WHERE::-6})"
+	elif [ "$min" ]; then
+		check_value_tbl_exists "$opt"
+		WHERE="$WHERE SELECT file FROM file2$opt WHERE TRUE $(iffy "$min" "AND x>$min") $(iffy "$max" "AND x<$max") UNION"
+		continue
+	
+	elif [ "$opt" = "--tag" ]; then
+		_tmp_tagids="$i"
+		WHERE="$WHERE
+  AND f.id IN (SELECT file_id FROM file2tag WHERE tag_id IN (SELECT node FROM _tmp_tagids_$i))"
+		continue
+	elif [ "$opt" = "--not-tag" ]; then
+		_tmp_tagids="$i"
+		WHERE="$WHERE
+  AND f.id NOT IN (SELECT file_id FROM file2tag WHERE tag_id IN (SELECT node FROM _tmp_tagids_$i))"
+		continue
+	elif [ "$opt" = "tag--" ]; then
+		PRE="$PRE
+CALL descendant_tags_id_from('_tmp_tagids_$_tmp_tagids', $(dblqt "${tags::-1}"));"
+		_tmp_tagids=""
+		tags=""
+		continue
+	elif [ "$_tmp_tagids" ]; then
+		tags="$tags $(dblqt "$opt"),"
+		continue
+	
+	elif [ "$opt" = "--order-by-value" ]; then
+		ORDER="ORDER BY "
+		ORDERNESS="${opts[$i]}"
+		((++i))
+		_order_by_value=1
+		continue
+	elif [ "$opt" = "order-by-value--" ]; then
+		_order_by_value=""
+		ORDER="$ORDER NULL"
+		continue
+	elif [ "$_order_by_value" ]; then
+		JOIN="$JOIN LEFT JOIN file2$opt f2$i ON f2$i.file=f.id"
+		ORDER="$ORDER IFNULL(f2$i.x,"
+		ORDER_END="$ORDER_END)"
+		continue
+	
+	elif [ "$opt" = "--rand" ]; then
+		ORDER_END="$ORDER_END * RAND()"
+		continue
+	
+	else
+		echo "unrecognised argument: $opt" >&2
+		exit
+	fi
+done
+
+
+qry="$PRE
+SELECT d.protocol, CONCAT(d.name, f.name)
+FROM file f
+JOIN dir d ON d.id=f.dir
+$JOIN
+WHERE TRUE $WHERE
+${ORDER}${ORDER_END}${ORDERNESS}"
+
+
+if [ "$NAME" = "" ]; then
+	echo "$qry"
+	exit
+fi
+
+mysql "${tagem_auth[@]}" -e "INSERT INTO settings (name, stpetersburger, files_from_which, files_from, start_from, skip_tagged, skip_trans, skip_grey, start_from_which, w_max, w_min, h_max, h_min, file_sz_min, file_sz_max) VALUES ($(dblqt "$NAME"), 0, 2, $(dblqt "$qry"),
+'', FALSE, FALSE, FALSE, 0, 0, 0, 0, 0, 0, 0
+)" tagem
+
+
+exit
+
+
+Examples:
+
+./mk-rule --name "Best Scifi + Fantasy Music Videos" --value 90 '' Score Musicness Artistry value-- --tag SciFi Fantasy tag-- --tag Music tag-- --tag Video tag--
