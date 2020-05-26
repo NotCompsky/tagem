@@ -26,9 +26,6 @@
 #ifdef TXT
   #include <QTextStream>
 #endif
-#ifdef BOXABLE
-  #include <QPainter>
-#endif
 #ifdef SCROLLABLE
   #include <QScrollBar>
 #endif
