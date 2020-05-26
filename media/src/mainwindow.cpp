@@ -71,6 +71,10 @@
 # define PRINTF(...)
 #endif
 
+#ifdef IMG
+# include <QNetworkReply>
+#endif
+
 #define STDIN_FILENO 0
 
 // mysql.files.media_id is the ID of the unique image/scene, irrespective of rescaling, recolouring, etc.
@@ -637,7 +641,25 @@ void MainWindow::media_open(){
 	
 	this->is_file_modified = false;
   #elif (defined IMG)
-    QImageReader imgreader(file);
+	QImageReader imgreader;
+	
+	if (this->protocol == protocol::local_filesystem){
+		imgreader.setFileName(file);
+	} else {
+		QNetworkAccessManager* const network_manager = new QNetworkAccessManager(this);
+		QNetworkReply* const reply = network_manager->get(QNetworkRequest(file));
+		QEventLoop event_loop;
+		connect(reply,  &QNetworkReply::finished,  &event_loop,  &QEventLoop::quit);
+		event_loop.exec();
+		
+		if (reply->error() != QNetworkReply::NoError){
+			fprintf(stderr,  "Cannot load image from network: %s\n",  this->get_media_fp());
+			return;
+		}
+		
+		imgreader.setDevice(reply);
+	}
+    
     imgreader.setAutoTransform(true);
     this->image = imgreader.read();
     if (this->image.isNull()){
