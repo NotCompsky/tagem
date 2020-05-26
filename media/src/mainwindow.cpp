@@ -71,8 +71,8 @@
 # define PRINTF(...)
 #endif
 
-#ifdef IMG
-# include <QNetworkReply>
+#if ((defined IMG) && (!LOCAL_ONLY))
+# include "get_from_network.hpp"
 #endif
 
 #define STDIN_FILENO 0
@@ -587,9 +587,10 @@ void MainWindow::media_open(){
 	if (this->protocol == protocol::NONE)
 		this->protocol = guess_protocol(this->media_fp);
 	
+	QFile f;
 	switch(this->protocol){
 		case protocol::local_filesystem: {
-			QFile f(file);
+			f.setFileName(file);
 			this->file_sz = f.size();
 			if (this->file_sz == 0){
 				fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
@@ -599,6 +600,8 @@ void MainWindow::media_open(){
 			
 			if (r.reject_size(this->file_sz))
 				return this->media_next();
+			
+			break;
 		}
 		case protocol::youtube_dl: {
 			QProcess ytdl;
@@ -610,6 +613,8 @@ void MainWindow::media_open(){
 			file = ytdl.readLine();
 			external_audio_url = ytdl.readLine();
 			// Sometimes youtube-dl returns multiple urls. I have encountered this for youtube.com - separate video and audio streams
+			
+			break;
 		}
 	}
 	
@@ -646,18 +651,7 @@ void MainWindow::media_open(){
 	if (this->protocol == protocol::local_filesystem){
 		imgreader.setFileName(file);
 	} else {
-		QNetworkAccessManager* const network_manager = new QNetworkAccessManager(this);
-		QNetworkReply* const reply = network_manager->get(QNetworkRequest(file));
-		QEventLoop event_loop;
-		connect(reply,  &QNetworkReply::finished,  &event_loop,  &QEventLoop::quit);
-		event_loop.exec();
-		
-		if (reply->error() != QNetworkReply::NoError){
-			fprintf(stderr,  "Cannot load image from network: %s\n",  this->get_media_fp());
-			return;
-		}
-		
-		imgreader.setDevice(reply);
+		imgreader.setDevice(get_from_network(file));
 	}
     
     imgreader.setAutoTransform(true);
