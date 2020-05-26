@@ -74,6 +74,7 @@ void Overlay::paintEvent(QPaintEvent* e){
 			);
 		}
 	}
+	painter.restore();
 # endif
 
     painter.restore();
