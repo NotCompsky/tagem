@@ -13,6 +13,7 @@ class InfoDialog : public QDialog {
 	char file_path[4096];
 	void update_file_path(); // SLOT
 	void unlink_tag();
+	unsigned protocol;
 };
 
 

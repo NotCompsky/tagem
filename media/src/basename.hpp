@@ -18,6 +18,14 @@ namespace protocol {
 		youtube_dl,
 		COUNT
 	};
+	constexpr static
+	const char* const strings[COUNT] = {
+		"NONE",
+		"file://",
+		"http://",
+		"https://",
+		"youtube-dl"
+	};
 }
 
 
@@ -104,7 +112,7 @@ unsigned guess_protocol(const char* url){
 
 
 inline
-void record_dir_from_filepath(const char* const _file_path){
+void record_dir_from_filepath(const unsigned protocol,  const char* const _file_path){
 	constexpr static const compsky::asciify::flag::Escape f_esc;
 	constexpr static const compsky::asciify::flag::StrLen f_strlen;
 	compsky::mysql::exec(
@@ -112,7 +120,7 @@ void record_dir_from_filepath(const char* const _file_path){
 		BUF,
 		"INSERT INTO dir (protocol, name) "
 		"SELECT ",
-			guess_protocol(_file_path), ","
+			protocol, ","
 			"\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
 		"FROM dir "
 		"WHERE NOT EXISTS ("

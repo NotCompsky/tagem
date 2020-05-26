@@ -888,7 +888,7 @@ void MainWindow::assign_value(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-		record_dir_from_filepath(this->get_media_fp());
+		record_dir_from_filepath(this->protocol, this->get_media_fp());
 		insert_file_from_path(this->get_media_fp());
         this->file_id = get_last_insert_id();
     }
