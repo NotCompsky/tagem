@@ -297,7 +297,7 @@ AS
 		f.id NOT IN (
 			SELECT file_id
 			FROM file2tag
-			JOIN tag t ON t.id=tag_id
+			JOIN _tag t ON t.id=tag_id
 			WHERE u2p.permissions & t.permissions != t.permissions
 		)
 	)
