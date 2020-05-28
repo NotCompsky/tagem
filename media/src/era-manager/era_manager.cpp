@@ -54,9 +54,7 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 }
 
 void EraManager::change_era2s_tblname() const {
-	const QByteArray ba = this->era2string_tbl_name->text().toLocal8Bit();
-	const char* const s = ba.data();
-	memcpy(era2s_tblname,  s,  strlen(s) + 1);
+	compsky::mysql::asciify(era2s_tblname, this->era2string_tbl_name->text());
 }
 
 void EraManager::toggle_display_eras(){
