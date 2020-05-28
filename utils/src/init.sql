@@ -13,11 +13,27 @@ INSERT INTO protocol (id, name) VALUES
 
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	device BIGINT UNSIGNED NOT NULL,
+	name VARBINARY(1024) NOT NULL UNIQUE KEY,
+	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	FOREIGN KEY (device) REFERENCES device (id)
+);
+
+CREATE TABLE _device (
+	# Storage device - such as a hard drive, or a website (a remote storage device)
+	# Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
+	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	protocol INT UNSIGNED NOT NULL,
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
+INSERT INTO _device (name, protocol) VALUES
+("https://youtube.com/watch?v=", (SELECT id FROM protocol WHERE name="youtube-dl")),
+("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
+("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
+("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
+("https://github.com/", (SELECT id FROM protocol WHERE name="https://"));
 
 CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -307,6 +323,14 @@ VIEW dir
 AS
 	SELECT d.*
 	FROM _dir d
+	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	WHERE u2p.permissions & d.permissions = d.permissions
+;
+CREATE SQL SECURITY DEFINER
+VIEW device
+AS
+	SELECT d.*
+	FROM _device d
 	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
 	WHERE u2p.permissions & d.permissions = d.permissions
 ;

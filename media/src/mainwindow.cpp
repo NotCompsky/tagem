@@ -8,6 +8,7 @@
 #include "info_dialog.hpp"
 #include "add_new_tag.hpp"
 #include "basename.hpp"
+#include "filetype.hpp"
 
 #include <cstdio> // for remove
 #ifndef _WIN32
@@ -71,7 +72,7 @@
 # define PRINTF(...)
 #endif
 
-#if ((defined IMG) && (!LOCAL_ONLY))
+#if ((defined IMG || defined TXT) && (!LOCAL_ONLY))
 # include "get_from_network.hpp"
 #endif
 
@@ -117,7 +118,7 @@ MainWindow::~MainWindow(){
   #ifdef IMG
     //delete this->main_widget;  // runtime error: member call on address  which does not point to an object of type 'QLabel'
   #endif
-  #ifdef TXT
+  #if (defined TXT || defined IMG)
     delete this->main_widget;
   #endif
   #ifdef VID
@@ -629,17 +630,26 @@ void MainWindow::media_open(){
 		m_player->setAudioStream(external_audio_url);
     m_player->setRepeat(-1); // Repeat infinitely
   #elif (defined TXT)
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
-        fprintf(stderr,  "Cannot load file: %s\n",  file);
-        this->media_next();
-        return;
-    }
+	
+	if (this->protocol == protocol::local_filesystem){
+		if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
+			fprintf(stderr,  "Cannot load file: %s\n",  file);
+			this->media_next();
+			return;
+		}
 
-    // Read from the file
-    QTextStream in(&f);
-    QTextDocument* document = this->main_widget->document();
-    document->setPlainText(in.readAll());
-    f.close();
+		// Read from the file
+		QTextStream in(&f);
+		QTextDocument* document = this->main_widget->document();
+		document->setPlainText(in.readAll());
+		f.close();
+	} else {
+		QIODevice* const dev = get_from_network(file);
+		if (filetype::guess(this->get_media_fp()) == filetype::html)
+			this->main_widget->document()->setHtml(dev->readAll());
+		else
+			this->main_widget->document()->setPlainText(dev->readAll());
+	}
 
     // Scroll to top
     this->main_widget->scroll(0, 0);
@@ -904,8 +914,7 @@ void MainWindow::assign_value(){
 
 void MainWindow::ensure_fileID_set(){
     if (this->file_id == 0){
-		record_dir_from_filepath(this->protocol, this->get_media_fp());
-		insert_file_from_path(this->get_media_fp());
+		insert_file_from_path(this->get_media_fp(), this->protocol);
         this->file_id = get_last_insert_id();
     }
 }
@@ -1338,7 +1347,7 @@ void MainWindow::python_script(){
 void MainWindow::jump_to_era(const uint64_t era_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	constexpr static const char* const qry = "SELECT d.protocol, CONCAT(d.name, f.name), f.id, e.start FROM file f JOIN dir d ON d.id=f.dir JOIN era e ON e.file_id=f.id AND e.id=";
+	constexpr static const char* const qry = "SELECT D.protocol, CONCAT(d.name, f.name), f.id, e.start FROM file f JOIN dir d ON d.id=f.dir JOIN device D ON D.id=d.device JOIN era e ON e.file_id=f.id AND e.id=";
 	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,
@@ -1377,9 +1386,10 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 	char* itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"SELECT d.protocol, CONCAT(d.name, f.name), f.id, IFNULL(e.start, 0) "
+		"SELECT D.protocol, CONCAT(d.name, f.name), f.id, IFNULL(e.start, 0) "
 		"FROM file f "
 		"JOIN dir d ON d.id=f.dir "
+		"JOIN device D ON D.id=d.device "
 		"LEFT JOIN era e ON e.file_id=f.id "
 		"WHERE TRUE "
 	);
@@ -1444,7 +1454,7 @@ void MainWindow::jump_to_era_tagged(std::vector<MainWindow::TagstrAndNot> const 
 void MainWindow::jump_to_file(const uint64_t file_id){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	constexpr static const char* const qry = "SELECT d.protocol, CONCAT(d.name, f.name) FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=";
+	constexpr static const char* const qry = "SELECT D.protocol, CONCAT(d.name, f.name) FROM file f JOIN dir d ON d.id=f.dir JOIN device D ON D.id=d.device WHERE f.id=";
 	static char buf[std::char_traits<char>::length(qry) + 19 + 1];
 	compsky::mysql::query(
 		_mysql::obj,

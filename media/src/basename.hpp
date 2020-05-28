@@ -2,6 +2,7 @@
 
 #include <compsky/mysql/query.hpp>
 #include "dropdown_dialog.hpp"
+#include "device.hpp"
 
 
 namespace _mysql {
@@ -10,46 +11,8 @@ namespace _mysql {
 extern char BUF[];
 
 
-namespace protocol {
-	enum {
-		NONE,
-		local_filesystem,
-		http,
-		https,
-		youtube_dl,
-		COUNT
-	};
-	constexpr static
-	const char* const strings[COUNT] = {
-		"NONE",
-		"file://",
-		"http://",
-		"https://",
-		"youtube-dl"
-	};
-}
-
-
 inline
-const char* basename(const char* s){
-	const char* end_of_dirname = s;
-	while(*s != 0){
-		if (*s == '/')
-			end_of_dirname = s;
-		++s;
-	}
-	return end_of_dirname + 1;
-}
-
-
-inline
-size_t pardir_length(const char* s){
-	return reinterpret_cast<uintptr_t>(basename(s)) - reinterpret_cast<uintptr_t>(s);
-}
-
-
-inline
-size_t pardir_length(const QString& s){
+size_t pardir_length__naiive(const QString& s){
 	int end_of_dirname__indx = 0;
 	for(auto i = 0;  i < s.size();  ){
 		if (s.at(i) == QChar('/'))
@@ -61,81 +24,101 @@ size_t pardir_length(const QString& s){
 
 
 inline
-unsigned guess_protocol(const char* url){
-	if (*url == '/')
-		return protocol::local_filesystem;
-	
-	// Now follows an *extremely* crude method for guessing the protocol
-	
-	unsigned ultimate_protocol = protocol::NONE;
-	switch(*url){
-		case 'h':
-			switch(*(++url)){
-				case 't':
-					switch(*(++url)){
-						case 't':
-							switch(*(++url)){
-								case 'p':
-									switch(*(++url)){
-										case 's':
-											ultimate_protocol = protocol::https;
-										case '/':
-											ultimate_protocol = protocol::http;
-									}
-							}
-					}
-			}
+bool is_in_subdir_of(const char* path,  const char* dir){
+	printf("is_in_usbdir_of\n\t%s\n\t%s\n", path, dir);
+	// WARNING: path is assumed to be a child of dir.
+	while(*path == *dir){
+		++path;
+		++dir;
 	}
-	if (ultimate_protocol == protocol::NONE)
-		return ultimate_protocol;
-	
-	while(*url != 0)
-		++url;
-	unsigned n_periods = 0;
-	for (auto i = 0;  i < 5;  ++i){
-		switch(*(--url)){
-			// Match likely media extensions
-			case '.':
-				++n_periods;
-			case 'A' ... 'Z':
-			case 'a' ... 'z':
-			case '0' ... '9':
-				continue;
-			default:
-				break;
-		}
+	while(true){
+		if (*path == '/')
+			return true;
+		if (*path == 0)
+			return false;
+		++path;
 	}
-	if (n_periods == 0){
-		DropdownDialog* const dialog = new DropdownDialog(QString("Protocol of ") + QString(url), {protocol::strings[ultimate_protocol], protocol::strings[protocol::youtube_dl]}, nullptr);
-		dialog->exec();
-		ultimate_protocol = (dialog->combo_box->currentIndex()) ? protocol::youtube_dl : ultimate_protocol;
-		delete dialog;
-	}
-	
-	return ultimate_protocol;
 }
 
 
 inline
-void record_dir_from_filepath(const unsigned protocol,  const char* const _file_path){
+size_t pardir_length__qry(const char* const file_path){
 	constexpr static const compsky::asciify::flag::Escape f_esc;
-	constexpr static const compsky::asciify::flag::StrLen f_strlen;
+	compsky::mysql::query(_mysql::obj, RES1, BUF,
+		"SELECT name "
+		"FROM dir "
+		"WHERE name=LEFT(\"", f_esc, '"', file_path, "\", LENGTH(name)) "
+		"ORDER BY LENGTH(name) DESC "
+		"LIMIT 1"
+	);
+	const char* dir_name = nullptr;
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &dir_name));
+	if ((dir_name != nullptr)  and  (not is_in_subdir_of(file_path, dir_name)))
+		return strlen(dir_name);
+	return 0;
+}
+
+
+template<typename... Args>
+void record_dir_from_filepath(const char* const _file_path,  Args... args){
+	constexpr static const compsky::asciify::flag::Escape f_esc;
+	
+	bool ok;
+	const QString prefix_qstr = QInputDialog::getText(
+		nullptr,
+		"New directory",
+		"This filepath is from a new 'directory'. Please input the directory path (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'directory' would be https://www.youtube.com/watch?v=. For a Mac/UNIX filesystem, it would be something like /path/to/directory/",
+		QLineEdit::Normal,
+		_file_path,
+		&ok
+	);
+	const QByteArray ba = prefix_qstr.toLocal8Bit();
+	const char* const prefix = ba.data();
+	
+	const uint64_t device = get_device_id__insert_if_not_exist(prefix, args...);
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO dir (protocol, name) "
+		"INSERT INTO dir (device, name) "
 		"SELECT ",
-			protocol, ","
-			"\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\" "
+			device, ","
+			"\"", f_esc, '"', prefix, "\" "
 		"FROM dir "
 		"WHERE NOT EXISTS ("
 			"SELECT id "
 			"FROM dir "
-			"WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\""
+			"WHERE name=\"", f_esc, '"', prefix, "\""
 		")"
 		"LIMIT 1"
 	);
+	
 	// WARNING: What happens if user tries to insert a directory which already exists in '_dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
+}
+
+
+template<typename... Args>
+size_t pardir_length(const char* const file_path,  Args... args){
+	while(true){
+		const size_t sz = pardir_length__qry(file_path);
+		if (sz)
+			return sz;
+		
+		record_dir_from_filepath(file_path, args...);
+	}
+}
+
+
+template<typename... Args>
+size_t pardir_length(const QString& qstr,  Args... args){
+	const QByteArray ba = qstr.toLocal8Bit();
+	const char* const file_path = ba.data();
+	return pardir_length(file_path);
+}
+
+
+inline
+const char* basename(const char* s){
+	return s + pardir_length(s);
 }
 
 
@@ -155,15 +138,15 @@ void update_file_from_path(const uint64_t _file_id,  const char* const _file_pat
 }
 
 
-inline
-void insert_file_from_path(const char* const _file_path){
+template<typename... Args>
+void insert_file_from_path(const char* const _file_path,  Args... args){
 	constexpr static const compsky::asciify::flag::Escape f_esc;
 	constexpr static const compsky::asciify::flag::StrLen f_strlen;
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
 		"INSERT INTO file (dir, name) VALUES ("
-			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path), _file_path, "\"),"
+			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path, args...), _file_path, "\"),"
 			"\"", f_esc, '"', basename(_file_path), "\""
 		") ON DUPLICATE KEY UPDATE dir=dir"
 	);

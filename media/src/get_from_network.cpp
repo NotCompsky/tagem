@@ -10,7 +10,7 @@ QNetworkReply* get_from_network(const QString& url){
 	event_loop.exec();
 	
 	if (reply->error() != QNetworkReply::NoError){
-		fprintf(stderr,  "Cannot load from network: %s\n",  url);
+		qDebug() << "Cannot load from network:" << url;
 		return nullptr;
 	}
 	

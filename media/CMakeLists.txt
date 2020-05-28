@@ -110,7 +110,7 @@ foreach(file_type ${MY_TARGETS})
 		src/file2.cpp
 	)
 	if(NOT LOCAL_ONLY)
-		if("${tgt}" STREQUAL tagemimg)
+		if("${tgt}" STREQUAL tagemimg  OR  "${tgt}" STREQUAL tagemtxt)
 			target_sources("${tgt}" PRIVATE ${NETWORK_SOURCES})
 		endif()
 	endif()
