@@ -3,6 +3,7 @@
 #include "../mainwindow.hpp"
 #include "../menu.hpp"
 #include <compsky/mysql/query.hpp>
+#include <compsky/asciify/asciify.hpp>
 #include <QComboBox>
 #include <QInputDialog>
 #include <QPushButton>
@@ -54,7 +55,7 @@ EraManager::EraManager(MainWindow* const _win,  QWidget* parent)
 }
 
 void EraManager::change_era2s_tblname() const {
-	compsky::mysql::asciify(era2s_tblname, this->era2string_tbl_name->text());
+	compsky::asciify::asciify(era2s_tblname, this->era2string_tbl_name->text());
 }
 
 void EraManager::toggle_display_eras(){
