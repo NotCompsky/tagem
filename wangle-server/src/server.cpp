@@ -42,6 +42,10 @@ namespace cached_stuff {
 	static char cache[n_cached * max_buf_len];
 	enum {
 		files_given_tag,
+		files_given_dir,
+		tags_given_file,
+		dir_info,
+		file_info,
 		n_fns
 	};
 	struct ID {
@@ -387,15 +391,49 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
 	}
 	
+	std::string_view dir_info(const char* id_str){
+		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		
+		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
+			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+		
+		this->mysql_query(
+			"SELECT name "
+			"FROM dir "
+			"WHERE id=", id
+		);
+		
+		const char* name;
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+		this->asciify('[');
+		while(this->mysql_assign_next_row(&name)){
+			this->asciify(
+				'"', _f::esc, '"',  name, '"'
+			);
+		}
+		this->asciify(']');
+		*this->itr = 0;
+		
+		this->add_buf_to_cache(cached_stuff::dir_info, id);
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view file_info(const char* id_str){
 		const uint64_t id = a_to_uint64__space_terminated(id_str);
 		
-		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
+		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 		
 		this->mysql_query(
 			"SELECT "
 				"IFNULL(LOWER(HEX(f2h.x)),\"\"),"
+				"d.id,"
 				"d.name,"
 				"f.name,"
 				"GROUP_CONCAT(f2t.tag_id) "
@@ -408,6 +446,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* md5_hash;
+		const char* dir_id;
 		const char* dir_name;
 		const char* file_name;
 		const char* tag_ids;
@@ -418,9 +457,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_name, &file_name, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &dir_name, &file_name, &tag_ids)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
+				dir_id, ',',
 				'"', _f::esc, '"',  dir_name, '"', ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', tag_ids, '"'
@@ -429,7 +469,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
-		this->add_buf_to_cache(cached_stuff::files_given_tag, id);
+		this->add_buf_to_cache(cached_stuff::file_info, id);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -437,7 +477,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view tags_given_file(const char* id_str){
 		const uint64_t id = a_to_uint64__space_terminated(id_str);
 		
-		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
+		if (const int indx = cached_stuff::from_cache(cached_stuff::tags_given_file, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 		
 		this->mysql_query(
@@ -468,7 +508,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
-		this->add_buf_to_cache(cached_stuff::files_given_tag, id);
+		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -540,9 +580,83 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view files_given_dir(const char* id_str){
+		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		
+		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_dir, id))
+			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+		
+		this->mysql_query(
+			"SELECT "
+				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
+				"f.id,"
+				"f.name,"
+				"GROUP_CONCAT(f2t.tag_id)"
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"WHERE d.id=", id, " "
+			"GROUP BY f.id "
+			"LIMIT 100"
+		);
+		
+		//const char* protocol_id;
+		const char* md5_hex;
+		//const char* dir_id;
+		//const char* dir_name;
+		const char* f_id;
+		const char* f_name;
+		const char* tag_ids;
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+		this->asciify('[');
+		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &tag_ids)){
+			this->asciify(
+				'[',
+					'"', md5_hex, '"', ',',
+					//dir_id, ',',
+					//'"', _f::esc, '"', dir_name, '"', ',',
+					f_id, ',',
+					'"', _f::esc, '"', f_name,   '"', ',',
+					'"', tag_ids, '"',
+				']',
+				','
+			);
+		}
+		if (this->last_char_in_buf() == ',')
+			// If there was at least one iteration of the loop...
+			--this->itr; // ...wherein a trailing comma was left
+		this->asciify(']');
+		*this->itr = 0;
+		
+		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	constexpr
 	std::string_view return_api(const char* s){
 		switch(*(s++)){
+			case 'd':
+				switch(*(s++)){
+					case '/':
+						switch(*(s++)){
+							case 'i':
+								switch(*(s++)){
+									case '/':
+										// /a/d/i/
+										return dir_info(s);
+								}
+								break;
+						}
+						break;
+				}
+				break;
 			case 'f':
 				switch(*(s++)){
 					case '/':
@@ -550,8 +664,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 							case 'i':
 								switch(*(s++)){
 									case '/':
-										// /a/f/t/
+										// /a/f/i/
 										return file_info(s);
+								}
+								break;
+							case 'd':
+								switch(*(s++)){
+									case '/':
+										// /a/f/d/
+										return files_given_dir(s);
 								}
 								break;
 							case 't':
@@ -672,6 +793,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 										;
 								}
 								break;
+							case 'd':
+								switch(*(s++)){
+									case ' ':
+										// /d#1234
+										return
+											#include "headers/return_code/OK.c"
+											#include "headers/Content-Type/html.c"
+											#include "headers/Cache-Control/1day.c"
+											"\n"
+											#include "html/dir.html"
+										;
+									break;
+								}
 							case 'f':
 								switch(*(s++)){
 									case ' ':
