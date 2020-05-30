@@ -1,8 +1,12 @@
 #pragma once
 
-#include <compsky/mysql/query.hpp>
-#include "dropdown_dialog.hpp"
 #include "device.hpp"
+#include <compsky/mysql/query.hpp>
+#ifdef QT_VERSION
+# include <QInputDialog>
+#else
+# include "cli.hpp"
+#endif
 
 
 namespace _mysql {
@@ -11,6 +15,7 @@ namespace _mysql {
 extern char BUF[];
 
 
+#ifdef QT_VERSION
 inline
 size_t pardir_length__naiive(const QString& s){
 	int end_of_dirname__indx = 0;
@@ -21,6 +26,7 @@ size_t pardir_length__naiive(const QString& s){
 	}
 	return end_of_dirname__indx + 1;
 }
+#endif
 
 
 inline
@@ -60,37 +66,49 @@ size_t pardir_length__qry(const char* const file_path){
 
 
 template<typename... Args>
-void record_dir_from_filepath(const char* const _file_path,  Args... args){
+void record_dir(const char* const dir_path,  Args... args){
 	constexpr static const compsky::asciify::flag::Escape f_esc;
-	
-	bool ok;
-	const QString prefix_qstr = QInputDialog::getText(
-		nullptr,
-		"New directory",
-		"This filepath is from a new 'directory'. Please input the directory path (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'directory' would be https://www.youtube.com/watch?v=. For a Mac/UNIX filesystem, it would be something like /path/to/directory/",
-		QLineEdit::Normal,
-		_file_path,
-		&ok
-	);
-	const QByteArray ba = prefix_qstr.toLocal8Bit();
-	const char* const prefix = ba.data();
-	
-	const uint64_t device = get_device_id__insert_if_not_exist(prefix, args...);
+	const uint64_t device = get_device_id__insert_if_not_exist(dir_path, args...);
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
 		"INSERT INTO dir (device, name) "
 		"SELECT ",
 			device, ","
-			"\"", f_esc, '"', prefix, "\" "
+			"\"", f_esc, '"', dir_path, "\" "
 		"FROM dir "
 		"WHERE NOT EXISTS ("
 			"SELECT id "
 			"FROM dir "
-			"WHERE name=\"", f_esc, '"', prefix, "\""
+			"WHERE name=\"", f_esc, '"', dir_path, "\""
 		")"
 		"LIMIT 1"
 	);
+}
+
+
+template<typename... Args>
+void record_dir_from_filepath(const char* const _file_path,  Args... args){
+	constexpr static const compsky::asciify::flag::Escape f_esc;
+
+	constexpr static const char* const help_txt = "This filepath is from a new 'directory'. Please input the directory path (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'directory' would be https://www.youtube.com/watch?v=. For a Mac/UNIX filesystem, it would be something like /path/to/directory/";
+#ifdef QT_VERSION
+	bool ok;
+	const QString prefix_qstr = QInputDialog::getText(
+		nullptr,
+		"New directory",
+		help_txt,
+		QLineEdit::Normal,
+		_file_path,
+		&ok
+	);
+	const QByteArray ba = prefix_qstr.toLocal8Bit();
+	const char* const prefix = ba.data();
+#else
+	const char* const prefix = cli::get_trim(_file_path, "New directory prefix.\n%s\n", help_txt);
+#endif
+	
+	record_dir(prefix, args...);
 	
 	// WARNING: What happens if user tries to insert a directory which already exists in '_dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
 }
@@ -108,12 +126,14 @@ size_t pardir_length(const char* const file_path,  Args... args){
 }
 
 
+#ifdef QT_VERSION
 template<typename... Args>
 size_t pardir_length(const QString& qstr,  Args... args){
 	const QByteArray ba = qstr.toLocal8Bit();
 	const char* const file_path = ba.data();
 	return pardir_length(file_path);
 }
+#endif
 
 
 inline
@@ -148,6 +168,21 @@ void insert_file_from_path(const char* const _file_path,  Args... args){
 		"INSERT INTO file (dir, name) VALUES ("
 			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path, args...), _file_path, "\"),"
 			"\"", f_esc, '"', basename(_file_path), "\""
+		") ON DUPLICATE KEY UPDATE dir=dir"
+	);
+}
+
+
+template<typename... Args>
+void insert_file_from_path_pair(const char* const dir,  const char* const file_name,  Args... args){
+	constexpr static const compsky::asciify::flag::Escape f_esc;
+	record_dir(dir);
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"INSERT INTO file (dir, name) VALUES ("
+			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', dir, "\"),"
+			"\"", f_esc, '"', file_name, "\""
 		") ON DUPLICATE KEY UPDATE dir=dir"
 	);
 }

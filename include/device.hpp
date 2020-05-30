@@ -1,8 +1,13 @@
 #pragma once
 
 #include "protocol.hpp"
+#ifdef QT_VERSION
+# include "dropdown_dialog.hpp"
+# include <QInputDialog>
+#else
+# include "cli.hpp"
+#endif
 #include <compsky/mysql/query.hpp>
-#include <QInputDialog>
 
 
 namespace _mysql {
@@ -68,10 +73,15 @@ unsigned guess_protocol(const char* url){
 		}
 	}
 	if (n_periods == 0){
+#ifdef QT_VERSION
 		DropdownDialog* const dialog = new DropdownDialog(QString("Protocol of ") + QString(url), {protocol::strings[protocol_guess], protocol::strings[protocol::youtube_dl]}, nullptr);
 		dialog->exec();
 		protocol_guess = (dialog->combo_box->currentIndex()) ? protocol::youtube_dl : protocol_guess;
 		delete dialog;
+#else
+		constexpr static const cli::flag::ArgSeparator f;
+		protocol_guess = (cli::get_which("Protocol of %s: ", url, f, protocol::strings[protocol_guess], protocol::strings[protocol::youtube_dl])) ? protocol_guess : protocol::youtube_dl;
+#endif
 	}
 	
 	return protocol_guess;
@@ -134,15 +144,20 @@ uint64_t get_device_id__insert_if_not_exist(const char* const file_path,  Args..
 	const uint64_t device_id = get_device_id_from_file_path(file_path, args...);
 	if (device_id)
 		return device_id;
+	constexpr const char* const help_txt = "This filepath is from a new 'device'. Please input the device prefix (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'device' would be https://www.youtube.com/watch?v=";
+#ifdef QT_VERSION
 	bool ok;
 	const QString prefix = QInputDialog::getText(
 		nullptr,
 		"New device prefix",
-		"This filepath is from a new 'device'. Please input the device prefix (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'device' would be https://www.youtube.com/watch?v=",
+		help_txt,
 		QLineEdit::Normal,
 		file_path,
 		&ok
 	);
+#else
+	const char* const prefix = cli::get_trim(file_path, "New device prefix.\n%s\n", help_txt);
+#endif
 	const unsigned protocol = guess_protocol(file_path, args...);
 	compsky::mysql::exec(_mysql::obj, BUF, "INSERT INTO device (name, protocol) VALUES (\"", prefix, "\", ", protocol, ")");
 	return get_device_id(file_path);

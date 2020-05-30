@@ -1,3 +1,6 @@
+#include "basename.hpp"
+#include "protocol.hpp"
+
 #include <compsky/mysql/query.hpp>
 #include <boost/regex.hpp>
 #include <pHash.h>
@@ -18,9 +21,11 @@ namespace _mysql {
 	MYSQL* obj;
 	constexpr static const size_t auth_sz = 512;
 	char auth[auth_sz];
-	MYSQL_RES* res;
-	MYSQL_ROW  row;
 }
+
+
+MYSQL_RES* RES1;
+MYSQL_ROW  ROW1;
 
 
 namespace _f {
@@ -28,8 +33,8 @@ namespace _f {
 }
 
 
-static char* BUF;
 constexpr static const size_t BUF_SZ = 1024 * 4096;
+char BUF[BUF_SZ];
 
 
 static AVFormatContext* av_fmt_ctx;
@@ -133,7 +138,7 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 			);
 		} while (
 			(length_to_go != 0)  &&
-			(compsky::asciify::get_index(itr, BUF)  <  BUF_SZ - (1 + 19 + 1 + 19 + 2))
+			((uintptr_t)itr - (uintptr_t)BUF)  <  BUF_SZ - (1 + 19 + 1 + 19 + 2)
 		);
 		
 		compsky::mysql::exec_buffer(
@@ -265,7 +270,7 @@ void save_hash(const Duration file_type_flag,  const char* const hash_name,  con
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 	compsky::asciify::asciify(
 		itr,
-		"AND name REGEXP '\\.", file_ext_regexp, "'"
+		"AND f.name REGEXP '\\.", file_ext_regexp, "'"
 	);
 #define ADD_NAME_REGEXP_SZ (23+128)
 }
@@ -337,28 +342,22 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 		}
 		
 		static char buf[128 + 4*4096];
+		
+		file_path[dir_prefix_len] = 0;
+		insert_file_from_path_pair(file_path, ename, protocol::local_filesystem);
+		
 		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
 		
-		compsky::mysql::exec(
-			_mysql::obj,
-			buf,
-			"INSERT INTO file (name) "
-			"SELECT \"", _f::esc, '"', file_path, "\" "
-			"FROM file "
-			"WHERE NOT EXISTS (SELECT id FROM file WHERE name=\"", _f::esc, '"', file_path, "\") "
-			"LIMIT 1"
-			// NOTE: ON DUPLICATE KEY skips IDs on duplicate entries due to AUTO_INCREMENT
-		);
 		compsky::mysql::query(
 			_mysql::obj,
-			_mysql::res,
+			RES1,
 			buf,
 			"SELECT id FROM file "
-			"WHERE name=\"", _f::esc, '"', file_path, "\" "
+			"WHERE name=\"", _f::esc, '"', ename, "\" "
 			  "AND id NOT IN (SELECT file FROM file2", hash_name, ")"
 		);
 		const char* file_id;
-		while(compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &file_id)){
+		while(compsky::mysql::assign_next_row(RES1, &ROW1, &file_id)){
 			// This can only have 0 or 1 iterations
 			save_hash(file_type_flag, hash_name, file_id, file_path);
 		}
@@ -392,9 +391,10 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	const char* _fp;
 	
 	constexpr static const char* const qry_1 = 
-		"SELECT id, name "
-		"FROM file "
-		"WHERE id NOT IN ("
+		"SELECT f.id, CONCAT(d.name, f.name) "
+		"FROM file f "
+		"JOIN dir d ON d.id=f.dir "
+		"WHERE f.id NOT IN ("
 			"SELECT file "
 			"FROM file2" /*, hash_name, */
 	;
@@ -414,12 +414,12 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	and_name_regexp(itr, file_ext_regexp);
 	compsky::mysql::query_buffer(
 		_mysql::obj,
-		_mysql::res,
+		RES1,
 		buf,
 		(uintptr_t)itr - (uintptr_t)buf
 	);
 	
-	while(compsky::mysql::assign_next_row(_mysql::res, &_mysql::row, &_id, &_fp)){
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_id, &_fp)){
 		try {
 			save_hash(file_type_flag, hash_name, _id, _fp);
 		} catch (...){
@@ -436,10 +436,6 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 
 int main(const int argc,  const char* const* argv){
 	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
-	
-	BUF = (char*)malloc(BUF_SZ);
-	if (BUF == nullptr)
-		return 4096;
 	
 	Options opts;
 	do {
