@@ -1,7 +1,7 @@
 #pragma once
 
 #include "protocol.hpp"
-#ifdef QT_VERSION
+#ifndef CLI_ONLY
 # include "dropdown_dialog.hpp"
 # include <QInputDialog>
 #else
@@ -73,7 +73,7 @@ unsigned guess_protocol(const char* url){
 		}
 	}
 	if (n_periods == 0){
-#ifdef QT_VERSION
+#ifndef CLI_ONLY
 		DropdownDialog* const dialog = new DropdownDialog(QString("Protocol of ") + QString(url), {protocol::strings[protocol_guess], protocol::strings[protocol::youtube_dl]}, nullptr);
 		dialog->exec();
 		protocol_guess = (dialog->combo_box->currentIndex()) ? protocol::youtube_dl : protocol_guess;
@@ -145,7 +145,7 @@ uint64_t get_device_id__insert_if_not_exist(const char* const file_path,  Args..
 	if (device_id)
 		return device_id;
 	constexpr const char* const help_txt = "This filepath is from a new 'device'. Please input the device prefix (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'device' would be https://www.youtube.com/watch?v=";
-#ifdef QT_VERSION
+#ifndef CLI_ONLY
 	bool ok;
 	const QString prefix = QInputDialog::getText(
 		nullptr,

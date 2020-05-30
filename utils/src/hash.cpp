@@ -1,3 +1,4 @@
+#define CLI_ONLY
 #include "basename.hpp"
 #include "protocol.hpp"
 
@@ -6,12 +7,20 @@
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
+#include <openssl/md5.h>
 extern "C" {
 # include <libavformat/avformat.h>
 # include <libavcodec/avcodec.h>
 }
 #include <stdexcept>
 #include <stdio.h> // for fprintf
+
+// Only used for QT5MD5 hash
+#include <QUrl>
+#include <QByteArray>
+#include <QCryptographicHash>
+#include <QString>
+#include <QFile>
 
 
 #define MAX_HASH_NAME_LENGTH 10
@@ -26,6 +35,7 @@ namespace _mysql {
 
 MYSQL_RES* RES1;
 MYSQL_ROW  ROW1;
+const char* THUMBNAIL_DIR = nullptr;
 
 
 namespace _f {
@@ -70,6 +80,8 @@ struct Image{};
 struct Video{};
 struct Audio{};
 struct SHA256_FLAG{};
+struct MD5_FLAG{};
+struct QT5_MD5_FLAG{}; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
 struct Size{};
 struct Duration{};
 
@@ -105,6 +117,18 @@ void asciify_hash(const SHA256_FLAG file_type_flag,  char*& itr,  const unsigned
 		itr,
 		'"'
 	);
+};
+
+
+void asciify_hash(const MD5_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
+	constexpr static const SHA256_FLAG f;
+	asciify_hash(f,  itr,  hash);
+};
+
+
+void asciify_hash(const QT5_MD5_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
+	constexpr static const SHA256_FLAG f;
+	asciify_hash(f,  itr,  hash);
 };
 
 
@@ -211,6 +235,83 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	SHA256_Final(hash, &sha256);
 	
 	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+}
+
+void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+	static unsigned char hash[MD5_DIGEST_LENGTH + 1] = {};
+	
+	MD5_CTX md5_ctx;
+	MD5_Init(&md5_ctx);
+	
+	FILE* f = fopen(fp, "rb");
+	if (f == nullptr){
+		fprintf(stderr,  "Cannot read file: %s\n",  fp);
+		return;
+	}
+	
+	static char buf[4096];
+	int i;
+	while((i = fread(buf, 1, sizeof(buf), f))  !=  0){
+		MD5_Update(&md5_ctx, buf, i);
+	}
+	
+	MD5_Final(hash, &md5_ctx);
+	
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+}
+
+void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+	static unsigned char hash[16 + 1] = {};
+	
+	const QUrl url(QString("file://") + QString(fp));
+	
+	// The following is from https://api.kde.org/frameworks/kio/html/previewjob_8cpp_source.html
+	// Slightly modified (some variables designated const)
+	// BEGIN copyrighted text
+	/*
+	Copyright (C) GPLv2 or later
+		2000 David Faure <faure@kde.org>
+		2000 Carsten Pfeiffer <pfeiffer@kde.org>
+		2001 Malte Starostik <malte.starostik@t-online.de>
+	*/
+	const QByteArray origName = url.toEncoded();
+	QCryptographicHash md5(QCryptographicHash::Md5);
+	md5.addData(QFile::encodeName(QString::fromUtf8(origName)));
+	// END copyrighted text
+	
+	const QByteArray hash_ba = md5.result();
+	const char* hash_signed = hash_ba.data();
+	
+	memcpy(hash, hash_signed, sizeof(hash));
+	
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+	
+	
+	if (THUMBNAIL_DIR == nullptr)
+		return;
+	
+	
+	// The following is from PreviewJobPrivate::statResultThumbnail https://api.kde.org/frameworks/kio/html/previewjob_8cpp_source.html
+	// Slightly modified (some variables designated const)
+	// BEGIN copyrighted text
+	/*
+	Copyright (C) GPLv2 or later
+		2000 David Faure <faure@kde.org>
+		2000 Carsten Pfeiffer <pfeiffer@kde.org>
+		2001 Malte Starostik <malte.starostik@t-online.de>
+	*/
+	const QString thumbName = QString::fromUtf8(QFile::encodeName(QString::fromLatin1(md5.result().toHex()))) + QLatin1String(".png");
+	// END copyrighted text
+	
+	if (QFile::exists(thumbName))
+		return;
+	
+	//QImage img;
+	//if (not THUMB_CREATOR.create(url, 256, 256, img)){
+		fprintf(stderr, "Failed to create thumbnail for: %s\n", fp);
+	//	return;
+	//}
+	//img.save(thumbName);
 }
 
 void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
@@ -346,16 +447,18 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 		file_path[dir_prefix_len] = 0;
 		insert_file_from_path_pair(file_path, ename, protocol::local_filesystem);
 		
-		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
-		
 		compsky::mysql::query(
 			_mysql::obj,
 			RES1,
 			buf,
-			"SELECT id FROM file "
-			"WHERE name=\"", _f::esc, '"', ename, "\" "
-			  "AND id NOT IN (SELECT file FROM file2", hash_name, ")"
+			"SELECT f.id "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"WHERE d.name=\"", _f::esc, '"', file_path, "\" "
+			  "AND f.name=\"", _f::esc, '"', ename, "\" "
+			  "AND f.id NOT IN (SELECT file FROM file2", hash_name, ")"
 		);
+		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
 		const char* file_id;
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &file_id)){
 			// This can only have 0 or 1 iterations
@@ -459,12 +562,17 @@ int main(const int argc,  char* const* argv){
 				"		-R\n"
 				"		-v\n"
 				"			Add verbosity\n"
+				"		-t DIRECTORY\n"
+				"			Set thumbnail directory\n"
+				"			If Qt5 MD5 is used, will create all non-existing thumbnails\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
 				"		d	Duration\n"
 				"		i	Image DCT\n"
 				"		v	Video DCT\n"
 				"		s	SHA256\n"
+				"		m	MD5\n"
+				"		M	Qt5 MD5 (for thumbnails)\n"
 				"		S	Size\n"
 			);
 			return 1;
@@ -478,6 +586,9 @@ int main(const int argc,  char* const* argv){
 				break;
 			case 'R':
 				opts.recursive = true;
+				break;
+			case 't':
+				THUMBNAIL_DIR = *(++argv);
 				break;
 			case 'v':
 				++verbosity;
@@ -493,6 +604,8 @@ int main(const int argc,  char* const* argv){
 	constexpr static const Video  video_flag;
 	constexpr static const Audio  audio_flag;
 	constexpr static const SHA256_FLAG sha256_flag;
+	constexpr static const MD5_FLAG    md5_flag;
+	constexpr static const QT5_MD5_FLAG qt5_md5_flag;
 	constexpr static const Size   size_flag;
 	constexpr static const Duration duration_flag;
 	
@@ -516,6 +629,12 @@ int main(const int argc,  char* const* argv){
 				break;
 			case 's':
 				hash_all_from(opts,  sha256_flag, nullptr, "sha256");
+				break;
+			case 'm':
+				hash_all_from(opts,  md5_flag,    nullptr, "md5");
+				break;
+			case 'M':
+				hash_all_from(opts,  qt5_md5_flag,nullptr, "qt5md5");
 				break;
 			case 'S':
 				hash_all_from(opts,  size_flag,   nullptr, "size");
