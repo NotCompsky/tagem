@@ -35,7 +35,7 @@ foreach(p LIB BIN INCLUDE CMAKE)
 endforeach()
 
 # set up include-directories
-include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}")
 
 add_subdirectory(media)
 add_subdirectory(utils)

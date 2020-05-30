@@ -75,7 +75,7 @@ add_executable(tagem-tag-manager
 	
 	src/add_new_tag.cpp
 	src/name_dialog.cpp
-	src/dropdown_dialog.cpp
+	../include/dropdown_dialog.cpp
 	src/unlink_tag_btn.cpp
 	src/add_new_tag.cpp
 )
@@ -102,7 +102,7 @@ foreach(file_type ${MY_TARGETS})
 		src/keyreceiver.cpp
 		src/name_dialog.cpp
 		src/inlist_filter_dialog.cpp
-		src/dropdown_dialog.cpp
+		../include/dropdown_dialog.cpp
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
 		src/add_new_tag.cpp
