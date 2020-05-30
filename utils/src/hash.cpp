@@ -279,7 +279,7 @@ void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
 
 
 struct Options {
-	const char* directory;
+	char* directory;
 	bool recursive;
 	
 	Options()
@@ -434,7 +434,16 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 };
 
 
-int main(const int argc,  const char* const* argv){
+void ensure_endswith_slash(char* str){
+	while(*str != 0)
+		++str;
+	--str;
+	if (*str == '/')
+		*str = 0;
+}
+
+
+int main(const int argc,  char* const* argv){
 	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
 	Options opts;
@@ -443,7 +452,7 @@ int main(const int argc,  const char* const* argv){
 		const char* const arg = *argv;
 		if (arg == nullptr){
 			printf(
-				"Usage: %s [OPTIONS] HASH_TYPES\n"
+				"Usage: [OPTIONS] HASH_TYPES\n"
 				"	OPTIONS\n"
 				"		-d DIRECTORY\n"
 				"			Tag all files in a directory (adding them to the database if necessary)\n"
@@ -457,7 +466,6 @@ int main(const int argc,  const char* const* argv){
 				"		v	Video DCT\n"
 				"		s	SHA256\n"
 				"		S	Size\n"
-				, *argv
 			);
 			return 1;
 		}
@@ -466,6 +474,7 @@ int main(const int argc,  const char* const* argv){
 		switch(arg[1]){
 			case 'd':
 				opts.directory = *(++argv);
+				ensure_endswith_slash(opts.directory);
 				break;
 			case 'R':
 				opts.recursive = true;
