@@ -1,0 +1,37 @@
+"<!DOCTYPE html>"
+	"<body>"
+#include "components/parent_link.html"
+#include "components/jquery.html"
+#include "components/utils.js.html"
+		"<script>"
+			"const file_id = window.location.hash.substr(1);"
+			
+			"$.ajax({"
+				"dataType: \"json\","
+				"url: \"/a/f/i/\"+file_id,"
+				"success: function(data){"
+					"var s = \"\";"
+					"$('#thumb').attr(\"src\",  \"/i/f/\" + data[0]);"
+					"$('#dir_name').text(data[1]);"
+					"$('#file_name').text(data[2]);"
+					"$('#tags').text(data[3]);"
+					"column_id2name(\"/a/t.json\", '#tags', '/t#');"
+				"},"
+				"error: function(){"
+					"alert(\"Error populating table\");"
+				"}"
+			"});"
+		"</script>"
+
+		"<h1 id=\"file_name\"></h1>"
+		
+		"<img id=\"thumb\"></img>"
+		
+		"<br/>"
+		
+		"<a id=\"dir_name\" href=\"/d#\"+file_id></a>"
+		"<div id=\"tags\"></div>"
+		
+		"<br/>"
+	"</body>"
+"</html>"

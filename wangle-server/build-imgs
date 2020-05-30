@@ -1,0 +1,12 @@
+#!/bin/sh
+
+for fp_orig in favicon.ico src/i/404.png; do
+	fp="$(echo "$fp_orig" | sed -E 's/[.](png|ico)$/.txt/g')"
+	if [ "$fp" = "$fp_orig" ]; then
+		echo "fp == fp_orig == $fp" >&2
+		exit
+	fi
+	printf 'R"=====(' >  "$fp"
+	cat "$fp_orig"    >> "$fp"
+	printf ')====="'  >> "$fp"
+done
