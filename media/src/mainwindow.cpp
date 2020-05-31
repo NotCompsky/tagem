@@ -582,7 +582,7 @@ void MainWindow::media_open(){
 	}
     
     // WARNING: fp MUST be initialised, unless called via signal button press
-    QString file = this->get_media_fp();
+    QString file;
 	QString external_audio_url; // Initialised as null
 	
 	if (this->protocol == protocol::NONE)
@@ -590,7 +590,8 @@ void MainWindow::media_open(){
 	
 	QFile f;
 	switch(this->protocol){
-		case protocol::local_filesystem: {
+		case protocol::local_filesystem:
+			file = this->get_media_fp();
 			f.setFileName(file);
 			this->file_sz = f.size();
 			if (this->file_sz == 0){
@@ -603,7 +604,6 @@ void MainWindow::media_open(){
 				return this->media_next();
 			
 			break;
-		}
 		case protocol::youtube_dl: {
 			QProcess ytdl;
 			ytdl.start("youtube-dl", {"-g", this->get_media_fp()});
