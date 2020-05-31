@@ -8,6 +8,8 @@
 			
 			"var file_name;"
 			"var dir_name;"
+			"var device_id;"
+			"var mimetype;"
 			
 			"$.ajax({"
 				"dataType: \"json\","
@@ -15,36 +17,25 @@
 				"success: function(data){"
 					"var s = \"\";"
 					"$('#thumb').html(\"<img src='/i/f/\" + data[0] + \"'></img>\");"
+					"device_id = data[6];"
 					"dir_name = data[2];"
 					"$('#dir_name').attr(\"href\",  \"/d#\" + data[1]);"
 					"$('#dir_name').text(dir_name);"
 					"file_name = data[3];"
 					"$('#file_name').text(file_name);"
 					"$('#tags').text(data[4]);"
+					"mimetype = data[5];"
 					"column_id2name(\"/a/t.json\", '#tags', '/t#');"
 				"},"
 				"error: function(){"
 					"alert(\"Error populating table\");"
 				"}"
 			"});"
-			
-			"function view(){"
-				"var src = \"\";"
-				"if (dir_name.startsWith(\"/\")){"
-					"src += \"file://\";"
-				"}"
-				"src += dir_name + file_name;"
-				"if (/.(jpe?g|png|gif)$/.exec(file_name) !== null){"
-					"$('#thumb').html(\"<img src='\" + src + \"'></img>\");"
-				"} else {"
-					"$('#thumb').html(\"<video><source src='\" + src + \"'></source></video>\");"
-				"}"
-			"}"
 		"</script>"
 
 		"<h1 id=\"file_name\"></h1>"
 		
-		"<div id=\"thumb\" onclick=\"view()\"></div>"
+		"<div id=\"thumb\" onclick=\"set_embed_html('#thumb', device_id, dir_name, file_name)\"></div>"
 		
 		"<br/>"
 		

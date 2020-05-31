@@ -83,11 +83,124 @@ bool is_valid_hex_char(const char c){
 	}
 }
 
+template<typename Int>
+Int a2n(const char* s){
+	uint64_t n = 0;
+	while(*s >= '0'  &&  *s <= '9'){
+		n *= 10;
+		n += *s - '0';
+		++s;
+	}
+	return n;
+}
+
+template<typename Int>
+Int a2n(const char** s){
+	uint64_t n = 0;
+	while(**s >= '0'  &&  **s <= '9'){
+		n *= 10;
+		n += **s - '0';
+		++(*s);
+	}
+	return n;
+}
+
+constexpr
+bool get_range(const char* headers,  size_t& from,  size_t& to){
+	while(*(++headers) != 0){ // NOTE: headers is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
+		if (*headers != '\n')
+			continue;
+		bool is_range_header = false;
+		switch(*(++headers)){
+			case 'R':
+				switch(*(++headers)){
+					case 'a':
+						switch(*(++headers)){
+							case 'n':
+								switch(*(++headers)){
+									case 'g':
+										switch(*(++headers)){
+											case 'e':
+												switch(*(++headers)){
+													case ':':
+														switch(*(++headers)){
+															case ' ':
+																switch(*(++headers)){
+																	case 'b':
+																		switch(*(++headers)){
+																			case 'y':
+																				switch(*(++headers)){
+																					case 't':
+																						switch(*(++headers)){
+																							case 'e':
+																								switch(*(++headers)){
+																									case 's':
+																										switch(*(++headers)){
+																											case '=':
+																												is_range_header = true;
+																										}
+																										break;
+																								}
+																								break;
+																						}
+																						break;
+																				}
+																				break;
+																		}
+																		break;
+																}
+																break;
+														}
+														break;
+												}
+												break;
+										}
+										break;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+		}
+		if (*headers == 0)
+			break;
+		if (likely(not is_range_header))
+			continue;
+		
+		++headers; // Skip '=' - a2n is safe even if the next character is null
+		from = a2n<size_t>(&headers);
+		
+		if (*headers != '-')
+			return true;
+		
+		++headers; // Skip '-' - a2n is safe even if the next character is null
+		to = a2n<size_t>(headers);
+		
+		return false;
+	}
+	from = 0;
+	to = 0;
+	return false;
+}
+
 namespace _r {
 	constexpr static const std::string_view not_found =
 		#include "headers/return_code/NOT_FOUND.c"
 		"\n"
 		"Not Found"
+	;
+	
+	constexpr static const std::string_view invalid_file = 
+		#include "headers/return_code/NOT_FOUND.c"
+		"\n"
+		"File does not exist"
+	;
+	
+	constexpr static const std::string_view server_error =
+		#include "headers/return_code/SERVER_ERROR.c"
+		"\n"
+		"Server error"
 	;
 	
 	/*
@@ -166,8 +279,39 @@ namespace _r {
 	
 	static const char* tags_json;
 	static const char* protocols_json;
+	static const char* devices_json;
 	
-	void init_json(const char* const qry,  const char*& dst){
+	
+	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str){
+		compsky::asciify::asciify(
+			itr,
+			'"', *n, '"', ':',
+				'"', _f::esc, '"', *str, '"',
+			','
+		);
+	}
+	size_t strlens(const uint64_t*,  const char* const* str){
+		return std::char_traits<char>::length("\"1234567890123456789\":\"\",") + 2*strlen(*str);
+	}
+	
+	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
+		compsky::asciify::asciify(
+			itr,
+			'"', *n, '"', ':', '[',
+					'"', _f::esc, '"', *str0, '"', ',',
+					*m, ',',
+					'"', _f::esc, '"', *str1, '"', ',',
+					'"', _f::esc, '"', *str2, '"',
+				']',
+			','
+		);
+	}
+	size_t strlens(const uint64_t*,  const char* const* str0,  const unsigned*,  const char* const* str1,  const char* const* str2){
+		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",123456789,\"\",\"\"],") + 2*strlen(*str0) + 2*strlen(*str1) + 2*strlen(*str2);
+	}
+	
+	template<typename... Args>
+	void init_json(const char* const qry,  const char*& dst,  Args... args){
 		MYSQL_RES* mysql_res;
 		MYSQL_ROW mysql_row;
 		
@@ -187,17 +331,10 @@ namespace _r {
 		
 		size_t sz = 0;
 		
-		char* name;
-		char* id;
-		
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
-		while(compsky::mysql::assign_next_row__no_free(mysql_res, &mysql_row, &id, &name)){
-			sz +=
-				1 + strlen(id) + 1 + 1 +
-					1 + 2*strlen(name) + 1 +
-				1
-			;
+		while(compsky::mysql::assign_next_row__no_free(mysql_res, &mysql_row, args...)){
+			sz += strlens(args...);;
 		}
 		sz += 1;
 		sz += 1;
@@ -210,13 +347,8 @@ namespace _r {
 		compsky::asciify::asciify(itr, _headers);
 		compsky::asciify::asciify(itr, '{');
 		mysql_data_seek(mysql_res, 0); // Reset to first result
-		while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &id, &name)){
-			compsky::asciify::asciify(
-				itr,
-				'"', id, '"', ':',
-					'"', _f::esc, '"', name, '"',
-				','
-			);
+		while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, args...)){
+			asciifiis(itr, args...);
 		}
 		if (unlikely(*(itr - 1) == ','))
 			// If there was at least one iteration of the loop...
@@ -232,17 +364,6 @@ namespace _method {
 		POST,
 		UNKNOWN
 	};
-}
-
-constexpr
-uint64_t a_to_uint64__space_terminated(const char* s){
-	uint64_t n = 0;
-	while(*s >= '0'  &&  *s <= '9'){
-		n *= 10;
-		n += *s - '0';
-		++s;
-	}
-	return n;
 }
 
 constexpr
@@ -316,6 +437,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return compsky::mysql::assign_next_row(this->res, &this->row, args...);
 	}
 	
+	template<typename... Args>
+	bool mysql_assign_next_row__no_free(Args... args){
+		return compsky::mysql::assign_next_row__no_free(this->res, &this->row, args...);
+	}
+	
+	void mysql_free_res(){
+		mysql_free_result(this->res);
+	}
+	
 	std::string_view get_buf_as_string_view(){
 		return std::string_view(this->buf, this->buf_indx());
 	}
@@ -365,7 +495,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->buf[CACHE_DIR_STRLEN + 32 + 2] = 'n';
 		this->buf[CACHE_DIR_STRLEN + 32 + 3] = 'g';
 		this->buf[CACHE_DIR_STRLEN + 32 + 4] = 0;
-		printf("Opening file: %s\n", this->buf);
 		FILE* const f = fopen(this->buf, "rb");
 		if (f == nullptr)
 			return _r::img_not_found;
@@ -379,20 +508,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		compsky::asciify::asciify(itr,  sz, '\n', '\n');
 		
 		const size_t n_read = fread(itr, 1, sz, f);
-		printf("Read %lu bytes\n", n_read);
 		
 		fclose(f);
 		
-		printf("Sending full image [%lu] [%lu]: %.500s\n",  sz,  sz + (uintptr_t)itr - (uintptr_t)this->buf,  itr);
-		
 		*(itr + sz) = 0;
-		printf("%s\n", this->buf);
 		
 		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
 	}
 	
 	std::string_view dir_info(const char* id_str){
-		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		const uint64_t id = a2n<uint64_t>(id_str);
 		
 		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
@@ -425,7 +550,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view file_info(const char* id_str){
-		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		const uint64_t id = a2n<uint64_t>(id_str);
 		
 		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
@@ -436,20 +561,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"d.id,"
 				"d.name,"
 				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id) "
+				"GROUP_CONCAT(f2t.tag_id),"
+				"mt.name,"
+				"d.device "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
 			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"JOIN mimetype mt ON mt.id=f.mimetype "
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id=", id, " "
 			"GROUP BY f.id"
 		);
 		
 		const char* md5_hash;
+		const char* device_id;
 		const char* dir_id;
 		const char* dir_name;
 		const char* file_name;
 		const char* tag_ids;
+		const char* mimetype;
 		this->reset_buf_index();
 		this->asciify(
 			#include "headers/return_code/OK.c"
@@ -457,13 +587,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &dir_name, &file_name, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &dir_name, &file_name, &tag_ids, &mimetype, &device_id)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"',  dir_name, '"', ',',
 				'"', _f::esc, '"', file_name, '"', ',',
-				'"', tag_ids, '"'
+				'"', tag_ids, '"', ',',
+				'"', mimetype, '"', ',',
+				 device_id
 			);
 		}
 		this->asciify(']');
@@ -475,7 +607,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view tags_given_file(const char* id_str){
-		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		const uint64_t id = a2n<uint64_t>(id_str);
 		
 		if (const int indx = cached_stuff::from_cache(cached_stuff::tags_given_file, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
@@ -514,7 +646,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_tag(const char* id_str){
-		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		const uint64_t id = a2n<uint64_t>(id_str);
 		
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
@@ -581,7 +713,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir(const char* id_str){
-		const uint64_t id = a_to_uint64__space_terminated(id_str);
+		const uint64_t id = a2n<uint64_t>(id_str);
 		
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_dir, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
@@ -657,6 +789,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						break;
 				}
 				break;
+			case 'D':
+				switch(*(s++)){
+					case '.':
+						// D.json
+						return _r::devices_json;
+				}
+				break;
 			case 'f':
 				switch(*(s++)){
 					case '/':
@@ -728,15 +867,91 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::not_found;
 	}
 	
-	std::string_view file_page(const char* file_id){
-		// TODO
-		return std::string_view(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/ico.c"
-			#include "headers/Cache-Control/1day.c"
-			"\n"
-			#include "html/file.html"
+	std::string_view stream_file(const char* file_id){
+		constexpr static const size_t block_sz = 4096 * 1024 * 20; // ~20 MiB // WARNING: Files larger than this must be streamed in chunks, but are currently not accepted by browsers.
+		constexpr static const size_t room_for_headers = 1000;
+		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
+		
+		const uint64_t id = a2n<uint64_t>(file_id);
+		
+		size_t from;
+		size_t to;
+		if (unlikely(get_range(file_id, from, to))){
+			printf("from %lu to %lu (invalid)\n", from, to);
+			return _r::not_found;
+		}
+		
+		printf("from %lu to %lu\n", from, to);
+		
+		if (unlikely( (to != 0) and (to <= from) ))
+			return _r::not_found;
+		
+		printf("START OF REQUEST HEADERS\n%s\nEND OF REQUEST HEADERS\n", file_id);
+		
+		this->mysql_query(
+			"SELECT m.name, CONCAT(d.name, f.name) "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"JOIN mimetype m ON m.id=f.mimetype "
+			"WHERE f.id=", id
 		);
+		const char* mimetype = nullptr;
+		const char* file_path;
+		while(this->mysql_assign_next_row__no_free(&mimetype, &file_path));
+		if (mimetype == nullptr){
+			this->mysql_free_res();
+			return _r::not_found;
+		}
+		
+		printf("file_path = %s\n", file_path);
+		
+		FILE* const f = fopen(file_path, "rb");
+		if (f == nullptr){
+			fprintf(stderr, "Cannot open file: %s\n", file_path);
+			this->mysql_free_res();
+			return _r::invalid_file;
+		}
+		
+		static struct stat st;
+		if (unlikely(stat(file_path, &st))){
+			fprintf(stderr, "Cannot stat file: %s\n", file_path);
+			this->mysql_free_res();
+			return _r::server_error;
+		}
+		const size_t f_sz = st.st_size;
+		printf("File sz: %lu\n", f_sz);
+		
+		printf("Seeking\n");
+		if (unlikely(fseek(f, from, SEEK_SET))){
+			this->mysql_free_res();
+			return _r::server_error;
+		}
+		
+		const size_t bytes_to_read = (to) ? (to - from) : block_sz;
+		const size_t bytes_read = fread(this->buf + room_for_headers,  1,  bytes_to_read,  f);
+		fclose(f);
+		
+		printf("Read %lu bytes\n", bytes_read);
+		
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Cache-Control/1day.c"
+			// TODO: Get streaming working. Currently only accepted by browser if entire file is sent.
+			//"Transfer-Encoding: chunked\n" // WARNING: This is only valid for HTTP/1.1
+			//"Connection: keep-alive\n"
+			"Accept-Ranges: bytes\n"
+			"Content-Type: ", mimetype, '\n',
+			"Content-Range: bytes ", from, '-', from + bytes_read, '/', f_sz, '\n',
+			"Content-Length: ", bytes_read, '\n', '\n'
+		);
+		const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
+		printf("Returning headers: %.*s\n",  (int)headers_len,  this->buf);
+		memcpy(this->buf + room_for_headers - headers_len,  this->buf,  headers_len);
+		
+		this->mysql_free_res();
+		
+		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
 	constexpr
@@ -858,6 +1073,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 										return _r::return_static(s);
 								}
 								break;
+							case 'S':
+								switch(*(s++)){
+									case '/':
+										switch(*(s++)){
+											case 'f':
+												switch(*(s++)){
+													case '/':
+														// /S/f/
+														return this->stream_file(s);
+												}
+												break;
+										}
+										break;
+								}
+								break;
 						}
 						break;
 				}
@@ -918,14 +1148,6 @@ int s2n(const char* s){
 }
 
 int main(int argc,  char** argv){
-	{ // TODO: TMP
-		  FILE* const f = fopen("/tmp/img_not_found.txt", "wb");
-		  fwrite(_r::img_not_found.data(), 1, _r::img_not_found.size(), f);
-		  fclose(f);
-		  printf("Written img_not_found to /tmp/img_not_found.txt");
-	}
-	
-	
 	char** dummy_argv = argv;
 	int port_n = 0;
 	while (*(++argv)){
@@ -962,8 +1184,14 @@ int main(int argc,  char** argv){
 	
 	compsky::mysql::init_auth(_mysql::buf, _mysql::buf_sz, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
 	compsky::mysql::login_from_auth(_mysql::mysql_obj, _mysql::auth);
-	_r::init_json("SELECT id, name FROM tag", _r::tags_json);
-	_r::init_json("SELECT id, name FROM protocol", _r::protocols_json);
+	uint64_t id;
+	const char* name;
+	_r::init_json("SELECT id, name FROM tag", _r::tags_json, &id, &name);
+	_r::init_json("SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
+	unsigned protocol;
+	const char* embed_pre;
+	const char* embed_post;
+	_r::init_json("SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());

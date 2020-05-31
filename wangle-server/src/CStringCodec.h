@@ -48,12 +48,6 @@ class CStringCodec : public Handler<std::unique_ptr<folly::IOBuf>, const char*,
   }
 
   folly::Future<folly::Unit> write(Context* ctx,  const std::string_view msg) override {
-	  { // TODO: TMP
-		  FILE* const f = fopen("/tmp/msg.txt", "wb");
-		  fwrite(msg.data(), 1, msg.size(), f);
-		  fclose(f);
-		  printf("Written msg to /tmp/msg.txt");
-	  }
     auto buf = folly::IOBuf::copyBuffer(msg.data(), msg.size());
     return ctx->fireWrite(std::move(buf));
   }
