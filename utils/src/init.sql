@@ -34,6 +34,8 @@ CREATE TABLE _dir (
 	device BIGINT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	thumbnail_pre VARBINARY(100) NOT NULL, -- e.g. https://i.ytimg.com/vi/
+	thumbnail_post VARBINARY(100) NOT NULL, -- e.g. /hqdefault.jpg
 	FOREIGN KEY (device) REFERENCES _device (id)
 );
 

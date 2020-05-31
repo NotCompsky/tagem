@@ -653,7 +653,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
+				"IF(d.protocol=", protocol::local_filesystem, ","
+					"IFNULL(CONCAT(\"/i/f/\", LOWER(HEX(f2h.x))), \"\"),"
+					"CONCAT(d.thumbnail_pre, f.name, d.thumbnail_post)"
+				"),"
 				//"D.protocol,"
 				//"d.id,"
 				//"d.name,"

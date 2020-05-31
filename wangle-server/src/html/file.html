@@ -16,7 +16,7 @@
 				"url: \"/a/f/i/\"+file_id,"
 				"success: function(data){"
 					"var s = \"\";"
-					"$('#thumb').html(\"<img src='/i/f/\" + data[0] + \"'></img>\");"
+					"$('#thumb').html(\"<img src='\" + data[0] + \"'></img>\");"
 					"device_id = data[6];"
 					"dir_name = data[2];"
 					"$('#dir_name').attr(\"href\",  \"/d#\" + data[1]);"
