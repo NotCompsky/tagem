@@ -11,14 +11,6 @@ INSERT INTO protocol (id, name) VALUES
 (3, "https://"),
 (4, "youtube-dl");
 
-CREATE TABLE _dir (
-	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-	device BIGINT UNSIGNED NOT NULL,
-	name VARBINARY(1024) NOT NULL UNIQUE KEY,
-	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
-	FOREIGN KEY (device) REFERENCES device (id)
-);
-
 CREATE TABLE _device (
 	# Storage device - such as a hard drive, or a website (a remote storage device)
 	# Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
@@ -26,6 +18,8 @@ CREATE TABLE _device (
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	protocol INT UNSIGNED NOT NULL,
+	embed_pre  VARBINARY(1000) NOT NULL DEFAULT "", -- eg <iframe width="1280" height="720" src="https://www.youtube.com/embed/
+	embed_post VARBINARY(1000) NOT NULL DEFAULT "", -- eg " frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
 INSERT INTO _device (name, protocol) VALUES
@@ -35,14 +29,53 @@ INSERT INTO _device (name, protocol) VALUES
 ("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://github.com/", (SELECT id FROM protocol WHERE name="https://"));
 
+CREATE TABLE _dir (
+	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	device BIGINT UNSIGNED NOT NULL,
+	name VARBINARY(1024) NOT NULL UNIQUE KEY,
+	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	FOREIGN KEY (device) REFERENCES _device (id)
+);
+
+CREATE TABLE mimetype (
+	id INT UNSIGNED NOT NULL PRIMARY KEY,
+	name VARBINARY(32) NOT NULL UNIQUE KEY
+);
+SET @i := -1;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"!!NONE!!");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/aac");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/bmp");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/css");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/csv");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/gif");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/html");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/jpeg");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"textjavascript");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"application/json");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/mpeg");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/mpeg");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/ogg");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/ogg");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/opus");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/png");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/tiff");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/plain");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/wav");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/webm");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/webm");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi");
+
 CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	dir BIGINT UNSIGNED NOT NULL,
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
     permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	mimetype INT UNSIGNED NOT NULL DEFAULT 0,
     UNIQUE KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
+	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
     PRIMARY KEY (id)
 );
 
@@ -262,6 +295,20 @@ CREATE TABLE operators (
 	PRIMARY KEY (id)
 );
 INSERT INTO operators (id, string) VALUES (0,"AND"), (1,"OR"), (2,"XOR"), (3,"NOT");
+
+CREATE TABLE file2md5 (
+	# To use KDE thumbnails
+	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+	x BINARY(16) NOT NULL,
+	FOREIGN KEY (file) REFERENCES _file (id)
+);
+
+CREATE TABLE file2qt5md5 (
+	# To use KDE thumbnails
+	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+	x BINARY(16) NOT NULL,
+	FOREIGN KEY (file) REFERENCES _file (id)
+);
 
 
 
