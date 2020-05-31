@@ -46,9 +46,13 @@ uint64_t get_id_from_table(const char* const table_name,  const String entry_nam
 };
 
 void tag2parent(const uint64_t tagid,  const uint64_t parid){
-	constexpr static const char* const sql__insert = "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
-	static char buf[std::char_traits<char>::length(sql__insert) + 19 + 1 + 19 + 1];
+	constexpr static const char* const sql__insert =       "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
+	constexpr static const char* const sql__update_perms = "UPDATE tag t JOIN tag2parent t2p ON t2p.tag_id=t.id JOIN tag p ON p.id=t2p.parent_id SET t.permissions=t.permissions|p.permissions";
+	
+	static char buf[std::char_traits<char>::length(sql__update_perms)];
+	
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__insert, tagid, ',', parid, ")");
+	compsky::mysql::exec(_mysql::obj,  buf,  sql__update_perms);
 }
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
