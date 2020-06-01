@@ -229,6 +229,48 @@
 		"}"
 	"});"
 "}"
+"function filter_tbl(selector, name_col_id, tags_col_id){"
+	"const tbl = document.querySelector(selector);"
+	"const headers = tbl.getElementsByTagName('th');"
+	
+	"const name_regexp_str = (name_col_id === undefined) ? '' : headers[name_col_id].getElementsByTagName('input')[0].value;"
+	"const tags_regexp_str = (tags_col_id === undefined) ? '' : headers[tags_col_id].getElementsByTagName('input')[0].value;"
+	
+	"var name_regexp;"
+	"if (name_regexp_str !== ''){"
+		"name_regexp = new RegExp(name_regexp_str);"
+	"}"
+	"var tags_regexp;"
+	"if (tags_regexp_str !== ''){"
+		"tags_regexp = new RegExp(tags_regexp_str);"
+	"}"
+	
+	"for (const row of tbl.getElementsByTagName('tbody')[0].getElementsByTagName('tr')){"
+		"const cols = row.getElementsByTagName('td');"
+		
+		"if (name_regexp !== undefined){"
+			"const name = cols[name_col_id].textContent;"
+			"if (!(name_regexp.test(name))){"
+				"row.classList.add('hidden');"
+				"continue;"
+			"}"
+		"}"
+		
+		"if (tags_regexp !== undefined){"
+			"const tags = Array.prototype.slice.call(cols[tags_col_id].getElementsByTagName('a')).map(x => x.textContent).join('\\n');"
+			"if (!(tags_regexp.test(tags))){"
+				"row.classList.add('hidden');"
+				"continue;"
+			"}"
+		"}"
+		
+		"row.classList.remove('hidden');"
+	"}"
+"}"
+"function filter_f_tbl(selector){"
+	"filter_tbl(selector, 1, 2);"
+"}"
+
 
 "function getCellValue(tr, idx){"
 	"return tr.children[idx].getAttribute('value') || tr.children[idx].innerText || tr.children[idx].textContent"

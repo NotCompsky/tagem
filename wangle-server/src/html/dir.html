@@ -7,7 +7,7 @@
 #include "components/all.css.html"
 		"<script>"
 			"var tagselect;"
-			"const tbl = \"#f tbody\";"
+			"const tbody = \"#f tbody\";"
 			
 			"$(document).ready(function(){" // Only execute after page has finished loading
 				"tagselect = $(\"#tagselect\");"
@@ -28,9 +28,9 @@
 					"}"
 				"});"
 				
-				"populate_f_table('/a/f/d/' + dir_id, tbl);"
+				"populate_f_table('/a/f/d/' + dir_id, tbody);"
 				
-				"fancify_tbl(tbl);"
+				"fancify_tbl(tbody);"
 			"});"
 			
 			"function get_selected_file_ids(){"
@@ -39,23 +39,9 @@
 		"</script>"
 		
 #include "components/add_tag.html"
-		
 		"<h2 id=\"dir_name\"></h2>"
 		"<table id=\"f\">"
-			"<thead>"
-				"<tr>"
-					"<th>"
-						"Thumbnail"
-					"</th>"
-					"<th>"
-						"File"
-					"</th>"
-					"<th>"
-						"Tags"
-					"</th>"
-				"</tr>"
-			"</thead>"
-			"<tbody></tbody>"
+#include "components/file_tbl.html"
 		"</table>"
 		
 		"<br/>"
