@@ -34,7 +34,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/FrameDecoder.cpp")
 set_property(TARGET server PROPERTY CXX_STANDARD 17)
-target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}")
+target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 target_link_libraries(server wangle::wangle mariadbclient)
 foreach(var NULL_REASONS;NULL_TAGS;NULL_USERTAGS)
 	if(${var})

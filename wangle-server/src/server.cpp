@@ -106,6 +106,30 @@ Int a2n(const char** s){
 }
 
 constexpr
+bool is_integer(const char c){
+	return ((c >= '0')  and  (c <= '9'));
+}
+
+constexpr
+const char* get_comma_separated_ints(const char** str,  const char separator){
+	const char* const start = *str;
+	while(true){
+		if (not is_integer(**str))
+			return nullptr;
+		do {
+			++(*str);
+		} while (is_integer(**str));
+		
+		if (**str == ','){
+			++(*str);
+			continue;
+		}
+		
+		return (**str == separator) ? start : nullptr;
+	}
+}
+
+constexpr
 bool get_range(const char* headers,  size_t& from,  size_t& to){
 	while(*(++headers) != 0){ // NOTE: headers is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
 		if (*headers != '\n')
@@ -203,6 +227,12 @@ namespace _r {
 		"Server error"
 	;
 	
+	constexpr static const std::string_view post_ok =
+		#include "headers/return_code/OK.c"
+		"\n"
+		"OK"
+	;
+	
 	/*
 	constexpr static const std::string_view bad_request =
 		#include "headers/return_code/BAD_REQUEST.c"
@@ -278,6 +308,7 @@ namespace _r {
 	char* itr = nullptr;
 	
 	static const char* tags_json;
+	static const char* dirs_json;
 	static const char* protocols_json;
 	static const char* devices_json;
 	
@@ -308,6 +339,20 @@ namespace _r {
 	}
 	size_t strlens(const uint64_t*,  const char* const* str0,  const unsigned*,  const char* const* str1,  const char* const* str2){
 		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",123456789,\"\",\"\"],") + 2*strlen(*str0) + 2*strlen(*str1) + 2*strlen(*str2);
+	}
+	
+	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str0,  const uint64_t* m){
+		compsky::asciify::asciify(
+			itr,
+			'"', *n, '"', ':', '[',
+					'"', _f::esc, '"', *str0, '"', ',',
+					*m,
+				']',
+			','
+		);
+	}
+	size_t strlens(const uint64_t*,  const char* const* str0,  const uint64_t*){
+		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",1234567890123456789],") + 2*strlen(*str0);
 	}
 	
 	template<typename... Args>
@@ -369,6 +414,24 @@ namespace _method {
 constexpr
 unsigned int which_method(const char*& s){
 	switch(*(s++)){
+		case 'P':
+			switch(*(s++)){
+				case 'O':
+					switch(*(s++)){
+						case 'S':
+							switch(*(s++)){
+								case 'T':
+									switch(*(s++)){
+										case ' ':
+											return _method::POST;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
 		case 'G':
 			switch(*(s++)){
 				case 'E':
@@ -425,11 +488,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_mutex.unlock();
 	}
 	
+	void mysql_exec_using_buf(){
+		this->mysql_mutex.lock();
+		compsky::mysql::exec_buffer(_mysql::mysql_obj, this->buf, this->buf_indx());
+		this->mysql_mutex.unlock();
+	}
+	
 	template<typename... Args>
 	void mysql_query(Args... args){
 		this->reset_buf_index();
 		this->asciify(args...);
 		this->mysql_query_using_buf();
+	}
+	
+	template<typename... Args>
+	void mysql_exec(Args... args){
+		this->reset_buf_index();
+		this->asciify(args...);
+		this->mysql_exec_using_buf();
 	}
 	
 	template<typename... Args>
@@ -558,15 +634,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_query(
 			"SELECT "
 				"IFNULL(LOWER(HEX(f2h.x)),\"\"),"
-				"d.id,"
-				"d.name,"
+				"f.dir,"
 				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id),"
-				"mt.name,"
-				"d.device "
+				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\"),"
+				"mt.name "
 			"FROM file f "
-			"JOIN dir d ON d.id=f.dir "
-			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"JOIN mimetype mt ON mt.id=f.mimetype "
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id=", id, " "
@@ -574,9 +647,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* md5_hash;
-		const char* device_id;
 		const char* dir_id;
-		const char* dir_name;
 		const char* file_name;
 		const char* tag_ids;
 		const char* mimetype;
@@ -587,15 +658,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &dir_name, &file_name, &tag_ids, &mimetype, &device_id)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &tag_ids, &mimetype)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
-				'"', _f::esc, '"',  dir_name, '"', ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', tag_ids, '"', ',',
-				'"', mimetype, '"', ',',
-				 device_id
+				'"', mimetype, '"'
 			);
 		}
 		this->asciify(']');
@@ -653,19 +722,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"IF(d.protocol=", protocol::local_filesystem, ","
-					"IFNULL(CONCAT(\"/i/f/\", LOWER(HEX(f2h.x))), \"\"),"
-					"CONCAT(d.thumbnail_pre, f.name, d.thumbnail_post)"
-				"),"
-				//"D.protocol,"
-				//"d.id,"
-				//"d.name,"
+				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
 				"f.id,"
 				"f.name,"
 				"GROUP_CONCAT(f2t.tag_id)"
 			"FROM file f "
-			//"JOIN dir d ON d.id=f.dir "
-			//"JOIN device D ON D.id=d.device "
 			"JOIN file2tag f2t ON f2t.file_id=f.id "
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id IN ("
@@ -726,12 +787,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
 				"f.id,"
 				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id)"
+				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
-			"JOIN dir d ON d.id=f.dir "
-			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
-			"WHERE d.id=", id, " "
+			"WHERE f.dir=", id, " "
 			"GROUP BY f.id "
 			"LIMIT 100"
 		);
@@ -779,6 +839,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		switch(*(s++)){
 			case 'd':
 				switch(*(s++)){
+					case '.':
+						// /a/d.json
+						return _r::dirs_json;
 					case '/':
 						switch(*(s++)){
 							case 'i':
@@ -957,6 +1020,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
+	std::string_view post__add_tag_to_file(const char* s){
+		const char* const file_ids = get_comma_separated_ints(&s, '/');
+		if (file_ids == 0)
+			return _r::not_found;
+		const size_t file_ids_len = (uintptr_t)s - (uintptr_t)file_ids;
+		++s; // Skip trailing slash
+		const char* const tag_ids  = get_comma_separated_ints(&s, ' ');
+		if (tag_ids == 0)
+			return _r::not_found;
+		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
+		
+		this->mysql_exec(
+			"INSERT INTO file2tag (tag_id, file_id) "
+			"SELECT t.id, f.id " // To ensure client cannot modify tags/files they are not authorised to view
+			"FROM tag t "
+			"JOIN file f "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  "AND f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			"ON DUPLICATE KEY UPDATE file_id=file_id"
+		);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__add_var_to_file(const char* s){
+		
+		return _r::post_ok;
+	}
+	
 	constexpr
 	std::string_view determine_response(const char* s){
 		switch(which_method(s)){
@@ -1022,6 +1114,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 											"\n"
 											#include "html/dir.html"
 										;
+									case '/':
+										return
+											#include "headers/return_code/OK.c"
+											#include "headers/Content-Type/html.c"
+											#include "headers/Cache-Control/1day.c"
+											"\n"
+											#include "html/dirs.html"
+										;
 									break;
 								}
 							case 'f':
@@ -1085,6 +1185,36 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 													case '/':
 														// /S/f/
 														return this->stream_file(s);
+												}
+												break;
+										}
+										break;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+			case _method::POST:
+				switch(*(s++)){
+					case '/':
+						switch(*(s++)){
+							case 'f':
+								switch(*(s++)){
+									case '/':
+										switch(*(s++)){
+											case 'v':
+												switch(*(s++)){
+													case '/':
+														// /f/v/
+														return this->post__add_var_to_file(s);
+												}
+												break;
+											case 't':
+												switch(*(s++)){
+													case '/':
+														// /f/t/
+														return this->post__add_tag_to_file(s);
 												}
 												break;
 										}
@@ -1191,6 +1321,8 @@ int main(int argc,  char** argv){
 	const char* name;
 	_r::init_json("SELECT id, name FROM tag", _r::tags_json, &id, &name);
 	_r::init_json("SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
+	uint64_t id2;
+	_r::init_json("SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
 	unsigned protocol;
 	const char* embed_pre;
 	const char* embed_post;
