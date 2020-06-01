@@ -82,7 +82,7 @@
 			"var s = \"\";"
 			"for (var ls of data){"
 				"s += \"<tr data-id='\" + ls[1] + \"'>\";"
-					"s += \"<td><img src='/i/f/\" + ls[0] + \"'></img>\";"
+					"s += \"<td><img src='/i/f/\" + ls[0] + \"'></img></td>\";"
 					//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
 					"s += \"<td><a href='/f#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // File ID and name
 					"s += \"<td>\" + ls[3] + \"</td>\";"
