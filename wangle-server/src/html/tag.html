@@ -7,7 +7,7 @@
 #include "components/all.css.html"
 		"<script>"
 			"var tagselect;"
-			"const tbody = \"#f tbody\";"
+			"const tbody = \"#f .tbody\";"
 			"$(document).ready(function(){"
 				"tagselect = $(\"#tagselect\");"
 				"populate_tagselect(tagselect);"
@@ -18,7 +18,7 @@
 			"});"
 			
 			"function get_selected_file_ids(){"
-				"return $(\"#f tbody tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
+				"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
 			"}"
 		"</script>"
 
@@ -28,9 +28,9 @@
 		"<h2>"
 			"Tagged Files"
 		"</h2>"
-		"<table id=\"f\">"
+		"<div class=\"table\" id=\"f\">"
 #include "components/file_tbl.html"
-		"</table>"
+		"</div>"
 
 	"</body>"
 "</html>"

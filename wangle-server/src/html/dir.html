@@ -7,7 +7,7 @@
 #include "components/all.css.html"
 		"<script>"
 			"var tagselect;"
-			"const tbody = \"#f tbody\";"
+			"const tbody = \"#f .tbody\";"
 			
 			"$(document).ready(function(){" // Only execute after page has finished loading
 				"tagselect = $(\"#tagselect\");"
@@ -34,15 +34,15 @@
 			"});"
 			
 			"function get_selected_file_ids(){"
-				"return $(\"#f tbody tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
+				"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
 			"}"
 		"</script>"
 		
 #include "components/add_tag.html"
 		"<h2 id=\"dir_name\"></h2>"
-		"<table id=\"f\">"
+		"<div =\"table\" id=\"f\">"
 #include "components/file_tbl.html"
-		"</table>"
+		"</div>"
 		
 		"<br/>"
 	"</body>"

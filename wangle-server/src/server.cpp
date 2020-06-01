@@ -285,6 +285,36 @@ namespace _r {
 					"\n"
 					#include "static/all.css"
 				;
+			case 't':
+				switch(*(s++)){
+					case 'b':
+						switch(*(s++)){
+							case 'l':
+								switch(*(s++)){
+									case '1':
+										// tbl1.css
+										return
+											#include "headers/return_code/OK.c"
+											#include "headers/Content-Type/css.c"
+											#include "headers/Cache-Control/1day.c"
+											"\n"
+											#include "static/table_as_blocks.css"
+										;
+									case '2':
+										// tbl2.css
+										return
+											#include "headers/return_code/OK.c"
+											#include "headers/Content-Type/css.c"
+											#include "headers/Cache-Control/1day.c"
+											"\n"
+											#include "static/table_as_table.css"
+										;
+								}
+								break;
+						}
+						break;
+				}
+				break;
 			case 'u':
 				switch(*(s++)){
 					case '.':
@@ -301,16 +331,16 @@ namespace _r {
 													"\n"
 													#include "static/utils.js"
 												;
-											default: return not_found;
 										}
-									default: return not_found;
+										break;
 								}
-							default: return not_found;
+								break;
 						}
-					default: return not_found;
+						break;
 				}
-			default: return not_found;
+				break;
 		}
+		return _r::not_found;
 	}
 	
 	static char buf[1024 * 1024]; // Needs to be large enough for file thumbnails
