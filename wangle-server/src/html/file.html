@@ -16,21 +16,7 @@
 			"$(document).ready(function(){" // Only execute after page has finished loading
 				"tagselect = $(\"#tagselect\");"
 				
-				"$.ajax({"
-					"dataType: \"json\","
-					"url: \"/a/t.json\","
-					"success: function(data){"
-						"var s = \"\";"
-						"for (const [id, name] of Object.entries(data)){"
-							"s += \"<option value='\" + id + \"'>\" + name + \"</option>\";"
-						"}"
-						"tagselect.html(s);"
-						"tagselect.select2();" // Initialise it
-					"},"
-					"error: function(){"
-						"alert(\"Error populating table\");"
-					"}"
-				"});"
+				"populate_tagselect(tagselect);"
 				
 				"$.ajax({"
 					"dataType: \"json\","
@@ -56,18 +42,6 @@
 					"}"
 				"});"
 			"});"
-			
-			"function add_tag(){"
-				"$.post({"
-					"url: \"/f/t/\" + file_id + \"/\" + tagselect.val().join(\",\"),"
-					"success: function(){"
-						"tagselect.val(\"\").change();" // Deselect all
-					"},"
-					"error: function(){"
-						"alert(\"Error tagging file\");"
-					"}"
-				"});"
-			"}"
 		"</script>"
 
 		"<h1 id=\"file_name\"></h1>"
@@ -79,8 +53,7 @@
 		"<a id=\"dir_name\"></a>"
 		"<div id=\"tags\"></div>"
 		
-		"<button onclick=\"add_tag()\">Add Tag</button>"
-		"<select id=\"tagselect\" multiple=\"multiple\"></select>"
+#include "components/add_tag.html"
 		
 		"<br/>"
 	"</body>"

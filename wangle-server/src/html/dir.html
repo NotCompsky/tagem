@@ -2,24 +2,43 @@
 	"<body>"
 #include "components/parent_link.html"
 #include "components/jquery.html"
+#include "components/select2.html"
 #include "components/utils.js.html"
+#include "components/all.css.html"
 		"<script>"
-			"const dir_id = window.location.hash.substr(1);"
+			"var tagselect;"
+			"const tbl = \"#f tbody\";"
 			
-			"$.ajax({"
-				"dataType: \"json\","
-				"url: \"/a/d/i/\"+dir_id,"
-				"success: function(data){"
-					"var s = \"\";"
-					"$('#dir_name').text(data[0]);"
-				"},"
-				"error: function(){"
-					"alert(\"Error populating table\");"
-				"}"
+			"$(document).ready(function(){" // Only execute after page has finished loading
+				"tagselect = $(\"#tagselect\");"
+				
+				"populate_tagselect(tagselect);"
+				
+				"const dir_id = window.location.hash.substr(1);"
+			
+				"$.ajax({"
+					"dataType: \"json\","
+					"url: \"/a/d/i/\"+dir_id,"
+					"success: function(data){"
+						"var s = \"\";"
+						"$('#dir_name').text(data[0]);"
+					"},"
+					"error: function(){"
+						"alert(\"Error populating table\");"
+					"}"
+				"});"
+				
+				"populate_f_table('/a/f/d/' + dir_id, tbl);"
+				
+				"fancify_tbl(tbl);"
 			"});"
 			
-			"populate_f_table('/a/f/d/' + dir_id, '#f tbody');"
+			"function get_selected_file_ids(){"
+				"return $(\"#f tbody tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
+			"}"
 		"</script>"
+		
+#include "components/add_tag.html"
 		
 		"<h2 id=\"dir_name\"></h2>"
 		"<table id=\"f\">"

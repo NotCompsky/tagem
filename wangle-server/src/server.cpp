@@ -276,6 +276,15 @@ namespace _r {
 	constexpr
 	std::string_view return_static(const char* s){
 		switch(*(s++)){
+			case 'a':
+				// a.css
+				return
+					#include "headers/return_code/OK.c"
+					#include "headers/Content-Type/css.c"
+					#include "headers/Cache-Control/1day.c"
+					"\n"
+					#include "static/all.css"
+				;
 			case 'u':
 				switch(*(s++)){
 					case '.':
