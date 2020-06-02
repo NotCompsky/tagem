@@ -4,3 +4,23 @@
 ".hidden{"
 	"display:none;"
 "}"
+
+"#content{"
+	"position:absolute;"
+	"left:10%;"
+	"border:1px solid #999;"
+"}"
+
+"#sidebar{"
+	"position:absolute;"
+	"left:0;"
+	"width:10%;"
+"}"
+
+".box{"
+	"border:1px solid #999;"
+"}"
+
+".list{"
+	"padding:2px 7px"
+"}"
