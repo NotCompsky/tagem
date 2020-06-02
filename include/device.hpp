@@ -89,7 +89,7 @@ unsigned guess_protocol(const char* url){
 
 
 inline
-unsigned guess_protocol(const char* const url [[unused]],  const unsigned protocol_id){
+unsigned guess_protocol(const char* const url,  const unsigned protocol_id){
 	if (protocol_id)
 		return protocol_id;
 	return guess_protocol(url);
