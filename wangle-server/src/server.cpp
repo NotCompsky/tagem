@@ -1277,6 +1277,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view post__edit_tag_cmnt(const char* s){
+		const uint64_t tag_id = a2n<uint64_t>(&s);
+		++s;
+		
+		printf("Edit tag cmnt: %lu: %s\n", tag_id, s);
+		
+		return _r::post_ok;
+	}
+	
 	constexpr
 	std::string_view determine_response(const char* s){
 		switch(which_method(s)){
@@ -1434,6 +1443,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 											case '/':
 												// /dl/
 												return this->post__dl(s);
+										}
+										break;
+								}
+								break;
+							case 't':
+								switch(*(s++)){
+									case '/':
+										switch(*(s++)){
+											case 'c':
+												switch(*(s++)){
+													case '/':
+														// /t/c/
+														// TODO: Implement client-side
+														return this->post__edit_tag_cmnt(s);
+												}
+												break;
 										}
 										break;
 								}
