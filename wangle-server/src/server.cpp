@@ -11,6 +11,9 @@
 #include <mutex>
 #include <cstring> // for malloc
 
+#define FILE_THUMBNAIL "IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))),"
+#define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
+
 
 #ifndef n_cached
 # error "Please define -Dn_cached=<NUMBER_OF_ITEMS_TO_CACHE>"
@@ -705,7 +708,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"IFNULL(LOWER(HEX(f2h.x)),\"\"),"
+				FILE_THUMBNAIL
 				"f.dir,"
 				"f.name,"
 				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\"),"
@@ -713,6 +716,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"JOIN mimetype mt ON mt.id=f.mimetype "
+			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id=", id, " "
 			"GROUP BY f.id"
@@ -794,12 +798,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
+				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
 				"GROUP_CONCAT(f2t.tag_id)"
 			"FROM file f "
 			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id IN ("
 				"SELECT file_id "
@@ -856,12 +861,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"IFNULL(LOWER(HEX(f2h.x)), \"\"),"
+				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
 				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.dir=", id, " "
 			"GROUP BY f.id "

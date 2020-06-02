@@ -24,7 +24,7 @@
 					"success: function(data){"
 						"var s = \"\";"
 						
-						"$('#thumb').html(\"<img src='/i/f/\" + data[0] + \"'></img>\");"
+						"$('#thumb').html('<img src=\"' + data[0] + '\"></img>');"
 						"const dir_id = data[1];"
 						"file_name = data[2];"
 						"$('#tags').text(data[3]);"

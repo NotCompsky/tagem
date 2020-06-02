@@ -310,6 +310,13 @@ CREATE TABLE file2qt5md5 (
 	FOREIGN KEY (file) REFERENCES _file (id)
 );
 
+CREATE TABLE file2thumbnail (
+	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+	x VARBINARY(1024) NOT NULL,
+	FOREIGN KEY (file) REFERENCES _file (id)
+);
+-- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v=';
+
 
 
 CREATE TABLE settings (
