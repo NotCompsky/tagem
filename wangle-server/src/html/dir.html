@@ -35,6 +35,8 @@
 				"var dir_name;"
 				"var device_id;"
 				"set_dir_name_from_id(dir_id, \"#dir_name\");"
+				
+				"display_parent_dirs(dir_id, \"#parent_dirs\");"
 			"});"
 			
 			"function get_selected_file_ids(){"
@@ -44,6 +46,9 @@
 		
 #include "components/add_tag.html"
 		"<h2 id=\"dir_name\"></h2>"
+		
+		"<div id=\"parent_dirs\"></div>"
+		
 		"<div =\"table\" id=\"f\">"
 #include "components/file_tbl.html"
 		"</div>"
