@@ -1047,13 +1047,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						return this->file_thumbnail(s);
 				}
 				break;
-			case 't':
-				switch(*(s++)){
-					case '.':
-						// m.json
-						return _r::tags_json;
-				}
-				break;
 		}
 		return _r::not_found;
 	}
