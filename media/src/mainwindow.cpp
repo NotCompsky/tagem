@@ -633,7 +633,7 @@ void MainWindow::media_open(){
 	
 	if (this->protocol == protocol::local_filesystem){
 		if (!f.open(QIODevice::ReadOnly | QIODevice::Text)){
-			fprintf(stderr,  "Cannot load file: %s\n",  file);
+			fprintf(stderr,  "Cannot load file: %s\n",  this->get_media_fp());
 			this->media_next();
 			return;
 		}
