@@ -11,8 +11,10 @@
 #include <mutex>
 #include <cstring> // for malloc
 
-#define FILE_THUMBNAIL "IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))),"
+#define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))), \"\"),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
+
+#include <curl/curl.h>
 
 
 #ifndef n_cached
@@ -38,6 +40,14 @@ namespace _mysql {
 
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
+
+enum FunctionSuccessness {
+	ok,
+	malicious_request,
+	server_error,
+	unimplemented,
+	COUNT
+};
 
 namespace cached_stuff {
 	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
@@ -111,6 +121,16 @@ Int a2n(const char** s){
 constexpr
 bool is_integer(const char c){
 	return ((c >= '0')  and  (c <= '9'));
+}
+
+constexpr
+const char* skip_to(const char* s,  const char c){
+	while(true){
+		if (unlikely(*s == 0))
+			return nullptr;
+		if (*s == c)
+			return s;
+	}
 }
 
 constexpr
@@ -209,6 +229,25 @@ bool get_range(const char* headers,  size_t& from,  size_t& to){
 	from = 0;
 	to = 0;
 	return false;
+}
+
+FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth){
+	FILE* const f = fopen(dst_pth, "w");
+	if (f == nullptr){
+		fprintf(stderr,  "Cannot open file for writing: %s\n",  dst_pth);
+		return FunctionSuccessness::server_error;
+	}
+	
+	CURL* const handle = curl_easy_init();
+	curl_easy_setopt(handle, CURLOPT_URL, url);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, f);
+	curl_easy_perform(handle);
+	
+	fclose(f);
+	
+	curl_easy_cleanup(handle);
+	
+	return FunctionSuccessness::ok;
 }
 
 namespace _r {
@@ -1101,6 +1140,105 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
+	FunctionSuccessness dl_file(const uint64_t dir_id,  const char* const file_name,  const char* const url){
+		FunctionSuccessness rc = FunctionSuccessness::ok;
+		static char dst_pth[4096];
+		
+		const char* dir_name = nullptr;
+		this->mysql_query("SELECT name FROM dir WHERE id=", dir_id);
+		if (not this->mysql_assign_next_row(&dir_name)){
+			// No visible directory with the requested ID
+			// MySQL results already freed
+			return FunctionSuccessness::malicious_request;
+		}
+		
+		printf("dl_file %lu %s\n", dir_id, url);
+		
+		compsky::asciify::asciify(dst_pth, dir_name, file_name, '\0');
+		
+		rc = dl_file__curl(url, dst_pth);
+		
+		dl_file__cleanup:
+		this->mysql_free_res();
+		return rc;
+	}
+	
+	std::string_view post__dl(const char* s){
+		static char url_buf[4096];
+		
+		const uint64_t dir_id = a2n<uint64_t>(&s);
+		++s;
+		
+		const char* const tag_ids  = get_comma_separated_ints(&s, '/');
+		if (tag_ids == nullptr)
+			return _r::not_found;
+		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
+		++s; // Skip slash
+		
+		const char* url = s;
+		unsigned n_errors = 0;
+		while(true){
+			const char c = *s;
+			++s;
+			switch(c){
+				case 0: // unlikely
+					return _r::not_found;
+				case ' ':
+				case ',':
+					const size_t url_len = (uintptr_t)s - (uintptr_t)url - 1;
+					memcpy(url_buf, url, url_len);
+					url_buf[url_len] = 0;
+					
+					const char* itr = url_buf;
+					const char* file_name = nullptr;
+					while(*itr != 0){
+						if (*itr == '/')
+							file_name = itr;
+						++itr;
+					}
+					++file_name; // Skip the slash
+					
+					switch(dl_file(dir_id, file_name, url_buf)){
+						case FunctionSuccessness::server_error:
+							++n_errors;
+						case FunctionSuccessness::ok:
+							break;
+						case FunctionSuccessness::malicious_request:
+							return _r::not_found;
+					}
+					
+					this->mysql_exec(
+						"INSERT INTO file"
+						"(name, dir)"
+						"VALUES(",
+							'"', _f::esc, '"', file_name, '"', ',',
+							dir_id,
+						")"
+						"ON DUPLICATE KEY UPDATE dir=dir"
+					);
+					this->mysql_exec(
+						"INSERT INTO file2tag"
+						"(file_id, tag_id)"
+						"SELECT f.id, t.id "
+						"FROM file f "
+						"JOIN tag t "
+						"WHERE f.name=\"", _f::esc, '"', file_name, "\" "
+						  "AND f.dir=", dir_id, " "
+						  "AND t.id IN (", _f::strlen, tag_ids, tag_ids_len,") "
+						"ON DUPLICATE KEY UPDATE file_id=file_id"
+					);
+					
+					url = s;
+					if (c == ' ')
+						goto post__dl_break2;
+					break;
+			}
+		}
+		post__dl_break2:
+		
+		return (n_errors) ? _r::server_error : _r::post_ok;
+	}
+	
 	std::string_view post__add_tag_to_file(const char* s){
 		const char* const file_ids = get_comma_separated_ints(&s, '/');
 		if (file_ids == 0)
@@ -1280,6 +1418,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '/':
 						switch(*(s++)){
+							case 'd':
+								switch(*(s++)){
+									case 'l':
+										switch(*(s++)){
+											case '/':
+												// /dl/
+												return this->post__dl(s);
+										}
+										break;
+								}
+								break;
 							case 'f':
 								switch(*(s++)){
 									case '/':
@@ -1362,6 +1511,8 @@ int s2n(const char* s){
 }
 
 int main(int argc,  char** argv){
+	curl_global_init(CURL_GLOBAL_ALL);
+	
 	char** dummy_argv = argv;
 	int port_n = 0;
 	while (*(++argv)){
@@ -1420,6 +1571,8 @@ int main(int argc,  char** argv){
 	mysql_close(_mysql::mysql_obj);
 	mysql_library_end();
 	compsky::mysql::wipe_auth(_mysql::buf, _mysql::buf_sz);
+	
+	curl_global_cleanup();
 
 	return 0;
 }
