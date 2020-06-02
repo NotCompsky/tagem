@@ -405,6 +405,20 @@ namespace _r {
 		struct Arr{};
 	};
 	
+	
+	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str1,  const char* const* str2){
+		compsky::asciify::asciify(
+			itr,
+			'"', *n, '"', ':', '[',
+				'"', _f::esc, '"', *str1, '"', ',',
+				'"', _f::esc, '"', *str2, '"',
+			']', ','
+		);
+	}
+	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str1,  const char* const* str2){
+		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",\"\"],") + 2*strlen(*str1) + 2*strlen(*str2);
+	}
+	
 	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* m,  const uint64_t* n){
 		compsky::asciify::asciify(
 			itr,
@@ -1579,9 +1593,10 @@ int main(int argc,  char** argv){
 	uint64_t id;
 	uint64_t id2;
 	const char* name;
+	const char* str2;
 	constexpr _r::flag::Dict dict;
 	constexpr _r::flag::Arr  arr;
-	_r::init_json(dict, "SELECT id, name FROM tag", _r::tags_json, &id, &name);
+	_r::init_json(dict, "SELECT id, name, thumbnail FROM tag", _r::tags_json, &id, &name, &str2);
 	_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
 	_r::init_json(dict, "SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
 	_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
