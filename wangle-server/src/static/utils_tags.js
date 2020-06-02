@@ -23,7 +23,7 @@
 "}"
 "function set_tag_name_from_id(id, selector){"
 	"get_json('/a/t.json', function(data){"
-		"tag_name = data[id][0];"
+		"tag_name = data[id];"
 		"$(selector).text(tag_name);"
 	"});"
 "}"
