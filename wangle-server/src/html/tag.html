@@ -15,6 +15,9 @@
 				"const tag_id = window.location.hash.substr(1);"
 				"populate_f_table('/a/f/t/' + tag_id, tbody);"
 				"fancify_tbl(tbody);"
+				
+				"var tag_name;"
+				"set_tag_name_from_id(tag_id, \"#tag_name\");"
 			"});"
 			
 			"function get_selected_file_ids(){"
