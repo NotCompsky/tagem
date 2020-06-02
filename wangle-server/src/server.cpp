@@ -231,7 +231,12 @@ bool get_range(const char* headers,  size_t& from,  size_t& to){
 	return false;
 }
 
-FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth){
+FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth,  const bool overwrite_existing){
+	if (not overwrite_existing){
+		if (fopen(dst_pth, "rb") != nullptr)
+			return FunctionSuccessness::ok;
+	}
+	
 	FILE* const f = fopen(dst_pth, "w");
 	if (f == nullptr){
 		fprintf(stderr,  "Cannot open file for writing: %s\n",  dst_pth);
@@ -1140,7 +1145,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_file(const uint64_t dir_id,  const char* const file_name,  const char* const url){
+	FunctionSuccessness dl_file(const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing){
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		static char dst_pth[4096];
 		
@@ -1152,11 +1157,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return FunctionSuccessness::malicious_request;
 		}
 		
-		printf("dl_file %lu %s\n", dir_id, url);
+		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
 		
 		compsky::asciify::asciify(dst_pth, dir_name, file_name, '\0');
 		
-		rc = dl_file__curl(url, dst_pth);
+		rc = dl_file__curl(url, dst_pth, overwrite_existing);
 		
 		dl_file__cleanup:
 		this->mysql_free_res();
@@ -1191,14 +1196,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					
 					const char* itr = url_buf;
 					const char* file_name = nullptr;
+					const char* ext = nullptr;
 					while(*itr != 0){
 						if (*itr == '/')
 							file_name = itr;
+						else if (*itr == '.')
+							ext = itr;
 						++itr;
 					}
 					++file_name; // Skip the slash
+					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
-					switch(dl_file(dir_id, file_name, url_buf)){
+					switch(dl_file(dir_id, file_name, url_buf, is_html_file)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
