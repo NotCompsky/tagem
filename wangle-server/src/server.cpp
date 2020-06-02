@@ -347,12 +347,28 @@ namespace _r {
 	char* itr = nullptr;
 	
 	static const char* tags_json;
+	static const char* tag2parent_json;
 	static const char* dirs_json;
 	static const char* protocols_json;
 	static const char* devices_json;
 	
 	
-	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str){
+	namespace flag {
+		struct Dict{};
+		struct Arr{};
+	};
+	
+	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* m,  const uint64_t* n){
+		compsky::asciify::asciify(
+			itr,
+			'[', *m, ',', *n, ']', ','
+		);
+	}
+	size_t strlens(const flag::Arr& _flag,  const uint64_t*,  const uint64_t*){
+		return std::char_traits<char>::length("[1234567890123456789,1234567890123456789],");
+	}
+	
+	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str){
 		compsky::asciify::asciify(
 			itr,
 			'"', *n, '"', ':',
@@ -360,11 +376,11 @@ namespace _r {
 			','
 		);
 	}
-	size_t strlens(const uint64_t*,  const char* const* str){
+	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str){
 		return std::char_traits<char>::length("\"1234567890123456789\":\"\",") + 2*strlen(*str);
 	}
 	
-	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
+	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
 		compsky::asciify::asciify(
 			itr,
 			'"', *n, '"', ':', '[',
@@ -376,11 +392,11 @@ namespace _r {
 			','
 		);
 	}
-	size_t strlens(const uint64_t*,  const char* const* str0,  const unsigned*,  const char* const* str1,  const char* const* str2){
+	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str0,  const unsigned*,  const char* const* str1,  const char* const* str2){
 		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",123456789,\"\",\"\"],") + 2*strlen(*str0) + 2*strlen(*str1) + 2*strlen(*str2);
 	}
 	
-	void asciifiis(char*& itr,  const uint64_t* n,  const char* const* str0,  const uint64_t* m){
+	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const uint64_t* m){
 		compsky::asciify::asciify(
 			itr,
 			'"', *n, '"', ':', '[',
@@ -390,12 +406,29 @@ namespace _r {
 			','
 		);
 	}
-	size_t strlens(const uint64_t*,  const char* const* str0,  const uint64_t*){
+	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str0,  const uint64_t*){
 		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",1234567890123456789],") + 2*strlen(*str0);
 	}
 	
-	template<typename... Args>
-	void init_json(const char* const qry,  const char*& dst,  Args... args){
+	constexpr
+	char opener(const flag::Dict& _flag){
+		return '{';
+	}
+	constexpr
+	char opener(const flag::Arr& _flag){
+		return '[';
+	}
+	constexpr
+	char closer(const flag::Dict& _flag){
+		return '}';
+	}
+	constexpr
+	char closer(const flag::Arr& _flag){
+		return ']';
+	}
+	
+	template<typename FlagType,  typename... Args>
+	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
 		MYSQL_RES* mysql_res;
 		MYSQL_ROW mysql_row;
 		
@@ -418,7 +451,7 @@ namespace _r {
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
 		while(compsky::mysql::assign_next_row__no_free(mysql_res, &mysql_row, args...)){
-			sz += strlens(args...);;
+			sz += strlens(_flag, args...);;
 		}
 		sz += 1;
 		sz += 1;
@@ -429,15 +462,15 @@ namespace _r {
 			exit(4096);
 		
 		compsky::asciify::asciify(itr, _headers);
-		compsky::asciify::asciify(itr, '{');
+		compsky::asciify::asciify(itr, opener(_flag));
 		mysql_data_seek(mysql_res, 0); // Reset to first result
 		while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, args...)){
-			asciifiis(itr, args...);
+			asciifiis(_flag, itr, args...);
 		}
 		if (unlikely(*(itr - 1) == ','))
 			// If there was at least one iteration of the loop...
 			--itr; // ...wherein a trailing comma was left
-		*(itr++) = '}';
+		*(itr++) = closer(_flag);
 		*itr = 0;
 	}
 }
@@ -935,6 +968,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					case '.':
 						// m.json
 						return _r::tags_json;
+					case '2':
+						// /a/t2p.json
+						return _r::tag2parent_json;
 					case '/':
 						switch(*(s++)){
 							case 'f':
@@ -1357,15 +1393,18 @@ int main(int argc,  char** argv){
 	compsky::mysql::init_auth(_mysql::buf, _mysql::buf_sz, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
 	compsky::mysql::login_from_auth(_mysql::mysql_obj, _mysql::auth);
 	uint64_t id;
-	const char* name;
-	_r::init_json("SELECT id, name FROM tag", _r::tags_json, &id, &name);
-	_r::init_json("SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
 	uint64_t id2;
-	_r::init_json("SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
+	const char* name;
+	constexpr _r::flag::Dict dict;
+	constexpr _r::flag::Arr  arr;
+	_r::init_json(dict, "SELECT id, name FROM tag", _r::tags_json, &id, &name);
+	_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
+	_r::init_json(dict, "SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
+	_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
 	unsigned protocol;
 	const char* embed_pre;
 	const char* embed_post;
-	_r::init_json("SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+	_r::init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());

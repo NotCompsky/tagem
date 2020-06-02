@@ -37,3 +37,13 @@
 		"tagselect.select2();" // Initialise it
 	"});"
 "}"
+
+"function display_parent_tags(tag_id, selector){"
+	// Similar to display_parent_dirs
+	"get_json('/a/t2p.json', function(t2p){"
+		"get_json('/a/t.json', function(t){"
+			"const arr = t2p.filter(x => (x[0] == tag_id)).map(x => x[1]).map(x => \"<a href='/t#\" + x + \"'>\" + t[x] + \"</a>\");"
+			"$(selector).html(arr.join(\"<br/>\"));"
+		"});"
+	"});"
+"}"
