@@ -20,6 +20,7 @@
 				"set_tag_name_from_id(tag_id, \"#tag_name\");"
 				
 				"display_parent_tags(tag_id, \"#parent_tags\");"
+				"display_child_tags(tag_id,  \"#child_tags\");"
 			"});"
 			
 			"function get_selected_file_ids(){"
@@ -28,6 +29,7 @@
 		"</script>"
 
 		"<div id=\"parent_tags\"></div>"
+		"<div id=\"child_tags\"></div>"
 		"<h1 id=\"tag_name\"></h1>"
 
 #include "components/add_tag.html"
