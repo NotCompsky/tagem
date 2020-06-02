@@ -1,9 +1,4 @@
-"<!DOCTYPE html>"
-	"<body>"
-#include "components/parent_link.html"
-#include "components/jquery.html"
-#include "components/select2.html"
-#include "components/utils.js.html"
+#include "components/pre_body.html"
 		"<script>"
 			"const file_id = window.location.hash.substr(1);"
 			
@@ -56,9 +51,6 @@
 		
 		"<a id=\"dir_name\"></a>"
 		"<div id=\"tags\"></div>"
-		
+
 #include "components/add_tag.html"
-		
-		"<br/>"
-	"</body>"
-"</html>"
+#include "components/post_body.html"
