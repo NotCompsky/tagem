@@ -389,15 +389,13 @@ VIEW file
 AS
 	SELECT *
 	FROM _file
-	WHERE (
-		id NOT IN (
-			SELECT f2t.file_id
-			FROM file2tag f2t
-			JOIN tag2parent_tree t2pt ON t2pt.parent=f2t.tag_id
-			JOIN user2hidden_tag u2ht ON u2ht.tag=t2pt.parent
-			JOIN user u ON u.id=u2ht.user
-			WHERE u.name=SESSION_USER()
-		)
+	WHERE id NOT IN (
+		SELECT f2t.file_id
+		FROM user u
+		JOIN user2hidden_tag u2ht ON u2ht.user=u.id
+		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
+		JOIN file2tag f2t ON f2t.tag_id=t2pt.tag
+		WHERE u.name=SESSION_USER()
 	)
 ;
 CREATE SQL SECURITY DEFINER
