@@ -57,6 +57,8 @@ void tag2parent(const uint64_t tagid,  const uint64_t parid){
 }
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
+	// TODO: Do all of these in one transaction, so that incomplete tags are never added.
+	
 	tagslist.append(tagstr);
 	tagcompleter.reset(tagslist);
 
