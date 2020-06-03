@@ -92,13 +92,16 @@ R"=========(
 # undef SECTION_BEFORE_FILES_TBL
 #endif
 
-#define TAG_TEXT "Add Tags to Files"
-#define TAG_FN "tag_files(get_selected_file_ids(), '#tagselect-files')"
-#define TAGSELECT_ID "tagselect-files"
-#include "components/add_tag.html"
-#undef TAG_FN
-#undef TAGSELECT_ID
-#undef TAG_TEXT
+#ifdef FILE_TAGGER
+# define TAG_TEXT "Add Tags to Files"
+# define TAG_FN "tag_files(get_selected_file_ids(), '#tagselect-files')"
+# define TAGSELECT_ID "tagselect-files"
+# include "components/add_tag.html"
+# undef TAG_FN
+# undef TAGSELECT_ID
+# undef TAG_TEXT
+# undef FILE_TAGGER
+#endif
 
 "</div>"
 
