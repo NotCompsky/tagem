@@ -47,12 +47,10 @@ uint64_t get_id_from_table(const char* const table_name,  const String entry_nam
 
 void tag2parent(const uint64_t tagid,  const uint64_t parid){
 	constexpr static const char* const sql__insert =       "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
-	constexpr static const char* const sql__update_perms = "UPDATE tag t JOIN tag2parent t2p ON t2p.tag_id=t.id JOIN tag p ON p.id=t2p.parent_id SET t.permissions=t.permissions|p.permissions";
 	
 	static char buf[500];
 	
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__insert, tagid, ',', parid, ")");
-	compsky::mysql::exec(_mysql::obj,  buf,  sql__update_perms);
 	compsky::mysql::exec(_mysql::obj,  buf,  "INSERT INTO tag2parent_tree (tag, parent, depth) SELECT ", tagid, ",parent,depth+1 FROM tag2parent_tree WHERE tag=", parid, " ON DUPLICATE KEY UPDATE tag=VALUES(tag)");
 }
 

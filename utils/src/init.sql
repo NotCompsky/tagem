@@ -73,7 +73,6 @@ CREATE TABLE _file (
 	dir BIGINT UNSIGNED NOT NULL,
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
-    permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	mimetype INT UNSIGNED NOT NULL DEFAULT 0,
     UNIQUE KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
@@ -103,7 +102,6 @@ INSERT INTO file2 (min, max, conversion, name) VALUES
 CREATE TABLE _tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARBINARY(128),
-	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	thumbnail VARBINARY(200) NOT NULL DEFAULT "",
 	cover VARBINARY(200) NOT NULL DEFAULT "",
     UNIQUE KEY (name),
@@ -128,6 +126,18 @@ CREATE TABLE tag2parent_tree (
 	FOREIGN KEY (tag) REFERENCES _tag (id),
 	FOREIGN KEY (parent) REFERENCES _tag (id),
     PRIMARY KEY (tag, parent)
+);
+
+CREATE TABLE user (
+	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARBINARY(100) NOT NULL UNIQUE KEY
+);
+
+CREATE TABLE user2hidden_tag (
+	user INT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id)
 );
 
 CREATE TABLE file2tag (
@@ -364,23 +374,29 @@ CREATE TABLE user2permissions (
 CREATE SQL SECURITY DEFINER
 VIEW tag
 AS
-	SELECT t.*
-	FROM _tag t
-	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
-	WHERE u2p.permissions & t.permissions=t.permissions
+	SELECT *
+	FROM _tag
+	WHERE id NOT IN (
+		SELECT t2pt.tag
+		FROM user u
+		JOIN user2hidden_tag u2ht ON u2ht.user=u.id
+		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
+		WHERE u.name=SESSION_USER()
+	)
 ;
 CREATE SQL SECURITY DEFINER
 VIEW file
 AS
-	SELECT f.*
-	FROM _file f
-	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
+	SELECT *
+	FROM _file
 	WHERE (
-		f.id NOT IN (
-			SELECT file_id
-			FROM file2tag
-			JOIN _tag t ON t.id=tag_id
-			WHERE u2p.permissions & t.permissions != t.permissions
+		id NOT IN (
+			SELECT f2t.file_id
+			FROM file2tag f2t
+			JOIN tag2parent_tree t2pt ON t2pt.parent=f2t.tag_id
+			JOIN user2hidden_tag u2ht ON u2ht.tag=t2pt.parent
+			JOIN user u ON u.id=u2ht.user
+			WHERE u.name=SESSION_USER()
 		)
 	)
 ;
