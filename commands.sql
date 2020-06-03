@@ -1,3 +1,16 @@
+# Extract an era from an audio/video file
+# src: https://superuser.com/questions/459313/how-to-cut-at-exact-frames-using-ffmpeg
+SELECT f.name, e.start, e.end - e.start AS `diff` FROM file f, era e WHERE e.file_id=f.id AND f.id=???;
+# ffmpeg -ss $e.start/1000 -i $f.name -to diff/1000 -c copy /tmp/a.mkv # ??? Why 1000?
+
+
+
+# Fix era table limits
+UPDATE era e, file2duration f2d SET e.end=f2d.x*1000 WHERE f2d.file=e.file_id AND e.end>f2d.x*1000;
+
+
+
+
 CALL descendant_tags_id_from_ids("_r1", "86");
 CALL descendant_tags_id_from_ids("_m1", "90");
 #CALL descendant_tags_id_from_ids("_m2", "355");
@@ -66,7 +79,17 @@ HAVING `c` > 1
 ORDER BY n DESC
 ;
 
-
+# View the mean score of each tag, including its descendants, for a specific root tag
+CALL descendant_tags_id_rooted_from("_root2tag", "'Music'");
+SELECT t.name, COUNT(f2s.x) as `c`, SUM(f2s.x) / COUNT(f2s.x) AS `n`
+FROM tag t, _root2tag r2t, file2tag f2t, file2Score f2s
+WHERE t.id=r2t.node
+  AND f2t.tag_id=r2t.node
+  AND f2t.file_id=f2s.file
+GROUP BY t.id
+HAVING `c` > 1
+ORDER BY n DESC
+;
 
 
 
@@ -331,119 +354,10 @@ RIGHT JOIN (
 
 
 
-
+# Procedures
 
 # Collect all the direct descendends of tag of ID `N`, with descendant level <= 1 (i.e. itself and direct children)
 
-DROP PROCEDURE IF EXISTS descendant_tags_id__max_depth_1;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_id__max_depth_1(tbl VARBINARY(1024),  str VARBINARY(1024))
-BEGIN
-	set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
-	PREPARE stmt FROM @query;
-	EXECUTE stmt;
-
-	set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY,  root BIGINT UNSIGNED NOT NULL);");
-	PREPARE stmt FROM @query;
-	EXECUTE stmt;
-
-	set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT id, id FROM tag WHERE name IN (", str, ");");
-	PREPARE stmt FROM @query;
-	EXECUTE stmt;
-
-	DROP TABLE IF EXISTS _tmp;
-
-	set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT t2p.tag_id, t2p.parent_id FROM tag2parent t2p, tag t WHERE t2p.parent_id=t.id AND t.name IN (", str, ");");
-	PREPARE stmt FROM @query;
-	EXECUTE stmt;
-END $$
-
-delimiter ;
-
-## eg
-# CALL descendant_tags_id__max_depth_1('ttttt', "'Human'");
-# SELECT t.name, T.name FROM ttttt a, tag t, tag T WHERE a.node=t.id AND a.root=T.id;
-
-
-
-
-
-
-# Print all tags (including itself) descended from tag of ID `N`
-
-DROP PROCEDURE IF EXISTS descendant_tags_id;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_id(seed INT UNSIGNED)
-BEGIN
-  -- Temporary storage
-  DROP TABLE IF EXISTS _result;
-  CREATE TEMPORARY TABLE _result (node INT UNSIGNED PRIMARY KEY);
-
-  -- Seeding
-  INSERT INTO _result VALUES (seed);
-
-  -- Iteration
-  DROP TABLE IF EXISTS _tmp;
-  CREATE TEMPORARY TABLE _tmp LIKE _result;
-  REPEAT
-    TRUNCATE TABLE _tmp;
-    INSERT IGNORE INTO _tmp SELECT tag_id AS node
-      FROM _result JOIN tag2parent ON node = parent_id;
-
-    INSERT IGNORE INTO _result SELECT node FROM _tmp;
-  UNTIL ROW_COUNT() = 0
-  END REPEAT;
-  DROP TABLE _tmp;
-  SELECT * FROM _result;
-END $$
-
-delimiter ;
-
-## Usage: `CALL descendant_tags_id(N)`
-## Slightly modified query from "Mats Kindahl" from "https://stackoverflow.com/questions/7631048/connect-by-prior-equivalent-for-mysql"
-
-
-
-
-# The above, but using tag names rather than IDs
-
-## Procedure defined same as above, but replacing seeding with:
-  INSERT INTO _result (SELECT id FROM tag WHERE name = seed);
-### and replacing argument with (seed VARBINARY(128))
-
-DROP PROCEDURE IF EXISTS descendant_tags_name;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_name(seed VARBINARY(128))
-BEGIN
-  -- Temporary storage
-  DROP TABLE IF EXISTS _result;
-  CREATE TEMPORARY TABLE _result (node INT UNSIGNED PRIMARY KEY);
-
-  -- Seeding
-  INSERT INTO _result (SELECT id FROM tag WHERE name = seed);
-
-  -- Iteration
-  DROP TABLE IF EXISTS _tmp;
-  CREATE TEMPORARY TABLE _tmp LIKE _result;
-  REPEAT
-    TRUNCATE TABLE _tmp;
-    INSERT IGNORE INTO _tmp SELECT tag_id AS node
-      FROM _result JOIN tag2parent ON node = parent_id;
-
-    INSERT IGNORE INTO _result SELECT node FROM _tmp;
-  UNTIL ROW_COUNT() = 0
-  END REPEAT;
-  DROP TABLE _tmp;
-  SELECT * FROM _result;
-END $$
-
-delimiter ;
 
 ## Usage:
 CALL descendant_tags_name("TAG_NAME");
@@ -471,81 +385,6 @@ JOIN (
 
 ## Procedures
 
-DROP PROCEDURE IF EXISTS descendant_tags_id_init;
-DROP PROCEDURE IF EXISTS descendant_tags_id_preseeded;
-DROP PROCEDURE IF EXISTS descendant_tags_id_from;
-DROP PROCEDURE IF EXISTS descendant_tags_id_from_ids;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_id_init(tbl VARBINARY(1024))
-BEGIN
-    set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY);");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-END $$
-
-CREATE PROCEDURE descendant_tags_id_preseeded(tbl VARBINARY(1024))
-BEGIN
-    set @query_b = concat("INSERT IGNORE INTO _tmp SELECT tag_id AS node FROM ", tbl, " JOIN tag2parent ON node = parent_id;");
-    set @query_d = concat("INSERT IGNORE INTO ", tbl, " SELECT node FROM _tmp;");
-    PREPARE stmt_b FROM @query_b;
-    PREPARE stmt_d FROM @query_d;
-    REPEAT
-        TRUNCATE TABLE _tmp;
-        EXECUTE stmt_b;
-        EXECUTE stmt_d;
-    UNTIL ROW_COUNT() = 0
-    END REPEAT;
-END $$
-
-CREATE PROCEDURE descendant_tags_id_from(tbl VARBINARY(1024),  str VARBINARY(1024))
-BEGIN
-    CALL descendant_tags_id_init(tbl);
-    set @query = concat("INSERT INTO ", tbl, " (node) SELECT id FROM tag WHERE name IN (", str, ");");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    DROP TABLE IF EXISTS _tmp;
-    
-    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    CALL descendant_tags_id_preseeded(tbl);
-    #set @query = concat("SELECT * FROM ", tbl, ";");
-    #PREPARE stmt FROM @query;
-    #EXECUTE stmt;
-END $$
-
-CREATE PROCEDURE descendant_tags_id_from_ids(tbl VARBINARY(1024),  str VARBINARY(1024))
-BEGIN
-    CALL descendant_tags_id_init(tbl);
-    set @query = concat("INSERT INTO ", tbl, " (node) VALUES (", str, ");");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    DROP TABLE IF EXISTS _tmp;
-    
-    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    CALL descendant_tags_id_preseeded(tbl);
-    #set @query = concat("SELECT * FROM ", tbl, ";");
-    #PREPARE stmt FROM @query;
-    #EXECUTE stmt;
-END $$
-
-delimiter ;
 
 ## Usage
 
@@ -554,36 +393,7 @@ CALL descendant_tags_id_from("_tmp_arg",  "'tagname', 'tagname2'");
 
 
 
-# Create full tag2root table listing all descendant tags for each tag
 
-## Procedures
-
-DROP PROCEDURE IF EXISTS descendant_tags_id_rooted;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_id_rooted()
-BEGIN
-    DROP TABLE IF EXISTS tag2root;
-    CREATE TEMPORARY TABLE tag2root (node BIGINT UNSIGNED NOT NULL,  root BIGINT UNSIGNED NOT NULL,  PRIMARY KEY `tag2root` (node, root));
-    INSERT INTO tag2root (node, root) SELECT id, id FROM tag;
-    
-    DROP TABLE IF EXISTS _tmp;
-    CREATE TEMPORARY TABLE _tmp LIKE tag2root;
-    
-    REPEAT
-        TRUNCATE TABLE _tmp;
-        INSERT IGNORE INTO _tmp SELECT tag_id, root FROM tag2root JOIN tag2parent ON node = parent_id;
-        INSERT IGNORE INTO tag2root SELECT node, root FROM _tmp;
-    UNTIL ROW_COUNT() = 0
-    END REPEAT;
-    
-    DROP TABLE IF EXISTS root2tag;
-    CREATE TEMPORARY TABLE root2tag (node BIGINT UNSIGNED NOT NULL,  root BIGINT UNSIGNED NOT NULL,  PRIMARY KEY `root2tag` (root, node));
-    INSERT INTO root2tag (node, root) SELECT root, node FROM tag2root;
-END $$
-
-delimiter ;
 
 ## Usage
 
@@ -596,29 +406,7 @@ SELECT node FROM tag2root WHERE root IN (SELECT id FROM tag WHERE name='TAG');
 
 
 
-DROP PROCEDURE IF EXISTS ancestor_tags_id_from;
 
-delimiter $$
-
-CREATE PROCEDURE ancestor_tags_id_rooted_from_id(tbl VARBINARY(1024),  tag_id INT)
-BEGIN
-    CALL ancestor_tags_id_rooted_init(tbl);
-    set @query = concat("INSERT INTO ", tbl, " (node, depth) VALUES (", tag_id, ", 0);");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    DROP TABLE IF EXISTS _tmp;
-    
-    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    CALL ancestor_tags_id_rooted_preseeded(tbl);
-END $$
-
-delimiter ;
 
 
 
@@ -669,56 +457,6 @@ JOIN (
 
 ## Procedures
 
-DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_init;
-DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_preseeded;
-DROP PROCEDURE IF EXISTS descendant_tags_id_rooted_from;
-
-delimiter $$
-
-CREATE PROCEDURE descendant_tags_id_rooted_init(tbl VARBINARY(1024))
-BEGIN
-    set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED PRIMARY KEY,  root BIGINT UNSIGNED NOT NULL);");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-END $$
-
-CREATE PROCEDURE descendant_tags_id_rooted_preseeded(tbl VARBINARY(1024))
-BEGIN
-    set @query_b = concat("INSERT IGNORE INTO _tmp SELECT tag_id, root FROM ", tbl, " JOIN tag2parent ON node = parent_id;");
-    set @query_d = concat("INSERT IGNORE INTO ", tbl, " SELECT node, root FROM _tmp;");
-    PREPARE stmt_b FROM @query_b;
-    PREPARE stmt_d FROM @query_d;
-    REPEAT
-        TRUNCATE TABLE _tmp;
-        EXECUTE stmt_b;
-        EXECUTE stmt_d;
-    UNTIL ROW_COUNT() = 0
-    END REPEAT;
-END $$
-
-CREATE PROCEDURE descendant_tags_id_rooted_from(tbl VARBINARY(1024),  str VARBINARY(1024))
-BEGIN
-    CALL descendant_tags_id_rooted_init(tbl);
-    set @query = concat("INSERT INTO ", tbl, " (node, root) SELECT id, id FROM tag WHERE name IN (", str, ");");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    DROP TABLE IF EXISTS _tmp;
-    
-    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    CALL descendant_tags_id_rooted_preseeded(tbl);
-END $$
-
-delimiter ;
 
 
 ## Usage
@@ -791,60 +529,6 @@ JOIN (
 
 
 
-# List all parents of a tag (this heirarchy is a tree structure)
-
-## Procedures
-
-DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_init;
-DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_preseeded;
-DROP PROCEDURE IF EXISTS ancestor_tags_id_rooted_from_id;
-
-delimiter $$
-
-CREATE PROCEDURE ancestor_tags_id_rooted_init(tbl VARBINARY(1024))
-BEGIN
-    set @query = concat("DROP TABLE IF EXISTS ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    set @query = concat("CREATE TEMPORARY TABLE ", tbl, " (node BIGINT UNSIGNED,  parent BIGINT UNSIGNED NOT NULL,  PRIMARY KEY `node2parent` (`node`, `parent`));");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-END $$
-
-CREATE PROCEDURE ancestor_tags_id_rooted_preseeded(tbl VARBINARY(1024))
-BEGIN
-    set @query_b = concat("INSERT IGNORE INTO _tmp SELECT tag_id, parent_id FROM ", tbl, " JOIN tag2parent ON tag_id = parent;");
-    set @query_d = concat("INSERT IGNORE INTO ", tbl, " SELECT node, parent FROM _tmp;");
-    PREPARE stmt_b FROM @query_b;
-    PREPARE stmt_d FROM @query_d;
-    REPEAT
-        TRUNCATE TABLE _tmp;
-        EXECUTE stmt_b;
-        EXECUTE stmt_d;
-    UNTIL ROW_COUNT() = 0
-    END REPEAT;
-END $$
-
-CREATE PROCEDURE ancestor_tags_id_rooted_from_id(tbl VARBINARY(1024),  tag_id INT)
-BEGIN
-    CALL ancestor_tags_id_rooted_init(tbl);
-    set @query = concat("INSERT INTO ", tbl, " SELECT ", tag_id, ", parent_id FROM tag2parent WHERE tag_id=", tag_id, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    DROP TABLE IF EXISTS _tmp;
-    
-    set @query = concat("CREATE TEMPORARY TABLE _tmp LIKE ", tbl, ";");
-    PREPARE stmt FROM @query;
-    EXECUTE stmt;
-    
-    
-    CALL ancestor_tags_id_rooted_preseeded(tbl);
-END $$
-
-delimiter ;
 
 
 CALL ancestor_tags_id_rooted_from_id("foobar", 90);

@@ -53,6 +53,7 @@ void tag2parent(const uint64_t tagid,  const uint64_t parid){
 	
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__insert, tagid, ',', parid, ")");
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__update_perms);
+	compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT INTO tag2parent_tree (tag, parent, depth) SELECT ", tagid, ",parent,depth+1 FROM tag2parent_tree WHERE tag=", parid, " ON DUPLICATE KEY UPDATE tag=tag");
 }
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){

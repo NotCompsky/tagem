@@ -121,6 +121,14 @@ CREATE TABLE tag2parent (
 	FOREIGN KEY (parent_id) REFERENCES _tag (id),
     PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
 );
+CREATE TABLE tag2parent_tree (
+	tag BIGINT UNSIGNED NOT NULL,
+	parent BIGINT UNSIGNED NOT NULL,
+	depth INT UNSIGNED NOT NULL,
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (parent) REFERENCES _tag (id),
+    PRIMARY KEY (tag, parent)
+);
 
 CREATE TABLE file2tag (
     file_id BIGINT UNSIGNED NOT NULL,
