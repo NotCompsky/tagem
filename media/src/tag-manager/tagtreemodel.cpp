@@ -1,4 +1,5 @@
 #include "tagtreemodel.hpp"
+#include "../add_new_tag.hpp"
 
 #include <QByteArray>
 #include <QDebug> // TMP
@@ -104,14 +105,8 @@ bool TagTreeModel::dropMimeData(const QMimeData* data,  Qt::DropAction action,  
 		throw std::runtime_error("parent_tag_id has strangely high value");
 	}
 	
-	constexpr static const char* const sql__insert = "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (";
-	constexpr static const char* const sql__delete = "DELETE FROM tag2parent WHERE parent_id=";
-	static char buf[std::char_traits<char>::length(sql__insert) + 19 + 1 + 19 + 1];
-    compsky::mysql::exec(_mysql::obj, buf,  sql__insert,  parent_tag_id,  ',',  tag_id,  ')');
-    compsky::mysql::exec(_mysql::obj, buf,  sql__delete,  current_parent_id,  " AND tag_id=",  tag_id);
-    
-    qDebug() << "INSERT IGNORE INTO tag2parent (parent_id, tag_id) VALUES (" << parent_tag_id << "," << tag_id << ")";
-    qDebug() << "DELETE FROM tag2parent WHERE parent_id=" << current_parent_id << " AND tag_id=" << tag_id;
+	tag2parent_add(tag_id, parent_tag_id); // Register new parenthood
+	tag2parent_rm(tag_id, current_parent_id);
     
     this->tag2parent[tag_id] = parent_tag_id;
     

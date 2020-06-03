@@ -47,7 +47,7 @@ void PrimaryItem::add_subtag(){
 	const uint64_t child = ask_for_tag("Child Tag");
 	if (child == 0)
 		return;
-	tag2parent(child, this->tag_id);
+	tag2parent_add(child, this->tag_id);
 	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), child, this->tag_id, 0, tag_id2name[child]); // TODO: Get the text of the element to the right, i.e. the name of the tag
 };
 
@@ -55,7 +55,7 @@ void PrimaryItem::add_parent(){
 	const uint64_t parent = ask_for_tag("Parent Tag");
 	if (parent == 0)
 		return;
-	tag2parent(this->tag_id, parent);
+	tag2parent_add(this->tag_id, parent);
 	this->view->add_child_to(static_cast<TagTreeModel*>(this->model()), this->tag_id, parent, 123, tag_id2name[this->tag_id]);
 	// TODO: Get the text of the elements to the right, i.e. the name of the tag, and its count
 }

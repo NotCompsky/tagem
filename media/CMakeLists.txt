@@ -77,13 +77,12 @@ add_executable(tagem-tag-manager
 	src/name_dialog.cpp
 	../include/dropdown_dialog.cpp
 	src/unlink_tag_btn.cpp
-	src/add_new_tag.cpp
 )
 target_compile_definitions(tagem-tag-manager PRIVATE TAG_MANAGER)
 target_include_directories(tagem-tag-manager PRIVATE "../include")
 target_link_libraries(tagem-tag-manager Qt5::Widgets compsky_asciify compsky_mysql)
 target_sources(tagem-tag-manager PRIVATE ${TAG_MANAGER_SOURCES})
-target_sources(tagem-tag-manager PRIVATE ${COMPLETER_SOURCES})
+target_sources(tagem-tag-manager PRIVATE ${COMPLETER_SOURCES} src/add_new_tag.cpp)
 
 add_executable(tagem-add-tag
 	src/main.cpp

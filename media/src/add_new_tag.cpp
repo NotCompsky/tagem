@@ -45,13 +45,22 @@ uint64_t get_id_from_table(const char* const table_name,  const String entry_nam
 	goto goto__returnresultsofthegetidfromtablequery;
 };
 
-void tag2parent(const uint64_t tagid,  const uint64_t parid){
+void tag2parent_add(const uint64_t tagid,  const uint64_t parid){
 	constexpr static const char* const sql__insert =       "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
 	
 	static char buf[500];
 	
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__insert, tagid, ',', parid, ")");
 	compsky::mysql::exec(_mysql::obj,  buf,  "INSERT INTO tag2parent_tree (tag, parent, depth) SELECT ", tagid, ",parent,depth+1 FROM tag2parent_tree WHERE tag=", parid, " ON DUPLICATE KEY UPDATE tag=VALUES(tag)");
+}
+
+void tag2parent_rm(const uint64_t tagid,  const uint64_t parid){
+	constexpr static const char* const sql1 = "DELETE FROM tag2parent WHERE tag_id=";
+	constexpr static const char* const sql2 = " AND parent_id=";
+	
+	static char buf[std::char_traits<char>::length(sql1) + 19 + std::char_traits<char>::length(sql2) + 19 + 1];
+	
+	compsky::mysql::exec(_mysql::obj,  buf,  sql1,  tagid,  sql2,  parid);
 }
 
 uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
@@ -79,7 +88,7 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 		if (_rc != QDialog::Accepted  ||  parent_tagstr == tagstr)
 			continue;
 		if (parent_tagstr.isEmpty()){
-			tag2parent(tagid, 0);
+			tag2parent_add(tagid, 0);
 			return tagid;
 		}
 		parent_tagstr_ba = parent_tagstr.toLocal8Bit();
@@ -97,7 +106,7 @@ uint64_t add_new_tag(const QString& tagstr,  uint64_t tagid){
 			
 			auto parid = get_id_from_table("tag",  parent_tagchars + lastindx);
 			
-			tag2parent(tagid, parid);
+			tag2parent_add(tagid, parid);
 			
 			QString parstr = QString::fromLocal8Bit(parent_tagchars + lastindx);
 			if (!tagslist.contains(parstr))
