@@ -8,6 +8,9 @@
 "#t .tbody .tr{"
 	"width:256px;"
 "}"
+"#d .tbody .tr{"
+	"width:256px;"
+"}"
 ".thumb{"
 	// To enable clicking events to be identified as they should
 	"width:256px;"

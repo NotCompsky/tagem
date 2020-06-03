@@ -110,6 +110,27 @@ R"=========(
 # undef FILES_TBL
 #endif
 
+#ifdef DIRS_TBL
+	"<div class=\"table\" id=\"d\">"
+		"<div class=\"thead\">"
+			"<div class=\"tr\">"
+				"<div class=\"th\">"
+					"Name"
+					"<input type=\"text\" placeholder=\"regexp\"/>"
+					"<button onclick=\"filter_d_tbl('#d');\">Filter</button>"
+				"</div>"
+				"<div class=\"th\">"
+					"Device"
+					"<input type=\"text\" placeholder=\"regexp\"/>"
+					"<button onclick=\"filter_d_tbl('#d');\">Filter</button>"
+				"</div>"
+			"</div>"
+		"</div>"
+		"<div class=\"tbody\"></div>"
+	"</div>"
+# undef DIRS_TBL
+#endif
+
 #ifdef TAGS_TBL
 	"<div id=\"t\" class=\"table\"><div class=\"tbody\"></div></div>"
 # undef TAGS_TBL
