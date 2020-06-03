@@ -1,4 +1,4 @@
-#include "components/pre_body.html"
+#include "components/before_body.html"
 		"<script>"
 			"const file_id = window.location.hash.substr(1);"
 			
@@ -16,18 +16,18 @@
 					"success: function(data){"
 						"var s = \"\";"
 						
-						"$('#thumb').html('<img src=\"' + data[0] + '\"></img>');"
+						"document.getElementById('profile-img').src = data[0];"
 						"const dir_id = data[1];"
 						"file_name = data[2];"
-						"$('#tags').text(data[3]);"
+						"get_json('/a/t.json', function(t){"
+							"display_tags(t, data[3].split(\",\"), \"#tags\");"
+						"});"
 						"mimetype = data[4];"
 						
 						"$('#dir_name').attr(\"href\",  \"/d#\" + dir_id);"
 						"set_dir_name_from_id(dir_id, \"#dir_name\");"
 						
-						"$('#file_name').text(file_name);"
-						
-						"column_id2name(\"/a/t.json\", '#tags', '/t#');"
+						"$('#profile-name').text(file_name);"
 					"},"
 					"error: function(){"
 						"alert(\"Error populating table\");"
@@ -40,13 +40,14 @@
 			"}"
 		"</script>"
 
-		"<h1 id=\"file_name\"></h1>"
-		
-		"<div id=\"thumb\" onclick=\"set_embed_html('#thumb', device_id, $('#dir_name').text(), file_name)\"></div>"
-		
-		"<br/>"
-		
-		"<a id=\"dir_name\"></a>"
-		"<div id=\"tags\"></div>"
 
-#include "components/post_body.html"
+#define WRAPPER1 "tags"
+#define SECTION_BEFORE_FILES_TBL \
+	"<a id=\"dir_name\"></a><br/>" \
+	"<div id=\"view\"></div><br/>" \
+	"<a onclick=\"set_embed_html('#view', device_id, $('#dir_name').text(), file_name)\">View</a>"
+
+#include "tag_socialmediaised.html"
+
+
+#include "components/after_body.html"

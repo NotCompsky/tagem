@@ -327,34 +327,6 @@ body {
   font-family: "DM Sans", sans-serif;
 }
 
-.timeline {
-  display: flex;
-  padding-top: 20px;
-  position: relative;
-  z-index: 2;
-}
-.timeline-left {
-  width: 310px;
-  flex-shrink: 0;
-}
-.timeline-right {
-  flex-grow: 1;
-  padding-left: 20px;
-}
-@media screen and (max-width: 768px) {
-  .timeline {
-    flex-wrap: wrap;
-    flex-direction: column-reverse;
-  }
-  .timeline-right {
-    padding-left: 0;
-    margin-bottom: 20px;
-  }
-  .timeline-left {
-    width: 100%;
-  }
-}
-
 .box {
   background-color: #151728;
   border-radius: 4px;

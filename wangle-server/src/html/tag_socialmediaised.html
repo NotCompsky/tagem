@@ -57,9 +57,10 @@ R"=========(
           <a class="profile-menu-link">More</a>
         </div>
       </div>
-      <div class="timeline">
-        <div class="table" id="f">
 )========="
+
+"<div id=\"tagging\">"
+
 #ifdef TAG_FN1
 # define TAG_FN TAG_FN1
 # define TAGSELECT_ID TAGSELECT_ID1
@@ -68,6 +69,9 @@ R"=========(
 # undef TAG_FN
 # undef TAGSELECT_ID
 # undef TAG_TEXT
+# undef TAG_FN1
+# undef TAGSELECT_ID1
+# undef TAG_TEXT1
 #endif
 
 #ifdef TAG_FN2
@@ -78,6 +82,14 @@ R"=========(
 # undef TAG_FN
 # undef TAGSELECT_ID
 # undef TAG_TEXT
+# undef TAG_FN2
+# undef TAGSELECT_ID2
+# undef TAG_TEXT2
+#endif
+
+#ifdef SECTION_BEFORE_FILES_TBL
+	SECTION_BEFORE_FILES_TBL
+# undef SECTION_BEFORE_FILES_TBL
 #endif
 
 #define TAG_TEXT "Add Tags to Files"
@@ -88,10 +100,18 @@ R"=========(
 #undef TAGSELECT_ID
 #undef TAG_TEXT
 
-#include "components/file_tbl.html"
+"</div>"
+
+#ifdef FILES_TBL
+# include "components/file_tbl.html"
+# undef FILES_TBL
+#endif
+
+#ifdef TAGS_TBL
+	"<div id=\"t\" class=\"table\"><div class=\"tbody\"></div></div>"
+# undef TAGS_TBL
+#endif
 R"=========(
-        </div>
-      </div>
     </div>
   </div>
   <div class="right-side">
@@ -118,12 +138,14 @@ R"=========(
 		"<div class=\"side-title\">" WRAPPER1 "</div>"
 		"<div id=\"" WRAPPER1 "\"></div>"
     "</div>"
+# undef WRAPPER1
 #endif
 #ifdef WRAPPER2
 	"<div class=\"side-wrapper\">"
 		"<div class=\"side-title\">" WRAPPER2 "</div>"
 		"<div id=\"" WRAPPER2 "\"></div>"
     "</div>"
+# undef WRAPPER2
 #endif
 R"=========(
     <div class="search-bar right-search">
