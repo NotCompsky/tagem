@@ -60,7 +60,34 @@ R"=========(
       <div class="timeline">
         <div class="table" id="f">
 )========="
+#ifdef TAG_FN1
+# define TAG_FN TAG_FN1
+# define TAGSELECT_ID TAGSELECT_ID1
+# define TAG_TEXT TAG_TEXT1
+# include "components/add_tag.html"
+# undef TAG_FN
+# undef TAGSELECT_ID
+# undef TAG_TEXT
+#endif
+
+#ifdef TAG_FN2
+# define TAG_FN TAG_FN2
+# define TAGSELECT_ID TAGSELECT_ID2
+# define TAG_TEXT TAG_TEXT2
+# include "components/add_tag.html"
+# undef TAG_FN
+# undef TAGSELECT_ID
+# undef TAG_TEXT
+#endif
+
+#define TAG_TEXT "Add Tags to Files"
+#define TAG_FN "tag_files(get_selected_file_ids(), '#tagselect-files')"
+#define TAGSELECT_ID "tagselect-files"
 #include "components/add_tag.html"
+#undef TAG_FN
+#undef TAGSELECT_ID
+#undef TAG_TEXT
+
 #include "components/file_tbl.html"
 R"=========(
         </div>

@@ -6,12 +6,9 @@
 			"var dir_name;"
 			"var device_id;"
 			"var mimetype;"
-			"var tagselect;"
 			
 			"$(document).ready(function(){" // Only execute after page has finished loading
-				"tagselect = $(\"#tagselect\");"
-				
-				"populate_tagselect(tagselect);"
+				"populate_tagselects();"
 				
 				"$.ajax({"
 					"dataType: \"json\","
@@ -52,5 +49,4 @@
 		"<a id=\"dir_name\"></a>"
 		"<div id=\"tags\"></div>"
 
-#include "components/add_tag.html"
 #include "components/post_body.html"

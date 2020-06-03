@@ -1269,6 +1269,63 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return (n_errors) ? _r::server_error : _r::post_ok;
 	}
 	
+	void tag_parentisation(const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
+		this->mysql_exec(
+			"INSERT INTO tag2parent (tag_id, parent_id) "
+			"SELECT t.id, p.id " // To ensure client cannot modify tags/files they are not authorised to view
+			"FROM tag t "
+			"JOIN tag p "
+			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
+			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
+			"ON DUPLICATE KEY UPDATE tag_id=tag_id"
+		);
+		
+		this->mysql_exec(
+			"INSERT INTO tag2parent_tree (tag, parent, depth) "
+			"SELECT t.id, t2pt.parent, t2pt.depth+1 "
+			"FROM tag t " // Seemingly unnecessary JOINs are to ensure client cannot modify tags/files they are not authorised to view
+			"JOIN tag p "
+			"JOIN tag2parent_tree t2pt ON t2pt.tag=p.id "
+			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
+			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
+			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
+		);
+	}
+	
+	std::string_view post__add_parents_to_tags(const char* s){
+		const char* const tag_ids = get_comma_separated_ints(&s, '/');
+		if (tag_ids == nullptr)
+			return _r::not_found;
+		const size_t tag_ids_len = (uintptr_t)s - (uintptr_t)tag_ids;
+		++s; // Skip trailing slash
+		
+		const char* const parent_ids  = get_comma_separated_ints(&s, ' ');
+		if (parent_ids == nullptr)
+			return _r::not_found;
+		const size_t parent_ids_len  = (uintptr_t)s - (uintptr_t)parent_ids;
+		
+		this->tag_parentisation(tag_ids, parent_ids, tag_ids_len, parent_ids_len);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__add_children_to_tags(const char* s){
+		const char* const tag_ids = get_comma_separated_ints(&s, '/');
+		if (tag_ids == nullptr)
+			return _r::not_found;
+		const size_t tag_ids_len = (uintptr_t)s - (uintptr_t)tag_ids;
+		++s; // Skip trailing slash
+		
+		const char* const child_ids  = get_comma_separated_ints(&s, ' ');
+		if (child_ids == nullptr)
+			return _r::not_found;
+		const size_t child_ids_len  = (uintptr_t)s - (uintptr_t)child_ids;
+		
+		this->tag_parentisation(child_ids, tag_ids, child_ids_len, tag_ids_len);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__add_tag_to_file(const char* s){
 		const char* const file_ids = get_comma_separated_ints(&s, '/');
 		if (file_ids == 0)
@@ -1475,9 +1532,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 											case 'c':
 												switch(*(s++)){
 													case '/':
-														// /t/c/
-														// TODO: Implement client-side
-														return this->post__edit_tag_cmnt(s);
+														// /t/c/ i.e. /t/child/
+														return this->post__add_children_to_tags(s);
+												}
+												break;
+											case 'p':
+												switch(*(s++)){
+													case '/':
+														// /t/c/ i.e. /t/child/
+														return this->post__add_parents_to_tags(s);
 												}
 												break;
 										}

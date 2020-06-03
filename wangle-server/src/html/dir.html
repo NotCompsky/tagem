@@ -1,12 +1,9 @@
 #include "components/before_body.html"
 		"<script>"
-			"var tagselect;"
 			"const tbody = \"#f .tbody\";"
 			
 			"$(document).ready(function(){" // Only execute after page has finished loading
-				"tagselect = $(\"#tagselect\");"
-				
-				"populate_tagselect(tagselect);"
+				"populate_tagselects();"
 				
 				"const dir_id = window.location.hash.substr(1);"
 			
