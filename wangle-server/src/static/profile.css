@@ -27,6 +27,7 @@ body {
 }
 
 #content{
+  left:0px;
   background-color: #151728;
   display: flex;
   max-width:100%;
