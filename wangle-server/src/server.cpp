@@ -1611,7 +1611,19 @@ int main(int argc,  char** argv){
 	const char* str3;
 	constexpr _r::flag::Dict dict;
 	constexpr _r::flag::Arr  arr;
-	_r::init_json(dict, "SELECT id, name, thumbnail, cover FROM tag", _r::tags_json, &id, &name, &str2, &str3);
+	_r::init_json(dict,
+		"SELECT "
+			"t.id,"
+			"t.name,"
+			"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
+			"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
+		"FROM tag t "
+		"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
+		"JOIN tag p ON p.id=t2pt.parent "
+		"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
+		"GROUP BY t.id"
+		, _r::tags_json, &id, &name, &str2, &str3
+	);
 	_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
 	_r::init_json(dict, "SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
 	_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
