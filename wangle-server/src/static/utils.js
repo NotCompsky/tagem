@@ -32,9 +32,9 @@
 				"document.querySelector(selector).innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
 			"}"
 			
-			"document.querySelector(selector).attr(\"onclick\", \"\");"
+			"$(selector).attr(\"onclick\", \"\");"
 		"} else {"
-			"document.querySelector(selector).html(embed_pre + file_name + data[device_id][3]);"
+			"document.querySelector(selector).innerHTML = embed_pre + file_name + data[device_id][3];"
 		"}"
 	"});"
 "}"

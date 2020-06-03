@@ -26,7 +26,7 @@
 	"get_json(url, function(data){"
 		"var s = \"\";"
 		"for (const [id, ls] of Object.entries(data)){"
-			"s +=
+			"s +="
 				"\""
 					"<div class='tr'>"
 					"<div class='td'>"

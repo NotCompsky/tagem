@@ -1,5 +1,5 @@
 "function column_from_timestamp(selector, timestamp_indx){"
-	"document.querySelector(selector).find('.tr').each(function (i, el){"
+	"$(selector).find('.tr').each(function (i, el){"
 		"var $tds = $(this).find('.td');"
 		"var $link = $tds.eq(timestamp_indx);"
 		"$link.value = $link.text();"
@@ -11,7 +11,7 @@
 		"if (col === undefined){"
 			"sub_into(data, document.querySelector(selector), href_prefix);"
 		"} else {"
-			"document.querySelector(selector).find('.tr').each(function (i, el){"
+			"$(selector).find('.tr').each(function (i, el){"
 				"var $tds = $(this).find('.td');"
 				"sub_into(data, $tds.eq(col), href_prefix);"
 			"});"
@@ -95,7 +95,7 @@
 ")(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));"
 
 "function init_tbls(){"
-	"document.getElements$(\".th\").each(function(i,el){el.addEventListener(\"click\", function(){"
+	"$(\".th\").each(function(i,el){el.addEventListener(\"click\", function(){"
 		"const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName(\"tbody\")[0];" // th < tr < thead < table
 		"Array.from(tbl.querySelectorAll('.tr:nth-child(n+1)'))"
 			".sort(comparer(Array.from(el.parentNode.children).indexOf(el), this.asc = !this.asc))"
