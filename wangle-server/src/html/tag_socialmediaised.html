@@ -112,14 +112,20 @@ R"=========(
         <span>▼</span>
       </span>
     </div>
-    <div class="side-wrapper">
-      <div class="side-title">PARENTS</div>
-      <div id="parents"></div>
-    </div>
-    <div class="side-wrapper contacts">
-      <div class="side-title">CHILDREN</div>
-      <div id="children"></div>
-    </div>
+)========="
+#ifdef WRAPPER1
+	"<div class=\"side-wrapper\">"
+		"<div class=\"side-title\">" WRAPPER1 "</div>"
+		"<div id=\"" WRAPPER1 "\"></div>"
+    "</div>"
+#endif
+#ifdef WRAPPER2
+	"<div class=\"side-wrapper\">"
+		"<div class=\"side-title\">" WRAPPER2 "</div>"
+		"<div id=\"" WRAPPER2 "\"></div>"
+    "</div>"
+#endif
+R"=========(
     <div class="search-bar right-search">
       <input type="text" placeholder="Search" />
       <div class="search-bar-svgs">
