@@ -18,16 +18,18 @@ CREATE TABLE _device (
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	protocol INT UNSIGNED NOT NULL,
-	embed_pre  VARBINARY(1000) NOT NULL DEFAULT "", -- eg <iframe width="1280" height="720" src="https://www.youtube.com/embed/
-	embed_post VARBINARY(1000) NOT NULL DEFAULT "", -- eg " frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+	embed_pre  VARBINARY(1000) NOT NULL DEFAULT "",
+	embed_post VARBINARY(1000) NOT NULL DEFAULT "",
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
 INSERT INTO _device (name, protocol) VALUES
-("https://youtube.com/watch?v=", (SELECT id FROM protocol WHERE name="youtube-dl")),
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://github.com/", (SELECT id FROM protocol WHERE name="https://"));
+INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
+("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>'),
+("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), '<iframe width="1280" height="720" src="https://www.youtube.com/embed/', '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>');
 
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
