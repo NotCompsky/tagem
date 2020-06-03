@@ -1,4 +1,4 @@
-#include "components/pre_body.html"
+#include "components/before_body.html"
 		"<script>"
 			"var tagselect;"
 			"const tbody = \"#f .tbody\";"
@@ -28,22 +28,17 @@
 				
 				"var dir_name;"
 				"var device_id;"
-				"set_dir_name_from_id(dir_id, \"#dir_name\");"
+				"set_dir_name_from_id(dir_id, \"#profile-name\");"
 				
-				"display_parent_dirs(dir_id, \"#parent_dirs\");"
+				"display_parent_dirs(dir_id, \"#parents\");"
 			"});"
 			
 			"function get_selected_file_ids(){"
 				"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
 			"}"
 		"</script>"
-		
-#include "components/add_tag.html"
-		"<h2 id=\"dir_name\"></h2>"
-		
-		"<div id=\"parent_dirs\"></div>"
-		
-		"<div =\"table\" id=\"f\">"
-#include "components/file_tbl.html"
-		"</div>"
-#include "components/post_body.html"
+
+
+#include "tag_socialmediaised.html"
+
+#include "components/after_body.html"
