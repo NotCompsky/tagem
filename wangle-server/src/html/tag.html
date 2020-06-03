@@ -1,4 +1,4 @@
-#include "components/pre_body.html"
+#include "components/before_body.html"
 		"<script>"
 			"var tagselect;"
 			"const tbody = \"#f .tbody\";"
@@ -11,11 +11,12 @@
 				"fancify_tbl(tbody);"
 				
 				"var tag_name;"
-				"set_tag_name_from_id(tag_id, \"#tag_name\");"
-				"set_tag_thumb_from_id(tag_id, \"#tthumb\");"
+				"set_tag_name_from_id(tag_id, \"#profile-name\");"
+				"set_tag_thumb_from_id(tag_id, \"#profile-img\");"
+				"set_tag_cover_from_id(tag_id, \"#profile-cover\");"
 				
-				"display_parent_tags(tag_id, \"#parent_tags\");"
-				"display_child_tags(tag_id,  \"#child_tags\");"
+				"display_parent_tags(tag_id, \"#parents\");"
+				"display_child_tags(tag_id,  \"#children\");"
 			"});"
 			
 			"function get_selected_file_ids(){"
@@ -23,17 +24,6 @@
 			"}"
 		"</script>"
 
-		"<div id=\"parent_tags\"></div>"
-		"<div id=\"child_tags\"></div>"
-		"<h1 id=\"tag_name\"></h1>"
-		
-		"<img id=\"tthumb\"></img>"
+#include "tag_socialmediaised.html"
 
-#include "components/add_tag.html"
-		"<h2>"
-			"Tagged Files"
-		"</h2>"
-		"<div class=\"table\" id=\"f\">"
-#include "components/file_tbl.html"
-		"</div>"
-#include "components/post_body.html"
+#include "components/after_body.html"

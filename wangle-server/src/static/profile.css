@@ -1,3 +1,4 @@
+R"=========(
 /*
 Copyright (c) 2020 by Aysenur Turk (https://codepen.io/TurkAysenur/pen/RwWKYMO)
 
@@ -250,7 +251,7 @@ body {
   max-height: 350px;
   z-index: 1;
 }
-.profile-cover {
+#profile-cover {
   position: absolute;
   top: 0;
   left: 0;
@@ -307,7 +308,7 @@ body {
   left: 24px;
 }
 
-.profile-img {
+#profile-img {
   width: 150px;
   height: 150px;
   border-radius: 50%;
@@ -315,7 +316,7 @@ body {
   border: 3px solid #151728;
 }
 
-.profile-name {
+#profile-name {
   margin-left: 24px;
   margin-bottom: 24px;
   font-size: 22px;
@@ -879,12 +880,12 @@ body {
     justify-content: center;
   }
 
-  .profile-img {
+  #profile-img {
     height: 100px;
     width: 100px;
   }
 
-  .profile-name {
+  #profile-name {
     margin: 5px 0;
   }
 
@@ -926,3 +927,4 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+)========="
