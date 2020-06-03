@@ -7,7 +7,7 @@
 
 "function populate_str(url, selector, postfnct){"
 	"get_json(url, function(data){"
-		"$(selector).html(data.join(\",\"));"
+		"document.querySelector(selector).innerHTML = data.join(\",\");"
 		"if (postfnct !== undefined){"
 			"postfnct();"
 		"}"
@@ -27,14 +27,14 @@
 			"}"
 			
 			"if (/.(jpe?g|png|gif)$/.exec(file_name) !== null){"
-				"$(selector).html(\"<img src='\" + src + \"'></img>\");"
+				"document.querySelector(selector).innerHTML = \"<img src='\" + src + \"'/>\";"
 			"} else {"
-				"$(selector).html(\"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\");"
+				"document.querySelector(selector).innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
 			"}"
 			
-			"$(selector).attr(\"onclick\", \"\");"
+			"document.querySelector(selector).attr(\"onclick\", \"\");"
 		"} else {"
-			"$(selector).html(embed_pre + file_name + data[device_id][3]);"
+			"document.querySelector(selector).html(embed_pre + file_name + data[device_id][3]);"
 		"}"
 	"});"
 "}"

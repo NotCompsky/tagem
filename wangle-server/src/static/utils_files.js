@@ -10,7 +10,7 @@
 				
 			"s += \"</div>\";"
 		"}"
-		"$(selector).html(s);"
+		"document.querySelector(selector).innerHTML = s;"
 		"column_id2name(\"/a/t.json\", selector, '/t#', 2);"
 	"});"
 "}"

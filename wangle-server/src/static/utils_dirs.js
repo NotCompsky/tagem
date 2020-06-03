@@ -2,7 +2,7 @@
 	"get_json('/a/d.json', function(data){"
 		"dir_name = data[id][0];"
 		"device_id = data[id][1];"
-		"$(selector).text(dir_name);"
+		"document.querySelector(selector).innerText = dir_name;"
 	"});"
 "}"
 "function display_parent_dirs(dir_id, selector){"
@@ -18,7 +18,7 @@
 			".map(x => \"<a href='/d#\" + x + \"'>\" + data[x][0] + \"</a>\")"
 		";"
 		"arr.pop();" // Remove last element, which is the current directory
-		"$(selector).html(arr.join(\"<br/>\"));"
+		"document.querySelector(selector).innerHTML = arr.join(\"<br/>\");"
 	"});"
 "}"
 
@@ -26,12 +26,15 @@
 	"get_json(url, function(data){"
 		"var s = \"\";"
 		"for (const [id, ls] of Object.entries(data)){"
-			"s += \"<div class='tr'>\";"
-			"s += \"<div class='td'><a href='/d#\" + id + \"'>\" + ls[0] + \"</a></div>\";"
-			"s += \"<div class='td'><a href='/D#\" + ls[1] + \"'>\" + \"Device\" + \"</a></div>\";"
-			"s += \"</div>\";"
+			"s +=
+				"\""
+					"<div class='tr'>"
+					"<div class='td'>"
+					"<a href='/d#"
+				"\" + id + \"'>\" + ls[0] + \"</a></div><div class='td'><a href='/D#\" + ls[1] + \"'>Device</a></div></div>\""
+			";"
 		"}"
-		"$(selector).html(s);"
+		"document.querySelector(selector).innerHTML = s;"
 	"});"
 "}"
 
