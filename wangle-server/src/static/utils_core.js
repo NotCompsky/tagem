@@ -19,3 +19,7 @@
 	"}"
 	"node.html(s);"
 "}"
+
+"function invert_dict(data){"
+	"return Object.fromEntries(Object.entries(data).map(([k, v]) => [v, k]));"
+"}"
