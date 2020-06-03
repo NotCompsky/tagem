@@ -5,9 +5,10 @@
 "#f .tbody .tr{"
 	"width:256px;"
 "}"
-"#f .tbody .tr img{"
+".thumb{"
 	// To enable clicking events to be identified as they should
 	"width:256px;"
+	"max-height:256px;" // Seems to be superfluous
 "}"
 "#f .thead .th{"
 	"display:inline-grid;"

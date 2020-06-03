@@ -478,7 +478,7 @@ body {
   margin-top: 18px;
 }
 
-.user-img {
+.icon{
   border-radius: 50%;
   width: 45px;
   height: 45px;
@@ -729,7 +729,7 @@ body {
   border-bottom: 1px solid #272a3a;
 }
 
-.stories .user-img {
+.stories .icon{
   border: 2px solid #e2b96c;
 }
 

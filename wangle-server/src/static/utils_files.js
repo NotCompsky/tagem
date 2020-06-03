@@ -3,7 +3,7 @@
 		"var s = \"\";"
 		"for (var ls of data){"
 			"s += \"<div class='tr' data-id='\" + ls[1] + \"'>\";"
-				"s += '<div class=\"td\"><img src=\"' + ls[0] + '\"></img></div>';"
+				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + ls[0] + '\"></img></div>';"
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
 				"s += \"<div class='td fname'><a href='/f#\" + ls[1] + \"'>\" + ls[2] + \"</a></div>\";" // File ID and name
 				"s += \"<div class='td'>\" + ls[3] + \"</div>\";"
