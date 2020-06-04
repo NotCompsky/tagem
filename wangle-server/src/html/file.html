@@ -1,6 +1,6 @@
 #include "components/before_body.html"
 		"<script>"
-			"const file_id = window.location.hash.substr(1);"
+			"var file_id;"
 			
 			"var file_name;"
 			"var dir_name;"
@@ -8,9 +8,8 @@
 			"var mimetype;"
 			"var file_tags;"
 			
-			"$(document).ready(function(){" // Only execute after page has finished loading
-				"populate_tagselects();"
-				
+			"function load_f(_file_id){"
+				"file_id = _file_id;"
 				"$.ajax({"
 					"dataType: \"json\","
 					"url: \"/a/f/i/\"+file_id,"
@@ -33,6 +32,11 @@
 						"alert(\"Error populating table\");"
 					"}"
 				"});"
+			"}"
+			
+			"$(document).ready(function(){" // Only execute after page has finished loading
+				"populate_tagselects();"
+				"load_f(window.location.hash.substr(1));"
 			"});"
 		"</script>"
 
