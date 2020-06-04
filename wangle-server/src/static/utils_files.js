@@ -100,7 +100,7 @@
 			"var s = \"\";"
 			
 			"document.getElementById('profile-img').src = data[0];"
-			"const dir_id = data[1];"
+			"dir_id = data[1];"
 			"file_name = data[2];"
 			"file_tags = data[3].split(\",\");"
 			"display_tags(file_tags, \"#tags\");"
