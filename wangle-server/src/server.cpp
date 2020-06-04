@@ -1469,7 +1469,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 									#include "headers/Content-Type/html.c"
 									#include "headers/Cache-Control/1day.c"
 									"\n"
-									#include "html/tag_socialmediaised.html"
+									#include "html/profile.html"
 								;
 							case 'a':
 								switch(*(s++)){
