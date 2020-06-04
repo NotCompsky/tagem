@@ -107,7 +107,7 @@
 			"mimetype = data[4];"
 			
 			"document.getElementById('dir_name').onclick = view_this_files_dir;"
-			"set_dir_name_from_id(dir_id, \"#dir_name\");"
+			"set_dir_name_from_id(dir_id, \"dir_name\");"
 			
 			"$('#profile-name').text(file_name);"
 		"},"

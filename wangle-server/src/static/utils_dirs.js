@@ -1,11 +1,11 @@
-"function set_dir_name_from_id(id, selector){"
+"function set_dir_name_from_id(dir_id, node_id){"
 	"set_var_to_json_then('d', '/a/d.json', function(){"
-		"dir_name = d[id][0];"
-		"device_id = d[id][1];"
-		"document.querySelector(selector).innerText = dir_name;"
+		"dir_name = d[dir_id][0];"
+		"device_id = d[dir_id][1];"
+		"document.getElementById(node_id).innerText = dir_name;"
 	"});"
 "}"
-"function display_parent_dirs(dir_id, selector){"
+"function display_parent_dirs(dir_id){"
 	"set_var_to_json_then('d', '/a/d.json', function(){"
 		"dir_name = d[dir_id][0];"
 		"const dir_name2id = Object.keys(d).reduce(function(obj, key){"
@@ -18,7 +18,7 @@
 			".map(x => \"<a onclick='view_dir(\" + x + \")'>\" + d[x][0] + \"</a>\")"
 		";"
 		"arr.pop();" // Remove last element, which is the current directory
-		"document.querySelector(selector).innerHTML = arr.join(\"<br/>\");"
+		"document.getElementById('parents').innerHTML = arr.join(\"<br/>\");"
 	"});"
 "}"
 
@@ -74,9 +74,9 @@
 	
 	"var dir_name;"
 	"var device_id;"
-	"set_dir_name_from_id(dir_id, \"#profile-name\");"
+	"set_dir_name_from_id(dir_id, 'profile-name');"
 	
-	"display_parent_dirs(dir_id, \"#parents\");"
+	"display_parent_dirs(dir_id);"
 "}"
 "function view_all_dirs(){"
 	"hide('tags-container');"
