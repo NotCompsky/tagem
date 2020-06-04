@@ -608,6 +608,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	MYSQL_RES* res;
 	MYSQL_ROW row;
 	
+	bool regenerate_dir_json;
+	bool regenerate_device_json;
+	bool regenerate_tag_json;
+	bool regenerate_tag2parent_json;
+	
 	constexpr
 	uintptr_t buf_indx(){
 		return (uintptr_t)this->itr - (uintptr_t)this->buf;
@@ -985,13 +990,75 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	constexpr
+	std::string_view get_dir_json(){
+		if (unlikely(this->regenerate_dir_json)){
+			uint64_t id;
+			const char* str1;
+			const char* str2;
+			constexpr _r::flag::Dict dict;
+			_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
+		}
+		return _r::dirs_json;
+	}
+	
+	constexpr
+	std::string_view get_device_json(){
+		if (unlikely(this->regenerate_device_json)){
+			uint64_t id;
+			const char* name;
+			unsigned protocol;
+			const char* embed_pre;
+			const char* embed_post;
+			constexpr _r::flag::Dict dict;
+			_r::init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+		}
+		return _r::devices_json;
+	}
+	
+	constexpr
+	std::string_view get_tag_json(){
+		if (unlikely(this->regenerate_tag_json)){
+			uint64_t id;
+			const char* name;
+			const char* str1;
+			const char* str2;
+			constexpr _r::flag::Dict dict;
+			_r::init_json(dict,
+				"SELECT "
+					"t.id,"
+					"t.name,"
+					"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
+					"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
+				"FROM tag t "
+				"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
+				"JOIN tag p ON p.id=t2pt.parent "
+				"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
+				"GROUP BY t.id"
+				, _r::tags_json, &id, &name, &str1, &str2
+			);
+		}
+		return _r::tags_json;
+	}
+	
+	constexpr
+	std::string_view get_tag2parent_json(){
+		if (unlikely(this->regenerate_tag2parent_json)){
+			uint64_t id;
+			uint64_t id2;
+			constexpr _r::flag::Arr arr;
+			_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
+		}
+		return _r::tag2parent_json;
+	}
+	
+	constexpr
 	std::string_view return_api(const char* s){
 		switch(*(s++)){
 			case 'd':
 				switch(*(s++)){
 					case '.':
 						// /a/d.json
-						return _r::dirs_json;
+						return this->get_dir_json();
 					case '/':
 						switch(*(s++)){
 							case 'i':
@@ -1009,7 +1076,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// D.json
-						return _r::devices_json;
+						return this->get_device_json;
 				}
 				break;
 			case 'f':
@@ -1045,10 +1112,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// m.json
-						return _r::tags_json;
+						return this->get_tag_json;;
 					case '2':
 						// /a/t2p.json
-						return _r::tag2parent_json;
+						return this->get_tag2parent_json;
 					case '/':
 						switch(*(s++)){
 							case 'f':
@@ -1290,6 +1357,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
+		
+		this->regenerate_tag_json = true;
+		this->regenerate_tag2parent_json = true;
 	}
 	
 	std::string_view post__add_parents_to_tags(const char* s){
@@ -1578,6 +1648,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
   public:
 	RTaggerHandler()
+	: regenerate_dir_json(false)
+	, regenerate_device_json(false)
+	, regenerate_tag_json(false)
+	, regenerate_tag2parent_json(false)
 	{
 		this->buf = (char*)malloc(this->buf_sz);
 		if(unlikely(this->buf == nullptr))
@@ -1667,33 +1741,11 @@ int main(int argc,  char** argv){
 	
 	compsky::mysql::init_auth(_mysql::buf, _mysql::buf_sz, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
 	compsky::mysql::login_from_auth(_mysql::mysql_obj, _mysql::auth);
+	
 	uint64_t id;
-	uint64_t id2;
 	const char* name;
-	const char* str2;
-	const char* str3;
 	constexpr _r::flag::Dict dict;
-	constexpr _r::flag::Arr  arr;
-	_r::init_json(dict,
-		"SELECT "
-			"t.id,"
-			"t.name,"
-			"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
-			"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
-		"FROM tag t "
-		"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
-		"JOIN tag p ON p.id=t2pt.parent "
-		"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
-		"GROUP BY t.id"
-		, _r::tags_json, &id, &name, &str2, &str3
-	);
-	_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
 	_r::init_json(dict, "SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
-	_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &name, &id2);
-	unsigned protocol;
-	const char* embed_pre;
-	const char* embed_post;
-	_r::init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
