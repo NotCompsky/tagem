@@ -38,10 +38,6 @@
 	"});"
 "}"
 
-"function filter_d_tbl(selector){"
-	"filter_tbl(selector, [0,1]);"
-"}"
-
 
 "function view_dir(dir_id){"
 	"hide('tags-container');"

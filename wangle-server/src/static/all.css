@@ -2,7 +2,7 @@
 	"background:#cff;"
 "}"
 ".hidden{"
-	"display:none;"
+	"display:none!important;"
 "}"
 
 "#main-container{"

@@ -44,10 +44,6 @@
 "}"
 
 
-"function filter_f_tbl(selector){"
-	"filter_tbl(selector, [1], 2);"
-"}"
-
 "function set_embed_html(selector, device_id, dir_name, file_name){"
 	"set_var_to_json_then('D', \"/a/D.json\", function(){"
 		"const embed_pre = D[device_id][2];"
