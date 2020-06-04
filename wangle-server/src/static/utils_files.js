@@ -30,3 +30,28 @@
 "function filter_f_tbl(selector){"
 	"filter_tbl(selector, [1], 2);"
 "}"
+
+"function set_embed_html(selector, device_id, dir_name, file_name){"
+	"set_var_to_json_then('D', \"/a/D.json\", function(){"
+		"const embed_pre = D[device_id][2];"
+		"if (embed_pre === \"\"){"
+			
+			"var src;"
+			"if (dir_name.startsWith(\"/\")){"
+				"src = \"/S/f/\" + file_id;"
+			"} else {"
+				"src = dir_name + file_name;"
+			"}"
+			
+			"if (/.(jpe?g|png|gif)$/.exec(file_name) !== null){"
+				"document.querySelector(selector).innerHTML = \"<img src='\" + src + \"'/>\";"
+			"} else {"
+				"document.querySelector(selector).innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
+			"}"
+			
+			"$(selector).attr(\"onclick\", \"\");"
+		"} else {"
+			"document.querySelector(selector).innerHTML = embed_pre + file_name + D[device_id][3];"
+		"}"
+	"});"
+"}"
