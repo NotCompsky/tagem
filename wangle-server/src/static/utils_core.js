@@ -13,14 +13,25 @@
 "}"
 "function set_var_to_json_then(var_name, url, fn){"
 	// All global variable are set in the window object
-	"if (window[var_name] === undefined){"
-		"get_json(url, function(data){"
-			"window[var_name] = data;"
-			"fn();"
-		"});"
+	"if (window[var_name] !== undefined){"
+		"fn();"
 		"return;"
 	"}"
-	"fn();"
+	"get_json(url, function(data){"
+		"const additions = get_cookie(var_name + '_adds');"
+		"if (additions !== undefined){"
+			"merge_into(data, JSON.parse(additions));"
+		"}"
+		
+		"const dels = get_cookie(var_name + '_dels');"
+		"if (dels !== undefined){"
+			"del_keys(data, JSON.parse(dels));"
+		"}"
+		
+		"window[var_name] = data;"
+		
+		"fn();"
+	"});"
 "}"
 "function sub_into(data, node, href_prefix){"
 	"var s = \"\";"
@@ -33,4 +44,16 @@
 
 "function invert_dict(data){"
 	"return Object.fromEntries(Object.entries(data).map(([k, v]) => [v, k]));"
+"}"
+
+"function zipsplitarr(keys, vals){"
+	// Convert two arrays into a dictionary
+	// [foo, bar], [ree, gee] -> [[foo,ree], [foo,gee], [bar,ree], [bar,gee]]
+	"const arr = [];"
+	"for (const key of keys){"
+		"for (const val of vals){"
+			"arr.push([key, val]);"
+		"}"
+	"}"
+	"return arr;"
 "}"
