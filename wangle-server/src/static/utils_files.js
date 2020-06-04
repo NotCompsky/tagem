@@ -5,13 +5,13 @@
 			"s += \"<div class='tr' data-id='\" + ls[1] + \"'>\";"
 				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + ls[0] + '\"></img></div>';"
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
-				"s += \"<div class='td fname'><a href='/f#\" + ls[1] + \"'>\" + ls[2] + \"</a></div>\";" // File ID and name
+				"s += \"<div class='td fname'><a onclick='view_file(\" + ls[1] + \")'>\" + ls[2] + \"</a></div>\";" // File ID and name
 				"s += \"<div class='td'>\" + ls[3] + \"</div>\";"
 				
 			"s += \"</div>\";"
 		"}"
 		"document.querySelector(\"#f .tbody\").innerHTML = s;"
-		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", '/t#', 2);"
+		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", 'view_tag', 2);"
 	"});"
 "}"
 
@@ -69,6 +69,50 @@
 			"$(selector).attr(\"onclick\", \"\");"
 		"} else {"
 			"document.querySelector(selector).innerHTML = embed_pre + file_name + D[device_id][3];"
+		"}"
+	"});"
+"}"
+
+"function view_this_files_dir(){"
+	"view_dir(dir_id);"
+"}"
+"function view_file(_file_id){"
+	"file_id = _file_id;"
+	"unhide('tags-container');"
+	"hide('parents-container');"
+	"hide('children-container');"
+	"hide('f');"
+	"hide('d');"
+	"hide('t');"
+	"document.getElementById('before-files-tbl').innerHTML = '<a id=\"dir_name\"></a><br/><div id=\"view\"></div><br/><a onclick=\"set_embed_html(\\'#view\\', device_id, document.getElementById(\\'dir_name\\').textContent, file_name)\">View</a>';"
+	"unhide('before-files-tbl');"
+	"unhide('tagselect-files-container');"
+	"hide('tagselect-self-p-container');"
+	"hide('tagselect-self-c-container');"
+	
+	"file_tagger_fn = after_tagged_this_file;"
+	"get_file_ids = get_file_id;"
+	
+	"$.ajax({"
+		"dataType: \"json\","
+		"url: \"/a/f/i/\"+file_id,"
+		"success: function(data){"
+			"var s = \"\";"
+			
+			"document.getElementById('profile-img').src = data[0];"
+			"const dir_id = data[1];"
+			"file_name = data[2];"
+			"file_tags = data[3].split(\",\");"
+			"display_tags(file_tags, \"#tags\");"
+			"mimetype = data[4];"
+			
+			"document.getElementById('dir_name').onclick = view_this_files_dir;"
+			"set_dir_name_from_id(dir_id, \"#dir_name\");"
+			
+			"$('#profile-name').text(file_name);"
+		"},"
+		"error: function(){"
+			"alert(\"Error populating table\");"
 		"}"
 	"});"
 "}"

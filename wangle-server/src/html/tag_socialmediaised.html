@@ -1,3 +1,28 @@
+#include "components/before_body.html"
+"<script>"
+	"var file_id;"
+	"var file_name;"
+	"var dir_name;"
+	"var device_id;"
+	"var mimetype;"
+	"var file_tags;"
+	
+	"$(document).ready(function(){" // Only execute after page has finished loading
+		"hide('tags-container');"
+		"hide('parents-container');"
+		"hide('children-container');"
+		"hide('f');"
+		"hide('d');"
+		"hide('t');"
+		"hide('before-files-tbl');"
+		"hide('tagselect-files-container');"
+		"hide('tagselect-self-p-container');"
+		"hide('tagselect-self-c-container');"
+		"populate_tagselects();"
+	"});"
+"</script>"
+
+
 R"=========(
 <!--
 Copyright (c) 2020 by Aysenur Turk (https://codepen.io/TurkAysenur/pen/RwWKYMO)
@@ -45,7 +70,7 @@ R"=========(
     <div class="main-container">
       <div class="profile">
         <div class="profile-avatar">
-          <img id="profile-img"/>
+          <img id="profile-img" src="/favicon.ico"/>
           <div id="profile-name"></div>
         </div>
         <img id="profile-cover"/>
@@ -140,18 +165,14 @@ R"=========(
       </span>
     </div>
 )========="
-	"<div class=\"side-wrapper\">"
-		"<div class=\"side-title\">tags</div>"
-		"<div id=\"tags\"></div>"
-    "</div>"
-	"<div class=\"side-wrapper\">"
-		"<div class=\"side-title\">parents</div>"
-		"<div id=\"parents\"></div>"
-    "</div>"
-    "<div class=\"side-wrapper\">"
-		"<div class=\"side-title\">children</div>"
-		"<div id=\"children\"></div>"
-    "</div>"
+#define SIDE_WRAPPER "parents"
+#include "components/side-wrapper.html"
+
+#define SIDE_WRAPPER "children"
+#include "components/side-wrapper.html"
+
+#define SIDE_WRAPPER "tags"
+#include "components/side-wrapper.html"
 R"=========(
     <div class="search-bar right-search">
       <input type="text" placeholder="Search" />
@@ -170,3 +191,4 @@ R"=========(
   </div>
 </div>
 )========="
+#include "components/after_body.html"

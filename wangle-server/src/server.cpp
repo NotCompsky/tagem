@@ -1460,7 +1460,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 									#include "headers/Content-Type/html.c"
 									#include "headers/Cache-Control/1day.c"
 									"\n"
-									#include "html/root.html"
+									#include "html/tag_socialmediaised.html"
 								;
 							case 'a':
 								switch(*(s++)){
@@ -1475,77 +1475,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 										return this->return_img(s);
 								}
 								break;
-							case 't':
-								switch(*(s++)){
-									case '/':
-										switch(*(s++)){
-											case ' ':
-												// /t/
-												return
-													#include "headers/return_code/OK.c"
-													#include "headers/Content-Type/html.c"
-													#include "headers/Cache-Control/1day.c"
-													"\n"
-													#include "html/tags.html"
-												;
-										}
-										break;
-									case ' ':
-										// /t#1234
-										return
-											#include "headers/return_code/OK.c"
-											#include "headers/Content-Type/html.c"
-											#include "headers/Cache-Control/1day.c"
-											"\n"
-											#include "html/tag.html"
-										;
-								}
-								break;
-							case 'd':
-								switch(*(s++)){
-									case ' ':
-										// /d#1234
-										return
-											#include "headers/return_code/OK.c"
-											#include "headers/Content-Type/html.c"
-											#include "headers/Cache-Control/1day.c"
-											"\n"
-											#include "html/dir.html"
-										;
-									case '/':
-										return
-											#include "headers/return_code/OK.c"
-											#include "headers/Content-Type/html.c"
-											#include "headers/Cache-Control/1day.c"
-											"\n"
-											#include "html/dirs.html"
-										;
-									break;
-								}
 							case 'f':
 								switch(*(s++)){
-									case ' ':
-										// /f#1234
-										return
-											#include "headers/return_code/OK.c"
-											#include "headers/Content-Type/html.c"
-											#include "headers/Cache-Control/1day.c"
-											"\n"
-											#include "html/file.html"
-										;
-									case '/':
-										switch(*(s++)){
-											case ' ':
-												// /f/
-												return std::string_view(
-													#include "headers/return_code/OK.c"
-													#include "headers/Content-Type/html.c"
-													#include "headers/Cache-Control/1day.c"
-													"\n"
-													#include "html/files.html"
-												);
-										}
-										break;
 									case 'a':
 										switch(*(s++)){
 											case 'v':
