@@ -11,7 +11,7 @@
 			"s += \"</div>\";"
 		"}"
 		"document.querySelector(selector).innerHTML = s;"
-		"column_id2name(\"/a/t.json\", selector, '/t#', 2);"
+		"column_id2name('t', \"/a/t.json\", selector, '/t#', 2);"
 	"});"
 "}"
 "function tag_files(file_ids, selector){"

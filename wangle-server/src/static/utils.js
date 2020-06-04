@@ -1,3 +1,4 @@
+#include "utils_global_vars.js"
 #include "utils_core.js"
 #include "utils_tags.js"
 #include "utils_dirs.js"
@@ -15,8 +16,8 @@
 "}"
 
 "function set_embed_html(selector, device_id, dir_name, file_name){"
-	"get_json(\"/a/D.json\", function(data){"
-		"const embed_pre = data[device_id][2];"
+	"set_var_to_json_then('D', \"/a/D.json\", function(){"
+		"const embed_pre = D[device_id][2];"
 		"if (embed_pre === \"\"){"
 			
 			"var src;"
@@ -34,7 +35,7 @@
 			
 			"$(selector).attr(\"onclick\", \"\");"
 		"} else {"
-			"document.querySelector(selector).innerHTML = embed_pre + file_name + data[device_id][3];"
+			"document.querySelector(selector).innerHTML = embed_pre + file_name + D[device_id][3];"
 		"}"
 	"});"
 "}"
