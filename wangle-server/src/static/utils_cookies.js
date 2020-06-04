@@ -16,20 +16,7 @@ function unset_cookie(name){
 
 function merge_into(dict, d2){
 	for (const [key, value] of Object.entries(d2)){
-		console.log("dict[key] =", dict[key]);
-		console.log("merging", key, value);
 		dict[key] = value;
-		console.log("dict[key] =", dict[key]);
-		if (window["t2p"] === undefined){
-			console.log("window[t2p] undefined");
-		} else {
-			console.log("window[t2p][key] =", window["t2p"][key]);
-		}
-		if (t2p === undefined){
-			console.log("t2p undefined");
-		} else {
-			console.log("t2p[key] =", t2p[key]);
-		}
 	}
 }
 
@@ -40,8 +27,6 @@ function del_keys(dict, keys){
 }
 
 function add_to_json_then(var_name, dict, url, fn){
-	console.log("add_to_json_then", var_name, dict);
-	//console.log(t2p.filter(x => x[0] == tag_id).map(([x,y]) => [t[x][0], t[y][0]]));
 	// dict is the dictionary of additions to the main dictionary
 	// The main dictionary is referred to by window[var_name]
 	if (dict instanceof Array){
@@ -49,7 +34,6 @@ function add_to_json_then(var_name, dict, url, fn){
 	} else {
 		merge_into(window[var_name], dict);
 	}
-	//console.log(t2p.filter(x => x[0] == tag_id).map(([x,y]) => [t[x][0], t[y][0]]));
 	
 	const cookie_name = var_name + '_adds';
 	const cookie_val = get_cookie(cookie_name);
@@ -69,6 +53,7 @@ function add_to_json_then(var_name, dict, url, fn){
 		// If above this limit, just get an entirely new JSON
 		get_json(url + '?' + (new Date().getTime()), function(data){
 			// Cache buster url parameter
+			console.log("Cache busting", var_name);
 			window[var_name] = data;
 			fn();
 		});
@@ -103,6 +88,7 @@ function rm_from_json_then(var_name, keys, url, fn){
 		// If above this limit, just get an entirely new JSON
 		get_json(url + '?' + (new Date().getTime()), function(data){
 			// Cache buster url parameter
+			console.log("Cache busting", var_name);
 			window[var_name] = data;
 			fn();
 		});
