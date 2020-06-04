@@ -517,7 +517,7 @@ namespace _r {
 		constexpr static const char* const _headers =
 			#include "headers/return_code/OK.c"
 			#include "headers/Content-Type/json.c"
-			#include "headers/Cache-Control/1day.c"
+			#include "headers/Cache-Control/0.c"
 			"\n"
 		;
 		
@@ -989,7 +989,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	constexpr
 	std::string_view get_dir_json(){
 		if (unlikely(this->regenerate_dir_json)){
 			uint64_t id;
@@ -997,11 +996,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str2;
 			constexpr _r::flag::Dict dict;
 			_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
+			this->regenerate_dir_json = false;
 		}
 		return _r::dirs_json;
 	}
 	
-	constexpr
 	std::string_view get_device_json(){
 		if (unlikely(this->regenerate_device_json)){
 			uint64_t id;
@@ -1011,11 +1010,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* embed_post;
 			constexpr _r::flag::Dict dict;
 			_r::init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+			this->regenerate_device_json = false;
 		}
 		return _r::devices_json;
 	}
 	
-	constexpr
 	std::string_view get_tag_json(){
 		if (unlikely(this->regenerate_tag_json)){
 			uint64_t id;
@@ -1036,17 +1035,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"GROUP BY t.id"
 				, _r::tags_json, &id, &name, &str1, &str2
 			);
+			this->regenerate_tag_json = false;
 		}
 		return _r::tags_json;
 	}
 	
-	constexpr
 	std::string_view get_tag2parent_json(){
 		if (unlikely(this->regenerate_tag2parent_json)){
 			uint64_t id;
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
+			this->regenerate_tag2parent_json = false;
 		}
 		return _r::tag2parent_json;
 	}
@@ -1076,7 +1076,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// D.json
-						return this->get_device_json;
+						return this->get_device_json();
 				}
 				break;
 			case 'f':
@@ -1112,10 +1112,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// m.json
-						return this->get_tag_json;;
+						return this->get_tag_json();
 					case '2':
 						// /a/t2p.json
-						return this->get_tag2parent_json;
+						return this->get_tag2parent_json();
 					case '/':
 						switch(*(s++)){
 							case 'f':
@@ -1648,10 +1648,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
   public:
 	RTaggerHandler()
-	: regenerate_dir_json(false)
-	, regenerate_device_json(false)
-	, regenerate_tag_json(false)
-	, regenerate_tag2parent_json(false)
+	: regenerate_dir_json(true)
+	, regenerate_device_json(true)
+	, regenerate_tag_json(true)
+	, regenerate_tag2parent_json(true)
 	{
 		this->buf = (char*)malloc(this->buf_sz);
 		if(unlikely(this->buf == nullptr))
