@@ -41,6 +41,11 @@ namespace _mysql {
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
+static bool regenerate_dir_json = true;
+static bool regenerate_device_json = true;
+static bool regenerate_tag_json = true;
+static bool regenerate_tag2parent_json = true;
+
 enum FunctionSuccessness {
 	ok,
 	malicious_request,
@@ -276,6 +281,7 @@ namespace _r {
 	
 	constexpr static const std::string_view post_ok =
 		#include "headers/return_code/OK.c"
+		#include "headers/Content-Type/text.c"
 		"\n"
 		"OK"
 	;
@@ -501,53 +507,6 @@ namespace _r {
 	char closer(const flag::Arr& _flag){
 		return ']';
 	}
-	
-	template<typename FlagType,  typename... Args>
-	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
-		MYSQL_RES* mysql_res;
-		MYSQL_ROW mysql_row;
-		
-		compsky::mysql::query(
-			_mysql::mysql_obj,
-			mysql_res,
-			buf,
-			qry
-		);
-		
-		constexpr static const char* const _headers =
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			#include "headers/Cache-Control/0.c"
-			"\n"
-		;
-		
-		size_t sz = 0;
-		
-		sz += std::char_traits<char>::length(_headers);
-		sz += 1;
-		while(compsky::mysql::assign_next_row__no_free(mysql_res, &mysql_row, args...)){
-			sz += strlens(_flag, args...);;
-		}
-		sz += 1;
-		sz += 1;
-		
-		char* itr = (char*)malloc(sz);
-		dst = const_cast<char*>(itr);
-		if(unlikely(itr == nullptr))
-			exit(4096);
-		
-		compsky::asciify::asciify(itr, _headers);
-		compsky::asciify::asciify(itr, opener(_flag));
-		mysql_data_seek(mysql_res, 0); // Reset to first result
-		while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, args...)){
-			asciifiis(_flag, itr, args...);
-		}
-		if (unlikely(*(itr - 1) == ','))
-			// If there was at least one iteration of the loop...
-			--itr; // ...wherein a trailing comma was left
-		*(itr++) = closer(_flag);
-		*itr = 0;
-	}
 }
 
 namespace _method {
@@ -634,10 +593,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		compsky::asciify::asciify(this->itr,  args...);
 	};
 	
-	void mysql_query_using_buf(){
+	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(_mysql::mysql_obj, this->res, this->buf, this->buf_indx());
+		compsky::mysql::query_buffer(_mysql::mysql_obj, this->res, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_query_using_buf(){
+		this->mysql_query_buf(this->buf, this->buf_indx());
 	}
 	
 	void mysql_exec_using_buf(){
@@ -674,6 +637,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		mysql_free_result(this->res);
 	}
 	
+	void mysql_seek(const int i){
+		mysql_data_seek(this->res, i);
+	}
+	
 	std::string_view get_buf_as_string_view(){
 		return std::string_view(this->buf, this->buf_indx());
 	}
@@ -698,6 +665,50 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		cached_IDs[indx].n_requests = n_requests;
 		cached_IDs[indx].user_id = user_id;
 		cached_IDs[indx].sz = sz;
+	}
+	
+	template<typename FlagType,  typename... Args>
+	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
+		using namespace _r;
+		
+		MYSQL_RES* mysql_res;
+		MYSQL_ROW mysql_row;
+		
+		this->mysql_query_buf(qry, strlen(qry));
+		
+		constexpr static const char* const _headers =
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			#include "headers/Cache-Control/1day.c"
+			"\n"
+		;
+		
+		size_t sz = 0;
+		
+		sz += std::char_traits<char>::length(_headers);
+		sz += 1;
+		while(this->mysql_assign_next_row__no_free(args...)){
+			sz += strlens(_flag, args...);;
+		}
+		sz += 1;
+		sz += 1;
+		
+		char* itr = (char*)malloc(sz);
+		dst = const_cast<char*>(itr);
+		if(unlikely(itr == nullptr))
+			exit(4096);
+		
+		compsky::asciify::asciify(itr, _headers);
+		compsky::asciify::asciify(itr, opener(_flag));
+		this->mysql_seek(0); // Reset to first result
+		while(this->mysql_assign_next_row(args...)){
+			asciifiis(_flag, itr, args...);
+		}
+		if (unlikely(*(itr - 1) == ','))
+			// If there was at least one iteration of the loop...
+			--itr; // ...wherein a trailing comma was left
+		*(itr++) = closer(_flag);
+		*itr = 0;
 	}
 	
 	std::string_view file_thumbnail(const char* md5hex){
@@ -990,39 +1001,42 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_dir_json(){
-		if (unlikely(this->regenerate_dir_json)){
+		if (unlikely(regenerate_dir_json)){
+			// WARNING: Race condition since init_json uses global mysql objects
+			// TODO: Eliminate race with mutex
+			regenerate_dir_json = false;
 			uint64_t id;
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			_r::init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
-			this->regenerate_dir_json = false;
+			this->init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
 		}
 		return _r::dirs_json;
 	}
 	
 	std::string_view get_device_json(){
-		if (unlikely(this->regenerate_device_json)){
+		if (unlikely(regenerate_device_json)){
+			regenerate_device_json = false;
 			uint64_t id;
 			const char* name;
 			unsigned protocol;
 			const char* embed_pre;
 			const char* embed_post;
 			constexpr _r::flag::Dict dict;
-			_r::init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
-			this->regenerate_device_json = false;
+			this->init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 		}
 		return _r::devices_json;
 	}
 	
 	std::string_view get_tag_json(){
-		if (unlikely(this->regenerate_tag_json)){
+		if (unlikely(regenerate_tag_json)){
+			regenerate_tag_json = false;
 			uint64_t id;
 			const char* name;
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			_r::init_json(dict,
+			this->init_json(dict,
 				"SELECT "
 					"t.id,"
 					"t.name,"
@@ -1035,18 +1049,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"GROUP BY t.id"
 				, _r::tags_json, &id, &name, &str1, &str2
 			);
-			this->regenerate_tag_json = false;
 		}
 		return _r::tags_json;
 	}
 	
 	std::string_view get_tag2parent_json(){
-		if (unlikely(this->regenerate_tag2parent_json)){
+		if (unlikely(regenerate_tag2parent_json)){
+			regenerate_tag2parent_json = false;
 			uint64_t id;
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
-			_r::init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
-			this->regenerate_tag2parent_json = false;
+			this->init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
 		}
 		return _r::tag2parent_json;
 	}
@@ -1358,8 +1371,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
 		
-		this->regenerate_tag_json = true;
-		this->regenerate_tag2parent_json = true;
+		regenerate_tag_json = true;
+		regenerate_tag2parent_json = true;
 	}
 	
 	std::string_view post__add_parents_to_tags(const char* s){
@@ -1648,10 +1661,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
   public:
 	RTaggerHandler()
-	: regenerate_dir_json(true)
-	, regenerate_device_json(true)
-	, regenerate_tag_json(true)
-	, regenerate_tag2parent_json(true)
 	{
 		this->buf = (char*)malloc(this->buf_sz);
 		if(unlikely(this->buf == nullptr))
@@ -1742,11 +1751,6 @@ int main(int argc,  char** argv){
 	compsky::mysql::init_auth(_mysql::buf, _mysql::buf_sz, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
 	compsky::mysql::login_from_auth(_mysql::mysql_obj, _mysql::auth);
 	
-	uint64_t id;
-	const char* name;
-	constexpr _r::flag::Dict dict;
-	_r::init_json(dict, "SELECT id, name FROM protocol", _r::protocols_json, &id, &name);
-
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
 	server.bind(port_n);
