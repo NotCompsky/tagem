@@ -157,8 +157,14 @@ const char* get_comma_separated_ints(const char** str,  const char separator){
 	}
 }
 
+enum GetRangeHeaderResult {
+	none,
+	valid,
+	invalid
+};
+
 constexpr
-bool get_range(const char* headers,  size_t& from,  size_t& to){
+GetRangeHeaderResult get_range(const char* headers,  size_t& from,  size_t& to){
 	while(*(++headers) != 0){ // NOTE: headers is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
 		if (*headers != '\n')
 			continue;
@@ -224,16 +230,16 @@ bool get_range(const char* headers,  size_t& from,  size_t& to){
 		from = a2n<size_t>(&headers);
 		
 		if (*headers != '-')
-			return true;
+			return GetRangeHeaderResult::invalid;
 		
 		++headers; // Skip '-' - a2n is safe even if the next character is null
 		to = a2n<size_t>(headers);
 		
-		return false;
+		return GetRangeHeaderResult::valid;
 	}
 	from = 0;
 	to = 0;
-	return false;
+	return GetRangeHeaderResult::none;
 }
 
 FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth,  const bool overwrite_existing){
@@ -1160,7 +1166,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view stream_file(const char* file_id){
-		constexpr static const size_t block_sz = 4096 * 1024 * 20; // ~20 MiB // WARNING: Files larger than this must be streamed in chunks, but are currently not accepted by browsers.
+		constexpr static const size_t block_sz = 1024 * 500; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
 		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
@@ -1168,17 +1174,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		size_t from;
 		size_t to;
-		if (unlikely(get_range(file_id, from, to))){
-			printf("from %lu to %lu (invalid)\n", from, to);
+		const GetRangeHeaderResult rc = get_range(file_id, from, to);
+		if (unlikely(rc == GetRangeHeaderResult::invalid)){
 			return _r::not_found;
 		}
 		
-		printf("from %lu to %lu\n", from, to);
-		
 		if (unlikely( (to != 0) and (to <= from) ))
 			return _r::not_found;
-		
-		printf("START OF REQUEST HEADERS\n%s\nEND OF REQUEST HEADERS\n", file_id);
 		
 		this->mysql_query(
 			"SELECT m.name, CONCAT(d.name, f.name) "
@@ -1195,8 +1197,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		}
 		
-		printf("file_path = %s\n", file_path);
-		
 		FILE* const f = fopen(file_path, "rb");
 		if (f == nullptr){
 			fprintf(stderr, "Cannot open file: %s\n", file_path);
@@ -1211,9 +1211,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::server_error;
 		}
 		const size_t f_sz = st.st_size;
-		printf("File sz: %lu\n", f_sz);
 		
-		printf("Seeking\n");
+		this->reset_buf_index();
+		
+		if (rc == GetRangeHeaderResult::none){
+			this->asciify(
+				"HTTP/1.1 20", (rc == GetRangeHeaderResult::none)?"0 OK":"6 PARTIAL CONTENT", "\n"
+				"Accept-Ranges: bytes\n"
+				"Content-Type: ", mimetype, '\n',
+				"Content-Length: ", f_sz, '\n',
+				 '\n'
+			);
+			const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
+			return std::string_view(this->buf,  headers_len);
+		}
+		
 		if (unlikely(fseek(f, from, SEEK_SET))){
 			this->mysql_free_res();
 			return _r::server_error;
@@ -1223,22 +1235,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const size_t bytes_read = fread(this->buf + room_for_headers,  1,  bytes_to_read,  f);
 		fclose(f);
 		
-		printf("Read %lu bytes\n", bytes_read);
+		const size_t end_byte = from + bytes_read;
 		
-		this->reset_buf_index();
 		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Cache-Control/1day.c"
-			// TODO: Get streaming working. Currently only accepted by browser if entire file is sent.
-			//"Transfer-Encoding: chunked\n" // WARNING: This is only valid for HTTP/1.1
-			//"Connection: keep-alive\n"
+			"HTTP/1.1 20", (end_byte == f_sz)?"0 OK":"6 Partial Content", "\n"
 			"Accept-Ranges: bytes\n"
 			"Content-Type: ", mimetype, '\n',
-			"Content-Range: bytes ", from, '-', from + bytes_read, '/', f_sz, '\n',
-			"Content-Length: ", bytes_read, '\n', '\n'
+			"Content-Range: bytes ", from, '-', end_byte - 1, '/', f_sz, '\n',
+			// The minus one is because the range of n bytes is from zeroth byte to the (n-1)th byte
+			"Content-Length: ", bytes_read, '\n',
+			'\n'
 		);
+		
 		const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
-		printf("Returning headers: %.*s\n",  (int)headers_len,  this->buf);
 		memcpy(this->buf + room_for_headers - headers_len,  this->buf,  headers_len);
 		
 		this->mysql_free_res();
