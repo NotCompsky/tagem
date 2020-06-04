@@ -58,9 +58,10 @@ namespace cached_stuff {
 	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
 	constexpr static const size_t max_buf_len = 1  +  100 * (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)  +  1  +  1; // == 25803
 	static char cache[n_cached * max_buf_len];
-	enum {
+	enum CacheID {
 		files_given_tag,
 		files_given_dir,
+		files_given_ids,
 		tags_given_file,
 		dir_info,
 		file_info,
@@ -884,31 +885,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view files_given_tag(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
-		
-		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-		
-		this->mysql_query(
-			"SELECT "
-				FILE_THUMBNAIL
-				"f.id,"
-				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id)"
-			"FROM file f "
-			"JOIN file2tag f2t ON f2t.file_id=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
-			"WHERE f.id IN ("
-				"SELECT file_id "
-				"FROM file2tag "
-				"WHERE tag_id=", id,
-			")"
-			"GROUP BY f.id "
-			"LIMIT 100"
-		);
-		
+	void asciify_file_info(){
 		//const char* protocol_id;
 		const char* md5_hex;
 		//const char* dir_id;
@@ -941,8 +918,62 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			--this->itr; // ...wherein a trailing comma was left
 		this->asciify(']');
 		*this->itr = 0;
+	}
+	
+	std::string_view files_given_tag(const char* id_str){
+		const uint64_t id = a2n<uint64_t>(id_str);
+		
+		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
+			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+		
+		this->mysql_query(
+			"SELECT "
+				FILE_THUMBNAIL
+				"f.id,"
+				"f.name,"
+				"GROUP_CONCAT(f2t.tag_id)"
+			"FROM file f "
+			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"WHERE f.id IN ("
+				"SELECT file_id "
+				"FROM file2tag "
+				"WHERE tag_id=", id,
+			")"
+			"GROUP BY f.id "
+			"LIMIT 100"
+		);
+		
+		this->asciify_file_info();
 		
 		this->add_buf_to_cache(cached_stuff::files_given_tag, id);
+		
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view files_given_ids(const char* s){
+		const char* const file_ids  = get_comma_separated_ints(&s, ' ');
+		if (file_ids == nullptr)
+			return _r::not_found;
+		const size_t file_ids_len  = (uintptr_t)s - (uintptr_t)file_ids;
+		
+		this->mysql_query(
+			"SELECT "
+				FILE_THUMBNAIL
+				"f.id,"
+				"f.name,"
+				"GROUP_CONCAT(f2t.tag_id)"
+			"FROM file f "
+			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			"GROUP BY f.id "
+			"LIMIT 100"
+		);
+		
+		this->asciify_file_info();
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1104,6 +1135,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						switch(*(s++)){
 							case 'i':
 								switch(*(s++)){
+									case 'd':
+										switch(*(s++)){
+											case '/':
+												// /f/id/123,456,789
+												return this->files_given_ids(s);
+										}
+										break;
 									case '/':
 										// /a/f/i/
 										return file_info(s);

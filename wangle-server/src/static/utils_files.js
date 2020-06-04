@@ -114,3 +114,26 @@
 		"}"
 	"});"
 "}"
+
+"function view_files(ls){"
+	"hide('tags-container');"
+	"hide('parents-container');"
+	"hide('children-container');"
+	"hide('before-files-tbl');"
+	"unhide('f');"
+	"hide('d');"
+	"hide('t');"
+	"unhide('tagselect-files-container');"
+	"hide('tagselect-self-p-container');"
+	"hide('tagselect-self-c-container');"
+	
+	"file_tagger_fn = after_tagged_selected_files;"
+	"get_file_ids = get_selected_file_ids;"
+	
+	"populate_f_table('/a/f/id/' + ls.join(\",\"));"
+	"fancify_tbl(\"#f .tbody\");"
+	
+	"window.location.hash = '';"
+	
+	"document.getElementById(\"profile-name\").textContent = \"Files\";"
+"}"
