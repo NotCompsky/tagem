@@ -51,7 +51,7 @@ void tag2parent_add(const uint64_t tagid,  const uint64_t parid){
 	static char buf[500];
 	
 	compsky::mysql::exec(_mysql::obj,  buf,  sql__insert, tagid, ',', parid, ")");
-	compsky::mysql::exec(_mysql::obj,  buf,  "INSERT INTO tag2parent_tree (tag, parent, depth) SELECT ", tagid, ",parent,depth+1 FROM tag2parent_tree WHERE tag=", parid, " ON DUPLICATE KEY UPDATE tag=VALUES(tag)");
+	compsky::mysql::exec(_mysql::obj,  buf,  "INSERT INTO tag2parent_tree (tag, parent, depth) SELECT ", tagid, ',', tagid, ",0 UNION SELECT ", tagid",parent,depth+1 FROM tag2parent_tree WHERE tag=", parid, " ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, VALUES(depth))");
 }
 
 void tag2parent_rm(const uint64_t tagid,  const uint64_t parid){
