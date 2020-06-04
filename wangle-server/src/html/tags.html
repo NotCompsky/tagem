@@ -1,12 +1,24 @@
 #include "components/before_body.html"
 
 		"<script>"
-			"$(document).ready(function(){"
+			"function view_all_tags(){"
+				"hide('tags');"
+				"hide('parents');"
+				"hide('children');"
+				"hide('before-files-tbl');"
+				"hide('f');"
+				"hide('d');"
+				"unhide('t');"
+				"hide('tagselect-files');"
+				"hide('tagselect-self-p');"
+				"hide('tagselect-self-c');"
 				"populate_t_id2name_table('#t .tbody');"
+			"}"
+			"$(document).ready(function(){"
+				"view_all_tags();"
 			"});"
 		"</script>"
 
-#define TAGS_TBL
 #include "tag_socialmediaised.html"
 
 #include "components/after_body.html"

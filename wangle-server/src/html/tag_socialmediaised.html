@@ -61,61 +61,44 @@ R"=========(
 
 "<div id=\"tagging\">"
 
-#ifdef TAG_FN1
-# define TAG_FN TAG_FN1
-# define TAGSELECT_ID TAGSELECT_ID1
-# define TAG_TEXT TAG_TEXT1
-# include "components/add_tag.html"
-# undef TAG_FN
-# undef TAGSELECT_ID
-# undef TAG_TEXT
-# undef TAG_FN1
-# undef TAGSELECT_ID1
-# undef TAG_TEXT1
-#endif
-
-#ifdef TAG_FN2
-# define TAG_FN TAG_FN2
-# define TAGSELECT_ID TAGSELECT_ID2
-# define TAG_TEXT TAG_TEXT2
-# include "components/add_tag.html"
-# undef TAG_FN
-# undef TAGSELECT_ID
-# undef TAG_TEXT
-# undef TAG_FN2
-# undef TAGSELECT_ID2
-# undef TAG_TEXT2
-#endif
-
-#ifdef SECTION_BEFORE_FILES_TBL
-	SECTION_BEFORE_FILES_TBL
-# undef SECTION_BEFORE_FILES_TBL
-#endif
-
-#ifdef FILE_TAGGER_TEXT
-# define TAG_TEXT FILE_TAGGER_TEXT
-# define TAG_FN \
-	"tag_files_then(" FILE_TAGGER_FILE_IDS ", '#tagselect-files', function(file_ids, tag_ids){" \
-		FILE_TAGGER_FN \
+#define TAG_FN \
+	"add_parent_tags_then(tag_id, '#tagselect-self-p', function(){" \
+		"display_parent_tags(tag_id, '#parents');" \
 	"})"
-# define TAGSELECT_ID "tagselect-files"
-# include "components/add_tag.html"
-# undef TAG_FN
-# undef TAGSELECT_ID
-# undef TAG_TEXT
-# undef FILE_TAGGER_FN
-# undef FILE_TAGGER_TEXT
-# undef FILE_TAGGER_FILE_IDS
-#endif
+#define TAGSELECT_ID "tagselect-self-p"
+#define TAG_TEXT "Add Parent Tags"
+#include "components/add_tag.html"
+#undef TAG_FN
+#undef TAGSELECT_ID
+#undef TAG_TEXT
+
+#define TAG_FN \
+	"add_child_tags_then(tag_id, '#tagselect-self-c', function(){" \
+		"display_child_tags(tag_id, '#children');" \
+	"})"
+#define TAGSELECT_ID "tagselect-self-c"
+#define TAG_TEXT "Add Child Tags"
+#include "components/add_tag.html"
+#undef TAG_FN
+#undef TAGSELECT_ID
+#undef TAG_TEXT
+
+"<div id='before-files-tbl'></div>"
+
+#define TAG_TEXT "Add Tags to Files"
+#define TAG_FN "tag_files_then(get_file_ids(), '#tagselect-files', file_tagger_fn)"
+#define TAGSELECT_ID "tagselect-files"
+#include "components/add_tag.html"
+#undef TAG_FN
+#undef TAGSELECT_ID
+#undef TAG_TEXT
+#undef FILE_TAGGER_FN
+#undef FILE_TAGGER_FILE_IDS
 
 "</div>"
 
-#ifdef FILES_TBL
-# include "components/file_tbl.html"
-# undef FILES_TBL
-#endif
+	#include "components/file_tbl.html"
 
-#ifdef DIRS_TBL
 	"<div class=\"table\" id=\"d\">"
 		"<div class=\"thead\">"
 			"<div class=\"tr\">"
@@ -133,13 +116,8 @@ R"=========(
 		"</div>"
 		"<div class=\"tbody\"></div>"
 	"</div>"
-# undef DIRS_TBL
-#endif
 
-#ifdef TAGS_TBL
 	"<div id=\"t\" class=\"table\"><div class=\"tbody\"></div></div>"
-# undef TAGS_TBL
-#endif
 R"=========(
     </div>
   </div>
@@ -162,20 +140,18 @@ R"=========(
       </span>
     </div>
 )========="
-#ifdef WRAPPER1
 	"<div class=\"side-wrapper\">"
-		"<div class=\"side-title\">" WRAPPER1 "</div>"
-		"<div id=\"" WRAPPER1 "\"></div>"
+		"<div class=\"side-title\">tags</div>"
+		"<div id=\"tags\"></div>"
     "</div>"
-# undef WRAPPER1
-#endif
-#ifdef WRAPPER2
 	"<div class=\"side-wrapper\">"
-		"<div class=\"side-title\">" WRAPPER2 "</div>"
-		"<div id=\"" WRAPPER2 "\"></div>"
+		"<div class=\"side-title\">parents</div>"
+		"<div id=\"parents\"></div>"
     "</div>"
-# undef WRAPPER2
-#endif
+    "<div class=\"side-wrapper\">"
+		"<div class=\"side-title\">children</div>"
+		"<div id=\"children\"></div>"
+    "</div>"
 R"=========(
     <div class="search-bar right-search">
       <input type="text" placeholder="Search" />

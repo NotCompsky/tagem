@@ -1,3 +1,10 @@
+"function hide(id){"
+	"document.getElementById(id).classList.add(\"hidden\");"
+"}"
+"function unhide(id){"
+	"document.getElementById(id).classList.remove(\"hidden\");"
+"}"
+
 "function timestamp2dt(t){"
 	"return new Date(t*1000).toISOString().slice(-24, -5)"
 "}"

@@ -1,13 +1,22 @@
 #include "components/before_body.html"
 		"<script>"
-			"const tbody = \"#f .tbody\";"
-			"var tag_id;"
-			"$(document).ready(function(){"
-				"populate_tagselects();"
+			"function view_tag(tag_id){"
+				"hide('tags');"
+				"unhide('parents');"
+				"unhide('children');"
+				"hide('before-files-tbl');"
+				"unhide('f');"
+				"hide('d');"
+				"hide('t');"
+				"unhide('tagselect-files');"
+				"unhide('tagselect-self-p');"
+				"unhide('tagselect-self-c');"
 				
-				"tag_id = window.location.hash.substr(1);"
-				"populate_f_table('/a/f/t/' + tag_id, tbody);"
-				"fancify_tbl(tbody);"
+				"file_tagger_fn = after_tagged_selected_files;"
+				"get_file_ids = get_selected_file_ids;"
+				
+				"populate_f_table('/a/f/t/' + tag_id);"
+				"fancify_tbl(\"#f .tbody\");"
 				
 				"set_tag_name_from_id(tag_id, \"#profile-name\");"
 				"set_tag_thumb_from_id(tag_id, \"#profile-img\");"
@@ -15,35 +24,12 @@
 				
 				"display_parent_tags(tag_id, \"#parents\");"
 				"display_child_tags(tag_id,  \"#children\");"
-			"});"
-			
-			"function get_selected_file_ids(){"
-				"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
 			"}"
+			"$(document).ready(function(){"
+				"populate_tagselects();"
+				"view_tag(window.location.hash.substr(1));"
+			"});"
 		"</script>"
-
-
-#define TAG_TEXT1 "Add Parent Tags"
-#define TAG_FN1 \
-	"add_parent_tags_then(tag_id, '#tagselect-self-p', function(){" \
-		"display_parent_tags(tag_id, '#parents');" \
-	"})"
-#define TAGSELECT_ID1 "tagselect-self-p"
-
-#define TAG_TEXT2 "Add Child Tags"
-#define TAG_FN2 \
-	"add_child_tags_then(tag_id, '#tagselect-self-c', function(){" \
-		"display_child_tags(tag_id, '#children');" \
-	"})"
-#define TAGSELECT_ID2 "tagselect-self-c"
-
-#define WRAPPER1 "parents"
-#define WRAPPER2 "children"
-
-#define FILE_TAGGER_TEXT "Add Tags to Files"
-#define FILE_TAGGER_FN "tag_files(get_selected_file_ids(), '#tagselect-files')"
-#define FILE_TAGGER_FILE_IDS "get_selected_file_ids()"
-#define FILES_TBL
 
 #include "tag_socialmediaised.html"
 

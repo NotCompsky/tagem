@@ -1,4 +1,4 @@
-"function populate_f_table(url, selector){"
+"function populate_f_table(url){"
 	"get_json(url, function(data){"
 		"var s = \"\";"
 		"for (var ls of data){"
@@ -10,10 +10,18 @@
 				
 			"s += \"</div>\";"
 		"}"
-		"document.querySelector(selector).innerHTML = s;"
-		"column_id2name('t', \"/a/t.json\", selector, '/t#', 2);"
+		"document.querySelector(\"#f .tbody\").innerHTML = s;"
+		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", '/t#', 2);"
 	"});"
 "}"
+
+"function get_file_id(){"
+	"return file_id;"
+"}"
+"function get_selected_file_ids(){"
+	"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
+"}"
+
 "function tag_files_then(file_ids, selector, fn){"
 	"const tagselect = $(selector);"
 	"const tag_ids = tagselect.val();"
@@ -28,6 +36,13 @@
 		"}"
 	"});"
 "}"
+"function after_tagged_this_file(file_ids, tag_ids){"
+	"display_tags_add(tag_ids, '#tags')"
+"}"
+"function after_tagged_selected_files(file_ids, tag_ids){"
+	// TODO
+"}"
+
 
 "function filter_f_tbl(selector){"
 	"filter_tbl(selector, [1], 2);"

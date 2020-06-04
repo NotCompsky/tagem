@@ -10,6 +10,21 @@
 			
 			"function load_f(_file_id){"
 				"file_id = _file_id;"
+				"unhide('tags');"
+				"hide('parents');"
+				"hide('children');"
+				"hide('f');"
+				"hide('d');"
+				"hide('t');"
+				"document.getElementById('before-files-tbl').innerHTML = '<a id=\"dir_name\"></a><br/><div id=\"view\"></div><br/><a onclick=\"set_embed_html(\\'#view\\', device_id, document.getElementById(\\'dir_name\\').textContent, file_name)\">View</a>';"
+				"unhide('before-files-tbl');"
+				"unhide('tagselect-files');"
+				"hide('tagselect-self-p');"
+				"hide('tagselect-self-c');"
+				
+				"file_tagger_fn = after_tagged_this_file;"
+				"get_file_ids = get_file_id;"
+				
 				"$.ajax({"
 					"dataType: \"json\","
 					"url: \"/a/f/i/\"+file_id,"
@@ -40,15 +55,6 @@
 			"});"
 		"</script>"
 
-
-#define WRAPPER1 "tags"
-#define SECTION_BEFORE_FILES_TBL \
-	"<a id=\"dir_name\"></a><br/>" \
-	"<div id=\"view\"></div><br/>" \
-	"<a onclick=\"set_embed_html('#view', device_id, $('#dir_name').text(), file_name)\">View</a>"
-#define FILE_TAGGER_TEXT "Add Tags to File"
-#define FILE_TAGGER_FN "display_tags_add(tag_ids, '#tags')"
-#define FILE_TAGGER_FILE_IDS "file_id"
 #include "tag_socialmediaised.html"
 
 

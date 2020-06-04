@@ -1,11 +1,18 @@
 #include "components/before_body.html"
 		"<script>"
-			"const tbody = \"#f .tbody\";"
-			
-			"$(document).ready(function(){" // Only execute after page has finished loading
-				"populate_tagselects();"
+			"function view_dir(dir_id){"
+				"hide('tags');"
+				"unhide('parents');"
+				"unhide('children');"
+				"hide('before-files-tbl');"
+				"unhide('f');"
+				"hide('d');"
+				"hide('t');"
+				"unhide('tagselect-files');"
+				"hide('tagselect-self-p');"
+				"hide('tagselect-self-c');"
 				
-				"const dir_id = window.location.hash.substr(1);"
+				"file_tagger_fn = after_tagged_selected_files;"
 			
 				"$.ajax({"
 					"dataType: \"json\","
@@ -19,27 +26,25 @@
 					"}"
 				"});"
 				
-				"populate_f_table('/a/f/d/' + dir_id, tbody);"
-				
-				"fancify_tbl(tbody);"
+				"populate_f_table('/a/f/d/' + dir_id);"
+				"fancify_tbl(\"#f .tbody\");"
 				
 				"var dir_name;"
 				"var device_id;"
 				"set_dir_name_from_id(dir_id, \"#profile-name\");"
 				
 				"display_parent_dirs(dir_id, \"#parents\");"
-			"});"
+			"}"
 			
 			"function get_selected_file_ids(){"
 				"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
 			"}"
+			
+			"$(document).ready(function(){"
+				"populate_tagselects();"
+				"view_dir(window.location.hash.substr(1));"
+			"});"
 		"</script>"
-
-#define FILE_TAGGER
-#define FILES_TBL
-
-#define WRAPPER1 "parents"
-#define WRAPPER2 "children"
 
 #include "tag_socialmediaised.html"
 
