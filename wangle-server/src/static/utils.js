@@ -5,16 +5,6 @@
 #include "utils_files.js"
 #include "utils_tbls.js"
 
-
-"function populate_str(url, selector, postfnct){"
-	"get_json(url, function(data){"
-		"document.querySelector(selector).innerHTML = data.join(\",\");"
-		"if (postfnct !== undefined){"
-			"postfnct();"
-		"}"
-	"});"
-"}"
-
 "function set_embed_html(selector, device_id, dir_name, file_name){"
 	"set_var_to_json_then('D', \"/a/D.json\", function(){"
 		"const embed_pre = D[device_id][2];"
