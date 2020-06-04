@@ -5,6 +5,10 @@
 	"display:none;"
 "}"
 
+".select2-search__field{"
+	"min-width:20pc;"
+"}"
+
 "#content{"
 	"position:absolute;"
 	"left:10%;"
