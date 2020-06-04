@@ -6,6 +6,7 @@
 			"var dir_name;"
 			"var device_id;"
 			"var mimetype;"
+			"var file_tags;"
 			
 			"$(document).ready(function(){" // Only execute after page has finished loading
 				"populate_tagselects();"
@@ -19,9 +20,8 @@
 						"document.getElementById('profile-img').src = data[0];"
 						"const dir_id = data[1];"
 						"file_name = data[2];"
-						"get_json('/a/t.json', function(t){"
-							"display_tags(t, data[3].split(\",\"), \"#tags\");"
-						"});"
+						"file_tags = data[3].split(\",\");"
+						"display_tags(file_tags, \"#tags\");"
 						"mimetype = data[4];"
 						
 						"$('#dir_name').attr(\"href\",  \"/d#\" + dir_id);"
@@ -34,10 +34,6 @@
 					"}"
 				"});"
 			"});"
-			
-			"function get_selected_file_ids(){"
-				"return file_id;"
-			"}"
 		"</script>"
 
 
@@ -46,7 +42,9 @@
 	"<a id=\"dir_name\"></a><br/>" \
 	"<div id=\"view\"></div><br/>" \
 	"<a onclick=\"set_embed_html('#view', device_id, $('#dir_name').text(), file_name)\">View</a>"
-#define FILE_TAGGER
+#define FILE_TAGGER_TEXT "Add Tags to File"
+#define FILE_TAGGER_FN "display_tags_add(tag_ids, '#tags')"
+#define FILE_TAGGER_FILE_IDS "file_id"
 #include "tag_socialmediaised.html"
 
 
