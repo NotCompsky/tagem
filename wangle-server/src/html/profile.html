@@ -20,6 +20,13 @@
 		"hide('tagselect-self-p-container');"
 		"hide('tagselect-self-c-container');"
 		"populate_tagselects();"
+		
+		"const x = window.location.hash.substr(2);"
+		"switch(window.location.hash.substr(1,1)){"
+			"case \"f\": view_file(x); break;"
+			"case \"d\": view_dir(x);  break;"
+			"case \"t\": view_tag(x);  break;"
+		"}"
 	"});"
 "</script>"
 

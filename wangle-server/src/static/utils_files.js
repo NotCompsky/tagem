@@ -89,6 +89,8 @@
 	"file_tagger_fn = after_tagged_this_file;"
 	"get_file_ids = get_file_id;"
 	
+	"window.location.hash = 'f' + file_id;"
+	
 	"$.ajax({"
 		"dataType: \"json\","
 		"url: \"/a/f/i/\"+file_id,"

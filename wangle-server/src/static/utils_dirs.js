@@ -81,6 +81,8 @@
 	
 	"display_parent_dirs(dir_id);"
 	"display_child_dirs(dir_id);"
+	
+	"window.location.hash = 'd' + dir_id;"
 "}"
 "function view_all_dirs(){"
 	"hide('tags-container');"
@@ -95,4 +97,5 @@
 	"hide('tagselect-self-c-container');"
 	"populate_d_id2name_table('#d .tbody');"
 	"document.getElementById(\"profile-name\").textContent = \"All Directories\";"
+	"window.location.hash = '';"
 "}"

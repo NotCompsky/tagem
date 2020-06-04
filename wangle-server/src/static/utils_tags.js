@@ -120,6 +120,8 @@
 	
 	"display_parent_tags(tag_id);"
 	"display_child_tags(tag_id);"
+	
+	"window.location.hash = 't' + tag_id;"
 "}"
 "function view_all_tags(){"
 	"hide('tags-container');"
@@ -133,4 +135,5 @@
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
 	"populate_t_id2name_table('#t .tbody');"
+	"window.location.hash = '';"
 "}"
