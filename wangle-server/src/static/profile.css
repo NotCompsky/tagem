@@ -239,7 +239,7 @@ body {
   color: #5c5d71;
 }
 
-.main-container {
+#main-container{
   padding: 20px;
   flex-grow: 1;
   overflow: auto;
