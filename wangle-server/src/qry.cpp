@@ -25,6 +25,7 @@ namespace arg {
 		order_by_value_asc,
 		order_by_value_desc,
 		limit,
+		offset,
 		value,
 		name,
 		END_OF_STRING,
@@ -651,8 +652,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		join.c_str(),
 		"WHERE TRUE", where.c_str(), "\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
-		"OFFSET ", offset, " "
-		"LIMIT ", limit,
+		"LIMIT ", limit, " "
+		"OFFSET ", offset,
 		'\0'
 	);
 	
