@@ -968,9 +968,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id)"
+				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
-			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id IN ("
@@ -1000,9 +1000,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"GROUP_CONCAT(f2t.tag_id)"
+				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
-			"JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
