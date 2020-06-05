@@ -36,6 +36,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"	name [REGEX]\n" \
 	"		Entries have a name that matches the regex\n" \
 	"		The regex must be surrounded by double quotes (\")\n" \
+	"	mime [REGEX]\n" \
+	"		Filter a file's mimetype\n" \
+	"		Only valid when filtering the file table\n" \
 	"OPTIONS\n" \
 	"	order [STRING]\n" \
 	"		Order results by the STRING\n" \
@@ -58,6 +61,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"		List remote (over HTTP/HTTPS) files which are not tagged \"Music\"\n" \
 	"	f not t \"!!ROOT TAG||\" not name \"[.](json|xml)$\"\n" \
 	"		List files which are not tagged with anything, ignoring JSON and XML files.\n" \
+	"	f mime \"^image/\"\n" \
+	"		List files with image mimetypes\n" \
 
 
 } // namespace sql_factory

@@ -28,6 +28,7 @@ namespace arg {
 		offset,
 		value,
 		name,
+		mimetype,
 		END_OF_STRING,
 		NOT = (1 << 7) // WARNING: Must be no other enums using this bit
 	};
@@ -160,6 +161,24 @@ arg::ArgType process_arg(const char*& qry){
 													return arg::limit;
 											}
 											break;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+		case 'm':
+			switch(*(++qry)){
+				case 'i':
+					switch(*(++qry)){
+						case 'm':
+							switch(*(++qry)){
+								case 'e':
+									switch(*(++qry)){
+										case ' ':
+											return arg::mimetype;
 									}
 									break;
 							}
@@ -581,6 +600,19 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				for (auto i = 0;  i < 7;  ++i)
 					// Strip the trailing " UNION "
 					where.pop_back();
+				where += ")";
+				break;
+			}
+			case arg::mimetype: {
+				if (which_tbl != 'f')
+					return successness::invalid;
+				where += "\nAND X.id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT f.id FROM file f JOIN mimetype m ON m.id=f.mimetype WHERE m.name REGEXP ";
+				const auto rc = append_escaped_str(where, qry);
+				if (rc != successness::ok)
+					return rc;
 				where += ")";
 				break;
 			}
