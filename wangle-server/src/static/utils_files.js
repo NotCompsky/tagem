@@ -60,7 +60,7 @@
 					"s = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
 					"break;"
 				"default:"
-					"s = \"<iframe src='\" + src + \"'></iframe>\";"
+					"s = \"<object type='\" + mimetype + \"' data='\" + src + \"'></object>\";"
 			"}"
 			"node.innerHTML = s;"
 			
