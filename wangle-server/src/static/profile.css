@@ -279,7 +279,7 @@ body {
   opacity: 0.7;
 }
 
-.profile-menu {
+#profile-menu{
   position: absolute;
   bottom: 0;
   padding-left: 200px;
@@ -289,13 +289,13 @@ body {
   border-radius: 0 0 4px 4px;
 }
 
-.profile-menu-link {
+#profile-menu a{
   padding: 20px 16px;
   color: #5c5e6e;
   transition: 0.3s;
   cursor: pointer;
 }
-.profile-menu-link.active, .profile-menu-link:hover {
+#profile-menu a.active, #profile-menu a:hover {
   color: #fff;
   background-color: #1b1d2e;
   border-bottom: 3px solid #1488fa;
@@ -863,21 +863,21 @@ body {
     margin: 5px 0;
   }
 
-  .profile-menu {
+  #profile-menu{
     padding-left: 0;
     width: 100%;
     overflow: auto;
     justify-content: center;
   }
 
-  .profile-menu-link {
+  #profile-menu a{
     padding: 16px;
     font-size: 15px;
   }
 }
 @media screen and (max-width: 480px) {
-  .profile-menu-link:nth-last-child(1),
-  .profile-menu-link:nth-last-child(2) {
+  #profile-menu a:nth-last-child(1),
+  #profile-menu a:nth-last-child(2) {
     display: none;
   }
 }

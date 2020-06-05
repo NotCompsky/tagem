@@ -48,7 +48,7 @@
 "}"
 
 
-"function view_dir(dir_id){"
+"function view_dir(_dir_id){"
 	"hide('tags-container');"
 	"unhide('parents-container');"
 	"unhide('children-container');"
@@ -62,20 +62,22 @@
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 
-	"$.ajax({"
-		"dataType: \"json\","
-		"url: \"/a/d/i/\"+dir_id,"
-		"success: function(data){"
-			"var s = \"\";"
-			"$('#dir_name').text(data[0]);"
-		"},"
-		"error: function(){"
-			"alert(\"Error populating table\");"
-		"}"
-	"});"
-	
-	"populate_f_table('/a/f/d/' + dir_id);"
-	"fancify_tbl(\"#f .tbody\");"
+	"if (_dir_id !== undefined){"
+		"dir_id = _dir_id;"
+		"$.ajax({"
+			"dataType: \"json\","
+			"url: \"/a/d/i/\"+dir_id,"
+			"success: function(data){"
+				"var s = \"\";"
+				"$('#dir_name').text(data[0]);"
+			"},"
+			"error: function(){"
+				"alert(\"Error populating table\");"
+			"}"
+		"});"
+		"populate_f_table('/a/f/d/' + dir_id);"
+		"fancify_tbl(\"#f .tbody\");"
+	"}"
 	
 	"set_dir_name_from_id(dir_id, 'profile-name');"
 	

@@ -3,6 +3,7 @@
 	"var tag_id;"
 	"var file_id;"
 	"var file_name;"
+	"var dir_id;"
 	"var dir_name;"
 	"var device_id;"
 	"var mimetype;"
@@ -84,15 +85,15 @@ R"=========(
           <div id="profile-name"></div>
         </div>
         <img id="profile-cover"/>
-        <div class="profile-menu">
-          <a class="profile-menu-link active">Timeline</a>
-          <a class="profile-menu-link">About</a>
-          <a class="profile-menu-link">Friends</a>
-          <a class="profile-menu-link">Photos</a>
-          <a class="profile-menu-link">More</a>
-        </div>
-      </div>
 )========="
+		"<div id=\"profile-menu\">"
+			"<a onclick=\"view_dir()\">Dir</a>"
+			"<a onclick=\"view_tag()\">Tag</a>"
+			"<a onclick=\"view_file()\">File</a>"
+			"<a onclick=\"view_files()\">Files</a>"
+		"</div>"
+	"</div>"
+
 
 "<div class=\"hidden\" id=\"qry-help\">"
 	"<h2>How to Query</h2>"

@@ -98,7 +98,6 @@
 
 
 "function view_tag(_tag_id){"
-	"tag_id = _tag_id;"
 	"hide('tags-container');"
 	"unhide('parents-container');"
 	"unhide('children-container');"
@@ -113,8 +112,12 @@
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
 	
-	"populate_f_table('/a/f/t/' + tag_id);"
-	"fancify_tbl(\"#f .tbody\");"
+	"if (_tag_id !== undefined){"
+		// It is undefined if we are just unhiding the tag view
+		"tag_id = _tag_id;"
+		"populate_f_table('/a/f/t/' + tag_id);"
+		"fancify_tbl(\"#f .tbody\");"
+	"}"
 	
 	"set_tag_name_from_id(tag_id, \"#profile-name\");"
 	"set_tag_thumb_from_id(tag_id, \"#profile-img\");"

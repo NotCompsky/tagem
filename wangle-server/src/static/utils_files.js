@@ -76,7 +76,6 @@
 	"set_embed_html('#view', device_id, document.getElementById('dir_name').textContent, file_name);"
 "}"
 "function view_file(_file_id){"
-	"file_id = _file_id;"
 	"unhide('tags-container');"
 	"hide('parents-container');"
 	"hide('children-container');"
@@ -92,34 +91,39 @@
 	"file_tagger_fn = after_tagged_this_file;"
 	"get_file_ids = get_file_id;"
 	
-	"window.location.hash = 'f' + file_id;"
-	
-	"$.ajax({"
-		"dataType: \"json\","
-		"url: \"/a/f/i/\"+file_id,"
-		"success: function(data){"
-			"var s = \"\";"
-			
-			"document.getElementById('profile-img').src = data[0];"
-			"dir_id = data[1];"
-			"file_name = data[2];"
-			"file_tags = data[3].split(\",\");"
-			"display_tags(file_tags, \"#tags\");"
-			"mimetype = data[4];"
-			
-			"document.getElementById('dir_name').onclick = view_this_files_dir;"
-			"set_dir_name_from_id(dir_id, \"dir_name\");"
-			
-			"$('#profile-name').text(file_name);"
-			
-			"if (autoplay){"
-				"display_this_file();"
+	"if (_file_id !== undefined){"
+		"file_id = _file_id;"
+		"$.ajax({"
+			"dataType: \"json\","
+			"url: \"/a/f/i/\"+file_id,"
+			"success: function(data){"
+				"var s = \"\";"
+				
+				"document.getElementById('profile-img').src = data[0];"
+				"dir_id = data[1];"
+				"file_name = data[2];"
+				"file_tags = data[3].split(\",\");"
+				"display_tags(file_tags, \"#tags\");"
+				"mimetype = data[4];"
+				
+				"document.getElementById('dir_name').onclick = view_this_files_dir;"
+				"set_dir_name_from_id(dir_id, \"dir_name\");"
+				
+				"$('#profile-name').text(file_name);"
+				
+				"if (autoplay){"
+					"display_this_file();"
+				"}"
+			"},"
+			"error: function(){"
+				"alert(\"Error populating table\");"
 			"}"
-		"},"
-		"error: function(){"
-			"alert(\"Error populating table\");"
-		"}"
-	"});"
+		"});"
+	"} else {"
+		"$('#profile-name').text(file_name);"
+	"}"
+	
+	"window.location.hash = 'f' + file_id;"
 "}"
 
 "function view_files(ls){"
@@ -137,8 +141,10 @@
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
 	
-	"populate_f_table('/a/f/id/' + ls.join(\",\"));"
-	"fancify_tbl(\"#f .tbody\");"
+	"if (ls !== undefined){"
+		"populate_f_table('/a/f/id/' + ls.join(\",\"));"
+		"fancify_tbl(\"#f .tbody\");"
+	"}"
 	
 	"window.location.hash = '';"
 	
