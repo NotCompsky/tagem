@@ -35,6 +35,13 @@ bool FrameDecoder::decode(Context* ctx,
                                    IOBufQueue& buf,
                                    std::unique_ptr<IOBuf>& result,
                                    size_t&) {
+	// NOTE: The last parameter == 0
+	// WARNING
+	// buf.front()->isShared() always returns false, and I'm going to do an engineer's proof and say therefore it is always false
+	// If it were shared, should unshare() it first.
+	*(const_cast<folly::IOBuf*>(buf.front())->writableTail()) = 0;
+	// Just to tell everyone where it terminates
+	// TODO: Look into read-only methods to transfer knowledge of length of data
       std::unique_ptr<folly::IOBuf> frame = buf.splitAtMost(1024 * 1024); // Arbitrary limit
       result = std::move(frame);
       return true;
