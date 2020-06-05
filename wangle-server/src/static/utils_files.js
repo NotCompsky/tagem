@@ -44,27 +44,28 @@
 "}"
 
 
-"function set_embed_html(selector, device_id, dir_name, file_name){"
+"function set_embed_html(_device_id, _dir_name, _file_name){"
 	"set_var_to_json_then('D', \"/a/D.json\", function(){"
-		"const embed_pre = D[device_id][2];"
+		"const embed_pre = D[_device_id][2];"
 		"if (embed_pre === \"\"){"
-			
 			"var src;"
-			"if (dir_name.startsWith(\"/\")){"
+			"if (_dir_name.startsWith(\"http\")){"
+				"src = _dir_name + _file_name;"
+			"} else {"
 				"src = \"/S/f/\" + file_id;"
-			"} else {"
-				"src = dir_name + file_name;"
 			"}"
 			
-			"if (/\\.(jpe?g|png|gif)$/.exec(file_name) !== null){"
-				"document.querySelector(selector).innerHTML = \"<img src='\" + src + \"'/>\";"
+			"const node = document.getElementById(\"view\");"
+			
+			"if (/\\.(jpe?g|png|gif)$/.exec(_file_name) !== null){"
+				"node.innerHTML = \"<img src='\" + src + \"'/>\";"
 			"} else {"
-				"document.querySelector(selector).innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
+				"node.innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
 			"}"
 			
-			"$(selector).attr(\"onclick\", \"\");"
+			"node.onclick = null;" // NOTE: Look into removeEventListener
 		"} else {"
-			"document.querySelector(selector).innerHTML = embed_pre + file_name + D[device_id][3];"
+			"node.innerHTML = embed_pre + _file_name + D[_device_id][3];"
 		"}"
 	"});"
 "}"
@@ -73,7 +74,7 @@
 	"view_dir(dir_id);"
 "}"
 "function display_this_file(){"
-	"set_embed_html('#view', device_id, document.getElementById('dir_name').textContent, file_name);"
+	"set_embed_html(device_id, dir_name, file_name);"
 "}"
 "function view_file(_file_id){"
 	"unhide('tags-container');"
