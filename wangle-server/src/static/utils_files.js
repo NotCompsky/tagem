@@ -52,15 +52,19 @@
 			"const node = document.getElementById(\"view\");"
 			
 			"let s;"
-			"switch(mimetype.substring(0, mimetype.indexOf('/'))){" // Would return empty if no slash in the mimetype
+			"switch(mimetype.substring(0, mimetype.indexOf('/'))){"
 				"case 'image':"
 					"s = \"<img src='\" + src + \"'/>\";"
 					"break;"
 				"case 'video':"
-					"s = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
+					"s = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'>Browser does not support videos</source></video>\";"
+					"break;"
+				"case '':"
+					// If no slash in the mimetype (probably "!!NONE!!")
+					"s = \"<iframe src='\" + src + \"'>Browser does not support iframes</iframe>\";"
 					"break;"
 				"default:"
-					"s = \"<object type='\" + mimetype + \"' data='\" + src + \"'></object>\";"
+					"s = \"<object type='\" + mimetype + \"' data='\" + src + \"'>Browser does not support object elements</object>\";"
 			"}"
 			"node.innerHTML = s;"
 			
