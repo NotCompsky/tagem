@@ -24,7 +24,7 @@
 #endif
 
 
-typedef wangle::Pipeline<folly::IOBufQueue&,  const char*> RTaggerPipeline;
+typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
 namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
@@ -1241,7 +1241,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view stream_file(const char* file_id){
-		constexpr static const size_t block_sz = 1024 * 500; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
+		constexpr static const size_t block_sz = 1024 * 1024 * 10;
+		constexpr static const size_t stream_block_sz = 1024 * 500; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
 		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
@@ -1292,7 +1293,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::server_error;
 		}
 		
-		const size_t bytes_to_read = (to) ? (to - from) : block_sz;
+		const size_t bytes_to_read = (rc == GetRangeHeaderResult::none) ? block_sz : ((to) ? (to - from) : stream_block_sz);
 		const size_t bytes_read = fread(this->buf + room_for_headers,  1,  bytes_to_read,  f);
 		fclose(f);
 		
