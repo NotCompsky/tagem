@@ -143,8 +143,10 @@
 	"get_file_ids = get_selected_file_ids;"
 	
 	"if (ls !== undefined){"
-		"populate_f_table('/a/f/id/' + ls.join(\",\"));"
-		"fancify_tbl(\"#f .tbody\");"
+		"if (ls.length !== 0){"
+			"populate_f_table('/a/f/id/' + ls.join(\",\"));"
+			"fancify_tbl(\"#f .tbody\");"
+		"}"
 	"}"
 	
 	"window.location.hash = '';"
