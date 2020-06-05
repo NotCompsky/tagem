@@ -337,7 +337,7 @@ successness::ReturnType process_args(std::string& where,  const char*& order_by,
 			case arg::dir: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.id WHERE d.name REGEXP ";
+				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -347,7 +347,7 @@ successness::ReturnType process_args(std::string& where,  const char*& order_by,
 			case arg::dir_basename: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.id WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
+				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
