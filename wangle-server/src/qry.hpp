@@ -54,7 +54,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"	f d \"^https://www[.]youtube[.]com/\" order-by-value DESC \"Musicness\" \"Score\"\n" \
 	"		List files from https://youtube.com/ in descending order of 'value', where the 'value' is either the file's \"Musicness\" or - if that is unavailable - the file's \"Score\"\n" \
 	"	f d \"^http\" not t \"Music\"\n" \
-	"		List all remote (over HTTP/HTTPS) files which are not tagged \"Music\"\n" \
+	"		List remote (over HTTP/HTTPS) files which are not tagged \"Music\"\n" \
+	"	f not t \"!!ROOT TAG||\"\n" \
+	"		List files which are not tagged with anything\n" \
 
 
 } // namespace sql_factory
