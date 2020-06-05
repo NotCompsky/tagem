@@ -45,6 +45,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"		Order results by the named variables, in that order.\n" \
 	"		The order is left-to-right, the value being a chain of IFNULLs\n" \
 	"	limit [INTEGER]\n" \
+	"	offset [INTEGER]\n" \
 	"\n" \
 	"EXAMPLES\n" \
 	"	f t \"Music\" t \"English (Language)\" \"French (Language)\" \"German (Language)\" value 90-100 \"Musicness\" \"Score\" name \"[.]webm$\" limit 100\n" \

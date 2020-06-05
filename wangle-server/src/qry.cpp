@@ -197,6 +197,28 @@ arg::ArgType process_arg(const char*& qry){
 			break;
 		case 'o':
 			switch(*(++qry)){
+				case 'f':
+					switch(*(++qry)){
+						case 'f':
+							switch(*(++qry)){
+								case 's':
+									switch(*(++qry)){
+										case 'e':
+											switch(*(++qry)){
+												case 't':
+													switch(*(++qry)){
+														case ' ':
+															return arg::offset;
+													}
+													break;
+											}
+											break;
+									}
+									break;
+							}
+							break;
+					}
+					break;
 				case 'r':
 					switch(*(++qry)){
 						case 'd':
@@ -449,7 +471,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 }
 
 static
-successness::ReturnType process_args(std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  const char which_tbl,  const char* qry){
+successness::ReturnType process_args(std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	while(true){
@@ -579,6 +601,12 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 					limit = 100;
 				break;
 			}
+			case arg::offset: {
+				offset = s2n<unsigned>(qry);
+				if (*qry != ' ')
+					return successness::invalid;
+				break;
+			}
 		}
 	}
 }
@@ -591,6 +619,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 	std::string where = "";
 	std::string order_by = "";
 	unsigned limit = 10;
+	unsigned offset = 0;
 	where.reserve(4096);
 	switch(*qry){
 		case 'f':
@@ -606,7 +635,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		default: return successness::invalid;
 	}
 	
-	const auto rc = process_args(join, where, order_by, limit, which_tbl, qry);
+	const auto rc = process_args(join, where, order_by, limit, offset, which_tbl, qry);
 	if (rc != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
@@ -622,6 +651,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		join.c_str(),
 		"WHERE TRUE", where.c_str(),
 		(order_by.empty())?"":"\nORDER BY ", order_by.c_str(), "\n"
+		"OFFSET ", offset, " "
 		"LIMIT ", limit,
 		'\0'
 	);
