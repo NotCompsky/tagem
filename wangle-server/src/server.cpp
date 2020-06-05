@@ -1721,6 +1721,7 @@ class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
 		}
 };
 
+constexpr
 int s2n(const char* s){
 	int n = 0;
 	while(*s != 0){
