@@ -1287,20 +1287,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		}
 		const size_t f_sz = st.st_size;
 		
-		this->reset_buf_index();
-		
-		if (rc == GetRangeHeaderResult::none){
-			this->asciify(
-				"HTTP/1.1 20", (rc == GetRangeHeaderResult::none)?"0 OK":"6 PARTIAL CONTENT", "\n"
-				"Accept-Ranges: bytes\n"
-				"Content-Type: ", mimetype, '\n',
-				"Content-Length: ", f_sz, '\n',
-				 '\n'
-			);
-			const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
-			return std::string_view(this->buf,  headers_len);
-		}
-		
 		if (unlikely(fseek(f, from, SEEK_SET))){
 			this->mysql_free_res();
 			return _r::server_error;
@@ -1312,15 +1298,28 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const size_t end_byte = from + bytes_read;
 		
-		this->asciify(
-			"HTTP/1.1 20", (end_byte == f_sz)?"0 OK":"6 Partial Content", "\n"
-			"Accept-Ranges: bytes\n"
-			"Content-Type: ", mimetype, '\n',
-			"Content-Range: bytes ", from, '-', end_byte - 1, '/', f_sz, '\n',
-			// The minus one is because the range of n bytes is from zeroth byte to the (n-1)th byte
-			"Content-Length: ", bytes_read, '\n',
-			'\n'
-		);
+		this->reset_buf_index();
+		
+		if (rc == GetRangeHeaderResult::none){
+			// Both Firefox and Chrome send a range header for videos, neither for images
+			this->asciify(
+				"HTTP/1.1 200 OK\n"
+				"Accept-Ranges: bytes\n"
+				"Content-Type: ", mimetype, '\n',
+				"Content-Length: ", f_sz, '\n',
+				 '\n'
+			);
+		} else {
+			this->asciify(
+				"HTTP/1.1 20", (end_byte == f_sz)?"0 OK":"6 Partial Content", "\n"
+				"Accept-Ranges: bytes\n"
+				"Content-Type: ", mimetype, '\n',
+				"Content-Range: bytes ", from, '-', end_byte - 1, '/', f_sz, '\n',
+				// The minus one is because the range of n bytes is from zeroth byte to the (n-1)th byte
+				"Content-Length: ", bytes_read, '\n',
+				'\n'
+			);
+		}
 		
 		const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
 		memcpy(this->buf + room_for_headers - headers_len,  this->buf,  headers_len);
