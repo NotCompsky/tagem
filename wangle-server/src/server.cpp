@@ -413,9 +413,6 @@ namespace _r {
 		return _r::not_found;
 	}
 	
-	static char buf[1024 * 1024]; // Needs to be large enough for file thumbnails
-	char* itr = nullptr;
-	
 	static const char* tags_json;
 	static const char* tag2parent_json;
 	static const char* dirs_json;
