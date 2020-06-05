@@ -19,6 +19,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"	[TABLE_ALIAS] [[FILTERS]] [[OPTIONS]]\n" \
 	"\n" \
 	"FILTERS\n" \
+	"Each may be preceded by \"not\" (without the quotation marks) to invert the filter\n" \
 	"	[TABLE_ALIAS] [[LIST OF NAMES]]\n" \
 	"		Entries have relations to entries of one of these names in this table\n" \
 	"		Each name is separated by a double quote (\")\n" \
@@ -52,6 +53,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"		List 100 MP4 files on the server\n" \
 	"	f d \"^https://www[.]youtube[.]com/\" order-by-value DESC \"Musicness\" \"Score\"\n" \
 	"		List files from https://youtube.com/ in descending order of 'value', where the 'value' is either the file's \"Musicness\" or - if that is unavailable - the file's \"Score\"\n" \
+	"	f d \"^http\" not t \"Music\"\n" \
+	"		List all remote (over HTTP/HTTPS) files which are not tagged \"Music\"\n" \
 
 
 } // namespace sql_factory

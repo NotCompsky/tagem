@@ -13,7 +13,8 @@
 namespace sql_factory{
 
 namespace arg {
-	enum Arg {
+	typedef uint32_t ArgType;
+	enum Arg : ArgType {
 		invalid,
 		file,
 		tag,
@@ -27,7 +28,7 @@ namespace arg {
 		value,
 		name,
 		END_OF_STRING,
-		COUNT
+		NOT = (1 << 7) // WARNING: Must be no other enums using this bit
 	};
 }
 
@@ -109,7 +110,7 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 }
 
 static
-arg::Arg process_arg(const char*& qry){
+arg::ArgType process_arg(const char*& qry){
 	LOG("process_arg %s\n", qry);
 	switch(*(++qry)){
 		case 0:
@@ -178,6 +179,16 @@ arg::Arg process_arg(const char*& qry){
 											return arg::name;
 									}
 									break;
+							}
+							break;
+					}
+					break;
+				case 'o':
+					switch(*(++qry)){
+						case 't':
+							switch(*(++qry)){
+								case ' ':
+									return arg::NOT | process_arg(qry);
 							}
 							break;
 					}
@@ -442,8 +453,9 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	while(true){
-		const auto arg_token = process_arg(qry);
-		switch(arg_token){
+		const arg::ArgType arg_token = process_arg(qry);
+		const bool is_inverted = (arg_token & arg::NOT);
+		switch(arg_token & ~arg::NOT){ // Ignore the NOT flag
 			case arg::END_OF_STRING:
 				return successness::ok;
 			case arg::invalid:
@@ -452,7 +464,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::dir: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
+				where += " AND id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -462,7 +477,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::dir_basename: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
+				where += " AND id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -472,7 +490,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += " AND id IN (SELECT x2t.";
+				where += " AND id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
 				where += "_id FROM ";
 				where += tbl_full_name(which_tbl);
@@ -487,7 +508,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag_tree: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += "\nAND id IN (SELECT x2t.";
+				where += "\nAND id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
 				where += "_id FROM ";
 				where += tbl_full_name(which_tbl);
@@ -500,7 +524,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::order_by: {
-				if ((not order_by.empty()) or (*(++qry) != '"'))
+				if ((not order_by.empty()) or (*(++qry) != '"') or is_inverted)
 					return successness::invalid;
 				const size_t order_by_sz = go_to_next(qry, '"');
 				order_by = std::string(qry + 1,  order_by_sz);
@@ -510,7 +534,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			}
 			case arg::order_by_value_asc:
 			case arg::order_by_value_desc: {
-				if (not order_by.empty())
+				if ((not order_by.empty()) or is_inverted)
 					return successness::invalid;
 				
 				std::string order_by_end;
@@ -524,7 +548,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::value: {
-				where += "\nAND id IN (";
+				where += "\nAND id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (";
 				const auto rc = process_value_list(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -535,7 +562,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::name: {
-				where += "\nAND name REGEXP ";
+				where += "\nAND name ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
