@@ -136,6 +136,6 @@
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
-	"populate_t_id2name_table('#t .tbody', ls);"
+	"populate_t_id2name_table('#t .tbody', ls.map(x => x.toString()));"
 	"window.location.hash = '';"
 "}"

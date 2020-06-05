@@ -97,7 +97,7 @@
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
-	"populate_d_id2name_table('#d .tbody', ls);"
+	"populate_d_id2name_table('#d .tbody', ls.map(x => x.toString()));"
 	"document.getElementById(\"profile-name\").textContent = \"All Directories\";"
 	"window.location.hash = '';"
 "}"
