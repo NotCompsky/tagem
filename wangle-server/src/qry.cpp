@@ -21,6 +21,8 @@ namespace arg {
 		dir,
 		dir_basename,
 		order_by,
+		order_by_value_asc,
+		order_by_value_desc,
 		limit,
 		value,
 		name,
@@ -194,6 +196,58 @@ arg::Arg process_arg(const char*& qry){
 											switch(*(++qry)){
 												case ' ':
 													return arg::order_by;
+												case '-':
+													switch(*(++qry)){
+														case 'b':
+															switch(*(++qry)){
+																case 'y':
+																	switch(*(++qry)){
+																		case '-':
+																			switch(*(++qry)){
+																				case 'v':
+																					switch(*(++qry)){
+																						case 'a':
+																							switch(*(++qry)){
+																								case 'l':
+																									switch(*(++qry)){
+																										case 'u':
+																											switch(*(++qry)){
+																												case 'e':
+																													switch(*(++qry)){
+																														case ' ':
+																															switch(*(++qry)){
+																																case 'a':
+																																	switch(*(++qry)){
+																																		case ' ':
+																																			return arg::order_by_value_asc;
+																																	}
+																																	break;
+																																case 'd':
+																																	switch(*(++qry)){
+																																		case ' ':
+																																			return arg::order_by_value_desc;
+																																	}
+																																	break;
+																															}
+																															break;
+																													}
+																													break;
+																											}
+																											break;
+																									}
+																									break;
+																							}
+																							break;
+																					}
+																					break;
+																			}
+																			break;
+																	}
+																	break;
+															}
+															break;
+													}
+													break;
 											}
 											break;
 									}
@@ -325,10 +379,71 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 }
 
 static
-successness::ReturnType process_args(std::string& where,  const char*& order_by,  size_t& order_by_sz, unsigned& limit,  const char which_tbl,  const char* qry){
-	LOG("process_args %c %s\n", which_tbl, qry);
+successness::ReturnType process_order_by_var_name_list(std::string& join,  std::string& order_by,  std::string& order_by_end,  const char*& qry){
+	LOG("process_order_by_var_name_list %s\n", qry);
+	
+	static
+	unsigned f2x_indx = 0;
+	// This function should only be called once, so static is superfluous
+	
+	// The following is like the loop in process_name_list, but changing what is done on a match
+	// TODO: Deduplicate code
+	const char* qry_begin = qry;
 	while(true){
-		switch(process_arg(qry)){
+		switch(*(++qry)){
+			case '"': {
+				const char* start = qry + 1;
+				while(true){
+					const char c = *(++qry);
+					if (c == '\\'){
+						// NOTE: Happily, we can see that all names are already escaped - an unescaped double quote inside a single name.
+						++qry;
+						continue;
+					}
+					if (c == '"'){
+						const size_t sz = (uintptr_t)qry - (uintptr_t)start;
+						
+						if (*(++qry) != ' ')
+							return successness::invalid;
+						
+						join += "LEFT JOIN file2";
+						join.append(start, sz);
+						join += " f2";
+						join += std::to_string(++f2x_indx);
+						join += " ON f2";
+						join += std::to_string(f2x_indx);
+						join += ".file=X.id\n";
+						
+						order_by += "IFNULL(f2";
+						order_by += std::to_string(f2x_indx);
+						order_by += ".x,";
+						
+						order_by_end += ")";
+						
+						break;
+					}
+					if (c == 0)
+						return successness::malicious;
+				}
+				break;
+			}
+			default:
+				if (qry == qry_begin + 1)
+					// then we haven't encountered any names in this list
+					return successness::invalid;
+				--qry;
+				return successness::ok;
+		}
+	}
+}
+
+static
+successness::ReturnType process_args(std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  const char which_tbl,  const char* qry){
+	LOG("process_args %c %s\n", which_tbl, qry);
+	unsigned f2x_indx = 0;
+	while(true){
+		const auto arg_token = process_arg(qry);
+		switch(arg_token){
 			case arg::END_OF_STRING:
 				return successness::ok;
 			case arg::invalid:
@@ -384,14 +499,30 @@ successness::ReturnType process_args(std::string& where,  const char*& order_by,
 				where += "))";
 				break;
 			}
-			case arg::order_by:
-				if (*(++qry) != '"')
+			case arg::order_by: {
+				if ((not order_by.empty()) or (*(++qry) != '"'))
 					return successness::invalid;
-				order_by = qry + 1;
-				order_by_sz = go_to_next(qry, '"');
+				const size_t order_by_sz = go_to_next(qry, '"');
+				order_by = std::string(qry + 1,  order_by_sz);
 				if (*(++qry) != ' ')
 					return successness::invalid;
 				break;
+			}
+			case arg::order_by_value_asc:
+			case arg::order_by_value_desc: {
+				if (not order_by.empty())
+					return successness::invalid;
+				
+				std::string order_by_end;
+				const auto rc = process_order_by_var_name_list(join, order_by, order_by_end, qry);
+				if (rc != successness::ok)
+					return rc;
+				
+				order_by += "NULL";
+				order_by += order_by_end + ((arg_token==arg::order_by_value_asc)?" ASC":"DESC");
+				
+				break;
+			}
 			case arg::value: {
 				where += "\nAND id IN (";
 				const auto rc = process_value_list(where, qry);
@@ -426,9 +557,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 	const char* const buf = itr;
 	
 	char which_tbl;
+	std::string join = "";
 	std::string where = "";
-	const char* order_by = "";
-	size_t order_by_sz = 0;
+	std::string order_by = "";
 	unsigned limit = 10;
 	where.reserve(4096);
 	switch(*qry){
@@ -445,9 +576,11 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		default: return successness::invalid;
 	}
 	
-	const auto rc = process_args(where, order_by, order_by_sz, limit, which_tbl, qry);
+	const auto rc = process_args(join, where, order_by, limit, which_tbl, qry);
 	if (rc != successness::ok){
+		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
+		LOG("order_by == %s\n", order_by.c_str());
 		return rc;
 	}
 	
@@ -455,9 +588,10 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		itr,
 		"SELECT "
 			"id\n"
-		"FROM ", tbl_full_name(which_tbl), "\n"
+		"FROM ", tbl_full_name(which_tbl), " X\n",
+		join.c_str(),
 		"WHERE TRUE", where.c_str(),
-		(order_by_sz)?"\nORDER BY ":"", _f::strlen, order_by, order_by_sz, "\n"
+		(order_by.empty())?"":"\nORDER BY ", order_by.c_str(), "\n"
 		"LIMIT ", limit,
 		'\0'
 	);

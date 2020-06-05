@@ -39,6 +39,10 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"	order [STRING]\n" \
 	"		Order results by the STRING\n" \
 	"		The string must be surrounded by double quotes (\")\n" \
+	"	order-by-value [MODE] [[LIST_OF_NAMES]]\n" \
+	"		MODE must be one of a (ascending) or d (descending)\n" \
+	"		Order results by the named variables, in that order.\n" \
+	"		The order is left-to-right, the value being a chain of IFNULLs\n" \
 	"	limit [INTEGER]\n" \
 	"\n" \
 	"EXAMPLES\n" \
@@ -46,6 +50,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"		List 100 WEBM files tagged Music and also tagged one of: English, French or German language, having either a musicness or score of between 90 and 100\n" \
 	"	f name \"\\\\.mp4\" d \"^/\" limit 100\n" \
 	"		List 100 MP4 files on the server\n" \
+	"	f d \"^https://www[.]youtube[.]com/\" order-by-value DESC \"Musicness\" \"Score\"\n" \
+	"		List files from https://youtube.com/ in descending order of 'value', where the 'value' is either the file's \"Musicness\" or - if that is unavailable - the file's \"Score\"\n" \
 
 
 } // namespace sql_factory
