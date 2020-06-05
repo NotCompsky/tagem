@@ -464,7 +464,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::dir: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id ";
+				where += "\nAND X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
@@ -477,7 +477,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::dir_basename: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += " AND id ";
+				where += "\nAND X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
@@ -490,7 +490,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += " AND id ";
+				where += "\nAND X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
@@ -508,7 +508,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag_tree: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += "\nAND id ";
+				where += "\nAND X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
@@ -548,7 +548,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::value: {
-				where += "\nAND id ";
+				where += "\nAND X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (";
@@ -562,7 +562,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::name: {
-				where += "\nAND name ";
+				where += "\nAND X.name ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "REGEXP ";
@@ -617,7 +617,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 	compsky::asciify::asciify(
 		itr,
 		"SELECT "
-			"id\n"
+			"X.id\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
 		join.c_str(),
 		"WHERE TRUE", where.c_str(),
