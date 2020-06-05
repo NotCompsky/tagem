@@ -1,5 +1,7 @@
 #include "FrameDecoder.h"
 #include "CStringCodec.h"
+#include "skip_to_body.hpp"
+#include "qry.hpp"
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/asciify/asciify.hpp>
@@ -158,6 +160,7 @@ const char* get_comma_separated_ints(const char** str,  const char separator){
 	}
 }
 
+
 enum GetRangeHeaderResult {
 	none,
 	valid,
@@ -291,6 +294,13 @@ namespace _r {
 		#include "headers/Content-Type/text.c"
 		"\n"
 		"OK"
+	;
+	
+	constexpr static const std::string_view post_not_necessarily_malicious_but_invalid =
+		#include "headers/return_code/UNPROCESSABLE_ENTITY.c"
+		#include "headers/Content-Type/text.c"
+		"\n"
+		"Invalid syntax"
 	;
 	
 	/*
@@ -716,6 +726,36 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			--itr; // ...wherein a trailing comma was left
 		*(itr++) = closer(_flag);
 		*itr = 0;
+	}
+	
+	std::string_view parse_qry(const char* s){
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		if (sql_factory::parse_into(this->buf, s) != sql_factory::successness::ok)
+			return _r::post_not_necessarily_malicious_but_invalid;
+		
+		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
+		
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+		this->asciify('[');
+		const char* id;
+		while(this->mysql_assign_next_row(&id)){
+			this->asciify(
+				id, ','
+			);
+		}
+		if (this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		*this->itr = 0;
+		
+		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view file_thumbnail(const char* md5hex){
@@ -1628,6 +1668,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 												break;
 										}
 										break;
+								}
+								break;
+							case 'q':
+								switch(*(s++)){
+									case '/':
+										return this->parse_qry(s);
 								}
 								break;
 						}

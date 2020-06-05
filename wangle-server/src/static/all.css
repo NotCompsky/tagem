@@ -34,3 +34,15 @@
 "}"
 
 #include "profile.css"
+
+"#qry-help p{"
+	"background:#fff;"
+	"color:#000;"
+	"font-family:monospace;"
+	"line-height:1.7em;"
+	"margin-bottom:1.5em;"
+	"max-width:100%;"
+	"overflow:auto;"
+	"padding:2em 2em;"
+	"white-space:pre-wrap;"
+"}"
