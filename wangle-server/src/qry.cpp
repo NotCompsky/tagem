@@ -2,11 +2,11 @@
 #include <compsky/asciify/asciify.hpp>
 #include <cstddef> // for size_t
 
-#ifdef DEBUG
-# include <iostream>
-# define LOG(x) std::cerr << x << std::endl
+#ifndef NOTTDEBUG
+# include <cstdio>
+# define LOG(...) fprintf(stderr, ##__VA_ARGS__)
 #else
-# define LOG(x)
+# define LOG(...)
 #endif
 
 
@@ -55,6 +55,7 @@ const char* tbl_full_name(const char tbl_alias){
 		case 'f':
 			return "file";
 		case 'd':
+		case 'D':
 			return "dir";
 		default: // AKA case 't'
 			return "tag";
@@ -107,7 +108,7 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 
 static
 arg::Arg process_arg(const char*& qry){
-	LOG("process_arg");
+	LOG("process_arg %s\n", qry);
 	switch(*(++qry)){
 		case 0:
 			return arg::END_OF_STRING;
@@ -231,7 +232,7 @@ arg::Arg process_arg(const char*& qry){
 
 static
 successness::ReturnType process_name_list(std::string& where,  const char tbl_alias,  const char*& qry){
-	LOG("process_name_list");
+	LOG("process_name_list %c %s\n", tbl_alias, qry);
 	const char* qry_begin = qry;
 	while(true){
 		switch(*(++qry)){
@@ -270,7 +271,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 
 static
 successness::ReturnType process_value_list(std::string& where,  const char*& qry){
-	LOG("process_value_list");
+	LOG("process_value_list %s\n", qry);
 	
 	const uint64_t min = s2n<uint64_t>(qry);
 	if (*qry != '-')
@@ -279,8 +280,8 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 	if (*qry != ' ')
 		return successness::invalid;
 	
-	LOG(+min);
-	LOG(+max);
+	LOG("  min == %lu\n", min);
+	LOG("  max == %lu\n", max);
 	
 	// The following is like the loop in process_name_list, but changing what is done on a match
 	// TODO: Deduplicate code
@@ -325,7 +326,7 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 
 static
 successness::ReturnType process_args(std::string& where,  const char*& order_by,  size_t& order_by_sz, unsigned& limit,  const char which_tbl,  const char* qry){
-	LOG("process_args");
+	LOG("process_args %c %s\n", which_tbl, qry);
 	while(true){
 		switch(process_arg(qry)){
 			case arg::END_OF_STRING:
@@ -446,7 +447,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 	
 	const auto rc = process_args(where, order_by, order_by_sz, limit, which_tbl, qry);
 	if (rc != successness::ok){
-		LOG(where);
+		LOG("where == %s\n", where.c_str());
 		return rc;
 	}
 	
@@ -461,7 +462,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		'\0'
 	);
 	
-	LOG("Query OK");
+	LOG("Query OK\n");
 	
 	return successness::ok;
 }
