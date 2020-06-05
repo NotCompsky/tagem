@@ -69,9 +69,8 @@
 		"tr.classList.add(\"selected\");"
 	"}"
 "}"
-"function fancify_tbl(selector){"
-	// WARNING: Ensure selector is only for tbody
-	"document.querySelector(selector).addEventListener(\"click\", function(e){"
+"function fancify_tbl(id){"
+	"document.getElementById(id).getElementsByClassName(\"tbody\")[0].addEventListener(\"click\", function(e){"
 		"var tgt = e.target;"
 		
 		// Climb the node tree until reach a row (success) - or the body itself (failure)

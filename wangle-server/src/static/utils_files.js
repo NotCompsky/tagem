@@ -145,7 +145,6 @@
 	"if (ls !== undefined){"
 		"if (ls.length !== 0){"
 			"populate_f_table('/a/f/id/' + ls.join(\",\"));"
-			"fancify_tbl(\"#f .tbody\");"
 		"}"
 	"}"
 	

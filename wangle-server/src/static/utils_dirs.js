@@ -76,7 +76,6 @@
 			"}"
 		"});"
 		"populate_f_table('/a/f/d/' + dir_id);"
-		"fancify_tbl(\"#f .tbody\");"
 	"}"
 	
 	"set_dir_name_from_id(dir_id, 'profile-name');"

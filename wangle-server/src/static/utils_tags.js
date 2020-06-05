@@ -116,7 +116,6 @@
 		// It is undefined if we are just unhiding the tag view
 		"tag_id = _tag_id;"
 		"populate_f_table('/a/f/t/' + tag_id);"
-		"fancify_tbl(\"#f .tbody\");"
 	"}"
 	
 	"set_tag_name_from_id(tag_id, \"#profile-name\");"
