@@ -46,3 +46,8 @@
 	"padding:2em 2em;"
 	"white-space:pre-wrap;"
 "}"
+
+"#view *{"
+	"width:100%;"
+	"min-height:50vh;"
+"}"
