@@ -77,8 +77,6 @@
 	"populate_f_table('/a/f/d/' + dir_id);"
 	"fancify_tbl(\"#f .tbody\");"
 	
-	"var dir_name;"
-	"var device_id;"
 	"set_dir_name_from_id(dir_id, 'profile-name');"
 	
 	"display_parent_dirs(dir_id);"
