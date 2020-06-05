@@ -649,8 +649,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 			"X.id\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
 		join.c_str(),
-		"WHERE TRUE", where.c_str(),
-		(order_by.empty())?"":"\nORDER BY ", order_by.c_str(), "\n"
+		"WHERE TRUE", where.c_str(), "\n"
+		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"OFFSET ", offset, " "
 		"LIMIT ", limit,
 		'\0'
