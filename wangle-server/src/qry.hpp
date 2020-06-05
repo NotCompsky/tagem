@@ -44,6 +44,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"EXAMPLES\n" \
 	"	f t \"Music\" t \"English (Language)\" \"French (Language)\" \"German (Language)\" value 90-100 \"Musicness\" \"Score\" name \"[.]webm$\" limit 100\n" \
 	"		List 100 WEBM files tagged Music and also tagged one of: English, French or German language, having either a musicness or score of between 90 and 100\n" \
+	"	f name \"\\\\.mp4\" d \"^/\" limit 100\n" \
+	"		List 100 MP4 files on the server\n" \
 
 
 } // namespace sql_factory
