@@ -48,20 +48,21 @@
 	"set_var_to_json_then('D', \"/a/D.json\", function(){"
 		"const embed_pre = D[_device_id][2];"
 		"if (embed_pre === \"\"){"
-			"var src;"
-			"if (_dir_name.startsWith(\"http\")){"
-				"src = _dir_name + _file_name;"
-			"} else {"
-				"src = \"/S/f/\" + file_id;"
-			"}"
-			
+			"const src = (_dir_name.startsWith(\"http\")) ? (_dir_name + _file_name) : (\"/S/f/\" + file_id);"
 			"const node = document.getElementById(\"view\");"
 			
-			"if (/\\.(jpe?g|png|gif)$/.exec(_file_name) !== null){"
-				"node.innerHTML = \"<img src='\" + src + \"'/>\";"
-			"} else {"
-				"node.innerHTML = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
+			"let s;"
+			"switch(mimetype.substring(0, mimetype.indexOf('/'))){" // Would return empty if no slash in the mimetype
+				"case 'image':"
+					"s = \"<img src='\" + src + \"'/>\";"
+					"break;"
+				"case 'video':"
+					"s = \"<video controls><source type='\" + mimetype + \"' src='\" + src + \"'></source></video>\";"
+					"break;"
+				"default:"
+					"s = \"<iframe src='\" + src + \"'></iframe>\";"
 			"}"
+			"node.innerHTML = s;"
 			
 			"node.onclick = null;" // NOTE: Look into removeEventListener
 		"} else {"

@@ -1312,7 +1312,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			);
 		} else {
 			this->asciify(
-				"HTTP/1.1 20", (end_byte == f_sz)?"0 OK":"6 Partial Content", "\n"
+				"HTTP/1.1 206 Partial Content\n"
 				"Accept-Ranges: bytes\n"
 				"Content-Type: ", mimetype, '\n',
 				"Content-Range: bytes ", from, '-', end_byte - 1, '/', f_sz, '\n',
