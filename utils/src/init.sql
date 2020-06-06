@@ -415,4 +415,26 @@ AS
 	WHERE u2p.permissions & d.permissions = d.permissions
 ;
 
+
+
+CREATE TABLE external_db (
+	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARBINARY(32) NOT NULL UNIQUE KEY
+);
+
+CREATE TABLE file2post (
+	-- This links posts in EXTERNAL databases to files in this database
+	-- An external database cannot be assumed to have at most one post for a given file. For instance, Reddit posts have duplicates.
+	file BIGINT UNSIGNED NOT NULL,
+	post BIGINT UNSIGNED NOT NULL,
+	db INT UNSIGNED NOT NULL,
+	PRIMARY KEY (post, db),
+	FOREIGN KEY (file) REFERENCES _file (id),
+	FOREIGN KEY (db) REFERENCES external_db (id)
+);
+
+ALTER TABLE file2post ADD INDEX (file);
+-- Add an index for performance reasons - almost all queries we do will be joining on file ID, not post or db IDs.
+
+
 )====="

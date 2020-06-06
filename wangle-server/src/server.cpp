@@ -28,12 +28,26 @@ namespace _f {
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
 
-namespace _mysql {
-	MYSQL* mysql_obj;
+struct DatabaseInfo {
+	MYSQL* const mysql_obj;
 	char buf[512];
 	char* auth[6];
-	constexpr static const size_t buf_sz = 512; // TODO: Alloc file size
-}
+	constexpr static const size_t buf_sz = 512;
+	const char* name() const {
+		return auth[4];
+	}
+	DatabaseInfo(const char* const env_var_name){
+		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
+		compsky::mysql::login_from_auth(mysql_obj, auth);
+	}
+	~DatabaseInfo(){
+		mysql_close(mysql_obj);
+		compsky::mysql::wipe_auth(buf, buf_sz);
+	}
+};
+
+static
+std::vector<DatabaseInfo> db_infos;
 
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
@@ -607,7 +621,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(_mysql::mysql_obj, this->res, _buf, _buf_sz);
+		compsky::mysql::query_buffer(db_infos.at(0).mysql_obj, this->res, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	
@@ -617,7 +631,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void mysql_exec_using_buf(){
 		this->mysql_mutex.lock();
-		compsky::mysql::exec_buffer(_mysql::mysql_obj, this->buf, this->buf_indx());
+		compsky::mysql::exec_buffer(db_infos.at(0).mysql_obj, this->buf, this->buf_indx());
 		this->mysql_mutex.unlock();
 	}
 	
@@ -1758,6 +1772,9 @@ int main(int argc,  char** argv){
 	
 	char** dummy_argv = argv;
 	int port_n = 0;
+	std::vector<char*> external_db_env_vars;
+	external_db_env_vars.reserve(1);
+	external_db_env_vars.push_back("TAGEM_MYSQL_CFG");
 	while (*(++argv)){
 		const char* const arg = *argv;
 		if (arg[1] != 0)
@@ -1770,6 +1787,9 @@ int main(int argc,  char** argv){
 				CACHE_DIR = *(++argv);
 				CACHE_DIR_STRLEN = strlen(CACHE_DIR);
 				break;
+			case 'x':
+				external_db_env_vars.push_back(*(++argv));
+				break;
 			default:
 				goto help;
 		}
@@ -1779,7 +1799,29 @@ int main(int argc,  char** argv){
 		help:
 		fprintf(
 			stderr,
-			"USAGE: ./server p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY]\n"
+			"USAGE\n"
+			"	p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]\n"
+			"\n"
+			"EXTERNAL DATABASES\n"
+			"	Optional\n"
+			"	List of environmental variables, each preceded by \"x\", pointing to files of the same format as $TAGEM_MYSQL_CFG, containing login data for foreign databases\n"
+			"	Eg\n"
+			"		x REDDIT_MYSQL_CFG x TWITTER_MYSQL_CFG\n"
+			"	These foreign databases should contain, at a minimum, a \"post\" table\n"
+			"	Each database should be of a unique name.\n"
+			"	The tagem database itself contains the \"post2file\" table, which maps the external database's posts to tagem's files\n"
+			// The alternative - the external database containing this table - would involve a lot more database calls. With this system, we can do a simple join, to tell clients that which posts are available in which external databases, and then only access the external database from file info and advanced queries.
+			"	Other obtional tables, that will be recognised and used if available, are:\n"
+			"		\"user\" for users\n"
+			"		\"user2tagem_tag\" linking the user to tagem's tag table\n"
+			"		\"follow\" linking users to other users\n"
+			"		\"post2mention\" and \"post2like\" linking users to posts\n"
+			"		\"cmnt\" for comments\n"
+			"		\"cmnt2mention\" and \"cmnt2like\" linking users to comments\n"
+			"		\"hashtag2tagem_tag\" linking tagem's tag table to the foreign hashtags\n"
+			"		\"hashtag\"\n"
+			"		\"post2hashtag\" linking posts to hashtags\n"
+			"		\"follow_hashtag\" linking users to hashtags\n"
 		);
 		return 1;
 	}
@@ -1790,17 +1832,17 @@ int main(int argc,  char** argv){
 	if (mysql_library_init(0, NULL, NULL))
 		throw compsky::mysql::except::SQLLibraryInit();
 	
-	compsky::mysql::init_auth(_mysql::buf, _mysql::buf_sz, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
-	compsky::mysql::login_from_auth(_mysql::mysql_obj, _mysql::auth);
+	db_infos.reserve(external_db_env_vars.size());
+	for (char* const db_env_name : external_db_env_vars){
+		db_infos.emplace_back(db_env_name);
+	}
 	
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
 	server.bind(port_n);
 	server.waitForStop();
 	
-	mysql_close(_mysql::mysql_obj);
 	mysql_library_end();
-	compsky::mysql::wipe_auth(_mysql::buf, _mysql::buf_sz);
 	
 	curl_global_cleanup();
 
