@@ -51,3 +51,7 @@
 	"width:100%;"
 	"min-height:50vh;"
 "}"
+
+"#view object, #view iframe{"
+	"min-width:60vw;"
+"}"
