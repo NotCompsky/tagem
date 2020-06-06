@@ -19,11 +19,6 @@
 #include <curl/curl.h>
 
 
-#ifndef n_cached
-# error "Please define -Dn_cached=<NUMBER_OF_ITEMS_TO_CACHE>"
-#endif
-
-
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
 namespace _f {
@@ -56,6 +51,7 @@ enum FunctionSuccessness {
 	COUNT
 };
 
+#ifdef n_cached
 namespace cached_stuff {
 	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
 	constexpr static const size_t max_buf_len = 1  +  100 * (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)  +  1  +  1; // == 25803
@@ -90,6 +86,7 @@ namespace cached_stuff {
 		return 0;
 	}
 }
+#endif
 
 std::vector<std::string> banned_client_addrs;
 
@@ -659,6 +656,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf, this->buf_indx());
 	}
 	
+#ifdef n_cached
 	void add_buf_to_cache(const unsigned int which_cached_fn,  const uint64_t user_id,  const unsigned int n_requests = 1){
 		using namespace cached_stuff;
 		
@@ -680,6 +678,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		cached_IDs[indx].user_id = user_id;
 		cached_IDs[indx].sz = sz;
 	}
+#endif
 	
 	template<typename FlagType,  typename... Args>
 	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
@@ -802,8 +801,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view dir_info(const char* id_str){
 		const uint64_t id = a2n<uint64_t>(id_str);
 		
+#ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+#endif
 		
 		this->mysql_query(
 			"SELECT name "
@@ -827,7 +828,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
+#ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::dir_info, id);
+#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -835,8 +838,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view file_info(const char* id_str){
 		const uint64_t id = a2n<uint64_t>(id_str);
 		
+#ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+#endif
 		
 		this->mysql_query(
 			"SELECT "
@@ -878,7 +883,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
+#ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::file_info, id);
+#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -886,8 +893,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view tags_given_file(const char* id_str){
 		const uint64_t id = a2n<uint64_t>(id_str);
 		
+#ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::tags_given_file, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+#endif
 		
 		this->mysql_query(
 			"SELECT "
@@ -917,7 +926,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
+#ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
+#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -960,8 +971,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view files_given_tag(const char* id_str){
 		const uint64_t id = a2n<uint64_t>(id_str);
 		
+#ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+#endif
 		
 		this->mysql_query(
 			"SELECT "
@@ -984,7 +997,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->asciify_file_info();
 		
+#ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::files_given_tag, id);
+#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1018,8 +1033,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view files_given_dir(const char* id_str){
 		const uint64_t id = a2n<uint64_t>(id_str);
 		
+#ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_dir, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
+#endif
 		
 		this->mysql_query(
 			"SELECT "
@@ -1069,7 +1086,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(']');
 		*this->itr = 0;
 		
+#ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
+#endif
 		
 		return this->get_buf_as_string_view();
 	}
