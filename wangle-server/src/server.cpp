@@ -15,6 +15,8 @@
 
 #define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))), \"\"),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
+#define DISTINCT_F2P_DB_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\")"
+#define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
 
 #include <curl/curl.h>
 
@@ -865,10 +867,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.dir,"
 				"f.name,"
-				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\"),"
+				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2T_TAG_IDS ","
 				"mt.name "
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"JOIN mimetype mt ON mt.id=f.mimetype "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
@@ -879,6 +883,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* md5_hash;
 		const char* dir_id;
 		const char* file_name;
+		const char* external_db_ids;
 		const char* tag_ids;
 		const char* mimetype;
 		this->reset_buf_index();
@@ -888,11 +893,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &tag_ids, &mimetype)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_ids, &tag_ids, &mimetype)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
+				'"', external_db_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				'"', mimetype, '"'
 			);
@@ -1000,8 +1006,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
-				"IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
+				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1036,8 +1042,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
-				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
+				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1066,8 +1072,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
-				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
+				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
