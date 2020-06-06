@@ -536,34 +536,36 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 	constexpr static const char* const _operator_none = "";
 	const char* bracket_operator_at_depth[max_bracket_depth] = {_operator_none};
 	unsigned bracket_depth = 0;
+	int n_args_since_operator = 0;
 	while(true){
 		const arg::ArgType arg_token = process_arg(qry);
 		const bool is_inverted = (arg_token & arg::NOT);
 		switch(arg_token & ~arg::NOT){ // Ignore the NOT flag
 			case arg::END_OF_STRING:
-				return successness::ok;
+				return ((bracket_depth == 0) and (n_args_since_operator == 1)) ? successness::ok : successness::invalid;
 			case arg::invalid:
 				return successness::invalid;
 			
-			// BEGIN: WARNING: No syntax chacking here - no checks on brackets and/or operators matching up or being included multiple times
+			case arg::operator_or:
+			case arg::operator_and:
+				if (n_args_since_operator != 1)
+					return successness::invalid;
+				bracket_operator_at_depth[bracket_depth] = ((arg_token & ~arg::NOT) == arg::operator_or) ? _operator_or : _operator_and;
+				n_args_since_operator = -1;
+				break;
+			
 			case arg::bracket_open:
 				where += bracket_operator_at_depth[bracket_depth];
 				where += "\n(";
 				++bracket_depth;
 				bracket_operator_at_depth[bracket_depth] = _operator_none;
+				--n_args_since_operator;
 				break;
 			case arg::bracket_close:
 				where += ")";
 				--bracket_depth;
+				--n_args_since_operator;
 				break;
-			
-			case arg::operator_or:
-				bracket_operator_at_depth[bracket_depth] = _operator_or;
-				break;
-			case arg::operator_and:
-				bracket_operator_at_depth[bracket_depth] = _operator_and;
-				break;
-			// END: WARNING
 			
 			case arg::file:
 			case arg::dir: {
@@ -711,6 +713,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 		}
+		++n_args_since_operator;
 	}
 }
 
