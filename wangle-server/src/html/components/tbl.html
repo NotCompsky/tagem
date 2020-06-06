@@ -19,6 +19,11 @@
 			COL3_NAME
 		"</div>"
 # endif
+# ifdef COL4_NAME
+		"<div class=\"td\">"
+			COL4_NAME
+		"</div>"
+# endif
 	"</div>"
 
 	// Filter row
@@ -44,6 +49,14 @@
 #  endif
 		"</div>"
 # endif
+# ifdef COL4_NAME
+		"<div class=\"td\">"
+#  ifdef COL4_IS_STR
+			"<input type=\"text\" placeholder=\"regexp\"/>"
+#   undef COL4_IS_STR
+#  endif
+		"</div>"
+# endif
 	"</div>"
 
 	// Sort row
@@ -61,6 +74,10 @@
 # ifdef COL3_NAME
 		"<div class=\"td sort\">Sort</div>"
 #  undef COL3_NAME
+# endif
+# ifdef COL4_NAME
+		"<div class=\"td sort\">Sort</div>"
+#  undef COL4_NAME
 # endif
 	"</div>"
 

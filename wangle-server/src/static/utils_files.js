@@ -7,11 +7,13 @@
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
 				"s += \"<div class='td fname'><a onclick='view_file(\" + ls[1] + \")'>\" + ls[2] + \"</a></div>\";" // File ID and name
 				"s += \"<div class='td'>\" + ls[3] + \"</div>\";"
+				"s += \"<div class='td'>\" + ls[4] + \"</div>\";"
 				
 			"s += \"</div>\";"
 		"}"
 		"document.querySelector(\"#f .tbody\").innerHTML = s;"
-		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", 'view_tag', 2);"
+		"column_id2name('x', \"/a/x.json\", \"#f .tbody\", 'view_db(', 2);"
+		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", 'view_tag', 3);"
 	"});"
 "}"
 

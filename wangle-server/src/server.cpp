@@ -29,7 +29,7 @@ namespace _f {
 }
 
 struct DatabaseInfo {
-	MYSQL* const mysql_obj;
+	MYSQL* mysql_obj;
 	char buf[512];
 	char* auth[6];
 	constexpr static const size_t buf_sz = 512;
@@ -52,6 +52,7 @@ std::vector<DatabaseInfo> db_infos;
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
+static bool regenerate_external_db_json = true;
 static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_tag_json = true;
@@ -427,6 +428,7 @@ namespace _r {
 	
 	static const char* tags_json;
 	static const char* tag2parent_json;
+	static const char* external_db_json;
 	static const char* dirs_json;
 	static const char* protocols_json;
 	static const char* devices_json;
@@ -955,6 +957,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		//const char* dir_name;
 		const char* f_id;
 		const char* f_name;
+		const char* external_db_ids;
 		const char* tag_ids;
 		this->reset_buf_index();
 		this->asciify(
@@ -963,7 +966,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -971,6 +974,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					//'"', _f::esc, '"', dir_name, '"', ',',
 					f_id, ',',
 					'"', _f::esc, '"', f_name,   '"', ',',
+					'"', external_db_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',
 				','
@@ -996,11 +1000,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
+				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
+				"IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN ("
 				"SELECT file_id "
 				"FROM file2tag "
@@ -1030,11 +1036,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
+				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
 				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			"GROUP BY f.id "
 			"LIMIT 100"
@@ -1058,54 +1066,37 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
+				"IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\"),"
 				"IFNULL(GROUP_CONCAT(f2t.tag_id),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.dir=", id, " "
 			"GROUP BY f.id "
 			"LIMIT 100"
 		);
 		
-		//const char* protocol_id;
-		const char* md5_hex;
-		//const char* dir_id;
-		//const char* dir_name;
-		const char* f_id;
-		const char* f_name;
-		const char* tag_ids;
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
-		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &tag_ids)){
-			this->asciify(
-				'[',
-					'"', md5_hex, '"', ',',
-					//dir_id, ',',
-					//'"', _f::esc, '"', dir_name, '"', ',',
-					f_id, ',',
-					'"', _f::esc, '"', f_name,   '"', ',',
-					'"', tag_ids, '"',
-				']',
-				','
-			);
-		}
-		if (this->last_char_in_buf() == ',')
-			// If there was at least one iteration of the loop...
-			--this->itr; // ...wherein a trailing comma was left
-		this->asciify(']');
-		*this->itr = 0;
+		this->asciify_file_info();
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
 #endif
 		
 		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view get_external_db_json(){
+		if (unlikely(regenerate_external_db_json)){
+			// Really we only need to run it once. So far there is no way to add an external database without reloading the server.
+			regenerate_external_db_json = false;
+			uint64_t id;
+			const char* str1;
+			constexpr _r::flag::Dict dict;
+			this->init_json(dict, "SELECT id, name FROM external_db", _r::external_db_json, &id, &str1);
+		}
+		return _r::external_db_json;
 	}
 	
 	std::string_view get_dir_json(){
@@ -1254,6 +1245,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 								break;
 						}
 						break;
+				}
+				break;
+			case 'x':
+				switch(*(s++)){
+					case '.':
+						// /a/x.json
+						return this->get_external_db_json();
 				}
 				break;
 		}
