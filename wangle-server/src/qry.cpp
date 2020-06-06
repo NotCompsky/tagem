@@ -29,6 +29,12 @@ namespace arg {
 		value,
 		name,
 		mimetype,
+		bracket_open,
+		bracket_close,
+		
+		operator_and,
+		operator_or,
+		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
 	};
@@ -117,6 +123,34 @@ arg::ArgType process_arg(const char*& qry){
 	switch(*(++qry)){
 		case 0:
 			return arg::END_OF_STRING;
+		
+		case '(':
+			switch(*(++qry)){
+				case ' ':
+					return arg::bracket_open;
+			}
+			break;
+		case ')':
+			switch(*(++qry)){
+				case ' ':
+					return arg::bracket_close;
+			}
+			break;
+		
+		case 'a':
+			switch(*(++qry)){
+				case 'n':
+					switch(*(++qry)){
+						case 'd':
+							switch(*(++qry)){
+								case ' ':
+									return arg::operator_and;
+							}
+							break;
+					}
+					break;
+			}
+			break;
 		case 'f':
 			switch(*(++qry)){
 				case ' ':
@@ -241,6 +275,8 @@ arg::ArgType process_arg(const char*& qry){
 					break;
 				case 'r':
 					switch(*(++qry)){
+						case ' ':
+							return arg::operator_or;
 						case 'd':
 							switch(*(++qry)){
 								case 'e':
@@ -494,6 +530,12 @@ static
 successness::ReturnType process_args(std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
+	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
+	constexpr static const char* const _operator_or  = "\nOR";
+	constexpr static const char* const _operator_and = "\nAND";
+	constexpr static const char* const _operator_none = "";
+	const char* bracket_operator_at_depth[max_bracket_depth] = {_operator_none};
+	unsigned bracket_depth = 0;
 	while(true){
 		const arg::ArgType arg_token = process_arg(qry);
 		const bool is_inverted = (arg_token & arg::NOT);
@@ -502,11 +544,33 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				return successness::ok;
 			case arg::invalid:
 				return successness::invalid;
+			
+			// BEGIN: WARNING: No syntax chacking here - no checks on brackets and/or operators matching up or being included multiple times
+			case arg::bracket_open:
+				where += bracket_operator_at_depth[bracket_depth];
+				where += "\n(";
+				++bracket_depth;
+				bracket_operator_at_depth[bracket_depth] = _operator_none;
+				break;
+			case arg::bracket_close:
+				where += ")";
+				--bracket_depth;
+				break;
+			
+			case arg::operator_or:
+				bracket_operator_at_depth[bracket_depth] = _operator_or;
+				break;
+			case arg::operator_and:
+				bracket_operator_at_depth[bracket_depth] = _operator_and;
+				break;
+			// END: WARNING
+			
 			case arg::file:
 			case arg::dir: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
@@ -519,7 +583,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::dir_basename: {
 				if (which_tbl != 'f')
 					return successness::unimplemented;
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
@@ -532,7 +597,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
@@ -550,7 +616,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::tag_tree: {
 				if (not has_tag_relation_tbl(which_tbl))
 					return successness::invalid;
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
@@ -590,7 +657,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::value: {
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (";
@@ -606,7 +674,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::mimetype: {
 				if (which_tbl != 'f')
 					return successness::invalid;
-				where += "\nAND X.id ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM file f JOIN mimetype m ON m.id=f.mimetype WHERE m.name REGEXP ";
@@ -617,7 +686,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			case arg::name: {
-				where += "\nAND X.name ";
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.name ";
 				if (is_inverted)
 					where += "NOT ";
 				where += "REGEXP ";
@@ -682,7 +752,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 			"X.id\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
 		join.c_str(),
-		"WHERE TRUE", where.c_str(), "\n"
+		"WHERE ", where.c_str(), "\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, " "
 		"OFFSET ", offset,
