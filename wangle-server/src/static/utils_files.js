@@ -80,6 +80,7 @@
 "}"
 "function display_this_file(){"
 	"set_embed_html(device_id, dir_name, file_name);"
+	"hide(\"view-btn\");"
 "}"
 "function autoplay(){"
 	"return document.getElementById('autoplay').checked;"
