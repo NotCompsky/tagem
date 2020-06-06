@@ -30,7 +30,7 @@ namespace arg {
 		name,
 		mimetype,
 		END_OF_STRING,
-		NOT = (1 << 7) // WARNING: Must be no other enums using this bit
+		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
 	};
 }
 
