@@ -88,7 +88,6 @@
 	"hide('f');"
 	"hide('d');"
 	"hide('t');"
-	"document.getElementById('before-files-tbl').innerHTML = '<a id=\"dir_name\"></a><br/><div id=\"view\"></div><br/><a onclick=\"display_this_file()\">View</a>';"
 	"unhide('before-files-tbl');"
 	"unhide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"

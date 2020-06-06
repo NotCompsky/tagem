@@ -128,7 +128,13 @@ R"=========(
 #undef TAGSELECT_ID
 #undef TAG_TEXT
 
-"<div id='before-files-tbl'></div>"
+"<div id=\"before-files-tbl\">" // TODO: Rename
+	"<a id=\"dir_name\"></a>"
+	"<br/>"
+	"<div id=\"view\"></div>"
+	"<br/>"
+	"<a onclick=\"display_this_file()\">View</a>"
+"</div>"
 
 #define TAG_TEXT "Add Tags to Files"
 #define TAG_FN "tag_files_then(get_file_ids(), '#tagselect-files', file_tagger_fn)"
