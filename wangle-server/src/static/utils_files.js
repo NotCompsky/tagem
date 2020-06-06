@@ -118,6 +118,8 @@
 				
 				"if (autoplay){"
 					"display_this_file();"
+				"} else {"
+					"unhide(\"view-btn\");"
 				"}"
 			"},"
 			"error: function(){"
