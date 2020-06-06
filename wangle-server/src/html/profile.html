@@ -92,17 +92,20 @@ R"=========(
 			"<a onclick=\"view_tag()\">Tag</a>"
 			"<a onclick=\"view_file()\">File</a>"
 			"<a onclick=\"view_files()\">Files</a>"
+			"<a onclick=\"unhide('help')\">Help</a>"
 		"</div>"
 	"</div>"
 
 
-"<div class=\"hidden\" id=\"qry-help\">"
+"<div class=\"hidden\" id=\"qry-help\" class=\"help\">"
 	"<h2>How to Query</h2>"
 	"<button onclick=\"hide('qry-help')\">Hide</button>"
 	"<p>"
 		QRY_USAGE
 	"</p>"
 "</div>"
+
+#include "components/help.html"
 
 "<div id=\"tagging\">"
 
