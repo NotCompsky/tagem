@@ -54,6 +54,7 @@ enum FunctionSuccessness {
 #ifdef n_cached
 namespace cached_stuff {
 	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
+	// TODO: Invalidate caches when necessary (after data is modified)
 	constexpr static const size_t max_buf_len = 1  +  100 * (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)  +  1  +  1; // == 25803
 	static char cache[n_cached * max_buf_len];
 	enum CacheID {
