@@ -121,8 +121,6 @@
 			"dataType: \"json\","
 			"url: \"/a/f/i/\"+file_id,"
 			"success: function(data){"
-				"var s = \"\";"
-				
 				"document.getElementById('profile-img').src = data[0];"
 				"dir_id = data[1];"
 				"file_name = data[2];"
