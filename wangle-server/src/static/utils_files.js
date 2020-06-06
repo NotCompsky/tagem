@@ -47,9 +47,9 @@
 "function set_embed_html(_device_id, _dir_name, _file_name){"
 	"set_var_to_json_then('D', \"/a/D.json\", function(){"
 		"const embed_pre = D[_device_id][2];"
+		"const node = document.getElementById(\"view\");"
 		"if (embed_pre === \"\"){"
 			"const src = (_dir_name.startsWith(\"http\")) ? (_dir_name + _file_name) : (\"/S/f/\" + file_id);"
-			"const node = document.getElementById(\"view\");"
 			
 			"let s;"
 			"switch(mimetype.substring(0, mimetype.indexOf('/'))){"
