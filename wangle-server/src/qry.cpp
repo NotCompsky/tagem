@@ -543,6 +543,8 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 		switch(arg_token & ~arg::NOT){ // Ignore the NOT flag
 			case arg::END_OF_STRING:
 				return ((bracket_depth == 0) and (n_args_since_operator == 1)) ? successness::ok : successness::invalid;
+				// WARNING: This also disallows using no filters altogether.
+				// TODO: Fix that.
 			case arg::invalid:
 				return successness::invalid;
 			
@@ -551,7 +553,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				if (n_args_since_operator != 1)
 					return successness::invalid;
 				bracket_operator_at_depth[bracket_depth] = ((arg_token & ~arg::NOT) == arg::operator_or) ? _operator_or : _operator_and;
-				n_args_since_operator = -1;
+				n_args_since_operator = 0;
 				break;
 			
 			case arg::bracket_open:
@@ -559,12 +561,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += "\n(";
 				++bracket_depth;
 				bracket_operator_at_depth[bracket_depth] = _operator_none;
-				--n_args_since_operator;
 				break;
 			case arg::bracket_close:
 				where += ")";
 				--bracket_depth;
-				--n_args_since_operator;
 				break;
 			
 			case arg::file:
@@ -580,6 +580,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::dir_basename: {
@@ -594,6 +595,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::tag: {
@@ -613,6 +615,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 					return rc;
 				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
 				where += "))";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::tag_tree: {
@@ -632,6 +635,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 					return rc;
 				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
 				where += "))";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::order_by: {
@@ -671,6 +675,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 					// Strip the trailing " UNION "
 					where.pop_back();
 				where += ")";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::mimetype: {
@@ -685,6 +690,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
+				++n_args_since_operator;
 				break;
 			}
 			case arg::name: {
@@ -696,6 +702,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
+				++n_args_since_operator;
 				break;
 			}
 			case arg::limit: {
@@ -713,7 +720,6 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 		}
-		++n_args_since_operator;
 	}
 }
 

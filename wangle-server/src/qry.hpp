@@ -52,6 +52,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"	limit [INTEGER]\n" \
 	"	offset [INTEGER]\n" \
 	"\n" \
+	"KNOWN BUGS\n" \
+	"	At least one filter must be included\n" \
 	"EXAMPLES\n" \
 	"	f t \"Music\" t \"English (Language)\" \"French (Language)\" \"German (Language)\" and value 90-100 \"Musicness\" \"Score\" and name \"[.]webm$\" limit 100\n" \
 	"		List 100 WEBM files tagged Music and also tagged one of: English, French or German language, having either a musicness or score of between 90 and 100\n" \
