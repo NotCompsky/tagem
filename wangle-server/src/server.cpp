@@ -38,15 +38,25 @@ struct DatabaseInfo {
 	char* auth[6];
 	constexpr static const size_t buf_sz = 512;
 	
-	bool has_user_full_name_column;
-	bool has_user_verified_column;
-	bool has_follow_tbl;
-	bool has_cmnt_tbl;
-	bool has_post2mention_tbl;
-	bool has_cmnt2mention_tbl;
-	bool has_hashtag_tbl;
-	bool has_post2like_tbl;
-	bool has_cmnt2like_tbl;
+	enum B : unsigned {
+		has_post_tbl,
+		has_user_full_name_column,
+		has_user_verified_column,
+		has_n_followers_column,
+		has_follow_tbl,
+		has_cmnt_tbl,
+		has_post2mention_tbl,
+		has_cmnt2mention_tbl,
+		has_hashtag_tbl,
+		has_post2like_tbl,
+		has_cmnt2like_tbl,
+		COUNT
+	};
+	bool bools[COUNT];
+	
+	bool is_true(unsigned enum_indx) const {
+		return this->bools[enum_indx];
+	}
 	
 	const char* name() const {
 		return auth[4];
@@ -56,16 +66,10 @@ struct DatabaseInfo {
 		compsky::mysql::wipe_auth(buf, buf_sz);
 	}
 	DatabaseInfo(const char* const env_var_name)
-	: has_user_full_name_column(false)
-	, has_user_verified_column(false)
-	, has_follow_tbl(false)
-	, has_cmnt_tbl(false)
-	, has_post2mention_tbl(false)
-	, has_cmnt2mention_tbl(false)
-	, has_hashtag_tbl(false)
-	, has_post2like_tbl(false)
-	, has_cmnt2like_tbl(false)
+	: bools{}
 	{
+		this->bools[has_post_tbl] = true;
+		
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
 		
@@ -81,27 +85,29 @@ struct DatabaseInfo {
 		const char* extra;
 		while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
 			if (streq("full_name", name))
-				this->has_user_full_name_column = true;
+				this->bools[has_user_full_name_column] = true;
+			else if (streq("verified", name))
+				this->bools[has_user_verified_column] = true;
 			else if (streq("n_followers", name))
-				this->has_user_full_name_column = true;
+				this->bools[has_n_followers_column] = true;
 		}
 		
 		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES");
 		while(compsky::mysql::assign_next_row(res, &row, &name)){
 			if (streq("follow", name))
-				this->has_follow_tbl = true;
+				this->bools[has_follow_tbl] = true;
 			else if (streq("cmnt", name))
-				this->has_cmnt_tbl = true;
+				this->bools[has_cmnt_tbl] = true;
 			else if (streq("post2mention", name))
-				this->has_post2mention_tbl = true;
+				this->bools[has_post2mention_tbl] = true;
 			else if (streq("cmnt2mention", name))
-				this->has_cmnt2mention_tbl = true;
+				this->bools[has_cmnt2mention_tbl] = true;
 			else if (streq("hashtag", name))
-				this->has_hashtag_tbl = true;
+				this->bools[has_hashtag_tbl] = true;
 			else if (streq("post2like", name))
-				this->has_post2like_tbl = true;
+				this->bools[has_post2like_tbl] = true;
 			else if (streq("cmnt2like", name))
-				this->has_cmnt2like_tbl = true;
+				this->bools[has_cmnt2like_tbl] = true;
 		}
 	}
 };
@@ -1072,6 +1078,69 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
+	std::string_view external_user_posts(const char* s,  const unsigned required_db_info_bool_indx,  const char* const tbl_name,  const char* const col_name){
+		const unsigned db_indx = a2n<unsigned>(&s);
+		++s;
+		const uint64_t user_id = a2n<uint64_t>(s);
+		
+		if ((db_indx == 0) or (db_indx >= db_infos.size()))
+			return _r::not_found;
+		
+		const unsigned db_id = db_indx2id[db_indx];
+		
+		const DatabaseInfo& db_info = db_infos.at(db_id);
+		
+		if (not db_info.is_true(required_db_info_bool_indx))
+			return _r::not_found;
+		
+		this->mysql_query_db_by_id(
+			db_id,
+			"SELECT GROUP_CONCAT(", col_name, ")"
+			"FROM ", tbl_name, " "
+			"WHERE user=", user_id
+		);
+		MYSQL_RES* const _post_ids_res = this->res;
+		const char* post_ids;
+		this->mysql_assign_next_row(&post_ids);
+		if (post_ids == nullptr){
+			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
+			mysql_free_result(_post_ids_res);
+			return _r::EMPTY_JSON_LIST;
+		}
+		
+		this->reset_buf_index();
+		this->mysql_query(
+			"SELECT GROUP_CONCAT(f.id)"
+			"FROM file f "
+			"JOIN file2post f2p ON f2p.file=f.id "
+			"WHERE f2p.post IN (", post_ids, ")"
+		);
+		mysql_free_result(_post_ids_res);
+		
+		const char* file_ids;
+		this->mysql_assign_next_row(&file_ids);
+		if (file_ids == nullptr){
+			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
+			this->mysql_free_res();
+			return _r::EMPTY_JSON_LIST;
+		}
+		
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+			"["
+				"\"", file_ids, "\""
+			"]"
+		);
+		*this->itr = 0;
+		
+		this->mysql_free_res();
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view external_user_info(const char* s){
 		// Viewing the user's liked posts and comments etc. is in a separate function
 		
@@ -1090,9 +1159,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			db_id,
 			"SELECT "
 				"u.name,",
-				(db_info.has_user_full_name_column) ? "IFNULL(u.full_name,\"\")," : "\"\",",
-				(db_info.has_user_verified_column) ? "u.verified," : "FALSE,",
-				(db_info.has_follow_tbl) ? "IFNULL(u.n_followers,0)," : "0,",
+				(db_info.is_true(DatabaseInfo::has_user_full_name_column)) ? "IFNULL(u.full_name,\"\")," : "\"\",",
+				(db_info.is_true(DatabaseInfo::has_user_verified_column)) ? "u.verified," : "FALSE,",
+				(db_info.is_true(DatabaseInfo::has_n_followers_column)) ? "IFNULL(u.n_followers,0)," : "0,",
 				"IFNULL(GROUP_CONCAT(u2t.tag),\"\") "
 			"FROM user u "
 			"LEFT JOIN user2tag u2t ON u2t.user=u.id "
@@ -1194,7 +1263,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			this->mysql_free_res();
 		}
 		
-		if (db_info.has_cmnt_tbl){
+		if (db_info.is_true(DatabaseInfo::has_cmnt_tbl)){
 			this->mysql_query_db_by_id(
 				db_indx2id[db_indx],
 				"SELECT "
@@ -1502,8 +1571,38 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 							case 'u':
 								switch(*(s++)){
 									case '/':
-										// /a/x/u/DB_ID/USER_ID
-										return this->external_user_info(s);
+										switch(*(s++)){
+											case 'p':
+												switch(*(s++)){
+													case '/':
+														switch(*(s++)){
+															case 'l':
+																switch(*(s++)){
+																	case '/':
+																		// /a/x/u/p/l/DB_ID/USER_ID
+																		return this->external_user_posts(s, DatabaseInfo::has_post2like_tbl, "post2like", "post");
+																}
+																break;
+															case 'u':
+																switch(*(s++)){
+																	case '/':
+																		// /a/x/u/p/u/DB_ID/USER_ID
+																		return this->external_user_posts(s, DatabaseInfo::has_post_tbl, "post", "id");
+																}
+																break;
+														}
+														break;
+												}
+												break;
+											case 'i':
+												switch(*(s++)){
+													case '/':
+														// /a/x/u/i/DB_ID/USER_ID
+														return this->external_user_info(s);
+												}
+												break;
+										}
+										break;
 								}
 								break;
 							case 'p':

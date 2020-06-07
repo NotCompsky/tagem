@@ -37,6 +37,23 @@
 	"document.getElementById('post-text').innerText = txt;"
 "}"
 
+"function display_posts(_db_id, _user_id, _type){"
+	// _type is either 'l' (for liked posts) or 'u' (for posts which they authored)
+	"unhide('f');"
+	"$.ajax({"
+		"dataType: \"json\","
+		"url: '/a/x/u/p/' + _type + '/' + _db_id + '/' + _user_id,"
+		"success: function(file_ids){"
+			"if(file_ids.length === 0)"
+				"return;"
+			"populate_f_table('/a/f/id/' + file_ids.join(\",\"));"
+		"},"
+		"error: function(){"
+			"alert(\"Error getting post file IDs\");"
+		"}"
+	"});"
+"}"
+
 "function view_post(db_id, post_id){"
 	"unhide('post-container');"
 	"$.ajax({"
@@ -71,7 +88,7 @@
 		"db_id = _db_id;"
 		"$.ajax({"
 			"dataType: \"json\","
-			"url: \"/a/x/u/\"+db_id+\"/\"+_user_id,"
+			"url: \"/a/x/u/i/\"+db_id+\"/\"+_user_id,"
 			"success: function(data){"
 				"document.getElementById('profile-img').src = \"\";"
 				
@@ -82,7 +99,7 @@
 				"else "
 					"hide('verified');"
 				
-				"document.getElementById('n-followers').textContent = data[3];"
+				"document.getElementById('n-followers').textContent = data[3] + ' followers';"
 				
 				"tags = data[4];"
 				"if (tags !== \"\"){"
