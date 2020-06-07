@@ -24,6 +24,7 @@
 		"hide('d');"
 		"hide('t');"
 		"hide('file-info');"
+		"hide('user-info');"
 		"hide('tagselect-files-container');"
 		"hide('tagselect-self-p-container');"
 		"hide('tagselect-self-c-container');"
@@ -147,6 +148,15 @@ R"=========(
 #undef TAG_FN
 #undef TAGSELECT_ID
 #undef TAG_TEXT
+
+"<div id=\"user-info\">"
+	"<h3 id=\"user-fullname\"></h3>"
+	
+	"<img id=\"verified\" src=\"https://freeiconshop.com/wp-content/uploads/edd/checkmark-flat.png\"/>"
+	
+	"<p id=\"n-followers\"></p><p>Followers</p>"
+	"<p id=\"n-following\"></p><p>Following</p>"
+"</div>"
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"

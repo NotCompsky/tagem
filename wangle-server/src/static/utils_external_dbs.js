@@ -60,6 +60,7 @@
 	"hide('d');"
 	"hide('t');"
 	"hide('file-info');"
+	"unhide('user-info');"
 	"hide('files-tagging');"
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
@@ -73,6 +74,15 @@
 			"url: \"/a/x/u/\"+db_id+\"/\"+_user_id,"
 			"success: function(data){"
 				"document.getElementById('profile-img').src = \"\";"
+				
+				"document.getElementById('user-fullname').textContent = data[1];"
+				
+				"if (data[2])"
+					"unhide('verified');"
+				"else "
+					"hide('verified');"
+				
+				"document.getElementById('n-followers').textContent = data[3];"
 				
 				"tags = data[4];"
 				"if (tags !== \"\"){"

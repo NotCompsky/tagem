@@ -116,6 +116,7 @@
 	"hide('d');"
 	"hide('t');"
 	"unhide('file-info');"
+	"hide('user-info');"
 	"hide('files-tagging');"
 	"unhide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
