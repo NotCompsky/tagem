@@ -1262,17 +1262,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* n_likes;
 			const char* username;
 			const char* text;
-			this->mysql_assign_next_row(&user, &timestamp, &n_likes, &username, &text);
-			compsky::asciify::asciify(
-				_itr_plus_offset,
-					'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
-					timestamp, ',',
-					n_likes, ',',
-					'"', username, '"', ',',
-					'"', _f::esc, '"', text, '"',
-				"],["
-			);
-			this->mysql_free_res();
+			while(this->mysql_assign_next_row(&user, &timestamp, &n_likes, &username, &text)){
+				compsky::asciify::asciify(
+					_itr_plus_offset,
+						'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
+						timestamp, ',',
+						n_likes, ',',
+						'"', username, '"', ',',
+						'"', _f::esc, '"', text, '"',
+					"],["
+				);
+			}
 		}
 		
 		if (db_info.is_true(DatabaseInfo::has_cmnt_tbl)){
