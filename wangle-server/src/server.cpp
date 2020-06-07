@@ -41,6 +41,12 @@ struct DatabaseInfo {
 	bool has_user_full_name_column;
 	bool has_user_verified_column;
 	bool has_follow_tbl;
+	bool has_cmnt_tbl;
+	bool has_post2mention_tbl;
+	bool has_cmnt2mention_tbl;
+	bool has_hashtag_tbl;
+	bool has_post2like_tbl;
+	bool has_cmnt2like_tbl;
 	
 	const char* name() const {
 		return auth[4];
@@ -53,6 +59,12 @@ struct DatabaseInfo {
 	: has_user_full_name_column(false)
 	, has_user_verified_column(false)
 	, has_follow_tbl(false)
+	, has_cmnt_tbl(false)
+	, has_post2mention_tbl(false)
+	, has_cmnt2mention_tbl(false)
+	, has_hashtag_tbl(false)
+	, has_post2like_tbl(false)
+	, has_cmnt2like_tbl(false)
 	{
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
@@ -74,9 +86,23 @@ struct DatabaseInfo {
 				this->has_user_full_name_column = true;
 		}
 		
-		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES LIKE \"follow\"");
-		while(compsky::mysql::assign_next_row(res, &row, &name))
-			this->has_follow_tbl = true;
+		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES");
+		while(compsky::mysql::assign_next_row(res, &row, &name)){
+			if (streq("follow", name))
+				this->has_follow_tbl = true;
+			else if (streq("cmnt", name))
+				this->has_cmnt_tbl = true;
+			else if (streq("post2mention", name))
+				this->has_post2mention_tbl = true;
+			else if (streq("cmnt2mention", name))
+				this->has_cmnt2mention_tbl = true;
+			else if (streq("hashtag", name))
+				this->has_hashtag_tbl = true;
+			else if (streq("post2like", name))
+				this->has_post2like_tbl = true;
+			else if (streq("cmnt2like", name))
+				this->has_cmnt2like_tbl = true;
+		}
 	}
 };
 
@@ -1108,6 +1134,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view external_post_info(const char* s){
+		// Data comes in two parts: data excluding comments, and then comments
+		
 		const unsigned db_indx = a2n<unsigned>(&s);
 		++s;
 		const uint64_t post_id = a2n<uint64_t>(s);
@@ -1115,54 +1143,102 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if ((db_indx == 0) or (db_indx >= db_infos.size()))
 			return _r::not_found;
 		
-		this->mysql_query_db_by_id(
-			db_indx2id[db_indx],
-			"SELECT "
-				"c.id,"
-				"c.parent,"
-				"c.user,"
-				"c.t,"
-				"u.name,"
-				"c.content "
-			"FROM cmnt c "
-			"JOIN user u ON u.id=c.user "
-			"WHERE c.post=", post_id, " "
-			"ORDER BY c.parent ASC" // Put parentless comments first
-		);
+		const unsigned db_id = db_indx2id[db_indx];
 		
-		this->reset_buf_index();
-		this->asciify(
+		const DatabaseInfo& db_info = db_infos.at(db_id);
+		
+		char* const _buf_plus_offset = this->buf + 200;
+		char* _itr_plus_offset = _buf_plus_offset;
+		// Reserve the first part of this->buf for writing SQL queries, and use the rest for writing the response.
+		
+		compsky::asciify::asciify(
+			_itr_plus_offset,
 			#include "headers/return_code/OK.c"
 			#include "headers/Content-Type/json.c"
 			"\n"
+			"[["
 		);
-		this->asciify('[');
-		const char* id;
-		const char* parent;
-		const char* user;
-		const char* timestamp;
-		const char* username;
-		const char* content;
-		while(this->mysql_assign_next_row(&id, &parent, &user, &timestamp, &username, &content)){
-			this->asciify(
-				'[',
-					id, ',',
-					parent, ',',
-					user, ',',
-					timestamp, ',',
-					'"', username, '"', ',',
-					'"', _f::esc, '"', content, '"',
-				']',
-				','
+		
+		{
+			this->mysql_query_db_by_id(
+				db_id,
+				"SELECT "
+					"p.user,"
+					"p.t,"
+					"IFNULL(p.n_cmnts,\"\"),"
+					"IFNULL(p.n_likes,\"\"),"
+					"u.name,"
+					"IFNULL(p.text,\"\") "
+				"FROM post p "
+				"JOIN user u ON u.id=p.user "
+				"WHERE p.id=", post_id
 			);
+			
+			const char* user;
+			const char* timestamp;
+			const char* n_cmnts;
+			const char* n_likes;
+			const char* username;
+			const char* text;
+			this->mysql_assign_next_row(&user, &timestamp, &n_cmnts, &n_likes, &username, &text);
+			compsky::asciify::asciify(
+				_itr_plus_offset,
+					'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
+					timestamp, ',',
+					n_cmnts, ',',
+					n_likes, ',',
+					'"', username, '"', ',',
+					'"', _f::esc, '"', text, '"',
+				"],["
+			);
+			this->mysql_free_res();
 		}
-		if (this->last_char_in_buf() == ',')
-			// If there was at least one iteration of the loop...
-			--this->itr; // ...wherein a trailing comma was left
-		this->asciify(']');
+		
+		if (db_info.has_cmnt_tbl){
+			this->mysql_query_db_by_id(
+				db_indx2id[db_indx],
+				"SELECT "
+					"c.id,"
+					"c.parent,"
+					"c.user,"
+					"c.t,"
+					"u.name,"
+					"c.content "
+				"FROM cmnt c "
+				"JOIN user u ON u.id=c.user "
+				"WHERE c.post=", post_id, " "
+				"ORDER BY c.parent ASC" // Put parentless comments first
+			);
+			
+			const char* id;
+			const char* parent;
+			const char* user;
+			const char* timestamp;
+			const char* username;
+			const char* content;
+			while(this->mysql_assign_next_row(&id, &parent, &user, &timestamp, &username, &content)){
+				compsky::asciify::asciify(
+					_itr_plus_offset,
+					'[',
+						'"', id, '"', ',', // As a string because Javascript rounds large numbers (!!!)
+						'"', parent, '"', ',', // As a string because Javascript rounds large numbers (!!!)
+						'"', user, '"', ',',  // As a string because Javascript rounds large numbers (!!!)
+						timestamp, ',',
+						'"', username, '"', ',',
+						'"', _f::esc, '"', content, '"',
+					']',
+					','
+				);
+			}
+			if (this->last_char_in_buf() == ',')
+				// If there was at least one iteration of the loop...
+				--this->itr; // ...wherein a trailing comma was left
+		}
+		
+		compsky::asciify::asciify(_itr_plus_offset, "]]");
 		*this->itr = 0;
 		
-		return this->get_buf_as_string_view();
+		return std::string_view(_buf_plus_offset,  (uintptr_t)_itr_plus_offset - (uintptr_t)_buf_plus_offset);
 	}
 	
 	std::string_view files_given_tag(const char* id_str){

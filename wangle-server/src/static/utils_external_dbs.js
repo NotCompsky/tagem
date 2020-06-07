@@ -5,7 +5,7 @@
 		"const _s ="
 			"'<div id=\"c' + cmnt_id + '\" class=\"cmnt\">' +"
 				"'<div class=\"head\">' +"
-					"'<a class=\"username\" onclick=\"view_user(' + db_id + ',\\'' + user_id + '\\')\">' + username + '</a>' +" // Encasing ID in quotes because Javascript rounds large numbers
+					"'<a class=\"user\" onclick=\"view_user(' + db_id + ',\\'' + user_id + '\\')\">' + username + '</a>' +" // Encasing ID in quotes because Javascript rounds large numbers
 					"'<time data-t=\"' + timestamp + '\">' + timestamp2dt(timestamp) + '</time>' +"
 				"'</div>' +"
 				"'<p>' +"
@@ -28,12 +28,22 @@
 	"unhide(\"cmnts\");"
 "}"
 
+"function display_post_meta(_db_id, tpl){"
+	"const [user, t, n_cmnts, n_likes, username, txt] = tpl;"
+	"document.getElementById('post-user').onclick = function(){view_user(_db_id, user)};"
+	// I don't know much about Javascript's memory management, but _db_id - although a local parameter of the function within which the function is created - seems to be preserved
+	"document.getElementById('post-user').innerText = username;"
+	"document.getElementById('post-time').innerText = timestamp2dt(t);"
+	"document.getElementById('post-text').innerText = txt;"
+"}"
+
 "function view_post(db_id, post_id){"
 	"$.ajax({"
 		"dataType: \"json\","
 		"url: \"/a/x/p/\"+db_id+\"/\"+post_id,"
 		"success: function(data){"
-			"display_cmnts(db_id, data);"
+			"display_post_meta(db_id, data[0]);"
+			"display_cmnts(db_id, data[1]);"
 		"},"
 		"error: function(){"
 			"alert(\"Error getting file data\");"
