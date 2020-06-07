@@ -16,6 +16,7 @@
 	"var user_name;"
 	
 	"$(document).ready(function(){" // Only execute after page has finished loading
+		"hide('help');"
 		"hide('tags-container');"
 		"hide('parents-container');"
 		"hide('children-container');"
@@ -109,7 +110,6 @@ R"=========(
 			"<a onclick=\"view_tag()\">Tag</a>"
 			"<a onclick=\"view_file()\">File</a>"
 			"<a onclick=\"view_files()\">Files</a>"
-			"<a onclick=\"unhide('help')\">Help</a>"
 		"</div>"
 	"</div>"
 
@@ -158,15 +158,17 @@ R"=========(
 	#include "components/toggle.html"
 	"<a id=\"view-btn\" onclick=\"display_this_file()\">View</a>"
 	
-	"<div id=\"post-container\">"
-		"<a id=\"post-user\" class=\"user\"></a>"
-		"<time id=\"post-time\"></time>"
-		"<div id=\"post-text\"></div>"
-		"<div id=\"cmnts-container\">"
-			"<div id=\"db-links\"></div>"
-			"<br/>"
-			"<a onclick=\"toggle('cmnts')\">Show/Hide Comments</a>"
-			"<div id=\"cmnts\"></div>"
+	"<div id=\"posts-container\">"
+		"<div id=\"db-links\"></div>"
+		"<div id=\"post-container\">"
+			"<a id=\"post-user\" class=\"user\"></a>"
+			"<time id=\"post-time\"></time>"
+			"<div id=\"post-text\"></div>"
+			"<div id=\"cmnts-container\">"
+				"<br/>"
+				"<a onclick=\"toggle('cmnts')\">Show/Hide Comments</a>"
+				"<div id=\"cmnts\"></div>"
+			"</div>"
 		"</div>"
 	"</div>"
 "</div>"
@@ -181,7 +183,9 @@ R"=========(
 #undef FILE_TAGGER_FN
 #undef FILE_TAGGER_FILE_IDS
 
-"<button onclick=\"deselect_rows('#f .tr')\">Deselect All</button>"
+"<div id=\"files-tagging\">"
+	"<button onclick=\"deselect_rows('#f .tr')\">Deselect All</button>"
+"</div>"
 
 "</div>"
 

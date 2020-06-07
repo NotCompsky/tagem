@@ -38,6 +38,7 @@
 "}"
 
 "function view_post(db_id, post_id){"
+	"unhide('post-container');"
 	"$.ajax({"
 		"dataType: \"json\","
 		"url: \"/a/x/p/\"+db_id+\"/\"+post_id,"
@@ -59,6 +60,7 @@
 	"hide('d');"
 	"hide('t');"
 	"hide('before-files-tbl');"
+	"hide('files-tagging');"
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
