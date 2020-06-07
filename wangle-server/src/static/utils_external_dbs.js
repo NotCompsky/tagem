@@ -29,7 +29,7 @@
 "}"
 
 "function display_post_meta(_db_id, tpl){"
-	"const [user, t, n_cmnts, n_likes, username, txt] = tpl;"
+	"const [user, t, n_likes, username, txt] = tpl;"
 	"document.getElementById('post-user').onclick = function(){view_user(_db_id, user)};"
 	// I don't know much about Javascript's memory management, but _db_id - although a local parameter of the function within which the function is created - seems to be preserved
 	"document.getElementById('post-user').innerText = username;"

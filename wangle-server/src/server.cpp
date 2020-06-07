@@ -40,9 +40,15 @@ struct DatabaseInfo {
 	
 	enum B : unsigned {
 		has_post_tbl,
+		
+		// User columns
 		has_user_full_name_column,
 		has_user_verified_column,
 		has_n_followers_column,
+		
+		// Post columns
+		has_n_likes_column,
+		
 		has_follow_tbl,
 		has_cmnt_tbl,
 		has_post2mention_tbl,
@@ -90,6 +96,12 @@ struct DatabaseInfo {
 				this->bools[has_user_verified_column] = true;
 			else if (streq("n_followers", name))
 				this->bools[has_n_followers_column] = true;
+		}
+		
+		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM post");
+		while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
+			if (streq("n_likes", name))
+				this->bools[has_n_likes_column] = true;
 		}
 		
 		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES");
@@ -1233,9 +1245,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				db_id,
 				"SELECT "
 					"p.user,"
-					"p.t,"
-					"IFNULL(p.n_cmnts,\"\"),"
-					"IFNULL(p.n_likes,\"\"),"
+					"p.t,",
+					(db_info.is_true(DatabaseInfo::has_n_likes_column)) ? "IFNULL(p.n_likes,\"\")," : "0,",
 					"u.name,"
 					"IFNULL(REPLACE(p.text, '\\n','\\\\n'),\"\") "
 				"FROM post p "
@@ -1254,7 +1265,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				_itr_plus_offset,
 					'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
 					timestamp, ',',
-					n_cmnts, ',',
 					n_likes, ',',
 					'"', username, '"', ',',
 					'"', _f::esc, '"', text, '"',
