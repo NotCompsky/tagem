@@ -1,8 +1,10 @@
 inline
 bool streq(const char* a,  const char* b){
-	while(*a == *b){
+	while(*a != 0){
+		if (*a != *b)
+			return false;
 		++a;
 		++b;
 	}
-	return (*a == 0  and  *b == 0);
+	return true;
 }
