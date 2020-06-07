@@ -71,13 +71,16 @@ struct DatabaseInfo {
 		mysql_close(mysql_obj);
 		compsky::mysql::wipe_auth(buf, buf_sz);
 	}
-	DatabaseInfo(const char* const env_var_name)
+	DatabaseInfo(const char* const env_var_name,  const bool set_bools)
 	: bools{}
 	{
-		this->bools[has_post_tbl] = true;
-		
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
+		
+		if (not set_bools)
+			return;
+		
+		this->bools[has_post_tbl] = true;
 		
 		MYSQL_RES* res;
 		MYSQL_ROW  row;
@@ -1256,11 +1259,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			
 			const char* user;
 			const char* timestamp;
-			const char* n_cmnts;
 			const char* n_likes;
 			const char* username;
 			const char* text;
-			this->mysql_assign_next_row(&user, &timestamp, &n_cmnts, &n_likes, &username, &text);
+			this->mysql_assign_next_row(&user, &timestamp, &n_likes, &username, &text);
 			compsky::asciify::asciify(
 				_itr_plus_offset,
 					'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
@@ -2207,7 +2209,7 @@ int main(int argc,  char** argv){
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
 		char* const db_env_name = external_db_env_vars.at(i);
 		
-		const DatabaseInfo& db_info = db_infos.emplace_back(db_env_name);
+		const DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
 		db_name2id_json += db_info.name();
 		db_name2id_json += "\",\"";
 		
