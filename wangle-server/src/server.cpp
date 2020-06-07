@@ -1280,7 +1280,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				db_indx2id[db_indx],
 				"SELECT "
 					"c.id,"
-					"c.parent,"
+					"IFNULL(c.parent,0),"
 					"c.user,"
 					"c.t,"
 					"u.name,"
@@ -1311,9 +1311,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					','
 				);
 			}
-			if (this->last_char_in_buf() == ',')
+			if (*(_itr_plus_offset - 1) == ',')
 				// If there was at least one iteration of the loop...
-				--this->itr; // ...wherein a trailing comma was left
+				--_itr_plus_offset; // ...wherein a trailing comma was left
 		}
 		
 		compsky::asciify::asciify(_itr_plus_offset, "]]");
