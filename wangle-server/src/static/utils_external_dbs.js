@@ -59,7 +59,7 @@
 	"hide('f');"
 	"hide('d');"
 	"hide('t');"
-	"hide('before-files-tbl');"
+	"hide('file-info');"
 	"hide('files-tagging');"
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
