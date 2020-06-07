@@ -10,6 +10,11 @@
 	"var file_tags;"
 	"var file2post;"
 	
+	// External database vars
+	"var db_id;"
+	"var user_id;"
+	"var user_name;"
+	
 	"$(document).ready(function(){" // Only execute after page has finished loading
 		"hide('tags-container');"
 		"hide('parents-container');"
@@ -25,11 +30,22 @@
 		"fancify_tbl(\"f\");"
 		"init_qry();"
 		
-		"const x = window.location.hash.substr(2);"
+		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
 			"case \"f\": view_file(x); break;"
 			"case \"d\": view_dir(x);  break;"
 			"case \"t\": view_tag(x);  break;"
+			"case \"x\":{"
+				"const [db_name, thing] = _x.split(\"/\");"
+				"set_var_to_json_then('x', '/a/x.json', function(){"
+					"db_id = x.indexOf(db_name);"
+					"const thing_id = thing.substr(1);"
+					"switch(thing[0]){"
+						"case \"u\": view_user(db_id, thing_id); break;"
+					"}"
+				"});"
+				"break;"
+			"}"
 		"}"
 	"});"
 "</script>"

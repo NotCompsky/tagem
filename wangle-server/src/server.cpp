@@ -2,6 +2,7 @@
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
 #include "qry.hpp"
+#include "streq.hpp"
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/asciify/asciify.hpp>
@@ -36,6 +37,11 @@ struct DatabaseInfo {
 	char buf[512];
 	char* auth[6];
 	constexpr static const size_t buf_sz = 512;
+	
+	bool has_user_full_name_column;
+	bool has_user_verified_column;
+	bool has_follow_tbl;
+	
 	const char* name() const {
 		return auth[4];
 	}
@@ -43,9 +49,34 @@ struct DatabaseInfo {
 		mysql_close(mysql_obj);
 		compsky::mysql::wipe_auth(buf, buf_sz);
 	}
-	DatabaseInfo(const char* const env_var_name){
+	DatabaseInfo(const char* const env_var_name)
+	: has_user_full_name_column(false)
+	, has_user_verified_column(false)
+	, has_follow_tbl(false)
+	{
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
+		
+		MYSQL_RES* res;
+		MYSQL_ROW  row;
+		
+		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM user");
+		const char* name;
+		const char* type;
+		const char* nullable;
+		const char* key;
+		const char* default_value;
+		const char* extra;
+		while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
+			if (streq("full_name", name))
+				this->has_user_full_name_column = true;
+			else if (streq("n_followers", name))
+				this->has_user_full_name_column = true;
+		}
+		
+		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES LIKE \"follow\"");
+		while(compsky::mysql::assign_next_row(res, &row, &name))
+			this->has_follow_tbl = true;
 	}
 };
 
@@ -1015,6 +1046,67 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
+	std::string_view external_user_info(const char* s){
+		// Viewing the user's liked posts and comments etc. is in a separate function
+		
+		const unsigned db_indx = a2n<unsigned>(&s);
+		++s;
+		const uint64_t user_id = a2n<uint64_t>(s);
+		
+		if ((db_indx == 0) or (db_indx >= db_infos.size()))
+			return _r::not_found;
+		
+		const unsigned db_id = db_indx2id[db_indx];
+		
+		const DatabaseInfo& db_info = db_infos.at(db_id);
+		
+		this->mysql_query_db_by_id(
+			db_id,
+			"SELECT "
+				"u.name,",
+				(db_info.has_user_full_name_column) ? "IFNULL(u.full_name,\"\")," : "\"\",",
+				(db_info.has_user_verified_column) ? "u.verified," : "FALSE,",
+				(db_info.has_follow_tbl) ? "IFNULL(u.n_followers,0)," : "0,",
+				"IFNULL(GROUP_CONCAT(u2t.tag),\"\") "
+			"FROM user u "
+			"LEFT JOIN user2tag u2t ON u2t.user=u.id "
+			"WHERE u.id=", user_id
+		);
+		
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+		this->asciify('[');
+		const char* name;
+		const char* full_name;
+		const char* is_verified;
+		const char* n_followers;
+		const char* tag_ids;
+		this->mysql_assign_next_row(&name, &full_name, &is_verified, &n_followers, &tag_ids);
+		// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
+		if (name == nullptr){
+			// No ushc user
+			this->mysql_free_res();
+			return _r::not_found;
+		}
+		this->asciify(
+			'"', name, '"', ',',
+			'"', _f::esc, '"', full_name, '"', ',',
+			is_verified, ',',
+			n_followers, ',',
+			'"', tag_ids, '"'
+		);
+		this->asciify(']');
+		*this->itr = 0;
+		
+		this->mysql_free_res();
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view external_post_info(const char* s){
 		const unsigned db_indx = a2n<unsigned>(&s);
 		++s;
@@ -1331,6 +1423,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						return _r::external_db_json;
 					case '/':
 						switch(*(s++)){
+							case 'u':
+								switch(*(s++)){
+									case '/':
+										// /a/x/u/DB_ID/USER_ID
+										return this->external_user_info(s);
+								}
+								break;
 							case 'p':
 								switch(*(s++)){
 									case '/':
