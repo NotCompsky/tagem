@@ -1237,7 +1237,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					"IFNULL(p.n_cmnts,\"\"),"
 					"IFNULL(p.n_likes,\"\"),"
 					"u.name,"
-					"IFNULL(p.text,\"\") "
+					"IFNULL(REPLACE(p.text, '\\n','\\\\n'),\"\") "
 				"FROM post p "
 				"JOIN user u ON u.id=p.user "
 				"WHERE p.id=", post_id
@@ -1272,7 +1272,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					"c.user,"
 					"c.t,"
 					"u.name,"
-					"c.content "
+					"REPLACE(c.content,'\\n','\\\\n') "
 				"FROM cmnt c "
 				"JOIN user u ON u.id=c.user "
 				"WHERE c.post=", post_id, " "
