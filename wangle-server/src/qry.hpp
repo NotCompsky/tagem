@@ -31,6 +31,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry);
 	"			f (file)\n" \
 	"			d (dir)\n" \
 	"			D (dir - matching against only the basename)\n" \
+	"			x (external database)\n" \
 	"	value [MIN]-[MAX] [[LIST_OF_NAMES]]\n" \
 	"		Entries have a variable named one of the listed names, which has a value in the specified range\n" \
 	"		Each name is separated by a double quote (\")\n" \

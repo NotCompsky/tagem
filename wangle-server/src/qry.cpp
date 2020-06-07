@@ -21,6 +21,7 @@ namespace arg {
 		tag_tree,
 		dir,
 		dir_basename,
+		external_db,
 		order_by,
 		order_by_value_asc,
 		order_by_value_desc,
@@ -369,6 +370,12 @@ arg::ArgType process_arg(const char*& qry){
 					break;
 			}
 			break;
+		case 'x':
+			switch(*(++qry)){
+				case ' ':
+					return arg::external_db;
+			}
+			break;
 	}
 	return arg::invalid;
 }
@@ -638,6 +645,23 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				++n_args_since_operator;
 				break;
 			}
+			case arg::external_db: {
+				if (which_tbl != 'f')
+					return successness::invalid;
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name IN (";
+				const auto rc = process_name_list(where, 'x', qry);
+				if (rc != successness::ok)
+					return rc;
+				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
+				where += "))";
+				++n_args_since_operator;
+				break;
+			}
+			
 			case arg::order_by: {
 				if ((not order_by.empty()) or (*(++qry) != '"') or is_inverted)
 					return successness::invalid;
