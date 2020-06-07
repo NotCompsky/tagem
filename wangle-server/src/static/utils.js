@@ -4,5 +4,6 @@
 #include "utils_dirs.js"
 #include "utils_files.js"
 #include "utils_tbls.js"
+#include "utils_external_dbs.js"
 #include "utils_cookies.js"
 #include "qry.js"

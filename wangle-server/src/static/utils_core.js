@@ -4,6 +4,13 @@
 "function unhide(id){"
 	"document.getElementById(id).classList.remove(\"hidden\");"
 "}"
+"function toggle(id){"
+	"const x = document.getElementById(id);"
+	"if (x.classList.contains(\"hidden\"))"
+		"unhide(id);"
+	" else "
+		"hide(id);"
+"}"
 
 "function timestamp2dt(t){"
 	"return new Date(t*1000).toISOString().slice(-24, -5)"
@@ -42,6 +49,8 @@
 "}"
 "function sub_into(data, node, fn_name){"
 	"var s = \"\";"
+	"if (data instanceof Array)"
+		"data = Object.fromEntries(data.entries());" // Convert ["foo","bar"] -> {0:"foo", 1:"bar"}
 	"for (var tagid of node.text().split(\",\")){"
 		"const x = data[tagid];"
 		"s += \"<a onclick='\" + fn_name + \"(\" + tagid + \")'>\" + ((x instanceof Array)?x[0]:x) + \"</a> \";"

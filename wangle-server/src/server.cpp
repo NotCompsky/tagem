@@ -16,6 +16,7 @@
 #define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))), \"\"),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\")"
+#define DISTINCT_F2P_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2p.post),\"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
 
 #include <curl/curl.h>
@@ -38,23 +39,25 @@ struct DatabaseInfo {
 	const char* name() const {
 		return auth[4];
 	}
+	void close(){
+		mysql_close(mysql_obj);
+		compsky::mysql::wipe_auth(buf, buf_sz);
+	}
 	DatabaseInfo(const char* const env_var_name){
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
-	}
-	~DatabaseInfo(){
-		mysql_close(mysql_obj);
-		compsky::mysql::wipe_auth(buf, buf_sz);
 	}
 };
 
 static
 std::vector<DatabaseInfo> db_infos;
 
+static
+unsigned db_indx2id[128];
+
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
-static bool regenerate_external_db_json = true;
 static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_tag_json = true;
@@ -623,27 +626,40 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		compsky::asciify::asciify(this->itr,  args...);
 	};
 	
-	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
+	void mysql_query_buf_db_by_id(const unsigned db_id,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(db_infos.at(0).mysql_obj, this->res, _buf, _buf_sz);
+		compsky::mysql::query_buffer(db_infos.at(db_id).mysql_obj, this->res, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
+		this->mysql_query_buf_db_by_id(0, _buf, _buf_sz);
 	}
 	
 	void mysql_query_using_buf(){
 		this->mysql_query_buf(this->buf, this->buf_indx());
 	}
 	
-	void mysql_exec_using_buf(){
+	void mysql_exec_using_buf_db_by_id(const unsigned db_id){
 		this->mysql_mutex.lock();
-		compsky::mysql::exec_buffer(db_infos.at(0).mysql_obj, this->buf, this->buf_indx());
+		compsky::mysql::exec_buffer(db_infos.at(db_id).mysql_obj, this->buf, this->buf_indx());
 		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_exec_using_buf(){
+		this->mysql_exec_using_buf_db_by_id(0);
+	}
+	
+	template<typename... Args>
+	void mysql_query_db_by_id(const unsigned db_id,  Args... args){
+		this->reset_buf_index();
+		this->asciify(args...);
+		this->mysql_query_buf_db_by_id(db_id, this->buf, this->buf_indx());
 	}
 	
 	template<typename... Args>
 	void mysql_query(Args... args){
-		this->reset_buf_index();
-		this->asciify(args...);
-		this->mysql_query_using_buf();
+		this->mysql_query_db_by_id(0, args...);
 	}
 	
 	template<typename... Args>
@@ -652,6 +668,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify(args...);
 		this->mysql_exec_using_buf();
 	}
+
 	
 	template<typename... Args>
 	bool mysql_assign_next_row(Args... args){
@@ -868,6 +885,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.dir,"
 				"f.name,"
 				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2P_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS ","
 				"mt.name "
 			"FROM file f "
@@ -884,6 +902,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* dir_id;
 		const char* file_name;
 		const char* external_db_ids;
+		const char* external_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
 		this->reset_buf_index();
@@ -893,12 +912,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_ids, &tag_ids, &mimetype)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_ids, &external_post_ids, &tag_ids, &mimetype)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', external_db_ids, '"', ',',
+				'"', external_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				'"', mimetype, '"'
 			);
@@ -964,6 +984,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* f_id;
 		const char* f_name;
 		const char* external_db_ids;
+		const char* post_ids;
 		const char* tag_ids;
 		this->reset_buf_index();
 		this->asciify(
@@ -972,7 +993,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_ids, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_ids, &post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -981,6 +1002,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					f_id, ',',
 					'"', _f::esc, '"', f_name,   '"', ',',
 					'"', external_db_ids, '"', ',',
+					'"', post_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',
 				','
@@ -991,6 +1013,64 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			--this->itr; // ...wherein a trailing comma was left
 		this->asciify(']');
 		*this->itr = 0;
+	}
+	
+	std::string_view post_info(const char* s){
+		const unsigned db_indx = a2n<unsigned>(&s);
+		++s;
+		const uint64_t post_id = a2n<uint64_t>(s);
+		
+		if ((db_indx == 0) or (db_indx >= db_infos.size()))
+			return _r::not_found;
+		
+		this->mysql_query_db_by_id(
+			db_indx2id[db_indx],
+			"SELECT "
+				"c.id,"
+				"c.parent,"
+				"c.user,"
+				"c.t,"
+				"u.name,"
+				"c.content "
+			"FROM cmnt c "
+			"JOIN user u ON u.id=c.user "
+			"WHERE c.post=", post_id, " "
+			"ORDER BY c.parent ASC" // Put parentless comments first
+		);
+		
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+		this->asciify('[');
+		const char* id;
+		const char* parent;
+		const char* user;
+		const char* timestamp;
+		const char* username;
+		const char* content;
+		while(this->mysql_assign_next_row(&id, &parent, &user, &timestamp, &username, &content)){
+			this->asciify(
+				'[',
+					id, ',',
+					parent, ',',
+					user, ',',
+					timestamp, ',',
+					'"', username, '"', ',',
+					'"', _f::esc, '"', content, '"',
+				']',
+				','
+			);
+		}
+		if (this->last_char_in_buf() == ',')
+			// If there was at least one iteration of the loop...
+			--this->itr; // ...wherein a trailing comma was left
+		this->asciify(']');
+		*this->itr = 0;
+		
+		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view files_given_tag(const char* id_str){
@@ -1007,6 +1087,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.id,"
 				"f.name,"
 				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2P_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
@@ -1043,6 +1124,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.id,"
 				"f.name,"
 				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2P_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
@@ -1073,6 +1155,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.id,"
 				"f.name,"
 				DISTINCT_F2P_DB_IDS ","
+				DISTINCT_F2P_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
@@ -1091,18 +1174,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 #endif
 		
 		return this->get_buf_as_string_view();
-	}
-	
-	std::string_view get_external_db_json(){
-		if (unlikely(regenerate_external_db_json)){
-			// Really we only need to run it once. So far there is no way to add an external database without reloading the server.
-			regenerate_external_db_json = false;
-			uint64_t id;
-			const char* str1;
-			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name FROM external_db", _r::external_db_json, &id, &str1);
-		}
-		return _r::external_db_json;
 	}
 	
 	std::string_view get_dir_json(){
@@ -1257,7 +1328,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// /a/x.json
-						return this->get_external_db_json();
+						return _r::external_db_json;
+					case '/':
+						switch(*(s++)){
+							case 'p':
+								switch(*(s++)){
+									case '/':
+										// /a/x/p/DB_ID/POST_ID
+										return this->post_info(s);
+								}
+								break;
+						}
+						break;
 				}
 				break;
 		}
@@ -1837,14 +1919,43 @@ int main(int argc,  char** argv){
 		throw compsky::mysql::except::SQLLibraryInit();
 	
 	db_infos.reserve(external_db_env_vars.size());
-	for (char* const db_env_name : external_db_env_vars){
-		db_infos.emplace_back(db_env_name);
+	std::string db_name2id_json = "[\"";
+	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
+		char* const db_env_name = external_db_env_vars.at(i);
+		
+		const DatabaseInfo& db_info = db_infos.emplace_back(db_env_name);
+		db_name2id_json += db_info.name();
+		db_name2id_json += "\",\"";
+		
+		if (i == 0)
+			continue;
+		
+		MYSQL_RES* res;
+		MYSQL_ROW row;
+		char buf[200];
+		compsky::mysql::query(db_infos.at(0).mysql_obj, res, buf, "SELECT id FROM external_db WHERE name=\"", db_info.name(), "\"");
+		unsigned id = 0;
+		while(compsky::mysql::assign_next_row(res, &row, &id));
+		if (id == 0){
+			fprintf(stderr,  "External database not recorded in external_db table: %s\n", db_info.name());
+			return 1;
+		}
+		db_indx2id[i] = id;
 	}
+	db_name2id_json.pop_back();   // Remove trailing quotation mark
+	db_name2id_json.back() = ']'; // Replace trailing comma
+	_r::external_db_json = db_name2id_json.c_str();
+	
+	printf("_r::external_db_json set\n");
 	
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
 	server.bind(port_n);
 	server.waitForStop();
+	
+	for (DatabaseInfo& db_info : db_infos){
+		db_info.close();
+	}
 	
 	mysql_library_end();
 	

@@ -1,18 +1,22 @@
 "function populate_f_table(url){"
 	"get_json(url, function(data){"
 		"var s = \"\";"
+		"file2post = {};"
 		"for (var ls of data){"
 			"s += \"<div class='tr' data-id='\" + ls[1] + \"'>\";"
 				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + ls[0] + '\"></img></div>';"
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
 				"s += \"<div class='td fname'><a onclick='view_file(\" + ls[1] + \")'>\" + ls[2] + \"</a></div>\";" // File ID and name
-				"s += \"<div class='td'>\" + ls[3] + \"</div>\";"
-				"s += \"<div class='td'>\" + ls[4] + \"</div>\";"
+				"s += \"<div class='td'>\" + ls[3] + \"</div>\";" // 3rd column i.e. col[2]
+				"s += \"<div class='td'>\" + ls[5] + \"</div>\";" // 4th column i.e. col[3]
+				
+				// Populate file2post dictionary
+				"file2post[ls[1]] = [ls[3], ls[4]];" // database_ids, post_ids
 				
 			"s += \"</div>\";"
 		"}"
 		"document.querySelector(\"#f .tbody\").innerHTML = s;"
-		"column_id2name('x', \"/a/x.json\", \"#f .tbody\", 'view_db(', 2);"
+		"column_id2name('x', \"/a/x.json\", \"#f .tbody\", 'view_db', 2);"
 		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", 'view_tag', 3);"
 	"});"
 "}"
@@ -91,13 +95,16 @@
 "function autoplay(){"
 	"return document.getElementById('autoplay').checked;"
 "}"
-"function display_external_db(id, name){"
-	"return \"<a class='db-link' onclick='view_post(\" + file_id + \",\" + id + \")'>View post on \" + name + \"</a>\";"
+"function display_external_db(id, name, post_id){"
+	"return \"<a class='db-link' onclick='view_post(\" + id + \",\\\"\" + post_id + \"\\\")'>View post on \" + name + \"</a>\";" // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
 "}"
-"function display_external_dbs(ids){"
+"function display_external_dbs(db_ids, post_ids){"
 	"set_var_to_json_then('x', '/a/x.json', function(){"
-		"const arr = ids.map(id => display_external_db(id, x[id]));"
-		"document.getElementById(\"db-links\").innerHTML = arr.join(\"<br/>\");"
+		"var s = \"\";"
+		"for (var i = 0;  i < db_ids.length;  ++i){"
+			"s += display_external_db(db_ids[i], x[db_ids[i]], post_ids[i]) + \"<br/>\";"
+		"}"
+		"document.getElementById(\"db-links\").innerHTML = s;"
 	"});"
 "}"
 "function view_file(_file_id){"
@@ -126,10 +133,10 @@
 				"file_name = data[2];"
 				"const db_ids = data[3];"
 				"if (db_ids !== \"\")"
-					"display_external_dbs(db_ids.split(\",\"));"
-				"file_tags = data[4].split(\",\");"
+					"display_external_dbs(db_ids.split(\",\"), data[4].split(\",\"));"
+				"file_tags = data[5].split(\",\");"
 				"display_tags(file_tags, \"#tags\");"
-				"mimetype = data[5];"
+				"mimetype = data[6];"
 				
 				"document.getElementById('dir_name').onclick = view_this_files_dir;"
 				"set_dir_name_from_id(dir_id, \"dir_name\");"
