@@ -1015,7 +1015,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
-	std::string_view post_info(const char* s){
+	std::string_view external_post_info(const char* s){
 		const unsigned db_indx = a2n<unsigned>(&s);
 		++s;
 		const uint64_t post_id = a2n<uint64_t>(s);
@@ -1335,7 +1335,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 								switch(*(s++)){
 									case '/':
 										// /a/x/p/DB_ID/POST_ID
-										return this->post_info(s);
+										return this->external_post_info(s);
 								}
 								break;
 						}
