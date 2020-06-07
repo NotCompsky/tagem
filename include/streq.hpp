@@ -6,5 +6,5 @@ bool streq(const char* a,  const char* b){
 		++a;
 		++b;
 	}
-	return true;
+	return (*b == 0);
 }
