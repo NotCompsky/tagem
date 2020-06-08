@@ -110,6 +110,7 @@
 	"unhide('tagselect-files-container');"
 	"unhide('tagselect-self-p-container');"
 	"unhide('tagselect-self-c-container');"
+	"hide('add-files-dialog');"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
@@ -142,6 +143,7 @@
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
+	"hide('add-files-dialog');"
 	"populate_t_id2name_table('#t .tbody', ls);"
 	"window.location.hash = '';"
 "}"

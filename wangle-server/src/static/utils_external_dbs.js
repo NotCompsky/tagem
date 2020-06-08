@@ -14,7 +14,7 @@
 				"'<div class=\\'replies\\'></div>' +"
 			"'</div>'"
 		";"
-		"if (parent_id === 0){"
+		"if (parent_id === \"0\"){"
 			"s += _s;"
 		"} else if (s !== undefined){"
 			"document.getElementById('cmnts').innerHTML = s;"

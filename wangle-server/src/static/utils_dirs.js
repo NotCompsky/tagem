@@ -61,6 +61,7 @@
 	"unhide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
+	"hide('add-files-dialog');"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 
@@ -100,6 +101,7 @@
 	"hide('tagselect-files-container');"
 	"hide('tagselect-self-p-container');"
 	"hide('tagselect-self-c-container');"
+	"hide('add-files-dialog');"
 	"populate_d_id2name_table('#d .tbody', ls);"
 	"document.getElementById(\"profile-name\").textContent = \"All Directories\";"
 	"window.location.hash = '';"

@@ -1,0 +1,20 @@
+"<div id=\"add-files-dialog\">"
+	"<input id=\"add-file-input\" type=\"text\" placeholder=\"URL\"/>"
+	"<button class=\"inline\" onclick=\"add_files__append()\">+</button>"
+	
+	"<div id=\"add-files-queue\"></div>"
+
+#define TOGGLE_ID "add-files-manual-protocol"
+#define TOGGLE_NAME "Use other protocol (such as youtube-dl)"
+#include "toggle.html"
+#undef TOGGLE_ID
+#undef TOGGLE_NAME
+
+#define TOGGLE_ID "save-file-locally"
+#define TOGGLE_NAME "Save File Locally?"
+#include "toggle.html"
+#undef TOGGLE_ID
+#undef TOGGLE_NAME
+
+	"<button onclick=\"add_file()\">Add to database</button>"
+"</div>"

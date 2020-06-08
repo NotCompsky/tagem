@@ -28,6 +28,7 @@
 		"hide('tagselect-files-container');"
 		"hide('tagselect-self-p-container');"
 		"hide('tagselect-self-c-container');"
+		"hide('add-files-dialog');"
 		"populate_tagselects();"
 		"fancify_tbl(\"f\");"
 		"init_qry();"
@@ -160,6 +161,8 @@ R"=========(
 	"<a onclick=\"display_posts(db_id,user_id,'u')\">Authored Posts</a>"
 	"<a onclick=\"display_posts(db_id,user_id,'l')\">Liked Posts</a>"
 "</div>"
+
+#include "components/add-files-dialog.html"
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"
