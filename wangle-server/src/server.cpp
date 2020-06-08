@@ -142,10 +142,10 @@ unsigned db_indx2id[128];
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
-static bool regenerate_dir_json = true;
-static bool regenerate_device_json = true;
-static bool regenerate_tag_json = true;
-static bool regenerate_tag2parent_json = true;
+static std::atomic<bool> regenerate_dir_json(true);
+static std::atomic<bool> regenerate_device_json(true);
+static std::atomic<bool> regenerate_tag_json(true);
+static std::atomic<bool> regenerate_tag2parent_json(true);
 
 enum FunctionSuccessness {
 	ok,
@@ -527,12 +527,33 @@ namespace _r {
 		return _r::not_found;
 	}
 	
-	static const char* tags_json;
-	static const char* tag2parent_json;
-	static const char* external_db_json;
-	static const char* dirs_json;
-	static const char* protocols_json;
-	static const char* devices_json;
+	// Compilers might be VERY bad at optimising atomic structs larger than 8 bytes. So using atomic items within a non-atomic struct.
+	struct AtomicStringView {
+		std::atomic<const char*> data;
+		std::atomic<size_t> sz;
+		AtomicStringView(const char* const _data,  const size_t _sz)
+		: data(_data)
+		, sz(_sz)
+		{}
+		AtomicStringView()
+		: data(nullptr)
+		, sz(0)
+		{}
+		std::string_view view() const {
+			return std::string_view(this->data.load(), this->sz.load());
+		}
+		void update(const char* const _data,  const size_t _sz){
+			// TODO: Free memory (!!!)
+			this->data.store(_data);
+			this->sz.store(_sz);
+		}
+	};
+	static AtomicStringView tags_json;
+	static AtomicStringView tag2parent_json;
+	static AtomicStringView external_db_json;
+	static AtomicStringView dirs_json;
+	static AtomicStringView protocols_json;
+	static AtomicStringView devices_json;
 	
 	
 	namespace flag {
@@ -806,7 +827,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 #endif
 	
 	template<typename FlagType,  typename... Args>
-	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
+	void init_json(const FlagType& _flag,  const char* const qry,  _r::AtomicStringView& dst,  Args... args){
 		using namespace _r;
 		
 		MYSQL_RES* mysql_res;
@@ -832,7 +853,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		sz += 1;
 		
 		char* itr = (char*)malloc(sz);
-		dst = const_cast<char*>(itr);
+		dst.update(itr, sz);
 		if(unlikely(itr == nullptr))
 			exit(4096);
 		
@@ -1439,22 +1460,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_dir_json(){
-		if (unlikely(regenerate_dir_json)){
+		if (unlikely(regenerate_dir_json.load())){
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
-			regenerate_dir_json = false;
+			regenerate_dir_json.store(false);
 			uint64_t id;
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
 			this->init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
 		}
-		return _r::dirs_json;
+		return _r::dirs_json.view();
 	}
 	
 	std::string_view get_device_json(){
-		if (unlikely(regenerate_device_json)){
-			regenerate_device_json = false;
+		if (unlikely(regenerate_device_json.load())){
+			regenerate_device_json.store(false);
 			uint64_t id;
 			const char* name;
 			unsigned protocol;
@@ -1463,12 +1484,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			constexpr _r::flag::Dict dict;
 			this->init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 		}
-		return _r::devices_json;
+		return _r::devices_json.view();
 	}
 	
 	std::string_view get_tag_json(){
-		if (unlikely(regenerate_tag_json)){
-			regenerate_tag_json = false;
+		if (unlikely(regenerate_tag_json.load())){
+			regenerate_tag_json.store(false);
 			uint64_t id;
 			const char* name;
 			const char* str1;
@@ -1488,18 +1509,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				, _r::tags_json, &id, &name, &str1, &str2
 			);
 		}
-		return _r::tags_json;
+		return _r::tags_json.view();
 	}
 	
 	std::string_view get_tag2parent_json(){
-		if (unlikely(regenerate_tag2parent_json)){
-			regenerate_tag2parent_json = false;
+		if (unlikely(regenerate_tag2parent_json.load())){
+			regenerate_tag2parent_json.store(false);
 			uint64_t id;
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			this->init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
 		}
-		return _r::tag2parent_json;
+		return _r::tag2parent_json.view();
 	}
 	
 	constexpr
@@ -1590,7 +1611,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// /a/x.json
-						return _r::external_db_json;
+						return _r::external_db_json.view();
 					case '/':
 						switch(*(s++)){
 							case 'u':
@@ -1997,8 +2018,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
 		
-		regenerate_tag_json = true;
-		regenerate_tag2parent_json = true;
+		regenerate_tag_json.store(true);;
+		regenerate_tag2parent_json.store(true);;
 	}
 	
 	std::string_view post__add_parents_to_tags(const char* s){
@@ -2388,7 +2409,7 @@ int main(int argc,  char** argv){
 	}
 	db_name2id_json.pop_back();   // Remove trailing quotation mark
 	db_name2id_json.back() = ']'; // Replace trailing comma
-	_r::external_db_json = db_name2id_json.c_str();
+	_r::external_db_json.update(db_name2id_json.c_str(), strlen(db_name2id_json.c_str()));
 	
 	printf("_r::external_db_json set\n");
 	
