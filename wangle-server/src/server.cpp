@@ -29,6 +29,7 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::Escape esc;
 	constexpr static const compsky::asciify::flag::AlphaNumeric alphanum;
 	constexpr static const compsky::asciify::flag::StrLen strlen;
+	constexpr static const compsky::asciify::flag::JSONEscape json_esc;
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
 
@@ -56,6 +57,8 @@ struct DatabaseInfo {
 		has_hashtag_tbl,
 		has_post2like_tbl,
 		has_cmnt2like_tbl,
+		has_user2tag_tbl,
+		
 		COUNT
 	};
 	bool bools[COUNT];
@@ -123,6 +126,8 @@ struct DatabaseInfo {
 				this->bools[has_post2like_tbl] = true;
 			else if (streq("cmnt2like", name))
 				this->bools[has_cmnt2like_tbl] = true;
+			else if (streq("user2tag", name))
+				this->bools[has_user2tag_tbl] = true;
 		}
 	}
 };
@@ -672,16 +677,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	constexpr static const size_t buf_sz = 100 * 1024 * 1024; // 100 MiB
 	char* buf;
 	char* itr;
-	size_t remaining_buf_sz;
 	
 	static std::mutex mysql_mutex;
 	MYSQL_RES* res;
 	MYSQL_ROW row;
-	
-	bool regenerate_dir_json;
-	bool regenerate_device_json;
-	bool regenerate_tag_json;
-	bool regenerate_tag2parent_json;
 	
 	constexpr
 	uintptr_t buf_indx(){
@@ -691,7 +690,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	constexpr
 	void reset_buf_index(){
 		this->itr = this->buf;
-		this->remaining_buf_sz = this->buf_sz;
 	}
 	
 	inline
@@ -1177,9 +1175,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				(db_info.is_true(DatabaseInfo::has_user_full_name_column)) ? "IFNULL(u.full_name,\"\")," : "\"\",",
 				(db_info.is_true(DatabaseInfo::has_user_verified_column)) ? "u.verified," : "FALSE,",
 				(db_info.is_true(DatabaseInfo::has_n_followers_column)) ? "IFNULL(u.n_followers,0)," : "0,",
-				"IFNULL(GROUP_CONCAT(u2t.tag),\"\") "
-			"FROM user u "
-			"LEFT JOIN user2tag u2t ON u2t.user=u.id "
+				(db_info.is_true(DatabaseInfo::has_user2tag_tbl)) ? "IFNULL(GROUP_CONCAT(u2t.tag),\"\")" : "\"\"", " "
+			"FROM user u ",
+			(db_info.is_true(DatabaseInfo::has_user2tag_tbl)) ? "LEFT JOIN user2tag u2t ON u2t.user=u.id" : "", " "
 			"WHERE u.id=", user_id
 		);
 		
@@ -1251,13 +1249,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					"p.t,",
 					(db_info.is_true(DatabaseInfo::has_n_likes_column)) ? "IFNULL(p.n_likes,\"\")," : "0,",
 					"u.name,"
-					"IFNULL(REPLACE(p.text, '\\n','\\\\n'),\"\") "
+					"IFNULL(p.text,\"\") "
 				"FROM post p "
 				"JOIN user u ON u.id=p.user "
 				"WHERE p.id=", post_id
 			);
 			
-			const char* user;
+			const char* user = nullptr;
 			const char* timestamp;
 			const char* n_likes;
 			const char* username;
@@ -1269,10 +1267,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						timestamp, ',',
 						n_likes, ',',
 						'"', username, '"', ',',
-						'"', _f::esc, '"', text, '"',
+						'"', _f::json_esc, text, '"',
 					"],["
 				);
 			}
+			if (user == nullptr)
+				return _r::not_found;
 		}
 		
 		if (db_info.is_true(DatabaseInfo::has_cmnt_tbl)){
@@ -1284,7 +1284,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					"c.user,"
 					"c.t,"
 					"u.name,"
-					"REPLACE(c.content,'\\n','\\\\n') "
+					"c.content "
 				"FROM cmnt c "
 				"JOIN user u ON u.id=c.user "
 				"WHERE c.post=", post_id, " "
@@ -1306,7 +1306,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						'"', user, '"', ',',  // As a string because Javascript rounds large numbers (!!!)
 						timestamp, ',',
 						'"', username, '"', ',',
-						'"', _f::esc, '"', content, '"',
+						'"', _f::json_esc, content, '"',
 					']',
 					','
 				);
@@ -1317,7 +1317,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		}
 		
 		compsky::asciify::asciify(_itr_plus_offset, "]]");
-		*this->itr = 0;
+		*_itr_plus_offset = 0;
 		
 		return std::string_view(_buf_plus_offset,  (uintptr_t)_itr_plus_offset - (uintptr_t)_buf_plus_offset);
 	}
@@ -1556,7 +1556,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			case 't':
 				switch(*(s++)){
 					case '.':
-						// m.json
+						// t.json
 						return this->get_tag_json();
 					case '2':
 						// /a/t2p.json
