@@ -3,6 +3,7 @@
 #include "skip_to_body.hpp"
 #include "qry.hpp"
 #include "streq.hpp"
+#include "protocol.hpp"
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/asciify/asciify.hpp>
@@ -267,6 +268,18 @@ enum GetRangeHeaderResult {
 	valid,
 	invalid
 };
+
+constexpr
+const char* skip_to_post_data(const char* s){
+	while(*(++s) != 0){
+		if (*s != '\n')
+			continue;
+		if (*(++s) == '\r')
+			if (*(++s) == '\n')
+				return s;
+	}
+	return nullptr;
+}
 
 constexpr
 GetRangeHeaderResult get_range(const char* headers,  size_t& from,  size_t& to){
@@ -1759,6 +1772,129 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
+	void add_f_to_db(const char* const dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
+		const char* const basename = url + dir_len;
+		//if (unlikely(dir_len >= url_len))
+		//	return true;
+		
+		const size_t basename_len = url_len - dir_len;
+		
+		this->mysql_exec(
+			"INSERT INTO file "
+			"(dir, name)"
+			"SELECT id, \"", _f::esc, '"', _f::strlen,  basename_len,  basename, "\" "
+			"FROM dir "
+			"WHERE name=\"", _f::esc, '"', _f::strlen, dir_len,  dir, "\" "
+			"ON DUPLICATE KEY UPDATE dir=dir"
+		);
+		this->mysql_exec(
+			"INSERT INTO file2tag "
+			"(file_id, tag_id)"
+			"SELECT f.id, t.id "
+			"FROM file f "
+			"JOIN dir d "
+			"JOIN tag t "
+			"WHERE t.id IN (", _f::strlen, tag_ids, tag_ids_len, ") "
+			  "AND f.name=\"", _f::esc, '"', _f::strlen, basename_len,  basename, "\" "
+			  "AND d.name=\"", _f::esc, '"', _f::strlen, dir_len,  dir, "\" "
+			"ON DUPLICATE KEY UPDATE file_id=file_id"
+		);
+	}
+	
+	std::string_view add_f(const char* s){
+		const char* const tag_ids  = get_comma_separated_ints(&s, '/');
+		if (tag_ids == nullptr)
+			return _r::not_found;
+		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
+		++s; // Skip trailing slash
+		
+		const char* const dir = s;
+		while((*s != 0) and (*s != ' '))
+			++s;
+		const size_t dir_len = (uintptr_t)s - (uintptr_t)dir;
+		
+		s = skip_to_post_data(s);
+		if (s == nullptr)
+			return _r::not_found;
+		
+		// The following gets the first single slash (not followed by another slash)
+		const char* _device = dir;
+		while((*_device != 0) and (*_device != '/'))
+			++_device;
+		++_device;
+		if (*_device == 0)
+			return _r::not_found;
+		if (*_device == '/'){
+			++_device;
+			while((*_device != 0) and (*_device != '/'))
+				++_device;
+		}
+		const size_t device_len = 1 + (uintptr_t)_device - (uintptr_t)dir;
+		
+		unsigned protocol_guess = protocol::NONE;
+		_device = dir;
+		switch(*_device){
+			case '/':
+				protocol_guess = protocol::local_filesystem;
+				break;
+			case 'h':
+				switch(*(++_device)){
+					case 't':
+						switch(*(++_device)){
+							case 't':
+								switch(*(++_device)){
+									case 'p':
+										switch(*(++_device)){
+											case 's':
+												protocol_guess = protocol::https;
+											case '/':
+												protocol_guess = protocol::http;
+										}
+								}
+						}
+				}
+		}
+		if (protocol_guess == protocol::NONE)
+			return _r::not_found;
+		
+		this->mysql_exec(
+			"INSERT INTO device "
+			"(protocol,name)"
+			"SELECT ",
+				protocol_guess, ","
+				"\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\" "
+			"FROM device "
+			"WHERE NOT EXISTS "
+			"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\")"
+			"LIMIT 1"
+		);
+		
+		this->mysql_exec(
+			"INSERT INTO dir "
+			"(device,name)"
+			"SELECT "
+				"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\"),"
+				"\"", _f::esc, '"', _f::strlen,  dir_len,  dir, "\" "
+			"FROM dir "
+			"WHERE NOT EXISTS "
+			"(SELECT id FROM dir WHERE name=\"", _f::esc, '"', _f::strlen,  dir_len,  dir, "\")"
+			"LIMIT 1"
+		);
+		
+		do {
+			++s; // Skip trailing newline
+			const char* const url = s;
+			while ((*s != 0) and (*s != '\n'))
+				++s;
+			const size_t url_len = (uintptr_t)s - (uintptr_t)url;
+			if (url_len == 0)
+				return _r::not_found;
+			this->add_f_to_db(dir, dir_len, url, url_len, tag_ids, tag_ids_len);
+			if (*s == 0)
+				return _r::post_ok;
+		} while(true);
+	}
+	
 	std::string_view post__dl(const char* s){
 		static char url_buf[4096];
 		
@@ -2018,6 +2154,28 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '/':
 						switch(*(s++)){
+							case 'a':
+								switch(*(s++)){
+									case 'd':
+										switch(*(s++)){
+											case 'd':
+												switch(*(s++)){
+													case '-':
+														switch(*(s++)){
+															case 'f':
+																switch(*(s++)){
+																	case '/':
+																		return this->add_f(s);
+																}
+																break;
+														}
+														break;
+												}
+												break;
+										}
+										break;
+								}
+								break;
 							case 'd':
 								switch(*(s++)){
 									case 'l':
