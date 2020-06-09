@@ -13,7 +13,8 @@
 "}"
 
 "function add_file(){"
-	"const urls = Array.from(document.getElementById('add-files-queue').getElementsByTagName('ul')).map(x => x.textContent);"
+	"const queue = document.getElementById('add-files-queue');"
+	"const urls = Array.from(queue.getElementsByTagName('ul')).map(x => x.textContent);"
 	"if(urls.length===0)"
 		"return;"
 	"const tagselect = $('#tagselect-files');"
@@ -38,6 +39,7 @@
 		"data:urls.join(\"\\n\"),"
 		"success:function(){"
 			"tagselect.val(\"\").change();"
+			"queue.innerHTML = \"\";" // Remove URLs
 			"alert(\"Success\");"
 		"},"
 		"dataType:\"text\""
