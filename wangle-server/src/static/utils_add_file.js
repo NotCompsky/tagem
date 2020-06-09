@@ -11,7 +11,7 @@
 	"const tag_ids = tagselect.val();"
 	"if(tag_ids.length === 0)"
 		"return;"
-	"const dir = document.getElementById(\"dirselect-container\").value;"
+	"const dir = document.getElementById(\"dirselect\").value;"
 	"const _dir_name = d[parseInt(dir)][0];"
 	"if(dir === \"\"){"
 		"alert(\"Please set the directory - likely a common prefix of all the URLs\");"
