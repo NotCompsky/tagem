@@ -56,9 +56,12 @@
 	"});"
 "}"
 "function sub_into(data, node, fn_name){"
-	"var s = \"\";"
+	"let s = \"\";"
 	"if (data instanceof Array)"
 		"data = Object.fromEntries(data.entries());" // Convert ["foo","bar"] -> {0:"foo", 1:"bar"}
+	"const _s = node.text();"
+	"if(_s === \"\")"
+		"return;"
 	"for (var tagid of node.text().split(\",\")){"
 		"const x = data[tagid];"
 		"s += \"<a onclick='\" + fn_name + \"(\" + tagid + \")'>\" + ((x instanceof Array)?x[0]:x) + \"</a> \";"

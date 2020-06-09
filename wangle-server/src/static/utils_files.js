@@ -8,10 +8,10 @@
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
 				"s += \"<div class='td fname'><a onclick='view_file(\" + ls[1] + \")'>\" + ls[2] + \"</a></div>\";" // File ID and name
 				"s += \"<div class='td'>\" + ls[3] + \"</div>\";" // 3rd column i.e. col[2]
-				"s += \"<div class='td'>\" + ls[5] + \"</div>\";" // 4th column i.e. col[3]
+				"s += \"<div class='td'>\" + ls[4] + \"</div>\";" // 4th column i.e. col[3]
 				
 				// Populate file2post dictionary
-				"file2post[ls[1]] = [ls[3], ls[4]];" // database_ids, post_ids
+				"file2post[ls[1]] = ls[3].split(\":\");" // database_ids, post_ids
 				
 			"s += \"</div>\";"
 		"}"
