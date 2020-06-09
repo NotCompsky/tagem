@@ -152,7 +152,7 @@
 "}"
 
 "function view_files(ls){"
-	"hide_all_escept(['f','tagselect-files-container']);"
+	"hide_all_except(['f','tagselect-files-container']);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
