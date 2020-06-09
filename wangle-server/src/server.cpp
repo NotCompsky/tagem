@@ -534,6 +534,13 @@ namespace _r {
 	static const char* protocols_json;
 	static const char* devices_json;
 	
+	std::mutex tags_json_mutex;
+	std::mutex tag2parent_json_mutex;
+	std::mutex external_db_json_mutex;
+	std::mutex dirs_json_mutex;
+	std::mutex protocols_json_mutex;
+	std::mutex devices_json_mutex;
+	
 	
 	namespace flag {
 		struct Dict{};
@@ -1439,6 +1446,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_dir_json(){
+		std::unique_lock lock(_r::dirs_json_mutex);
 		if (unlikely(regenerate_dir_json)){
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
@@ -1453,6 +1461,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_device_json(){
+		std::unique_lock lock(_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
 			uint64_t id;
@@ -1467,6 +1476,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_tag_json(){
+		std::unique_lock lock(_r::tags_json_mutex);
 		if (unlikely(regenerate_tag_json)){
 			regenerate_tag_json = false;
 			uint64_t id;
@@ -1492,6 +1502,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_tag2parent_json(){
+		std::unique_lock lock(_r::tag2parent_json_mutex);
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
 			uint64_t id;
