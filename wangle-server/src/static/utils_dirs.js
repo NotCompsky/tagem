@@ -41,7 +41,7 @@
 
 
 "function view_dir(_dir_id){"
-	"hide_all_except(['parents-container','children-container','files-tagging','tagselect-files-container']);"
+	"hide_all_except(['f','parents-container','children-container','files-tagging','tagselect-files-container']);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 
