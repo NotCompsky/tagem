@@ -23,6 +23,14 @@
 	"var user_id;"
 	"var user_name;"
 	
+	"var t;"
+	"var f;"
+	"var d;"
+	"var D;"
+	"var P;"
+	"var t2p;"
+	"var x;"
+	
 	"const tbl2selector = {"
 		"\"t\":\".tagselect\","
 		"\"d\":\"#dirselect\","
@@ -37,17 +45,9 @@
 		"\"P\":null"
 	"};"
 	
-	"$(document).ready(function(){" // Only execute after page has finished loading
-		"hide_all_except([]);"
-		
-		"refetch_json('t', '/a/t.json');"
-		"refetch_json('d', '/a/d.json');"
-		"refetch_json('D', '/a/D.json');"
-		"refetch_json('P', '/a/P.json');"
-		
-		"fancify_tbl(\"f\");"
-		"init_qry();"
-		
+	"function when_data_loaded(){"
+		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined)"
+			"return;"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
 			"case \"f\": view_file(_x); break;"
@@ -55,16 +55,28 @@
 			"case \"t\": view_tag(_x);  break;"
 			"case \"x\":{"
 				"const [db_name, thing] = _x.split(\"/\");"
-				"set_var_to_json_then('x', '/a/x.json', function(){"
-					"db_id = _x.indexOf(db_name);"
-					"const thing_id = thing.substr(1);"
-					"switch(thing[0]){"
-						"case \"u\": view_user(db_id, thing_id); break;"
-					"}"
-				"});"
+				"db_id = _x.indexOf(db_name);"
+				"const thing_id = thing.substr(1);"
+				"switch(thing[0]){"
+					"case \"u\": view_user(db_id, thing_id); break;"
+				"}"
 				"break;"
 			"}"
 		"}"
+	"}"
+	
+	"$(document).ready(function(){" // Only execute after page has finished loading
+		"hide_all_except([]);"
+		
+		"refetch_json('t', '/a/t.json', when_data_loaded);"
+		"refetch_json('d', '/a/d.json', when_data_loaded);"
+		"refetch_json('D', '/a/D.json', when_data_loaded);"
+		"refetch_json('P', '/a/P.json', when_data_loaded);"
+		"refetch_json('t2p', '/a/t2p.json', when_data_loaded);"
+		"refetch_json('x', '/a/x.json', when_data_loaded);"
+		
+		"fancify_tbl(\"f\");"
+		"init_qry();"
 	"});"
 "</script>"
 
