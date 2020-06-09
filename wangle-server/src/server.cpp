@@ -143,6 +143,7 @@ size_t CACHE_DIR_STRLEN;
 
 static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
+static bool regenerate_protocol_json = true;
 static bool regenerate_tag_json = true;
 static bool regenerate_tag2parent_json = true;
 
@@ -532,6 +533,7 @@ namespace _r {
 	static const char* dirs_json;
 	static const char* protocols_json;
 	static const char* devices_json;
+	static const char* protocol_json;
 	
 	std::mutex tags_json_mutex;
 	std::mutex tag2parent_json_mutex;
@@ -539,6 +541,7 @@ namespace _r {
 	std::mutex dirs_json_mutex;
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
+	std::mutex protocol_json_mutex;
 	
 	
 	namespace flag {
@@ -729,6 +732,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
 		this->mysql_query_buf_db_by_id(0, _buf, _buf_sz);
+	}
+	
+	void mysql_query_buf(const char* const _buf){
+		this->mysql_query_buf_db_by_id(0, _buf, std::char_traits<char>::length(_buf));
 	}
 	
 	void mysql_query_using_buf(){
@@ -1466,6 +1473,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::devices_json;
 	}
 	
+	std::string_view get_protocol_json(){
+		std::unique_lock lock(_r::protocol_json_mutex);
+		if (unlikely(regenerate_protocol_json)){
+			regenerate_protocol_json = false;
+			uint64_t id; // unsigned, really - just can't justify creating another function for template
+			const char* name;
+			constexpr _r::flag::Dict dict;
+			this->init_json(dict, "SELECT id, name FROM protocol", _r::protocol_json, &id, &name);
+		}
+		return _r::protocol_json;
+	}
+	
 	std::string_view get_tag_json(){
 		std::unique_lock lock(_r::tags_json_mutex);
 		if (unlikely(regenerate_tag_json)){
@@ -1530,6 +1549,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					case '.':
 						// D.json
 						return this->get_device_json();
+				}
+				break;
+			case 'P':
+				switch(*(s++)){
+					case '.':
+						// /a/P.json
+						return this->get_protocol_json();
 				}
 				break;
 			case 'f':
@@ -1774,7 +1800,31 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
-	void add_f_to_db(const char* const dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
+	void add_D_to_db(const unsigned protocol,  const char* const url,  const size_t url_len){
+		this->mysql_exec(
+			"INSERT INTO device "
+			"(protocol, name)"
+			"SELECT ", protocol, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\" "
+			"FROM device "
+			"WHERE NOT EXISTS"
+			"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"LIMIT 1"
+		);
+	}
+	
+	void add_d_to_db(const uint64_t device,  const char* const url,  const size_t url_len){
+		this->mysql_exec(
+			"INSERT INTO dir "
+			"(device, name)"
+			"SELECT ", device, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\" "
+			"FROM dir "
+			"WHERE NOT EXISTS"
+			"(SELECT id FROM dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"LIMIT 1"
+		);
+	}
+	
+	void add_f_to_db(const uint64_t dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
 		const char* const basename = url + dir_len;
 		//if (unlikely(dir_len >= url_len))
 		//	return true;
@@ -1784,104 +1834,53 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_exec(
 			"INSERT INTO file "
 			"(dir, name)"
-			"SELECT id, \"", _f::esc, '"', _f::strlen,  basename_len,  basename, "\" "
-			"FROM dir "
-			"WHERE name=\"", _f::esc, '"', _f::strlen, dir_len,  dir, "\" "
-			"ON DUPLICATE KEY UPDATE dir=dir"
+			"SELECT ", dir, ",\"", _f::esc, '"', _f::strlen,  basename_len,  basename, "\" "
+			"FROM file "
+			"WHERE NOT EXISTS"
+			"(SELECT id FROM file WHERE dir=", dir, " AND name=\"", _f::esc, '"', _f::strlen, basename_len,  basename, "\")"
+			"LIMIT 1"
 		);
 		this->mysql_exec(
 			"INSERT INTO file2tag "
 			"(file_id, tag_id)"
 			"SELECT f.id, t.id "
 			"FROM file f "
-			"JOIN dir d "
 			"JOIN tag t "
 			"WHERE t.id IN (", _f::strlen, tag_ids, tag_ids_len, ") "
 			  "AND f.name=\"", _f::esc, '"', _f::strlen, basename_len,  basename, "\" "
-			  "AND d.name=\"", _f::esc, '"', _f::strlen, dir_len,  dir, "\" "
+			  "AND f.dir=", dir, " "
 			"ON DUPLICATE KEY UPDATE file_id=file_id"
 		);
 	}
 	
-	std::string_view add_f(const char* s){
-		const char* const tag_ids  = get_comma_separated_ints(&s, '/');
-		if (tag_ids == nullptr)
-			return _r::not_found;
-		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
-		++s; // Skip trailing slash
+	std::string_view add_to_tbl(const char tbl,  const char* s){
+		const char* tag_ids;
+		size_t tag_ids_len;
+		size_t dir_len = 0;
 		
-		const char* const dir = s;
-		while((*s != 0) and (*s != ' '))
-			++s;
-		const size_t dir_len = (uintptr_t)s - (uintptr_t)dir;
+		if(tbl == 'f'){
+			tag_ids = get_comma_separated_ints(&s, '/');
+			if (tag_ids == nullptr)
+				return _r::not_found;
+			tag_ids_len = (uintptr_t)s - (uintptr_t)tag_ids;
+			++s; // Skip trailing slash
+		}
+		
+		
+		const uint64_t parent_id = a2n<uint64_t>(&s);
+		// dir for tbl f, device for tbl d, protocol (unsigned) for tbl D
 		
 		s = skip_to_post_data(s);
 		if (s == nullptr)
 			return _r::not_found;
 		
-		// The following gets the first single slash (not followed by another slash)
-		const char* _device = dir;
-		while((*_device != 0) and (*_device != '/'))
-			++_device;
-		++_device;
-		if (*_device == 0)
-			return _r::not_found;
-		if (*_device == '/'){
-			++_device;
-			while((*_device != 0) and (*_device != '/'))
-				++_device;
+		if(tbl == 'f'){
+			this->mysql_query("SELECT LENGTH(name) FROM dir WHERE id=", parent_id);
+			while(this->mysql_assign_next_row(&dir_len));
+			if (dir_len == 0)
+				// No such directory - impossible from the UI
+				return _r::not_found;
 		}
-		const size_t device_len = 1 + (uintptr_t)_device - (uintptr_t)dir;
-		
-		unsigned protocol_guess = protocol::NONE;
-		_device = dir;
-		switch(*_device){
-			case '/':
-				protocol_guess = protocol::local_filesystem;
-				break;
-			case 'h':
-				switch(*(++_device)){
-					case 't':
-						switch(*(++_device)){
-							case 't':
-								switch(*(++_device)){
-									case 'p':
-										switch(*(++_device)){
-											case 's':
-												protocol_guess = protocol::https;
-											case '/':
-												protocol_guess = protocol::http;
-										}
-								}
-						}
-				}
-		}
-		if (protocol_guess == protocol::NONE)
-			return _r::not_found;
-		
-		this->mysql_exec(
-			"INSERT INTO device "
-			"(protocol,name)"
-			"SELECT ",
-				protocol_guess, ","
-				"\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\" "
-			"FROM device "
-			"WHERE NOT EXISTS "
-			"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\")"
-			"LIMIT 1"
-		);
-		
-		this->mysql_exec(
-			"INSERT INTO dir "
-			"(device,name)"
-			"SELECT "
-				"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  device_len,  dir, "\"),"
-				"\"", _f::esc, '"', _f::strlen,  dir_len,  dir, "\" "
-			"FROM dir "
-			"WHERE NOT EXISTS "
-			"(SELECT id FROM dir WHERE name=\"", _f::esc, '"', _f::strlen,  dir_len,  dir, "\")"
-			"LIMIT 1"
-		);
 		
 		do {
 			++s; // Skip trailing newline
@@ -1891,7 +1890,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const size_t url_len = (uintptr_t)s - (uintptr_t)url;
 			if (url_len == 0)
 				return _r::not_found;
-			this->add_f_to_db(dir, dir_len, url, url_len, tag_ids, tag_ids_len);
+			switch(tbl){
+				case 'f':
+					this->add_f_to_db(parent_id, dir_len, url, url_len, tag_ids, tag_ids_len);
+					break;
+				case 'd':
+					this->add_d_to_db(parent_id, url, url_len);
+					break;
+				case 'D':
+					this->add_D_to_db(parent_id, url, url_len);
+					break;
+			}
 			if (*s == 0)
 				return _r::post_ok;
 		} while(true);
@@ -2164,10 +2173,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 												switch(*(s++)){
 													case '-':
 														switch(*(s++)){
+															case 'D':
+																switch(*(s++)){
+																	case '/':
+																		// /a/add-D/
+																		return this->add_to_tbl('D', s);
+																}
+																break;
+															case 'd':
+																switch(*(s++)){
+																	case '/':
+																		// /a/add-d/
+																		return this->add_to_tbl('d', s);
+																}
+																break;
 															case 'f':
 																switch(*(s++)){
 																	case '/':
-																		return this->add_f(s);
+																		// /a/add-f/
+																		return this->add_to_tbl('f', s);
 																}
 																break;
 														}

@@ -23,21 +23,28 @@
 	"var user_id;"
 	"var user_name;"
 	
+	"const tbl2selector = {"
+		"\"t\":\".tagselect\","
+		"\"d\":\"#dirselect\","
+		"\"D\":\"#deviceselect\","
+		"\"P\":\"#protocolselect\""
+	"};"
+	
+	"const tbl2namecol = {"
+		"\"t\":0,"
+		"\"d\":0,"
+		"\"D\":0,"
+		"\"P\":null"
+	"};"
+	
 	"$(document).ready(function(){" // Only execute after page has finished loading
-		"hide('help');"
-		"hide('tags-container');"
-		"hide('parents-container');"
-		"hide('children-container');"
-		"hide('f');"
-		"hide('d');"
-		"hide('t');"
-		"hide('file-info');"
-		"hide('user-info');"
-		"hide('tagselect-files-container');"
-		"hide('tagselect-self-p-container');"
-		"hide('tagselect-self-c-container');"
-		"hide('add-files-dialog');"
-		"populate_tagselects();"
+		"hide_all_except([]);"
+		
+		"refetch_json('t', '/a/t.json');"
+		"refetch_json('d', '/a/d.json');"
+		"refetch_json('D', '/a/D.json');"
+		"refetch_json('P', '/a/P.json');"
+		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
 		
@@ -171,7 +178,13 @@ R"=========(
 	"<a onclick=\"display_posts(db_id,user_id,'l')\">Liked Posts</a>"
 "</div>"
 
+#include "components/select-dir.html"
+#include "components/select-device.html"
+#include "components/select-protocol.html"
+
 #include "components/add-files-dialog.html"
+#include "components/add-dirs-dialog.html"
+#include "components/add-devices-dialog.html"
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"

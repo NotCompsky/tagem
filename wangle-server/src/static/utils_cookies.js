@@ -50,12 +50,7 @@
 	"if (str.length > 4000){"
 		// Most browsers only support cookies of max length 4096-ish
 		// If above this limit, just get an entirely new JSON
-		"get_json(url + '?' + (new Date().getTime()), function(data){"
-			// Cache buster url parameter
-			"console.log(\"Cache busting\", var_name);"
-			"window[var_name] = data;"
-			"fn();"
-		"});"
+		"refetch_json(var_name, url, fn);"
 		"unset_cookie(cookie_name);"
 		"return;"
 	"}"
