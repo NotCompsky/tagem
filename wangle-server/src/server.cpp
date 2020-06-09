@@ -17,8 +17,7 @@
 
 #define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))), \"\"),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
-#define DISTINCT_F2P_DB_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2p.db),\"\")"
-#define DISTINCT_F2P_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2p.post),\"\")"
+#define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.post,\":\",f2p.db),\"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
 
 #include <curl/curl.h>
@@ -980,8 +979,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.dir,"
 				"f.name,"
-				DISTINCT_F2P_DB_IDS ","
-				DISTINCT_F2P_POST_IDS ","
+				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS ","
 				"mt.name "
 			"FROM file f "
@@ -997,8 +995,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* md5_hash;
 		const char* dir_id;
 		const char* file_name;
-		const char* external_db_ids;
-		const char* external_post_ids;
+		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
 		this->reset_buf_index();
@@ -1008,13 +1005,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_ids, &external_post_ids, &tag_ids, &mimetype)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_and_post_ids, &tag_ids, &mimetype)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
-				'"', external_db_ids, '"', ',',
-				'"', external_post_ids, '"', ',',
+				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				'"', mimetype, '"'
 			);
@@ -1079,8 +1075,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		//const char* dir_name;
 		const char* f_id;
 		const char* f_name;
-		const char* external_db_ids;
-		const char* post_ids;
+		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		this->reset_buf_index();
 		this->asciify(
@@ -1089,7 +1084,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_ids, &post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -1097,8 +1092,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					//'"', _f::esc, '"', dir_name, '"', ',',
 					f_id, ',',
 					'"', _f::esc, '"', f_name,   '"', ',',
-					'"', external_db_ids, '"', ',',
-					'"', post_ids, '"', ',',
+					'"', external_db_and_post_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',
 				','
@@ -1355,8 +1349,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				DISTINCT_F2P_DB_IDS ","
-				DISTINCT_F2P_POST_IDS ","
+				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
@@ -1392,8 +1385,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				DISTINCT_F2P_DB_IDS ","
-				DISTINCT_F2P_POST_IDS ","
+				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
@@ -1423,8 +1415,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
-				DISTINCT_F2P_DB_IDS ","
-				DISTINCT_F2P_POST_IDS ","
+				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
