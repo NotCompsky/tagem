@@ -5,7 +5,7 @@
 	"document.getElementById(id).classList.remove(\"hidden\");"
 "}"
 "function hide_all_except(ls){"
-	"for(const id of ['f','d','t','file-info','user-info','tags-container','parents-container','children-container','dirselect-container','deviceselect-container','protocolselect-container','tagselect-files-container','tagselect-self-p-container','tagselect-self-c-container','add-files-dialog','add-dirs-dialog','add-devices-dialog']){"
+	"for(const id of ['help','qry-help','f','d','t','file-info','user-info','tags-container','parents-container','children-container','dirselect-container','deviceselect-container','protocolselect-container','tagselect-files-container','tagselect-self-p-container','tagselect-self-c-container','files-tagging','add-files-dialog','add-dirs-dialog','add-devices-dialog']){"
 		"if(ls.includes(id))"
 			"unhide(id);"
 		"else "
