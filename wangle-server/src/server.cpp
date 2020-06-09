@@ -1800,6 +1800,46 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
+	void add_t_to_db(const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
+		this->mysql_exec(
+			"INSERT INTO tag "
+			"(name)"
+			"SELECT \"", _f::esc, '"', _f::strlen,  tag_name_len,  tag_name, "\" "
+			"FROM tag "
+			"WHERE NOT EXISTS"
+			"(SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\")"
+			"LIMIT 1"
+		);
+		this->mysql_exec(
+			"INSERT INTO tag2parent "
+			"(tag_id, parent_id)"
+			"SELECT t.id, p.id "
+			"FROM tag t "
+			"JOIN tag p "
+			"WHERE p.id IN (", _f::strlen, parent_ids, parent_ids_len, ") "
+			  "AND t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
+			"ON DUPLICATE KEY UPDATE tag_id=tag_id"
+		);
+		this->mysql_exec(
+			"INSERT INTO tag2parent_tree (tag, parent, depth) "
+			"SELECT * "
+			"FROM("
+				"SELECT id AS id, id AS parent, 0 AS depth "
+				"FROM tag "
+				"WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
+				"UNION "
+				"SELECT t.id, t2pt.parent, t2pt.depth+1 "
+				"FROM tag t " // Seemingly unnecessary JOINs are to ensure client cannot modify tags/files they are not authorised to view
+				"JOIN tag p "
+				"JOIN tag2parent_tree t2pt ON t2pt.tag=p.id "
+				"WHERE t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
+				"AND p.id IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
+			")A "
+			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
+		);
+		regenerate_tag_json = true;
+	}
+	
 	void add_D_to_db(const unsigned protocol,  const char* const url,  const size_t url_len){
 		this->mysql_exec(
 			"INSERT INTO device "
@@ -1810,6 +1850,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
 			"LIMIT 1"
 		);
+		regenerate_device_json = true;
 	}
 	
 	void add_d_to_db(const uint64_t device,  const char* const url,  const size_t url_len){
@@ -1822,12 +1863,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(SELECT id FROM dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
 			"LIMIT 1"
 		);
+		regenerate_dir_json = true;
 	}
 	
-	void add_f_to_db(const uint64_t dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
+	bool add_f_to_db(const uint64_t dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
 		const char* const basename = url + dir_len;
-		//if (unlikely(dir_len >= url_len))
-		//	return true;
+		if (unlikely(dir_len >= url_len))
+			return true;
 		
 		const size_t basename_len = url_len - dir_len;
 		
@@ -1851,6 +1893,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND f.dir=", dir, " "
 			"ON DUPLICATE KEY UPDATE file_id=file_id"
 		);
+		
+		return false;
 	}
 	
 	std::string_view add_to_tbl(const char tbl,  const char* s){
@@ -1858,7 +1902,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		size_t tag_ids_len;
 		size_t dir_len = 0;
 		
-		if(tbl == 'f'){
+		if((tbl == 'f') or (tbl == 't')){
 			tag_ids = get_comma_separated_ints(&s, '/');
 			if (tag_ids == nullptr)
 				return _r::not_found;
@@ -1866,9 +1910,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			++s; // Skip trailing slash
 		}
 		
-		
-		const uint64_t parent_id = a2n<uint64_t>(&s);
-		// dir for tbl f, device for tbl d, protocol (unsigned) for tbl D
+		uint64_t parent_id;
+		if (tbl != 't'){
+			parent_id = a2n<uint64_t>(&s);
+			// dir for tbl f, device for tbl d, protocol (unsigned) for tbl D
+		}
 		
 		s = skip_to_post_data(s);
 		if (s == nullptr)
@@ -1892,13 +1938,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				return _r::not_found;
 			switch(tbl){
 				case 'f':
-					this->add_f_to_db(parent_id, dir_len, url, url_len, tag_ids, tag_ids_len);
+					if (unlikely(this->add_f_to_db(parent_id, dir_len, url, url_len, tag_ids, tag_ids_len)))
+						return _r::not_found;
 					break;
 				case 'd':
 					this->add_d_to_db(parent_id, url, url_len);
 					break;
 				case 'D':
 					this->add_D_to_db(parent_id, url, url_len);
+					break;
+				case 't':
+					this->add_t_to_db(tag_ids, tag_ids_len, url, url_len);
 					break;
 			}
 			if (*s == 0)
@@ -2192,6 +2242,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 																	case '/':
 																		// /a/add-f/
 																		return this->add_to_tbl('f', s);
+																}
+																break;
+															case 't':
+																switch(*(s++)){
+																	case '/':
+																		// /a/add-t/
+																		return this->add_to_tbl('t', s);
 																}
 																break;
 														}
