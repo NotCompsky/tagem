@@ -6,7 +6,7 @@
 		"$link.text(timestamp2dt($link.value));"
 	"});"
 "}"
-"function column_id2name(var_name, url, selector, fn_name, col){"
+"function column_id2name(var_name, selector, fn_name, col){"
 	"const data = window[var_name];"
 	"if (col === undefined){"
 		"sub_into(data, document.querySelector(selector), fn_name);"

@@ -1,6 +1,6 @@
 "function populate_f_table(url){"
 	"get_json(url, function(data){"
-		"var s = \"\";"
+		"let s = \"\";"
 		"file2post = {};"
 		"for (var ls of data){"
 			"s += \"<div class='tr' data-id='\" + ls[1] + \"'>\";"
@@ -16,8 +16,8 @@
 			"s += \"</div>\";"
 		"}"
 		"document.querySelector(\"#f .tbody\").innerHTML = s;"
-		"column_id2name('x', \"/a/x.json\", \"#f .tbody\", 'view_db', 2);"
-		"column_id2name('t', \"/a/t.json\", \"#f .tbody\", 'view_tag', 3);"
+		"column_id2name('x', \"#f .tbody\", 'view_db', 2);"
+		"column_id2name('t', \"#f .tbody\", 'view_tag', 3);"
 	"});"
 "}"
 
