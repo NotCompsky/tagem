@@ -2058,6 +2058,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
 		
+		// Update all descendant tags
+		this->mysql_exec(
+			"INSERT INTO tag2parent_tree (tag, parent, depth) "
+			"SELECT t2pt.tag, t2pt2.parent, t2pt.depth+1 "
+			"FROM tag p "
+			"JOIN tag2parent_tree t2pt ON t2pt.tag=p.id "
+			"JOIN tag2parent_tree t2pt2 ON t2pt2.tag=t2pt.parent "
+			"WHERE p.id IN (", _f::strlen, tag_ids, tag_ids_len, ")"
+			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
+		);
+		
 		regenerate_tag_json = true;
 		regenerate_tag2parent_json = true;
 	}
