@@ -1629,6 +1629,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 												switch(*(s++)){
 													case '/':
 														switch(*(s++)){
+															case 'c':
+																switch(*(s++)){
+																	case '/':
+																		// /a/x/u/p/c/DB_ID/USER_ID
+																		// Commented-on posts
+																		return this->external_user_posts(s, DatabaseInfo::has_cmnt_tbl, "cmnt", "post");
+																}
+																break;
 															case 'l':
 																switch(*(s++)){
 																	case '/':
