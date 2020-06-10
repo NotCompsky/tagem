@@ -67,3 +67,6 @@
 ".select2{"
 	"min-width:20em;"
 "}"
+".cmnt p{"
+	"white-space:pre-line;"
+"}"
