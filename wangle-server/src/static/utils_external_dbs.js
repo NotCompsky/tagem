@@ -91,9 +91,10 @@
 				"document.getElementById('n-followers').textContent = data[3] + ' followers';"
 				
 				"tags = data[4];"
-				"if (tags !== \"\"){"
+				"if (tags === \"\")"
+					"display_tags([], \"#tags\");"
+				"else "
 					"display_tags(tags.split(\",\"), \"#tags\");"
-				"}"
 				
 				"user_name = data[0];"
 				"$('#profile-name').text(user_name);"
