@@ -50,11 +50,13 @@
 "}"
 
 
-"function set_embed_html(_device_id, _dir_name, _file_name){"
+"function set_embed_html(_dir_id, _file_name){"
+	"const [_dir_name, _device_id] = d[(_dir_id === undefined) ? dir_id : _dir_id];"
 	"const embed_pre = D[_device_id][2];"
 	"const node = document.getElementById(\"view\");"
 	"if (embed_pre === \"\"){"
-		"const src = (_dir_name.startsWith(\"http\")) ? (_dir_name + _file_name) : (\"/S/f/\" + file_id);"
+		"const _src_end = (_dir_id === undefined) ? \"\" : \"/\" + _dir_id;"
+		"const src = (_dir_name.startsWith(\"http\")) ? (_dir_name + _file_name) : (\"/S/f/\" + file_id + _src_end);"
 		
 		"let s;"
 		"switch(mimetype.substring(0, mimetype.indexOf('/'))){"
@@ -72,8 +74,6 @@
 				"s = \"<object type='\" + mimetype + \"' data='\" + src + \"'>Browser does not support object elements</object>\";"
 		"}"
 		"node.innerHTML = s;"
-		
-		"node.onclick = null;" // NOTE: Look into removeEventListener
 	"} else {"
 		"node.innerHTML = embed_pre + _file_name + D[_device_id][3];"
 	"}"
@@ -82,13 +82,13 @@
 "function view_this_files_dir(){"
 	"view_dir(dir_id);"
 "}"
-"function display_this_file(){"
-	"set_embed_html(device_id, dir_name, file_name);"
-	"hide(\"view-btn\");"
+"function display_this_file(_dir_id){"
+	"set_embed_html(_dir_id, file_name);"
+	"hide(\"view-btns-container\");"
 "}"
 "function undisplay_this_file(){"
 	"document.getElementById(\"view\").innerHTML = \"\";"
-	"unhide(\"view-btn\");"
+	"unhide(\"view-btns-container\");"
 "}"
 "function autoplay(){"
 	"return document.getElementById('autoplay').checked;"
@@ -130,11 +130,17 @@
 				
 				"$('#profile-name').text(file_name);"
 				
+				"let _s = \"\";"
 				"if (autoplay()){"
 					"display_this_file();"
 				"} else {"
 					"undisplay_this_file();"
+					"if(data[6]!=\"\")"
+						"for(const _dir_id of data[6].split(\",\"))"
+							// dir_id of backup file
+							"_s += '<button class=\"view-btn\" onclick=\"display_this_file(' + _dir_id + ')\">' + d[_dir_id][0] + '</button>';"
 				"}"
+				"document.getElementById(\"view-btns-backups\").innerHTML = _s;"
 			"},"
 			"error: function(){"
 				"alert(\"Error populating table\");"

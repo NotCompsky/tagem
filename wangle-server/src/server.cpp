@@ -1001,13 +1001,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.name,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS ","
-				"mt.name "
+				"mt.name,"
+				"IFNULL(GROUP_CONCAT(DISTINCT d2.id),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"JOIN mimetype mt ON mt.id=f.mimetype "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
+			"LEFT JOIN file_backup f2 ON f2.file=f.id "
+			"LEFT JOIN dir d2 ON d2.id=f2.dir "
 			"WHERE f.id=", id, " "
 			"GROUP BY f.id"
 		);
@@ -1018,6 +1021,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
+		const char* backup_dir_ids;
 		this->reset_buf_index();
 		this->asciify(
 			#include "headers/return_code/OK.c"
@@ -1025,14 +1029,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_and_post_ids, &tag_ids, &mimetype)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
-				'"', mimetype, '"'
+				'"', mimetype, '"', ',',
+				'"', backup_dir_ids, '"'
 			);
 		}
 		this->asciify(']');
@@ -1767,17 +1772,27 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::not_found;
 	}
 	
-	std::string_view stream_file(const char* file_id){
+	std::string_view stream_file(const char* s){
 		constexpr static const size_t block_sz = 1024 * 1024 * 10;
 		constexpr static const size_t stream_block_sz = 1024 * 500; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
 		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
-		const uint64_t id = a2n<uint64_t>(file_id);
+		const uint64_t id = a2n<uint64_t>(&s);
+		if (unlikely(id == 0))
+			return _r::not_found;
+		
+		uint64_t dir_id = 0;
+		if(*s == '/'){
+			++s; // Skip trailing slash
+			dir_id = a2n<uint64_t>(s);
+			if (unlikely(dir_id == 0))
+				return _r::not_found;
+		}
 		
 		size_t from;
 		size_t to;
-		const GetRangeHeaderResult rc = get_range(file_id, from, to);
+		const GetRangeHeaderResult rc = get_range(s, from, to);
 		if (unlikely(rc == GetRangeHeaderResult::invalid)){
 			return _r::not_found;
 		}
@@ -1786,11 +1801,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		
 		this->mysql_query(
-			"SELECT m.name, CONCAT(d.name, f.name) "
-			"FROM file f "
-			"JOIN dir d ON d.id=f.dir "
+			"SELECT m.name, CONCAT(d.name, f", (dir_id==0)?"":"2", ".name) "
+			"FROM file f ",
+			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
+			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
-			"WHERE f.id=", id
+			"WHERE f.id=", id,
+			  (dir_id==0)?" OR ":" AND d.id=", dir_id
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
