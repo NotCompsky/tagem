@@ -121,8 +121,14 @@
 				"const db_and_post_ids = data[3];"
 				"if (db_and_post_ids !== \"\")"
 					"display_external_dbs(db_and_post_ids.split(\",\").map(x => x.split(\":\")));"
-				"file_tags = data[4].split(\",\");"
-				"display_tags(file_tags, \"#tags\");"
+				
+				"if(data[4] === \"\")"
+					"file_tags = [];"
+				"else{"
+					"file_tags = data[4].split(\",\");"
+					"display_tags(file_tags, \"#tags\");"
+				"}"
+				
 				"mimetype = data[5];"
 				
 				"document.getElementById('dir_name').onclick = view_this_files_dir;"
