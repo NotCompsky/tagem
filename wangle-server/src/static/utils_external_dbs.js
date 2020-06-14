@@ -87,8 +87,9 @@
 
 "function rm_cmnt(db_id, cmnt_id){"
 	"$.ajax({"
+		"type:\"POST\","
 		"dataType: \"text\","
-		"url: \"/a/x/c/rm/\"+db_id+\"/\"+cmnt_id,"
+		"url: \"/x/c/rm/\"+db_id+\"/\"+cmnt_id,"
 		"success: function(){"
 			"document.getElementById('c'+cmnt_id).classList.add('hidden');"
 		"},"

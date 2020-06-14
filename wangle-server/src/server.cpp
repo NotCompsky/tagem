@@ -1713,25 +1713,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 										return this->external_post_info(s);
 								}
 								break;
-							case 'c':
-								switch(*(s++)){
-									case '/':
-										switch(*(s++)){
-											case 'r':
-												switch(*(s++)){
-													case 'm':
-														switch(*(s++)){
-															case '/':
-																// /a/x/c/rm/DB_ID/CMNT_ID
-																return this->external_cmnt_rm(s);
-														}
-														break;
-												}
-												break;
-										}
-										break;
-								}
-								break;
 						}
 						break;
 				}
@@ -2327,6 +2308,33 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 																	case '/':
 																		// /a/add-t/
 																		return this->add_to_tbl('t', s);
+																}
+																break;
+														}
+														break;
+												}
+												break;
+										}
+										break;
+								}
+								break;
+							case 'x':
+								switch(*(s++)){
+									case '/':
+										switch(*(s++)){
+											case 'c':
+												switch(*(s++)){
+													case '/':
+														switch(*(s++)){
+															case 'r':
+																switch(*(s++)){
+																	case 'm':
+																		switch(*(s++)){
+																			case '/':
+																				// /x/c/rm/DB_ID/CMNT_ID
+																				return this->external_cmnt_rm(s);
+																		}
+																		break;
 																}
 																break;
 														}
