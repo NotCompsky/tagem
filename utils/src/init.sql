@@ -83,6 +83,18 @@ CREATE TABLE _file (
 # Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
 
 
+CREATE TABLE file_backup (
+	-- WARNING: Not sure how best to deal with the fact that some remote 'files' have different options, e.g. video format
+	-- NOTE: A backup might still be remote too. For instance, web.archive.org.
+	file BIGINT UNSIGNED NOT NULL,
+	dir BIGINT UNSIGNED NOT NULL,
+	name VARBINARY(1024) NOT NULL,
+	PRIMARY KEY (file, dir),
+	FOREIGN KEY (dir) REFERENCES _dir (id),
+	FOREIGN KEY (file) REFERENCES _file (id)
+);
+
+
 CREATE TABLE file2 (
 	# Stores the user-defined variable tables
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

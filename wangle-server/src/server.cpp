@@ -1125,6 +1125,38 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
+	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
+		const unsigned file_id = a2n<unsigned>(&s);
+		++s;
+		const uint64_t new_path__dir_id = a2n<uint64_t>(s);
+		
+		if ((file_id == 0) or (new_path__dir_id == 0))
+			return _r::not_found;
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		const char* const new_path__file_name = s;
+		
+		this->mysql_exec(
+			"INSERT INTO file_backup"
+			"(file,dir,name)"
+			"SELECT id, dir, name "
+			"FROM file "
+			"WHERE id=", file_id
+		);
+		// TODO: Catch duplicate key error. Should never happen.
+		
+		this->mysql_exec(
+			"UPDATE file "
+			"SET dir=", new_path__dir_id, ","
+				"name=\"", _f::esc, '"', new_path__file_name, "\""
+			"WHERE id=", file_id
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view external_user_posts(const char* s,  const unsigned required_db_info_bool_indx,  const char* const tbl_name,  const char* const col_name){
 		const unsigned db_indx = a2n<unsigned>(&s);
 		++s;
@@ -2382,6 +2414,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 								switch(*(s++)){
 									case '/':
 										switch(*(s++)){
+											case 'o':
+												switch(*(s++)){
+													case 'r':
+														switch(*(s++)){
+															case 'i':
+																switch(*(s++)){
+																	case 'g':
+																		switch(*(s++)){
+																			case '/':
+																				// /f/orig/FILE_ID/DIR_ID
+																				return this->replace_file_path_and_set_old_path_as_backup(s);
+																		}
+																		break;
+																}
+																break;
+														}
+														break;
+												}
+												break;
 											case 'v':
 												switch(*(s++)){
 													case '/':

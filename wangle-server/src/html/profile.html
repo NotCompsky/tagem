@@ -195,6 +195,8 @@ R"=========(
 #include "components/select-device.html"
 #include "components/select-protocol.html"
 
+#include "components/change-file-to-backup.html"
+
 #include "components/add-tags-dialog.html"
 
 #include "components/add-files-dialog.html"
@@ -209,6 +211,7 @@ R"=========(
 	#define TOGGLE_ID "autoplay"
 	#define TOGGLE_NAME "Autoplay"
 	#include "components/toggle.html"
+	"<button onclick=\"show_update_orig_src_dialog()\">Update src</button>"
 	"<a id=\"view-btn\" onclick=\"display_this_file()\">View</a>"
 	
 	"<div id=\"posts-container\">"

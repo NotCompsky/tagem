@@ -9,6 +9,7 @@
 #include "utils_add_file.js"
 #include "utils_add_dirs.js"
 #include "utils_add_devices.js"
+#include "utils_update_orig_src.js"
 #include "utils_cookies.js"
 #include "qry.js"
 
