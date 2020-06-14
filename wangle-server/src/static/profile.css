@@ -240,7 +240,6 @@ body {
 }
 
 #main-container{
-  padding: 20px;
   flex-grow: 1;
   overflow: auto;
   background-color: #24273b;
@@ -330,110 +329,6 @@ body {
 .box {
   background-color: #151728;
   border-radius: 4px;
-}
-
-.intro {
-  padding: 20px;
-}
-.intro-title {
-  font-family: "DM Sans", sans-serif;
-  color: #5c5e6e;
-  font-weight: 600;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.intro-menu {
-  background-color: #8f98a9;
-  box-shadow: -8px 0 0 0 #8f98a9, 8px 0 0 0 #8f98a9;
-  width: 5px;
-  height: 5px;
-  border: 0;
-  padding: 0;
-  border-radius: 50%;
-  margin-left: auto;
-  margin-right: 8px;
-}
-
-.info {
-  font-size: 15px;
-}
-.info-item {
-  display: flex;
-  color: #c3c5d5;
-}
-.info-item + .info-item {
-  margin-top: 14px;
-}
-.info-item a {
-  margin-left: 6px;
-  color: #1771d6;
-  text-decoration: none;
-}
-.info-item svg {
-  width: 16px;
-  margin-right: 10px;
-}
-
-.event {
-  position: relative;
-  margin-top: 20px;
-  padding: 10px;
-}
-
-.event-wrapper {
-  position: relative;
-}
-
-.event-img {
-  max-width: 100%;
-  display: block;
-  padding-bottom: 12px;
-}
-
-.event-date {
-  position: absolute;
-  left: 20px;
-  top: 15px;
-}
-
-.event-month {
-  background-color: #1687fa;
-  padding: 7px 20px;
-  font-weight: 600;
-  font-family: "DM Sans", sans-serif;
-  color: #fff;
-  text-align: center;
-  border-radius: 4px 4px 0 0;
-}
-
-.event-day {
-  width: 100%;
-  backdrop-filter: blur(4px);
-  color: #fff;
-  font-size: 22px;
-  font-weight: 600;
-  font-family: "DM Sans", sans-serif;
-  background-color: rgba(0, 0, 0, 0.4);
-  padding: 6px 0;
-  text-align: center;
-}
-
-.event-title {
-  color: #c3c5d5;
-  margin-bottom: 5px;
-  font-family: "DM Sans", sans-serif;
-  font-weight: 600;
-  padding: 0 14px;
-}
-
-.event-subtitle {
-  color: #5c5e6e;
-  font-family: "DM Sans", sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 0 14px;
 }
 
 .pages {
@@ -551,98 +446,6 @@ body {
   }
 }
 
-.status-share {
-  background-color: #1b86f9;
-  border: none;
-  color: #fff;
-  border-radius: 4px;
-  padding: 10px 20px;
-  margin-left: auto;
-  box-shadow: 0 0 20px #1b86f9;
-  cursor: pointer;
-}
-
-.album {
-  padding-top: 20px;
-  margin-top: 20px;
-}
-.album .status-main {
-  border: none;
-  display: flex;
-}
-.album .intro-menu {
-  margin-bottom: auto;
-  margin-top: 5px;
-}
-
-.album-detail {
-  width: calc(100% - 110px);
-}
-
-.album-title span {
-  color: #1771d6;
-  cursor: pointer;
-}
-
-.album-date {
-  font-size: 15px;
-  color: #595c6c;
-  margin-top: 4px;
-}
-
-.album-content {
-  padding: 0 20px 20px;
-}
-
-.album-photo {
-  width: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 4px;
-  margin-top: 10px;
-}
-
-.album-photos {
-  display: flex;
-  margin-top: 20px;
-  max-height: 30vh;
-}
-
-.album-photos > .album-photo {
-  width: 50%;
-}
-
-.album-right {
-  width: 50%;
-  margin-left: 10px;
-  line-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.album-right .album-photo {
-  height: calc(50% - 10px);
-}
-
-.album-actions {
-  padding: 0 20px 20px;
-}
-
-.album-action {
-  margin-right: 20px;
-  text-decoration: none;
-  color: #a2a4b4;
-  display: inline-flex;
-  align-items: center;
-  font-weight: 600;
-}
-.album-action:hover {
-  color: #fff;
-}
-.album-action svg {
-  width: 16px;
-  margin-right: 6px;
-}
-
 .account-button {
   border: 0;
   background: 0;
@@ -696,18 +499,6 @@ body {
   background-color: #151728;
   z-index: 3;
   flex-shrink: 0;
-}
-
-.stories {
-  border-bottom: 1px solid #272a3a;
-}
-
-.stories .icon{
-  border: 2px solid #e2b96c;
-}
-
-.stories .album-date {
-  font-family: "Source Sans Pro", sans-serif;
 }
 
 .user-status {
