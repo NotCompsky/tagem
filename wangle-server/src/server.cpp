@@ -724,44 +724,57 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		compsky::asciify::asciify(this->itr,  args...);
 	};
 	
-	void mysql_query_buf_db_by_id(const unsigned db_id,  const char* const _buf,  const size_t _buf_sz){
+	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(db_infos.at(db_id).mysql_obj, this->res, _buf, _buf_sz);
+		compsky::mysql::query_buffer(db_info.mysql_obj, this->res, _buf, _buf_sz);
+		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_exec_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
+		this->mysql_mutex.lock();
+		compsky::mysql::exec_buffer(db_info.mysql_obj, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
-		this->mysql_query_buf_db_by_id(0, _buf, _buf_sz);
+		this->mysql_query_buf_db_by_id(db_infos.at(0), _buf, _buf_sz);
 	}
 	
 	void mysql_query_buf(const char* const _buf){
-		this->mysql_query_buf_db_by_id(0, _buf, std::char_traits<char>::length(_buf));
+		this->mysql_query_buf_db_by_id(db_infos.at(0), _buf, std::char_traits<char>::length(_buf));
 	}
 	
 	void mysql_query_using_buf(){
 		this->mysql_query_buf(this->buf, this->buf_indx());
 	}
 	
-	void mysql_exec_using_buf_db_by_id(const unsigned db_id){
+	void mysql_exec_using_buf_db_by_id(DatabaseInfo& db_info){
 		this->mysql_mutex.lock();
-		compsky::mysql::exec_buffer(db_infos.at(db_id).mysql_obj, this->buf, this->buf_indx());
+		compsky::mysql::exec_buffer(db_info.mysql_obj, this->buf, this->buf_indx());
 		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_using_buf(){
-		this->mysql_exec_using_buf_db_by_id(0);
+		this->mysql_exec_using_buf_db_by_id(db_infos.at(0));
 	}
 	
 	template<typename... Args>
-	void mysql_query_db_by_id(const unsigned db_id,  Args... args){
+	void mysql_query_db_by_id(DatabaseInfo& db_info,  Args... args){
 		this->reset_buf_index();
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id(db_id, this->buf, this->buf_indx());
+		this->mysql_query_buf_db_by_id(db_info, this->buf, this->buf_indx());
+	}
+	
+	template<typename... Args>
+	void mysql_exec_db_by_id(DatabaseInfo& db_info,  Args... args){
+		this->reset_buf_index();
+		this->asciify(args...);
+		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
 	}
 	
 	template<typename... Args>
 	void mysql_query(Args... args){
-		this->mysql_query_db_by_id(0, args...);
+		this->mysql_query_db_by_id(db_infos.at(0), args...);
 	}
 	
 	template<typename... Args>
@@ -1122,13 +1135,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const unsigned db_id = db_indx2id[db_indx];
 		
-		const DatabaseInfo& db_info = db_infos.at(db_id);
+		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		if (not db_info.is_true(required_db_info_bool_indx))
 			return _r::not_found;
 		
 		this->mysql_query_db_by_id(
-			db_id,
+			db_info,
 			"SELECT GROUP_CONCAT(", col_name, ")"
 			"FROM ", tbl_name, " "
 			"WHERE user=", user_id
@@ -1187,10 +1200,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const unsigned db_id = db_indx2id[db_indx];
 		
-		const DatabaseInfo& db_info = db_infos.at(db_id);
+		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		this->mysql_query_db_by_id(
-			db_id,
+			db_info,
 			"SELECT "
 				"u.name,",
 				(db_info.is_true(DatabaseInfo::has_user_full_name_column)) ? "IFNULL(u.full_name,\"\")," : "\"\",",
@@ -1236,6 +1249,30 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view external_cmnt_rm(const char* s){
+		const unsigned db_indx = a2n<unsigned>(&s);
+		++s;
+		const uint64_t cmnt_id = a2n<uint64_t>(s);
+		
+		if ((db_indx == 0) or (db_indx >= db_infos.size()))
+			return _r::not_found;
+		
+		const unsigned db_id = db_indx2id[db_indx];
+		DatabaseInfo& db_info = db_infos.at(db_id);
+		
+		if (not db_info.is_true(DatabaseInfo::has_cmnt_tbl))
+			return _r::not_found;
+		
+		this->mysql_exec_db_by_id(
+			db_info,
+			"UPDATE cmnt "
+			"SET content=NULL "
+			"WHERE id=", cmnt_id
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view external_post_info(const char* s){
 		// Data comes in two parts: data excluding comments, and then comments
 		
@@ -1248,9 +1285,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const unsigned db_id = db_indx2id[db_indx];
 		
-		const DatabaseInfo& db_info = db_infos.at(db_id);
+		DatabaseInfo& db_info = db_infos.at(db_id);
 		
-		char* const _buf_plus_offset = this->buf + 200;
+		char* const _buf_plus_offset = this->buf + 300;
 		char* _itr_plus_offset = _buf_plus_offset;
 		// Reserve the first part of this->buf for writing SQL queries, and use the rest for writing the response.
 		
@@ -1264,7 +1301,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		{
 			this->mysql_query_db_by_id(
-				db_id,
+				db_info,
 				"SELECT "
 					"p.user,"
 					"p.t,",
@@ -1298,17 +1335,20 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		if (db_info.is_true(DatabaseInfo::has_cmnt_tbl)){
 			this->mysql_query_db_by_id(
-				db_indx2id[db_indx],
+				db_info,
 				"SELECT "
 					"c.id,"
 					"IFNULL(c.parent,0),"
 					"c.user,"
 					"c.t,"
 					"u.name,"
-					"c.content "
+					"IFNULL(c.content,\"\") "
 				"FROM cmnt c "
 				"JOIN user u ON u.id=c.user "
 				"WHERE c.post=", post_id, " "
+				  "AND c.content IS NOT NULL "
+					// Ignore comments deleted through web interface
+					// TODO: Display some deleted comments that have some non-deleted children. Maybe SQL script to replace NULL with empty string?
 				"ORDER BY c.parent ASC" // Put parentless comments first
 			);
 			
@@ -1671,6 +1711,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 									case '/':
 										// /a/x/p/DB_ID/POST_ID
 										return this->external_post_info(s);
+								}
+								break;
+							case 'c':
+								switch(*(s++)){
+									case '/':
+										switch(*(s++)){
+											case 'r':
+												switch(*(s++)){
+													case 'm':
+														switch(*(s++)){
+															case '/':
+																// /a/x/c/rm/DB_ID/CMNT_ID
+																return this->external_cmnt_rm(s);
+														}
+														break;
+												}
+												break;
+										}
+										break;
 								}
 								break;
 						}

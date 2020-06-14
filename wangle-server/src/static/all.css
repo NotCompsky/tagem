@@ -70,3 +70,8 @@
 ".cmnt p{"
 	"white-space:pre-line;"
 "}"
+".del{"
+	"background:#f00;"
+	"border:none;"
+	"border-radius:5px;"
+"}"
