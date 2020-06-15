@@ -30,6 +30,7 @@
 	"var P;"
 	"var t2p;"
 	"var x;"
+	"var mt;" // mimetypes
 	
 	"const tbl2selector = {"
 		"\"t\":\".tagselect\","
@@ -46,7 +47,7 @@
 	"};"
 	
 	"function when_data_loaded(){"
-		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined)"
+		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined)"
 			"return;"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
@@ -74,6 +75,7 @@
 		"refetch_json('P', '/a/P.json', when_data_loaded);"
 		"refetch_json('t2p', '/a/t2p.json', when_data_loaded);"
 		"refetch_json('x', '/a/x.json', when_data_loaded);"
+		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"

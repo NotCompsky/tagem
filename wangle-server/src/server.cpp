@@ -141,6 +141,7 @@ unsigned db_indx2id[128];
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
+static bool regenerate_mimetype_json = true;
 static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
@@ -527,6 +528,7 @@ namespace _r {
 		return _r::not_found;
 	}
 	
+	static const char* mimetype_json;
 	static const char* tags_json;
 	static const char* tag2parent_json;
 	static const char* external_db_json;
@@ -535,6 +537,7 @@ namespace _r {
 	static const char* devices_json;
 	static const char* protocol_json;
 	
+	std::mutex mimetype_json_mutex;
 	std::mutex tags_json_mutex;
 	std::mutex tag2parent_json_mutex;
 	std::mutex external_db_json_mutex;
@@ -1001,12 +1004,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.name,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS ","
-				"mt.name,"
-				"IFNULL(GROUP_CONCAT(DISTINCT d2.id),\"\")"
+				"f.mimetype,"
+				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\")"
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"JOIN mimetype mt ON mt.id=f.mimetype "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file_backup f2 ON f2.file=f.id "
@@ -1520,6 +1522,20 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view get_mimetype_json(){
+		std::unique_lock lock(_r::mimetype_json_mutex);
+		if (unlikely(regenerate_mimetype_json)){
+			// WARNING: Race condition since init_json uses global mysql objects
+			// TODO: Eliminate race with mutex
+			regenerate_mimetype_json = false;
+			uint64_t id;
+			const char* str1;
+			constexpr _r::flag::Dict dict;
+			this->init_json(dict, "SELECT id, name FROM mimetype", _r::mimetype_json, &id, &str1);
+		}
+		return _r::mimetype_json;
+	}
+	
 	std::string_view get_dir_json(){
 		std::unique_lock lock(_r::dirs_json_mutex);
 		if (unlikely(regenerate_dir_json)){
@@ -1687,6 +1703,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 										return tags_given_file(s);
 								}
 								break;
+						}
+						break;
+				}
+				break;
+			case 'm':
+				switch(*(s++)){
+					case 't':
+						switch(*(s++)){
+							case '.':
+								// mt.json
+								return this->get_mimetype_json();
 						}
 						break;
 				}

@@ -89,9 +89,11 @@ CREATE TABLE file_backup (
 	file BIGINT UNSIGNED NOT NULL,
 	dir BIGINT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL,
+	mimetype INT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, dir),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
-	FOREIGN KEY (file) REFERENCES _file (id)
+	FOREIGN KEY (file) REFERENCES _file (id),
+	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
 );
 
 
