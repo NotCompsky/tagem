@@ -29,10 +29,23 @@ uint64_t get_last_insert_id(){
 inline
 uint64_t is_file_in_db(const char* const fp,  unsigned& protocol){
 	constexpr static const compsky::asciify::flag::Escape _f_esc;
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT f.id, D.protocol FROM file f JOIN dir d ON d.id=f.dir JOIN device D ON D.id=d.device WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\"");
+	compsky::mysql::query(_mysql::obj,  RES1,  BUF,
+		"SELECT f.file, D.protocol, 1 "
+		"FROM file_backup f "
+		"JOIN dir d ON d.id=f.dir "
+		"JOIN device D ON D.id=d.device "
+		"WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\" "
+		"UNION "
+		"SELECT f.id, D.protocol, 0 "
+		"FROM file f "
+		"JOIN dir d ON d.id=f.dir "
+		"JOIN device D ON D.id=d.device "
+		"WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\""
+	);
     
     uint64_t id = 0;
-    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id,  &protocol));
+	bool is_backup;
+    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id,  &protocol, &is_backup));
     
     return id;
 }
