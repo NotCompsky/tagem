@@ -1659,7 +1659,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			uint64_t id;
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
-			this->init_json(arr,  "SELECT tag_id, parent_id FROM tag2parent", _r::tag2parent_json, &id, &id2);
+			this->init_json(arr,
+				"SELECT tag_id, parent_id "
+				"FROM tag2parent t2p "
+				"JOIN tag t ON t.id=t2p.tag_id "    // join to use tag view to filter tags
+				"JOIN tag p ON p.id=t2p.parent_id"  // same
+				, _r::tag2parent_json, &id, &id2
+			);
 		}
 		return _r::tag2parent_json;
 	}
