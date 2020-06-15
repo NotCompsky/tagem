@@ -5,7 +5,7 @@
 "function add_file(){"
 	"const queue = document.getElementById('add-files-queue');"
 	"const urls = [];"
-	"queue.textContent.replace(/(?:^|\\n)([0-9]+)[\\s]+([^\\n]+)/, function(group0, group1, group2){"
+	"queue.innerText.replace(/(?:^|\\n)([0-9]+)[\\s]+([^\\n]+)(?:\\n|$)/g, function(group0, group1, group2){"
 		"urls.push([group1, group2]);"
 	"});"
 	"if(urls.length===0){"
@@ -29,7 +29,7 @@
 	"$.ajax({"
 		"type:\"POST\","
 		"url:\"http://localhost:1999/add-f/\" + tag_ids.join(\",\") + \"/\"," // Trailing slash is for server's convenience
-		"data:queue.textContent,"
+		"data:urls.map(([dir,url]) => dir+'\\t'+url).join('\\n'),"
 		"success:function(){"
 			"tagselect.val(\"\").change();"
 			"queue.innerHTML = \"\";" // Remove URLs
