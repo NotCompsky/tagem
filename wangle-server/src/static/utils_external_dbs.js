@@ -154,7 +154,7 @@
 			"for(const [id,name] of data){"
 				"_s += '<a class=\"user\" onclick=\"view_user(' + db_id + ',\\'' + id + '\\')\">' + name + '</a>';"
 			"}"
-			"document.getElementById('likes').innerHTML = _s;"
+			"document.getElementById('likes-ls').innerHTML = _s;"
 			"unhide('likes');"
 		"},"
 		"error: function(){"
