@@ -1963,20 +1963,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		regenerate_dir_json = true;
 	}
 	
-	bool add_f_to_db(const uint64_t dir,  const size_t dir_len,  const char* const url,  const size_t url_len,  const char* const tag_ids,  const size_t tag_ids_len){
-		const char* const basename = url + dir_len;
-		if (unlikely(dir_len >= url_len))
+	bool add_f_to_db(const char* const tag_ids,  const size_t tag_ids_len,  const char* url,  const size_t dir_id_and_url_len){
+		const char* const dir_id_and_url = url;
+		const uint64_t dir_id = a2n<uint64_t>(&url);
+		if(unlikely(*url != '\t'))
 			return true;
-		
-		const size_t basename_len = url_len - dir_len;
+		++url;
+		const size_t url_len = dir_id_and_url_len - ( (uintptr_t)url - (uintptr_t)dir_id_and_url );
 		
 		this->mysql_exec(
 			"INSERT INTO file "
 			"(dir, name)"
-			"SELECT ", dir, ",\"", _f::esc, '"', _f::strlen,  basename_len,  basename, "\" "
-			"FROM file "
+			"SELECT d.id,SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1) "
+			"FROM file f "
+			"JOIN dir d ON d.id=", dir_id, " "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM file WHERE dir=", dir, " AND name=\"", _f::esc, '"', _f::strlen, basename_len,  basename, "\")"
+			"(SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, url_len, url, "\")"
 			"LIMIT 1"
 		);
 		this->mysql_exec(
@@ -1984,10 +1986,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(file_id, tag_id)"
 			"SELECT f.id, t.id "
 			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
 			"JOIN tag t "
 			"WHERE t.id IN (", _f::strlen, tag_ids, tag_ids_len, ") "
-			  "AND f.name=\"", _f::esc, '"', _f::strlen, basename_len,  basename, "\" "
-			  "AND f.dir=", dir, " "
+			  "AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1) "
+			  "AND f.dir=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_id=file_id"
 		);
 		
@@ -1997,7 +2000,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view add_to_tbl(const char tbl,  const char* s){
 		const char* tag_ids;
 		size_t tag_ids_len;
-		size_t dir_len = 0;
 		
 		if((tbl == 'f') or (tbl == 't')){
 			tag_ids = get_comma_separated_ints(&s, '/');
@@ -2008,22 +2010,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		}
 		
 		uint64_t parent_id;
-		if (tbl != 't'){
+		if ((tbl != 'f') and (tbl != 't')){
 			parent_id = a2n<uint64_t>(&s);
-			// dir for tbl f, device for tbl d, protocol (unsigned) for tbl D
+			// device for tbl d, protocol (unsigned) for tbl D
 		}
 		
 		s = skip_to_post_data(s);
 		if (s == nullptr)
 			return _r::not_found;
-		
-		if(tbl == 'f'){
-			this->mysql_query("SELECT LENGTH(name) FROM dir WHERE id=", parent_id);
-			while(this->mysql_assign_next_row(&dir_len));
-			if (dir_len == 0)
-				// No such directory - impossible from the UI
-				return _r::not_found;
-		}
 		
 		do {
 			++s; // Skip trailing newline
@@ -2035,7 +2029,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				return _r::not_found;
 			switch(tbl){
 				case 'f':
-					if (unlikely(this->add_f_to_db(parent_id, dir_len, url, url_len, tag_ids, tag_ids_len)))
+					if (unlikely(this->add_f_to_db(tag_ids, tag_ids_len, url, url_len)))
 						return _r::not_found;
 					break;
 				case 'd':
