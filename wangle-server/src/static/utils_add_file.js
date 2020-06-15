@@ -5,7 +5,7 @@
 "function add_file(){"
 	"const queue = document.getElementById('add-files-queue');"
 	"const urls = [];"
-	"queue.innerText.replace(/(?:^|\\n)([0-9]+)[\\s]+([^\\n]+)(?:\\n|$)/g, function(group0, group1, group2){"
+	"queue.innerText.replace(/(?:^|\\n)([0-9]+)[\\s]+([^\\n]+)/g, function(group0, group1, group2){"
 		"urls.push([group1, group2]);"
 	"});"
 	"if(urls.length===0){"
