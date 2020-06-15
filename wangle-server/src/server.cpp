@@ -1312,6 +1312,54 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view external_post_likes(const char* s){
+		const unsigned db_indx = a2n<unsigned>(&s);
+		++s;
+		const uint64_t post_id = a2n<uint64_t>(s);
+		
+		if ((db_indx == 0) or (db_indx >= db_infos.size()))
+			return _r::not_found;
+		
+		const unsigned db_id = db_indx2id[db_indx];
+		
+		DatabaseInfo& db_info = db_infos.at(db_id);
+		
+		if (not db_info.is_true(DatabaseInfo::has_post2like_tbl))
+			return _r::EMPTY_JSON_LIST;
+		
+		this->mysql_query_db_by_id(
+			db_info,
+			"SELECT "
+				"u.name,"
+				"u.id "
+			"FROM user u "
+			"JOIN post2like p2l ON p2l.user=u.id "
+			"WHERE p2l.post=", post_id
+		);
+		const char* username;
+		const char* user_id;
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+			"["
+		);
+		while(this->mysql_assign_next_row(&username, &user_id)){
+			this->asciify(
+				'[',
+					'"', user_id, '"', ',', // String because Javascript can't handle big integers
+					'"', username, '"',
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr; // Remove trailing comma
+		this->asciify("]");
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view external_post_info(const char* s){
 		// Data comes in two parts: data excluding comments, and then comments
 		
@@ -1773,8 +1821,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 							case 'p':
 								switch(*(s++)){
 									case '/':
-										// /a/x/p/DB_ID/POST_ID
-										return this->external_post_info(s);
+										switch(*(s++)){
+											case 'i':
+												switch(*(s++)){
+													case '/':
+														// /a/x/p/i/DB_ID/POST_ID
+														return this->external_post_info(s);
+												}
+												break;
+											case 'l':
+												switch(*(s++)){
+													case '/':
+														// /a/x/p/l/DB_ID/POST_ID
+														return this->external_post_likes(s);
+												}
+												break;
+										}
+										break;
 								}
 								break;
 						}

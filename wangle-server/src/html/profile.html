@@ -20,6 +20,7 @@
 	
 	// External database vars
 	"var db_id;"
+	"var post_id;"
 	"var user_id;"
 	"var user_name;"
 	
@@ -232,6 +233,12 @@ R"=========(
 			"<a id=\"post-user\" class=\"user\"></a>"
 			"<time id=\"post-time\"></time>"
 			"<div id=\"post-text\"></div>"
+			
+			"<br/>"
+			"<a onclick=\"view_likes()\">Likes</a>"
+			"<div id=\"likes\"></div>"
+			"<br/>"
+			
 			"<div id=\"cmnts-container\">"
 				"<br/>"
 				"<a onclick=\"toggle('cmnts')\">Show/Hide Comments</a>"
