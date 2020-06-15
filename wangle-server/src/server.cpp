@@ -1978,7 +1978,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM file f "
 			"JOIN dir d ON d.id=", dir_id, " "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, url_len, url, "\")"
+			"(SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.id=", dir_id, " AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1))"
 			"LIMIT 1"
 		);
 		this->mysql_exec(
