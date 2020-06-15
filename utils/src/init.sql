@@ -437,10 +437,11 @@ CREATE TABLE external_db (
 CREATE TABLE file2post (
 	-- This links posts in EXTERNAL databases to files in this database
 	-- An external database cannot be assumed to have at most one post for a given file. For instance, Reddit posts have duplicates.
+	-- A given post may have multiple files.
 	file BIGINT UNSIGNED NOT NULL,
 	post BIGINT UNSIGNED NOT NULL,
 	db INT UNSIGNED NOT NULL,
-	PRIMARY KEY (post, db),
+	PRIMARY KEY (file, post, db),
 	FOREIGN KEY (file) REFERENCES _file (id),
 	FOREIGN KEY (db) REFERENCES external_db (id)
 );
