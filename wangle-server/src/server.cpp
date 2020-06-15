@@ -1147,8 +1147,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_exec(
 			"INSERT INTO file_backup"
-			"(file,dir,name)"
-			"SELECT id, dir, name "
+			"(file,dir,name,mimetype)"
+			"SELECT id, dir, name, mimetype "
 			"FROM file "
 			"WHERE id=", file_id
 		);
