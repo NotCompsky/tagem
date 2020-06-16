@@ -1202,7 +1202,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			this->mysql_query_buf(
 				"SELECT id, name, device "
 				"FROM _dir "
-				"WHERE id NOT IN" USER_DISALLOWED_DIRS__COMPILE_TIME("0")
+				"WHERE id NOT IN" USER_DISALLOWED_DIRS__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(nullptr, dict, &_r::dirs_json, &id, &str1, &str2);
 		}
@@ -1242,7 +1242,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			this->mysql_query_buf(
 				"SELECT id, name, protocol, embed_pre, embed_post "
 				"FROM _device "
-				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME("0")
+				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(nullptr, dict, &_r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 		}
@@ -1309,9 +1309,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			constexpr _r::flag::Dict dict;
 			this->mysql_query_buf(
 				get_tag_json_qry_prefix
-				USER_DISALLOWED_TAGS__COMPILE_TIME("0")
+				USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 				get_tag_json_qry_postfix
-				USER_DISALLOWED_TAGS__COMPILE_TIME("0")
+				USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 				"GROUP BY t.id"
 			);
 			this->init_json(nullptr, dict, &_r::tags_json, &id, &name, &str1, &str2);
@@ -1347,8 +1347,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			this->mysql_query_buf(
 				"SELECT tag_id, parent_id "
 				"FROM tag2parent t2p "
-				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME("0")
-				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME("0")
+				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(nullptr, arr, &_r::tag2parent_json, &id, &id2);
 		}

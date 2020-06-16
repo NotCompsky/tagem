@@ -14,6 +14,7 @@ namespace SpecialUserID {
 		invalid = 0,
 		guest = 1
 	};
+	#define GUEST_ID_STR "1"
 }
 
 
