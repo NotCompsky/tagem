@@ -544,7 +544,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT name "
 			"FROM _dir "
 			"WHERE id=", id, " "
-			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
 		
 		const char* name;
