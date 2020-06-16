@@ -8,6 +8,7 @@
 #include "convert_str.hpp"
 #include "str_utils.hpp"
 #include "db_info.hpp"
+#include "help.hpp"
 
 #include "static_response.hpp"
 
