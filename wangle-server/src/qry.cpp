@@ -65,6 +65,19 @@ static
 const char* tbl_full_name(const char tbl_alias){
 	switch(tbl_alias){
 		case 'f':
+			return "file";
+		case 'd':
+		case 'D':
+			return "dir";
+		default: // AKA case 't'
+			return "tag";
+	}
+}
+
+static
+const char* tbl_full_name_of_base_tbl(const char tbl_alias){
+	switch(tbl_alias){
+		case 'f':
 			return "_file";
 		case 'd':
 		case 'D':
@@ -783,7 +796,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		itr,
 		"SELECT "
 			"X.id\n"
-		"FROM ", tbl_full_name(which_tbl), " X\n",
+		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
 		join.c_str(),
 		"WHERE ", where.c_str(), "\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"

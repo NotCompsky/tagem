@@ -82,6 +82,8 @@
 		"FROM user2hidden_dir " \
 		"WHERE user=" user_id \
 	")"
+#define DIR_TBL_USER_PERMISSION_FILTER(user_id) \
+	"AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 
 #include <curl/curl.h>
 
@@ -574,10 +576,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(id_str, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
 		this->mysql_query(
 			"SELECT name "
 			"FROM _dir "
-			"WHERE id=", id
+			"WHERE id=", id, " "
+			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
 		
 		const char* name;
@@ -620,6 +627,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"LEFT JOIN _dir d2 ON d2.id=f2.dir "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND d2.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"GROUP BY f.id"
 		);
 		
@@ -1592,9 +1601,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id),
-			  // TODO: Filter _dir
-			  (dir_id==0)?" OR ":" AND d.id=", dir_id
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
+			  ,(dir_id==0)?" OR ":" AND d.id=", dir_id
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
@@ -1661,12 +1670,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_file(const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing){
+	FunctionSuccessness dl_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing){
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		static char dst_pth[4096];
 		
 		const char* dir_name = nullptr;
-		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id);
+		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		if (not this->mysql_assign_next_row(&dir_name)){
 			// No visible directory with the requested ID
 			// MySQL results already freed
@@ -1692,7 +1701,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _tag "
 			"WHERE NOT EXISTS"
 			"(SELECT id FROM _tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			"LIMIT 1"
 		);
 		this->mysql_exec(
@@ -1717,10 +1726,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"UNION "
 				"SELECT t.id, t2pt.parent, t2pt.depth+1 "
 				"FROM _tag t "
-				"JOIN tag2parent_tree t2pt ON t2pt.tag=p.id "
+				"JOIN tag2parent_tree t2pt "
 				"WHERE t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
-				"AND t2pt.id IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
-				"AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				"AND t2pt.parent IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
+				"AND t2pt.tag NOT IN" USER_DISALLOWED_TAGS(user_id)
 			")A "
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
 		);
@@ -1748,6 +1757,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _dir "
 			"WHERE NOT EXISTS"
 			"(SELECT id FROM _dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			  "AND ", device, " NOT IN" USER_DISALLOWED_DEVICES(user_id)
 			"LIMIT 1"
 		);
 		regenerate_dir_json = true;
@@ -1769,6 +1779,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"JOIN _dir d ON d.id=", dir_id, " "
 			"WHERE NOT EXISTS"
 			"(SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.id=", dir_id, " AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1))"
+			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"LIMIT 1"
 		);
 		this->mysql_exec(
@@ -1782,6 +1793,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1) "
 			  "AND f.dir=", dir_id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"ON DUPLICATE KEY UPDATE file_id=file_id"
 		);
 		
@@ -1885,7 +1897,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					++file_name; // Skip the slash
 					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
-					switch(dl_file(dir_id, file_name, url_buf, is_html_file)){
+					switch(dl_file(user_id, dir_id, file_name, url_buf, is_html_file)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
