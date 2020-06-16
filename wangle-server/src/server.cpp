@@ -887,8 +887,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_query_db_by_id(
 			db_info,
 			"SELECT "
-				"u.name,"
-				"u.id "
+				"u.id,"
+				"u.name "
 			"FROM user u "
 			"JOIN post2like p2l ON p2l.user=u.id "
 			"WHERE p2l.post=", post_id
