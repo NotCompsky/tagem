@@ -71,13 +71,13 @@ NullableStringView get_cookie(const char* s,  const char* const cookie_name){
 		}
 		
 		// Skip to next cookie name
-		while((*cookies != ';') and (*cookies != 0))
+		while((*cookies != ';') and (*cookies != 0) and (*cookies != '\r'))
 			++cookies;
 		desired_cookie.sz = (uintptr_t)cookies - (uintptr_t)desired_cookie.data;
 		switch(*cookies){
 			case 0:
 				// Probably invalid end of headers
-			case '\n':
+			case '\r':
 				// No more cookies
 				return desired_cookie;
 			default: // ';'
