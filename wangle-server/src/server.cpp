@@ -384,6 +384,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*itr = 0;
 	}
 	
+	void begin_json_response(){
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+		);
+	}
+	
 	std::string_view parse_qry(const char* s){
 		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
@@ -393,12 +402,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->begin_json_response();
 		this->asciify('[');
 		const char* id;
 		while(this->mysql_assign_next_row(&id)){
@@ -473,12 +477,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* name;
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->begin_json_response();
 		this->asciify('[');
 		while(this->mysql_assign_next_row(&name)){
 			this->asciify(
@@ -575,12 +574,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* tag_id;
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->begin_json_response();
 		this->asciify('[');
 		while(this->mysql_assign_next_row(&tag_id)){
 			this->asciify(
@@ -610,12 +604,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* f_name;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->begin_json_response();
 		this->asciify('[');
 		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
@@ -717,11 +706,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::EMPTY_JSON_LIST;
 		}
 		
-		this->reset_buf_index();
+		this->begin_json_response();
 		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
 			"["
 				"\"", file_ids, "\""
 			"]"
@@ -760,12 +746,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE u.id=", user_id
 		);
 		
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->begin_json_response();
 		this->asciify('[');
 		const char* name;
 		const char* full_name;
@@ -844,11 +825,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		const char* username;
 		const char* user_id;
-		this->reset_buf_index();
+		this->begin_json_response();
 		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
 			"["
 		);
 		while(this->mysql_assign_next_row(&username, &user_id)){
