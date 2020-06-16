@@ -1,5 +1,10 @@
 R"=====(
 
+CREATE TABLE user (
+	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	name VARBINARY(100) NOT NULL UNIQUE KEY
+);
+
 CREATE TABLE protocol (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(16) NOT NULL UNIQUE KEY
@@ -15,11 +20,12 @@ CREATE TABLE _device (
 	# Storage device - such as a hard drive, or a website (a remote storage device)
 	# Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	user INT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
-	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
 	protocol INT UNSIGNED NOT NULL,
 	embed_pre  VARBINARY(1000) NOT NULL DEFAULT "",
 	embed_post VARBINARY(1000) NOT NULL DEFAULT "",
+	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
 INSERT INTO _device (name, protocol) VALUES
@@ -34,8 +40,9 @@ INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	device BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
-	permissions BIGINT UNSIGNED NOT NULL DEFAULT 0,
+	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id)
 );
 
@@ -74,9 +81,11 @@ CREATE TABLE _file (
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
 	mimetype INT UNSIGNED NOT NULL DEFAULT 0,
+	user INT UNSIGNED NOT NULL,
     UNIQUE KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
+	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
 );
 
@@ -90,10 +99,12 @@ CREATE TABLE file_backup (
 	dir BIGINT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL,
 	mimetype INT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, dir),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
 	FOREIGN KEY (file) REFERENCES _file (id),
-	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
+	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
+	FOREIGN KEY (user) REFERENCES user (id)
 );
 
 
@@ -115,10 +126,12 @@ INSERT INTO file2 (min, max, conversion, name) VALUES
 
 CREATE TABLE _tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	user INT UNSIGNED NOT NULL,
     name VARBINARY(128),
 	thumbnail VARBINARY(200) NOT NULL DEFAULT "",
 	cover VARBINARY(200) NOT NULL DEFAULT "",
     UNIQUE KEY (name),
+	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
 );
 INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!");
@@ -129,8 +142,10 @@ UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
 CREATE TABLE tag2parent (
     tag_id BIGINT UNSIGNED NOT NULL,
     parent_id BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
 	FOREIGN KEY (tag_id) REFERENCES _tag (id),
 	FOREIGN KEY (parent_id) REFERENCES _tag (id),
+	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
 );
 CREATE TABLE tag2parent_tree (
@@ -140,11 +155,6 @@ CREATE TABLE tag2parent_tree (
 	FOREIGN KEY (tag) REFERENCES _tag (id),
 	FOREIGN KEY (parent) REFERENCES _tag (id),
     PRIMARY KEY (tag, parent)
-);
-
-CREATE TABLE user (
-	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
 
 CREATE TABLE user2hidden_tag (
@@ -157,8 +167,10 @@ CREATE TABLE user2hidden_tag (
 CREATE TABLE file2tag (
     file_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
 	FOREIGN KEY (file_id) REFERENCES file (id),
 	FOREIGN KEY (tag_id) REFERENCES _tag (id),
+	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY `file2tag` (file_id, tag_id)
 );
 
