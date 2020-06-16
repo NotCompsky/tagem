@@ -390,6 +390,33 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 	}
 	
+	struct QuoteAndEscape{};
+	struct NoQuote{};
+	constexpr QuoteAndEscape quote_and_escape;
+	constexpr NoQuote no_quote;
+	void asciify_json_list_response(const QuoteAndEscape,  const char* str){
+		this->asciify(
+			'"', _f::esc, '"',  str, '"', ','
+		);
+	}
+	void asciify_json_list_response(const NoQuote,  const char* str){
+		this->asciify(
+			str, ','
+		);
+	}
+	template<typename Flag>
+	void write_json_list_response_into_buf(const Flag& flag,  const char* str){
+		this->begin_json_response();
+		this->asciify('[');
+		while(this->mysql_assign_next_row(&str)){
+			this->asciify_json_list_response(flag, str);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		*this->itr = 0;
+	}
+	
 	std::string_view parse_qry(const char* s){
 		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
@@ -399,18 +426,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
-		this->begin_json_response();
-		this->asciify('[');
 		const char* id;
-		while(this->mysql_assign_next_row(&id)){
-			this->asciify(
-				id, ','
-			);
-		}
-		if (this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
-		*this->itr = 0;
+		this->write_json_list_response_into_buf(this->no_quote, id);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -474,15 +491,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* name;
-		this->begin_json_response();
-		this->asciify('[');
-		while(this->mysql_assign_next_row(&name)){
-			this->asciify(
-				'"', _f::esc, '"',  name, '"'
-			);
-		}
-		this->asciify(']');
-		*this->itr = 0;
+		this->write_json_list_response_into_buf(this->quote_and_escape, name);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::dir_info, id);
@@ -571,19 +580,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* tag_id;
-		this->begin_json_response();
-		this->asciify('[');
-		while(this->mysql_assign_next_row(&tag_id)){
-			this->asciify(
-				tag_id,
-				','
-			);
-		}
-		if (this->last_char_in_buf() == ',')
-			// If there was at least one iteration of the loop...
-			--this->itr; // ...wherein a trailing comma was left
-		this->asciify(']');
-		*this->itr = 0;
+		this->write_json_list_response_into_buf(this->no_quote, tag_id);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
