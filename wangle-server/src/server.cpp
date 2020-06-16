@@ -153,6 +153,18 @@ namespace _r {
 		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",\"\"],") + 2*strlen(*str1) + 2*strlen(*str2);
 	}
 	
+	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* id,  const char** name,  const char** description,  const char** content){
+		compsky::asciify::asciify(
+			itr,
+			'[',
+				*id, ',',
+				'"', _f::esc, '"', *name, '"', ',',
+				'"', _f::esc, '"', *description, '"', ',',
+				'"', _f::json_esc, *content, '"',
+			']', ','
+		);
+	}
+	
 	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* m,  const uint64_t* n){
 		compsky::asciify::asciify(
 			itr,
@@ -263,6 +275,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_mutex.lock();
 		compsky::mysql::exec_buffer(db_info.mysql_obj, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_exec_buf(const char* const _buf,  const size_t _buf_sz){
+		this->mysql_exec_buf_db_by_id(db_infos.at(0), _buf, _buf_sz);
+	}
+	
+	void mysql_exec_buf(const char* const _buf){
+		this->mysql_exec_buf_db_by_id(db_infos.at(0), _buf, std::char_traits<char>::length(_buf));
 	}
 	
 	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
@@ -1219,6 +1239,62 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::devices_json;
 	}
 	
+	std::string_view get_exec_json(const char* s){
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
+		if (user_id == user_auth::SpecialUserID::guest)
+			return
+				#include "headers/return_code/UNAUTHORISED.c"
+				"\n"
+				"You need to log in to see tasks"
+			;
+		
+		uint64_t id;
+		const char* name;
+		const char* description;
+		const char* content;
+		constexpr _r::flag::Arr arr;
+		this->mysql_query(
+			"SELECT t.id, t.name, t.description, t.content "
+			"FROM task t "
+			"JOIN user2authorised_task u2t ON u2t.task=t.id "
+			"WHERE u2t.user=", user_id
+		);
+		this->itr = this->buf;
+		this->init_json(&this->itr, arr, nullptr, &id, &name, &description, &content);
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view exec_task(const char* s){
+		const unsigned task_id = a2n<unsigned>(s);
+		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if ((user_id == user_auth::SpecialUserID::invalid)  or  (user_id == user_auth::SpecialUserID::guest))
+			return _r::not_found;
+		
+		this->mysql_query(
+			"SELECT t.content "
+			"FROM task t "
+			"JOIN user2authorised_task u2t ON u2t.task=t.id "
+			"WHERE t.id=", task_id, " "
+			  "AND u2t.user=", user_id
+		);
+		const char* content = nullptr;
+		this->mysql_assign_next_row(&content);
+		
+		if(content == nullptr)
+			// User tried to execute a task they were not authorised to see
+			return _r::not_found;
+		
+		this->mysql_exec_buf(content);
+		
+		this->mysql_free_res();
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view get_protocol_json(const char* s){
 		this->mysql_query_buf("SELECT id, name FROM protocol");
 		
@@ -1358,6 +1434,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					case '.':
 						// /a/P.json
 						return this->get_protocol_json(s);
+				}
+				break;
+			case 'e':
+				switch(*(s++)){
+					case 'x':
+						switch(*(s++)){
+							case 'e':
+								switch(*(s++)){
+									case 'c':
+										switch(*(s++)){
+											case '.':
+												// /a/exec.json
+												return this->get_exec_json(s);
+										}
+										break;
+								}
+								break;
+						}
+						break;
 				}
 				break;
 			case 'f':
@@ -2208,6 +2303,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 													case '/':
 														// /t/c/ i.e. /t/child/
 														return this->post__add_parents_to_tags(s);
+												}
+												break;
+										}
+										break;
+								}
+								break;
+							case 'e':
+								switch(*(s++)){
+									case 'x':
+										switch(*(s++)){
+											case 'e':
+												switch(*(s++)){
+													case 'c':
+														switch(*(s++)){
+															case '/':
+																// /exec/TASK_ID
+																return this->exec_task(s);
+														}
+														break;
 												}
 												break;
 										}
