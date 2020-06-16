@@ -65,12 +65,12 @@ static
 const char* tbl_full_name(const char tbl_alias){
 	switch(tbl_alias){
 		case 'f':
-			return "file";
+			return "_file";
 		case 'd':
 		case 'D':
-			return "dir";
+			return "_dir";
 		default: // AKA case 't'
-			return "tag";
+			return "_tag";
 	}
 }
 
@@ -582,7 +582,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.name REGEXP ";
+				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -597,7 +597,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
+				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
@@ -616,7 +616,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += tbl_full_name(which_tbl);
 				where += "_id FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN tag t ON t.id=x2t.tag_id WHERE t.name IN (";
+				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag_id WHERE t.name IN (";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
@@ -636,7 +636,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += tbl_full_name(which_tbl);
 				where += "_id FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag_id JOIN tag t ON t.id=t2pt.parent WHERE t.name IN (";
+				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag_id JOIN _tag t ON t.id=t2pt.parent WHERE t.name IN (";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
@@ -709,7 +709,7 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM file f JOIN mimetype m ON m.id=f.mimetype WHERE m.name REGEXP ";
+				where += "IN (SELECT f.id FROM _file f JOIN mimetype m ON m.id=f.mimetype WHERE m.name REGEXP ";
 				const auto rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
