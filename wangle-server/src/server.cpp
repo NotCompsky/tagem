@@ -391,25 +391,43 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	struct QuoteAndEscape{};
+	struct QuoteNoEscape{};
 	struct NoQuote{};
 	constexpr QuoteAndEscape quote_and_escape;
+	constexpr QuoteNoEscape quote_no_escape;
 	constexpr NoQuote no_quote;
-	void asciify_json_list_response(const QuoteAndEscape,  const char* str){
+	void asciify_json_list_response(const QuoteAndEscape,  const char** str){
 		this->asciify(
-			'"', _f::esc, '"',  str, '"', ','
+			'"', _f::esc, '"',  *str, '"', ','
 		);
 	}
-	void asciify_json_list_response(const NoQuote,  const char* str){
+	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteNoEscape,  const char** str2){
 		this->asciify(
-			str, ','
+			'[',
+				'"',  *str1, '"', ','
+				'"',  *str2, '"',
+			']', ','
+		);
+	}
+	void asciify_json_list_response(const NoQuote,  const char** str){
+		this->asciify(
+			*str, ','
 		);
 	}
 	template<typename Flag>
-	void write_json_list_response_into_buf(const Flag& flag,  const char* str){
+	void mysql_assign_next_row_for_json_list_response(const Flag flag,  const char** str){
+		this->mysql_assign_next_row(&str);
+	}
+	template<typename Flag1,  template Flag2>
+	void mysql_assign_next_row_for_json_list_response(const Flag1 flag1,  const char** str1,  const Flag2 flag2,  const char** str2){
+		this->mysql_assign_next_row(&str1, &str2);
+	}
+	template<typename... Args>
+	void write_json_list_response_into_buf(Args... args){
 		this->begin_json_response();
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&str)){
-			this->asciify_json_list_response(flag, str);
+		while(this->mysql_assign_next_row_for_json_list_response(args...)){
+			this->asciify_json_list_response(args...);
 		}
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
@@ -427,7 +445,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
 		const char* id;
-		this->write_json_list_response_into_buf(this->no_quote, id);
+		this->write_json_list_response_into_buf(this->no_quote, &id);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -491,7 +509,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* name;
-		this->write_json_list_response_into_buf(this->quote_and_escape, name);
+		this->write_json_list_response_into_buf(this->quote_and_escape, &name);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::dir_info, id);
@@ -580,7 +598,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		const char* tag_id;
-		this->write_json_list_response_into_buf(this->no_quote, tag_id);
+		this->write_json_list_response_into_buf(this->no_quote, &tag_id);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
@@ -819,21 +837,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		const char* username;
 		const char* user_id;
-		this->begin_json_response();
-		this->asciify(
-			"["
-		);
-		while(this->mysql_assign_next_row(&username, &user_id)){
-			this->asciify(
-				'[',
-					'"', user_id, '"', ',', // String because Javascript can't handle big integers
-					'"', username, '"',
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr; // Remove trailing comma
-		this->asciify("]");
+		this->write_json_list_response_into_buf(this->quote_no_escape, &user_id, this->quote_no_escape, &username);
 		
 		return this->get_buf_as_string_view();
 	}
