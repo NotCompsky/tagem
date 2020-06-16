@@ -2193,17 +2193,6 @@ class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
 		}
 };
 
-constexpr
-int s2n(const char* s){
-	int n = 0;
-	while(*s != 0){
-		n *= 10;
-		n += *s - '0';
-		++s;
-	}
-	return n;
-}
-
 int main(int argc,  char** argv){
 	curl_global_init(CURL_GLOBAL_ALL);
 	
@@ -2218,7 +2207,7 @@ int main(int argc,  char** argv){
 			goto help;
 		switch(*arg){
 			case 'p':
-				port_n = s2n(*(++argv));
+				port_n = a2n<int>(*(++argv));
 				break;
 			case 'c':
 				CACHE_DIR = *(++argv);
