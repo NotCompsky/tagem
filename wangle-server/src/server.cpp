@@ -9,7 +9,7 @@
 #include "str_utils.hpp"
 #include "db_info.hpp"
 #include "help.hpp"
-
+#include "user_auth.hpp"
 #include "static_response.hpp"
 
 #include "get_cookies.hpp"
@@ -2163,6 +2163,8 @@ int main(int argc,  char** argv){
 	
 	db_infos.reserve(external_db_env_vars.size());
 	std::string db_name2id_json = "[\"";
+	MYSQL_RES* res;
+	MYSQL_ROW row;
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
 		char* const db_env_name = external_db_env_vars.at(i);
 		
@@ -2173,8 +2175,6 @@ int main(int argc,  char** argv){
 		if (i == 0)
 			continue;
 		
-		MYSQL_RES* res;
-		MYSQL_ROW row;
 		char buf[200];
 		compsky::mysql::query(db_infos.at(0).mysql_obj, res, buf, "SELECT id FROM external_db WHERE name=\"", db_info.name(), "\"");
 		unsigned id = 0;
@@ -2190,6 +2190,13 @@ int main(int argc,  char** argv){
 	_r::external_db_json = db_name2id_json.c_str();
 	
 	printf("_r::external_db_json set\n");
+	
+	compsky::mysql::query_buffer(db_infos.at(0).mysql_obj, res, "SELECT id, name FROM user");
+	user_auth::users.reserve(compsky::mysql::n_results<size_t>(res));
+	UserIDIntType id;
+	const char* name;
+	while(compsky::mysql::assign_next_row__no_free(res, &row, &id, &name))
+		user_auth::users.emplace_back(name, id);
 	
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
