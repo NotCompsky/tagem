@@ -15,6 +15,10 @@
 #include "read_request.hpp"
 #include "read_request_url.hpp"
 
+#ifdef n_cached
+# include "cache.hpp"
+#endif
+
 #include <compsky/mysql/query.hpp>
 #include <compsky/asciify/asciify.hpp>
 
@@ -66,44 +70,6 @@ enum FunctionSuccessness {
 	unimplemented,
 	COUNT
 };
-
-#ifdef n_cached
-namespace cached_stuff {
-	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
-	// TODO: Invalidate caches when necessary (after data is modified)
-	constexpr static const size_t max_buf_len = 1  +  100 * (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)  +  1  +  1; // == 25803
-	static char cache[n_cached * max_buf_len];
-	enum CacheID {
-		files_given_tag,
-		files_given_dir,
-		files_given_ids,
-		tags_given_file,
-		dir_info,
-		file_info,
-		n_fns
-	};
-	struct ID {
-		unsigned int n_requests;
-		unsigned int which_cached_fn;
-		uint64_t user_id;
-		size_t sz;
-	};
-	static ID cached_IDs[n_cached] = {}; // Initialise to zero
-	
-	int from_cache(const unsigned int which_cached_fn,  const uint64_t user_id){
-		int i = 0;
-		while (i < n_cached){
-			ID& id = cached_IDs[i];
-			++i;
-			if ((id.which_cached_fn == which_cached_fn) and (id.user_id == user_id)){
-				++id.n_requests;
-				return i;
-			}
-		}
-		return 0;
-	}
-}
-#endif
 
 std::vector<std::string> banned_client_addrs;
 
@@ -369,25 +335,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 #ifdef n_cached
 	void add_buf_to_cache(const unsigned int which_cached_fn,  const uint64_t user_id,  const unsigned int n_requests = 1){
-		using namespace cached_stuff;
-		
-		unsigned int min_n_requests = UINT_MAX;
-		unsigned int indx = 0; // In case all IDs have n_requesets at UINT_MAX - which is extremely unlikely
-		for (unsigned int i = 0;  i < n_cached;  ++i){
-			const ID& id = cached_IDs[i];
-			if (id.n_requests >= min_n_requests)
-				continue;
-			indx = i;
-			min_n_requests = id.n_requests;
-		}
-		
-		const size_t sz = this->buf_indx();
-		memcpy(cache + (indx * max_buf_len),  this->buf,  sz);
-		// We could alternatively re-use this->buf, and instead malloc a new buffer for this->buf - but I prefer to avoid memory fragmentation.
-		cached_IDs[indx].which_cached_fn = which_cached_fn;
-		cached_IDs[indx].n_requests = n_requests;
-		cached_IDs[indx].user_id = user_id;
-		cached_IDs[indx].sz = sz;
+		cached_stuff::add(this->buf, this->buf_indx(), which_cached_fn, user_id, n_requests);
 	}
 #endif
 	
