@@ -2377,7 +2377,13 @@ int main(int argc,  char** argv){
 		throw compsky::mysql::except::SQLLibraryInit();
 	
 	db_infos.reserve(external_db_env_vars.size());
-	std::string db_name2id_json = "[\"";
+	std::string db_name2id_json =
+		#include "headers/return_code/OK.c"
+		#include "headers/Content-Type/json.c"
+		#include "headers/Cache-Control/1day.c"
+		"\n"
+		"[\""
+	;
 	MYSQL_RES* res;
 	MYSQL_ROW row;
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
