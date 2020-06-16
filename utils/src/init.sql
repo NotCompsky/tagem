@@ -32,7 +32,8 @@ CREATE TABLE user2hidden_device (
 	user INT UNSIGNED NOT NULL,
 	device BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (device) REFERENCES _device (id)
+	FOREIGN KEY (device) REFERENCES _device (id),
+	PRIMARY KEY (user,device)
 );
 INSERT INTO _device (name, protocol) VALUES
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
@@ -55,7 +56,8 @@ CREATE TABLE user2hidden_dir (
 	user INT UNSIGNED NOT NULL,
 	dir BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (dir) REFERENCES _dir (id)
+	FOREIGN KEY (dir) REFERENCES _dir (id),
+	PRIMARY KEY (user,dir)
 );
 
 CREATE TABLE mimetype (
@@ -173,7 +175,8 @@ CREATE TABLE user2hidden_tag (
 	user INT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id)
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	PRIMARY KEY (user,tag)
 );
 
 CREATE TABLE file2tag (
