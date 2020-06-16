@@ -344,9 +344,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
 		using namespace _r;
 		
-		MYSQL_RES* mysql_res;
-		MYSQL_ROW mysql_row;
-		
 		this->mysql_query_buf(qry, strlen(qry));
 		
 		constexpr static const char* const _headers =
