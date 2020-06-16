@@ -393,9 +393,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	struct QuoteAndEscape{};
 	struct QuoteNoEscape{};
 	struct NoQuote{};
-	constexpr QuoteAndEscape quote_and_escape;
-	constexpr QuoteNoEscape quote_no_escape;
-	constexpr NoQuote no_quote;
+	constexpr static QuoteAndEscape quote_and_escape{};
+	constexpr static QuoteNoEscape quote_no_escape{};
+	constexpr static NoQuote no_quote{};
 	void asciify_json_list_response(const QuoteAndEscape,  const char** str){
 		this->asciify(
 			'"', _f::esc, '"',  *str, '"', ','
@@ -404,7 +404,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteNoEscape,  const char** str2){
 		this->asciify(
 			'[',
-				'"',  *str1, '"', ','
+				'"',  *str1, '"', ',',
 				'"',  *str2, '"',
 			']', ','
 		);
@@ -415,12 +415,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 	}
 	template<typename Flag>
-	void mysql_assign_next_row_for_json_list_response(const Flag flag,  const char** str){
-		this->mysql_assign_next_row(&str);
+	bool mysql_assign_next_row_for_json_list_response(const Flag flag,  const char** str){
+		return this->mysql_assign_next_row(str);
 	}
-	template<typename Flag1,  template Flag2>
-	void mysql_assign_next_row_for_json_list_response(const Flag1 flag1,  const char** str1,  const Flag2 flag2,  const char** str2){
-		this->mysql_assign_next_row(&str1, &str2);
+	template<typename Flag1,  typename Flag2>
+	bool mysql_assign_next_row_for_json_list_response(const Flag1 flag1,  const char** str1,  const Flag2 flag2,  const char** str2){
+		return this->mysql_assign_next_row(str1, str2);
 	}
 	template<typename... Args>
 	void write_json_list_response_into_buf(Args... args){
