@@ -34,56 +34,7 @@
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
-#define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND f.id NOT IN (" \
-		"SELECT f2t.file_id " \
-		"FROM user2hidden_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
-		"JOIN file2tag f2t ON f2t.tag_id=t2pt.tag " \
-		"WHERE u2ht.user=", user_id, \
-	")"
-#define USER_DISALLOWED_TAGS(user_id) \
-	"(" \
-		"SELECT t2pt.tag " \
-		"FROM user2hidden_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
-		"WHERE u2ht.user=", user_id, \
-	")"
-#define USER_DISALLOWED_TAGS__COMPILE_TIME(user_id) \
-	"(" \
-		"SELECT t2pt.tag " \
-		"FROM user2hidden_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
-		"WHERE u2ht.user=" user_id \
-	")"
-#define TAG_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-#define USER_DISALLOWED_DEVICES(user_id) \
-	"(" \
-		"SELECT device " \
-		"FROM user2hidden_device " \
-		"WHERE user=", user_id, \
-	")"
-#define USER_DISALLOWED_DEVICES__COMPILE_TIME(user_id) \
-	"(" \
-		"SELECT device " \
-		"FROM user2hidden_device " \
-		"WHERE user=" user_id \
-	")"
-#define USER_DISALLOWED_DIRS(user_id) \
-	"(" \
-		"SELECT dir " \
-		"FROM user2hidden_dir " \
-		"WHERE user=", user_id, \
-	")"
-#define USER_DISALLOWED_DIRS__COMPILE_TIME(user_id) \
-	"(" \
-		"SELECT dir " \
-		"FROM user2hidden_dir " \
-		"WHERE user=" user_id \
-	")"
-#define DIR_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+
 
 #include <curl/curl.h>
 
@@ -513,8 +464,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
 		
-		if (sql_factory::parse_into(this->buf, s) != sql_factory::successness::ok)
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
+		this->itr = this->buf;
+		if (sql_factory::parse_into(this->itr, s, user_id) != sql_factory::successness::ok)
 			return _r::post_not_necessarily_malicious_but_invalid;
+		
+		this->asciify(
+			
+		);
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		

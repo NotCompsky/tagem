@@ -760,7 +760,10 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 	}
 }
 
-successness::ReturnType parse_into(char* itr,  const char* qry){
+successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned user_id){
+	// TODO: Look into filtering the filters with the user_id permission filters, to avoid brute-forcing.
+	// Not sure this is a big issue.
+	
 	const char* const buf = itr;
 	
 	char which_tbl;
@@ -792,6 +795,20 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		return rc;
 	}
 	
+	const char* user_disallowed_X_tbl_filter_inner_pre;
+	switch(which_tbl){
+		case 'f':
+			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_FILES_INNER_PRE;
+			break;
+		case 'd':
+			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_DIRS_INNER_PRE;
+			break;
+		case 't':
+			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_TAGS_INNER_PRE;
+			break;
+		// No other values are possible
+	}
+	
 	compsky::asciify::asciify(
 		itr,
 		"SELECT "
@@ -799,6 +816,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry){
 		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
 		join.c_str(),
 		"WHERE ", where.c_str(), "\n"
+		  "AND X.id NOT IN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, " "
 		"OFFSET ", offset,
