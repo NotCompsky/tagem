@@ -709,7 +709,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT id, dir, name, mimetype,", user_id, " "
 			"FROM _file "
 			"WHERE id=", file_id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
 		);
 		// TODO: Catch duplicate key error. Should never happen.
 		
@@ -718,7 +718,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SET dir=", new_path__dir_id, ","
 				"name=\"", _f::esc, '"', new_path__file_name, "\""
 			"WHERE id=", file_id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
 		);
 		
 		return _r::post_ok;

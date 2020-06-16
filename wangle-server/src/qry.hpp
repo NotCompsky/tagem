@@ -7,10 +7,12 @@
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"JOIN file2tag f2t ON f2t.tag_id=t2pt.tag " \
 		"WHERE u2ht.user="
-#define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND f.id NOT IN (" \
+#define USER_DISALLOWED_FILES(user_id) \
+	"(" \
 		USER_DISALLOWED_FILES_INNER_PRE, user_id, \
 	")"
+#define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
+	"AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 #define USER_DISALLOWED_TAGS_INNER_PRE \
 		"SELECT t2pt.tag " \
 		"FROM user2hidden_tag u2ht " \
