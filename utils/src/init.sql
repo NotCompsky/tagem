@@ -28,6 +28,12 @@ CREATE TABLE _device (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
+CREATE TABLE user2hidden_device (
+	user INT UNSIGNED NOT NULL,
+	device BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (device) REFERENCES _device (id)
+);
 INSERT INTO _device (name, protocol) VALUES
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
@@ -44,6 +50,12 @@ CREATE TABLE _dir (
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id)
+);
+CREATE TABLE user2hidden_dir (
+	user INT UNSIGNED NOT NULL,
+	dir BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (dir) REFERENCES _dir (id)
 );
 
 CREATE TABLE mimetype (

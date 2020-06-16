@@ -49,8 +49,39 @@
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"WHERE u2ht.user=", user_id, \
 	")"
+#define USER_DISALLOWED_TAGS__COMPILE_TIME(user_id) \
+	"(" \
+		"SELECT t2pt.tag " \
+		"FROM user2hidden_tag u2ht " \
+		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
+		"WHERE u2ht.user=" user_id \
+	")"
 #define TAG_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+#define USER_DISALLOWED_DEVICES(user_id) \
+	"(" \
+		"SELECT device " \
+		"FROM user2hidden_device " \
+		"WHERE user=", user_id, \
+	")"
+#define USER_DISALLOWED_DEVICES__COMPILE_TIME(user_id) \
+	"(" \
+		"SELECT device " \
+		"FROM user2hidden_device " \
+		"WHERE user=" user_id \
+	")"
+#define USER_DISALLOWED_DIRS(user_id) \
+	"(" \
+		"SELECT dir " \
+		"FROM user2hidden_dir " \
+		"WHERE user=", user_id, \
+	")"
+#define USER_DISALLOWED_DIRS__COMPILE_TIME(user_id) \
+	"(" \
+		"SELECT dir " \
+		"FROM user2hidden_dir " \
+		"WHERE user=" user_id \
+	")"
 
 #include <curl/curl.h>
 
@@ -357,11 +388,38 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 #endif
 	
+	
 	template<typename FlagType,  typename... Args>
-	void init_json(const FlagType& _flag,  const char* const qry,  const char*& dst,  Args... args){
-		using namespace _r;
+	char* get_itr_from_buf(nullptr_t,  const FlagType& _flag,  const char* const _headers,  Args... args){
+		size_t sz = 0;
 		
-		this->mysql_query_buf(qry, strlen(qry));
+		sz += std::char_traits<char>::length(_headers);
+		sz += 1;
+		while(this->mysql_assign_next_row__no_free(args...)){
+			sz += _r::strlens(_flag, args...);;
+		}
+		sz += 1;
+		sz += 1;
+		
+		void* buf = malloc(sz);
+		if(unlikely(buf == nullptr))
+			exit(4096);
+		return reinterpret_cast<char*>(buf);
+	}
+	template<typename FlagType,  typename... Args>
+	char* get_itr_from_buf(char** buf,  const FlagType,  const char* const,  Args...){
+		return *buf;
+	}
+	void set_buf_to_itr(nullptr_t, char*){}
+	void set_buf_to_itr(char** buf,  char* itr){
+		*buf = itr;
+	}
+	void set_buf_to_itr(const char** buf,  char* itr){
+		*buf = const_cast<const char*>(itr);
+	}
+	template<typename StackdBuf,  typename MallocdBuf,  typename FlagType,  typename... Args>
+	void init_json(const StackdBuf buf,  const FlagType& _flag,  MallocdBuf dst,  Args... args){
+		using namespace _r;
 		
 		constexpr static const char* const _headers =
 			#include "headers/return_code/OK.c"
@@ -370,20 +428,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		;
 		
-		size_t sz = 0;
-		
-		sz += std::char_traits<char>::length(_headers);
-		sz += 1;
-		while(this->mysql_assign_next_row__no_free(args...)){
-			sz += strlens(_flag, args...);;
-		}
-		sz += 1;
-		sz += 1;
-		
-		char* itr = (char*)malloc(sz);
-		dst = const_cast<char*>(itr);
-		if(unlikely(itr == nullptr))
-			exit(4096);
+		char* itr = get_itr_from_buf(buf, _flag, _headers, args...);
 		
 		compsky::asciify::asciify(itr, _headers);
 		compsky::asciify::asciify(itr, opener(_flag));
@@ -396,6 +441,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			--itr; // ...wherein a trailing comma was left
 		*(itr++) = closer(_flag);
 		*itr = 0;
+		
+		set_buf_to_itr(dst, itr);
+		set_buf_to_itr(buf, itr);
 	}
 	
 	void begin_json_response(){
@@ -1100,7 +1148,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view get_mimetype_json(){
+	std::string_view get_mimetype_json(const char* s){
+		this->mysql_query_buf("SELECT id, name FROM mimetype");
+		
 		std::unique_lock lock(_r::mimetype_json_mutex);
 		if (unlikely(regenerate_mimetype_json)){
 			// WARNING: Race condition since init_json uses global mysql objects
@@ -1109,12 +1159,30 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			uint64_t id;
 			const char* str1;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name FROM mimetype", _r::mimetype_json, &id, &str1);
+			this->init_json(nullptr, dict, &_r::mimetype_json, &id, &str1);
 		}
 		return _r::mimetype_json;
 	}
 	
-	std::string_view get_dir_json(){
+	std::string_view get_dir_json(const char* s){
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		if (user_id != user_auth::SpecialUserID::guest){
+			uint64_t id;
+			const char* str1;
+			const char* str2;
+			constexpr _r::flag::Dict dict;
+			this->mysql_query(
+				"SELECT id, name, device "
+				"FROM _dir "
+				"WHERE id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			);
+			this->itr = this->buf;
+			this->init_json(&this->itr, dict, nullptr, &id, &str1, &str2);
+			return this->get_buf_as_string_view();
+		}
+		
 		std::unique_lock lock(_r::dirs_json_mutex);
 		if (unlikely(regenerate_dir_json)){
 			// WARNING: Race condition since init_json uses global mysql objects
@@ -1124,12 +1192,37 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name, device FROM _dir", _r::dirs_json, &id, &str1, &str2);
+			this->mysql_query_buf(
+				"SELECT id, name, device "
+				"FROM _dir "
+				"WHERE id NOT IN" USER_DISALLOWED_DIRS__COMPILE_TIME("0")
+			);
+			this->init_json(nullptr, dict, &_r::dirs_json, &id, &str1, &str2);
 		}
 		return _r::dirs_json;
 	}
 	
-	std::string_view get_device_json(){
+	std::string_view get_device_json(const char* s){
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		if (user_id != user_auth::SpecialUserID::guest){
+			uint64_t id;
+			const char* name;
+			unsigned protocol;
+			const char* embed_pre;
+			const char* embed_post;
+			constexpr _r::flag::Dict dict;
+			this->mysql_query(
+				"SELECT id, name, protocol, embed_pre, embed_post "
+				"FROM _device "
+				"WHERE id NOT IN" USER_DISALLOWED_DEVICES(user_id)
+			);
+			this->itr = this->buf;
+			this->init_json(&this->itr, dict, nullptr, &id, &name, &protocol, &embed_pre, &embed_post);
+			return this->get_buf_as_string_view();
+		}
+		
 		std::unique_lock lock(_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
@@ -1139,25 +1232,62 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* embed_pre;
 			const char* embed_post;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM _device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+			this->mysql_query_buf(
+				"SELECT id, name, protocol, embed_pre, embed_post "
+				"FROM _device "
+				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME("0")
+			);
+			this->init_json(nullptr, dict, &_r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 		}
 		return _r::devices_json;
 	}
 	
-	std::string_view get_protocol_json(){
+	std::string_view get_protocol_json(const char* s){
+		this->mysql_query_buf("SELECT id, name FROM protocol");
+		
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
 			uint64_t id; // unsigned, really - just can't justify creating another function for template
 			const char* name;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name FROM protocol", _r::protocol_json, &id, &name);
+			this->init_json(nullptr, dict, &_r::protocol_json, &id, &name);
 		}
 		return _r::protocol_json;
 	}
 	
-	std::string_view get_tag_json(){
-		// TODO: Have a JSON cached for each user
+	std::string_view get_tag_json(const char* s){
+		constexpr static const char* const qry1 =
+			"SELECT "
+				"t.id,"
+				"t.name,"
+				"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
+				"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
+			"FROM tag t "
+			"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
+			"JOIN tag p ON p.id=t2pt.parent "
+			"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
+		;
+		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		if (user_id != user_auth::SpecialUserID::guest){
+			uint64_t id;
+			const char* name;
+			const char* str1;
+			const char* str2;
+			constexpr _r::flag::Dict dict;
+			this->mysql_query(
+				qry1,
+				USER_DISALLOWED_TAGS(user_id)
+				"GROUP BY t.id"
+			);
+			this->itr = this->buf;
+			this->init_json(&this->itr, dict, nullptr, &id, &name, &str1, &str2);
+			return this->get_buf_as_string_view();
+		}
+		
 		std::unique_lock lock(_r::tags_json_mutex);
 		if (unlikely(regenerate_tag_json)){
 			regenerate_tag_json = false;
@@ -1166,37 +1296,48 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict,
-				"SELECT "
-					"t.id,"
-					"t.name,"
-					"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
-					"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
-				"FROM tag t "
-				"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
-				"JOIN tag p ON p.id=t2pt.parent "
-				"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
+			this->mysql_query(
+				qry1,
+				USER_DISALLOWED_TAGS__COMPILE_TIME("0")
 				"GROUP BY t.id"
-				, _r::tags_json, &id, &name, &str1, &str2
 			);
+			this->init_json(nullptr, dict, &_r::tags_json, &id, &name, &str1, &str2);
 		}
 		return _r::tags_json;
 	}
 	
-	std::string_view get_tag2parent_json(){
+	std::string_view get_tag2parent_json(const char* s){
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		if (user_id != user_auth::SpecialUserID::guest){
+			uint64_t id;
+			uint64_t id2;
+			constexpr _r::flag::Arr arr;
+			this->mysql_query(
+				"SELECT tag_id, parent_id "
+				"FROM tag2parent t2p "
+				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS(user_id)
+			);
+			this->itr = this->buf;
+			this->init_json(&this->itr, arr, nullptr, &id, &id2);
+			return this->get_buf_as_string_view();
+		}
+		
 		std::unique_lock lock(_r::tag2parent_json_mutex);
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
 			uint64_t id;
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
-			this->init_json(arr,
+			this->mysql_query_buf(
 				"SELECT tag_id, parent_id "
 				"FROM tag2parent t2p "
-				"JOIN tag t ON t.id=t2p.tag_id "    // join to use tag view to filter tags
-				"JOIN tag p ON p.id=t2p.parent_id"  // same
-				, _r::tag2parent_json, &id, &id2
+				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME("0")
+				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME("0")
 			);
+			this->init_json(nullptr, arr, &_r::tag2parent_json, &id, &id2);
 		}
 		return _r::tag2parent_json;
 	}
@@ -1208,7 +1349,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// /a/d.json
-						return this->get_dir_json();
+						return this->get_dir_json(s);
 					case '/':
 						switch(*(s++)){
 							case 'i':
@@ -1226,14 +1367,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// D.json
-						return this->get_device_json();
+						return this->get_device_json(s);
 				}
 				break;
 			case 'P':
 				switch(*(s++)){
 					case '.':
 						// /a/P.json
-						return this->get_protocol_json();
+						return this->get_protocol_json(s);
 				}
 				break;
 			case 'f':
@@ -1276,10 +1417,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				switch(*(s++)){
 					case '.':
 						// t.json
-						return this->get_tag_json();
+						return this->get_tag_json(s);
 					case '2':
 						// /a/t2p.json
-						return this->get_tag2parent_json();
+						return this->get_tag2parent_json(s);
 					case '/':
 						switch(*(s++)){
 							case 'f':
@@ -1298,7 +1439,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						switch(*(s++)){
 							case '.':
 								// mt.json
-								return this->get_mimetype_json();
+								return this->get_mimetype_json(s);
 						}
 						break;
 				}
