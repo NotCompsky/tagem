@@ -521,7 +521,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT name "
-			"FROM dir "
+			"FROM _dir "
 			"WHERE id=", id
 		);
 		
@@ -562,7 +562,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file_backup f2 ON f2.file=f.id "
-			"LEFT JOIN dir d2 ON d2.id=f2.dir "
+			"LEFT JOIN _dir d2 ON d2.id=f2.dir "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id"
@@ -1124,7 +1124,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name, device FROM dir", _r::dirs_json, &id, &str1, &str2);
+			this->init_json(dict, "SELECT id, name, device FROM _dir", _r::dirs_json, &id, &str1, &str2);
 		}
 		return _r::dirs_json;
 	}
@@ -1139,7 +1139,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* embed_pre;
 			const char* embed_post;
 			constexpr _r::flag::Dict dict;
-			this->init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+			this->init_json(dict, "SELECT id, name, protocol, embed_pre, embed_post FROM _device", _r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
 		}
 		return _r::devices_json;
 	}
@@ -1435,10 +1435,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT m.name, CONCAT(d.name, f", (dir_id==0)?"":"2", ".name) "
 			"FROM _file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
-			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
+			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id),
+			  // TODO: Filter _dir
 			  (dir_id==0)?" OR ":" AND d.id=", dir_id
 		);
 		const char* mimetype = nullptr;
@@ -1511,7 +1512,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		static char dst_pth[4096];
 		
 		const char* dir_name = nullptr;
-		this->mysql_query("SELECT name FROM dir WHERE id=", dir_id);
+		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id);
 		if (not this->mysql_assign_next_row(&dir_name)){
 			// No visible directory with the requested ID
 			// MySQL results already freed
@@ -1574,12 +1575,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void add_D_to_db(const UserIDIntType user_id,  const unsigned protocol,  const char* const url,  const size_t url_len){
 		this->mysql_exec(
-			"INSERT INTO device "
+			"INSERT INTO _device "
 			"(protocol, name,user)"
 			"SELECT ", protocol, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",", user_id, " "
-			"FROM device "
+			"FROM _device "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"(SELECT id FROM _device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
 			"LIMIT 1"
 		);
 		regenerate_device_json = true;
@@ -1587,12 +1588,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void add_d_to_db(const UserIDIntType user_id,  const uint64_t device,  const char* const url,  const size_t url_len){
 		this->mysql_exec(
-			"INSERT INTO dir "
+			"INSERT INTO _dir "
 			"(device, name, user)"
 			"SELECT ", device, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",", user_id, " "
-			"FROM dir "
+			"FROM _dir "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"(SELECT id FROM _dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
 			"LIMIT 1"
 		);
 		regenerate_dir_json = true;
@@ -1611,9 +1612,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(dir, name, user)"
 			"SELECT d.id,SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1),", user_id, " "
 			"FROM _file f "
-			"JOIN dir d ON d.id=", dir_id, " "
+			"JOIN _dir d ON d.id=", dir_id, " "
 			"WHERE NOT EXISTS"
-			"(SELECT f.id FROM _file f JOIN dir d ON d.id=f.dir WHERE d.id=", dir_id, " AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1))"
+			"(SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.id=", dir_id, " AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1))"
 			"LIMIT 1"
 		);
 		this->mysql_exec(
@@ -1621,7 +1622,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(file_id, tag_id, user)"
 			"SELECT f.id, t.id,", user_id, " "
 			"FROM _file f "
-			"JOIN dir d ON d.id=f.dir "
+			"JOIN _dir d ON d.id=f.dir "
 			"JOIN _tag t "
 			"WHERE t.id IN (", _f::strlen, tag_ids, tag_ids_len, ") "
 			  "AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1) "
