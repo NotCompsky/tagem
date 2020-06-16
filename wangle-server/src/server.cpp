@@ -418,7 +418,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*buf = const_cast<const char*>(itr);
 	}
 	template<typename StackdBuf,  typename MallocdBuf,  typename FlagType,  typename... Args>
-	void init_json(const StackdBuf buf,  const FlagType& _flag,  MallocdBuf dst,  Args... args){
+	void init_json(const StackdBuf stacked_itr,  const FlagType& _flag,  MallocdBuf mallocd_dst,  Args... args){
+		/*
+		 * stacked_itr is either nullptr or this->itr
+		 * In the first case,  itr_init is a new malloc'd string that is assigned to mallocd_dst
+		 * In the latter case, this->itr is incremented so that a string_view of this->buf can be replied
+		 */
+		
 		using namespace _r;
 		
 		constexpr static const char* const _headers =
@@ -428,7 +434,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		;
 		
-		char* itr = get_itr_from_buf(buf, _flag, _headers, args...);
+		char* const itr_init = get_itr_from_buf(stacked_itr, _flag, _headers, args...);
+		char* itr = itr_init;
 		
 		compsky::asciify::asciify(itr, _headers);
 		compsky::asciify::asciify(itr, opener(_flag));
@@ -442,8 +449,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*(itr++) = closer(_flag);
 		*itr = 0;
 		
-		set_buf_to_itr(dst, itr);
-		set_buf_to_itr(buf, itr);
+		set_buf_to_itr(mallocd_dst, itr_init);
+		set_buf_to_itr(stacked_itr, itr);
 	}
 	
 	void begin_json_response(){
@@ -1257,17 +1264,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_tag_json(const char* s){
-		constexpr static const char* const qry1 =
-			"SELECT "
-				"t.id,"
-				"t.name,"
-				"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"
-				"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "
-			"FROM tag t "
-			"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "
-			"JOIN tag p ON p.id=t2pt.parent "
-			"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"
-		;
+		#define get_tag_json_qry_prefix \
+			"SELECT "\
+				"t.id,"\
+				"t.name,"\
+				"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"\
+				"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "\
+			"FROM _tag t "\
+			"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "\
+			"JOIN _tag p ON p.id=t2pt.parent "\
+			"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"\
+			  "AND t.id NOT IN"
+		#define get_tag_json_qry_postfix \
+			  "AND p.id NOT IN"  
 		
 		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
 		if (user_id == user_auth::SpecialUserID::invalid)
@@ -1279,7 +1288,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str2;
 			constexpr _r::flag::Dict dict;
 			this->mysql_query(
-				qry1,
+				get_tag_json_qry_prefix
+				USER_DISALLOWED_TAGS(user_id)
+				get_tag_json_qry_postfix
 				USER_DISALLOWED_TAGS(user_id)
 				"GROUP BY t.id"
 			);
@@ -1296,8 +1307,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			const char* str1;
 			const char* str2;
 			constexpr _r::flag::Dict dict;
-			this->mysql_query(
-				qry1,
+			this->mysql_query_buf(
+				get_tag_json_qry_prefix
+				USER_DISALLOWED_TAGS__COMPILE_TIME("0")
+				get_tag_json_qry_postfix
 				USER_DISALLOWED_TAGS__COMPILE_TIME("0")
 				"GROUP BY t.id"
 			);
