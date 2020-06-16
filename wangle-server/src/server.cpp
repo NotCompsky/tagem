@@ -1,3 +1,4 @@
+#define DEBUG
 #include "FrameDecoder.h"
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
@@ -588,7 +589,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
-			  "AND d2.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND (d2.id IS NULL OR d2.id NOT IN" USER_DISALLOWED_DIRS(user_id) ")"
 			"GROUP BY f.id"
 		);
 		
