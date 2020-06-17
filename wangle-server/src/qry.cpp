@@ -12,6 +12,13 @@
 
 namespace sql_factory{
 
+namespace attribute_kind {
+	enum AttributeKind {
+		one_to_one,
+		many_to_many
+	};
+}
+
 namespace arg {
 	typedef uint32_t ArgType;
 	enum Arg : ArgType {
@@ -428,16 +435,29 @@ arg::ArgType process_arg(const char*& qry){
 }
 
 static
-successness::ReturnType get_attribute_name(const char which_tbl,  const char*& qry,  const char*& attribute_name){
+successness::ReturnType get_attribute_name(const char which_tbl,  const char*& qry,  const char*& attribute_name,  attribute_kind::AttributeKind& attribute_kind){
 	switch(*(++qry)){
 		case 'd':
 			switch(*(++qry)){
+				case 'c':
+					switch(*(++qry)){
+						case 't':
+							switch(*(++qry)){
+								case ' ':
+									attribute_name = "dct_hash";
+									attribute_kind = attribute_kind::many_to_many;
+									return (which_tbl=='f') ? successness::ok : successness::invalid;
+							}
+							break;
+					}
+					break;
 				case 'i':
 					switch(*(++qry)){
 						case 'r':
 							switch(*(++qry)){
 								case ' ':
 									attribute_name = "dir";
+									attribute_kind = attribute_kind::one_to_one;
 									return (which_tbl=='f') ? successness::ok : successness::invalid;
 							}
 							break;
@@ -460,6 +480,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 																		case ' ':
 																			// same duration
 																			attribute_name = "duration";
+																			attribute_kind = attribute_kind::one_to_one;
 																			return (which_tbl=='f') ? successness::ok : successness::invalid;
 																	}
 																	break;
@@ -486,6 +507,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 									case ' ':
 										// same md5
 										attribute_name = "md5";
+										attribute_kind = attribute_kind::one_to_one;
 										return (which_tbl=='f') ? successness::ok : successness::invalid;
 								}
 								break;
@@ -500,6 +522,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 											case ' ':
 												// same mime
 												attribute_name = "mimetype";
+												attribute_kind = attribute_kind::one_to_one;
 												return (which_tbl=='f') ? successness::ok : successness::invalid;
 										}
 										break;
@@ -517,6 +540,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 								switch(*(++qry)){
 									case ' ':
 										attribute_name = "sha256";
+										attribute_kind = attribute_kind::one_to_one;
 										return (which_tbl=='f') ? successness::ok : successness::invalid;
 								}
 								break;
@@ -530,6 +554,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 										switch(*(++qry)){
 											case ' ':
 												attribute_name = "size";
+												attribute_kind = attribute_kind::one_to_one;
 												return (which_tbl=='f') ? successness::ok : successness::invalid;
 										}
 										break;
@@ -549,6 +574,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 										switch(*(++qry)){
 											case ' ':
 												attribute_name = "name";
+												attribute_kind = attribute_kind::one_to_one;
 												return successness::ok;
 										}
 										break;
@@ -849,7 +875,8 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					return successness::invalid;
 				
 				const char* attribute_name;
-				const auto rc = get_attribute_name(which_tbl, qry, attribute_name);
+				attribute_kind::AttributeKind attribute_kind;
+				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -906,28 +933,48 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (which_tbl != 'f')
 					return successness::invalid;
 				const char* attribute_name;
-				const auto rc = get_attribute_name(which_tbl, qry, attribute_name);
+				attribute_kind::AttributeKind attribute_kind;
+				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
 				const std::string old_where = where;
-				where = " X.";
-				where += attribute_name;
-				if (is_inverted)
-					where += "NOT ";
-				where += " IN(SELECT X.";
-				where += attribute_name;
-				where += " AS x\nFROM ";
-				where += tbl_full_name_of_base_tbl(which_tbl);
-				where += " X\n";
-				where += join;
-				where += "WHERE ";
-				where += (old_where.empty())?"TRUE":old_where;
-				where += "\nAND X.id NOT IN(";
-				where += user_disallowed_X_tbl_filter_inner_pre;
-				where += std::to_string(user_id);
-				where += ")GROUP BY ";
-				where += attribute_name;
-				where += "\nHAVING COUNT(x)>1)";
+				if (attribute_kind == attribute_kind::one_to_one){
+					where = "X.";
+					where += attribute_name;
+					if (is_inverted)
+						where += " NOT";
+					where += " IN(SELECT X.";
+					where += attribute_name;
+					where += " AS x\nFROM ";
+					where += tbl_full_name_of_base_tbl(which_tbl);
+					where += " X\n";
+					where += join;
+					where += "WHERE ";
+					where += (old_where.empty())?"TRUE":old_where;
+					where += "\nAND X.id NOT IN(";
+					where += user_disallowed_X_tbl_filter_inner_pre;
+					where += std::to_string(user_id);
+					where += ")GROUP BY ";
+					where += attribute_name;
+					where += "\nHAVING COUNT(x)>1)";
+				} else {
+					where = "X.id";
+					if (is_inverted)
+						where += "NOT";
+					where += " IN(SELECT file FROM file2";
+					where += attribute_name;
+					where += "\nf2_ JOIN ";
+					where += tbl_full_name_of_base_tbl(which_tbl);
+					where += " X ON X.id=f2_.file\n";
+					where += join;
+					where += "WHERE ";
+					where += (old_where.empty())?"TRUE":old_where;
+					where += "\nAND X.id NOT IN(";
+					where += user_disallowed_X_tbl_filter_inner_pre;
+					where += std::to_string(user_id);
+					where += ")GROUP BY f2_.x";
+					where += "\nHAVING COUNT(x)>1)";
+				}
 				join = "";
 				
 				bracket_depth = 0;

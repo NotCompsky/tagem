@@ -115,6 +115,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"			duration\n" \
 	"			md5\n" \
 	"			sha\n" \
+	"			dct (perceptual DCT hash)\n" \
 	"\n" \
 	"OPTIONS\n" \
 	"	order [MODE] [ATTRIBUTE]\n" \
