@@ -1288,7 +1288,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			// User tried to execute a task they were not authorised to see
 			return _r::not_found;
 		
-		this->mysql_exec_buf(content);
+		const char* content_end = content;
+		while(true){
+			while((*content_end != 0) and (*content_end != ';'))
+				++content_end;
+			this->mysql_exec_buf(content,  (uintptr_t)content_end - (uintptr_t)content);
+			if(*content_end == 0)
+				break;
+			content = ++content_end;
+		}
 		
 		this->mysql_free_res();
 		
