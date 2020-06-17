@@ -1,3 +1,7 @@
+// TODO:
+//#define INPUT_FACTORY(type, placeholder) \
+//	"<input type=\"" type "\" placeholder=\"" placeholder "\"/>"
+
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
 #ifdef COL1_NAME
@@ -29,6 +33,11 @@
 # ifdef COL4_NAME
 		"<div class=\"td\">"
 			COL4_NAME
+		"</div>"
+# endif
+# ifdef COL5_NAME
+		"<div class=\"td\">"
+			COL5_NAME
 		"</div>"
 # endif
 	"</div>"
@@ -64,6 +73,14 @@
 #  endif
 		"</div>"
 # endif
+# ifdef COL5_NAME
+		"<div class=\"td\">"
+#  ifdef COL5_IS_DATA_INT
+			"<input type=\"text\" placeholder=\"12.3 MiB\"/>"
+#   undef COL5_IS_DATA_INT
+#  endif
+		"</div>"
+# endif
 	"</div>"
 
 	// Sort row
@@ -85,6 +102,10 @@
 # ifdef COL4_NAME
 		"<div class=\"td sort\">Sort</div>"
 #  undef COL4_NAME
+# endif
+# ifdef COL5_NAME
+		"<div class=\"td sort\">Sort</div>"
+#  undef COL5_NAME
 # endif
 	"</div>"
 

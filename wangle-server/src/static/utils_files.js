@@ -2,16 +2,17 @@
 	"get_json(url, function(data){"
 		"let s = \"\";"
 		"file2post = {};"
-		"for (var ls of data){"
-			"s += \"<div class='tr' data-id='\" + ls[1] + \"'>\";"
-				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + ls[0] + '\"></img></div>';"
+		"for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){"
+			"s += \"<div class='tr' data-id='\" + id + \"'>\";"
+				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + thumb + '\"></img></div>';"
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
-				"s += \"<div class='td fname'><a onclick='view_file(\" + ls[1] + \")'>\" + ls[2] + \"</a></div>\";" // File ID and name
-				"s += \"<div class='td'>\" + ls[3] + \"</div>\";" // 3rd column i.e. col[2]
-				"s += \"<div class='td'>\" + ls[4] + \"</div>\";" // 4th column i.e. col[3]
+				"s += \"<div class='td fname'><a onclick='view_file(\" + id + \")'>\" + name + \"</a></div>\";" // File ID and name
+				"s += \"<div class='td'>\" + ext_db_n_post_ids + \"</div>\";" // 3rd column i.e. col[2]
+				"s += \"<div class='td'>\" + tag_ids + \"</div>\";" // 4th column i.e. col[3]
+				"s += \"<div class='td' data-n=\" + sz + \">\" + bytes2human(parseInt(sz)) + \"</div>\";" // 5th column i.e. col[4]
 				
 				// Populate file2post dictionary
-				"file2post[ls[1]] = ls[3].split(\":\");" // database_ids, post_ids
+				"file2post[id] = ext_db_n_post_ids.split(\":\");" // database_ids, post_ids
 				
 			"s += \"</div>\";"
 		"}"

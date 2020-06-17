@@ -595,6 +595,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.dir,"
 				"f.name,"
+				"f.size,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS ","
 				"f.mimetype,"
@@ -680,11 +681,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		//const char* dir_name;
 		const char* f_id;
 		const char* f_name;
+		const char* f_sz;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		this->begin_json_response();
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &external_db_and_post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &f_sz, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -692,6 +694,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					//'"', _f::esc, '"', dir_name, '"', ',',
 					f_id, ',',
 					'"', _f::esc, '"', f_name,   '"', ',',
+					'"', f_sz, '"', ',', // Integer as string because Javascript can't handle big integers
 					'"', external_db_and_post_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',
@@ -1046,6 +1049,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
+				"f.size,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "
@@ -1086,6 +1090,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
+				"f.size,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "
@@ -1121,6 +1126,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				FILE_THUMBNAIL
 				"f.id,"
 				"f.name,"
+				"f.size,"
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "

@@ -1,0 +1,20 @@
+"const BYTES_UNITS=['','K','M','G','T','P'];"
+
+"function bytes2human(n){"
+	"let i = 0;"
+	"while(n > 1024){"
+		"++i;"
+		"n /= 1024;"
+	"}"
+	"return n.toFixed(1) + ' ' + BYTES_UNITS[i] + 'iB';"
+"}"
+
+// Dehumanise
+"function _abs_human2bytes(n, unit, magnitude){"
+	"return n*(magnitude**BYTES_UNITS.indexOf(unit))"
+"}"
+"function human2bytes(s){"
+	"const human2bytes_regexp = new RegExp('^([0-9]+(?:\\.[0-9]+)?)(|[KMGTP])(i)?B$');"
+	"const [_, n, unit, ibi_or_iga] = human2bytes_regexp.exec(s);"
+	"return _abs_human2bytes(parseFloat(n), unit, (ibi_or_iga===undefined)?1000:1024)"
+"}"
