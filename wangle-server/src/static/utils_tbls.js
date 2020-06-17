@@ -88,7 +88,8 @@
 "}"
 
 "function getCellValue(tr, idx){"
-	"return tr.children[idx].getAttribute('value') || tr.children[idx].innerText || tr.children[idx].textContent"
+	"const node = tr.children[idx];"
+	"return node.dataset.n || node.innerText"
 "}"
 
 "const comparer = (idx, asc) => (a, b) => ("
