@@ -97,6 +97,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		Filter a file's mimetype\n" \
 	"		Only valid when filtering the file table\n" \
 	"	same [ATTRIBUTE]\n" \
+	"		This filter is NOT to be preceded by a logical operator\n" \
 	"		Only for the file table\n" \
 	"		Filters results for files sharing an attribute\n" \
 	"		The order in which this filter is applied matters\n" \
