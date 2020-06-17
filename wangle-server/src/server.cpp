@@ -1095,6 +1095,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
+			"ORDER BY FIELD(f.id,", _f::strlen, file_ids, file_ids_len, ")"
 			"LIMIT 100"
 		);
 		
