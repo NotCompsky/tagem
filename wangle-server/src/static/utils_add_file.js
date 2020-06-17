@@ -35,6 +35,7 @@
 			"queue.innerHTML = \"\";" // Remove URLs
 			"alert(\"Success\");"
 		"},"
+		"error:err_alert,"
 		"dataType:\"text\""
 	"});"
 "}"

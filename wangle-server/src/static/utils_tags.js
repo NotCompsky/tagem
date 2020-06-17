@@ -46,9 +46,7 @@
 		"success: function(){"
 			"tagselect.val(\"\").change();" // Deselect all
 		"},"
-		"error: function(){"
-			"alert(\"Error adding child tags\");"
-		"}"
+		"error:err_alert"
 	"});"
 	"add_to_json_then('t2p', zipsplitarr(tagselect.val(), [_tag_id]), '/a/t2p.json', function(){"
 		"fn();"
@@ -61,9 +59,7 @@
 		"success: function(){"
 			"tagselect.val(\"\").change();" // Deselect all
 		"},"
-		"error: function(){"
-			"alert(\"Error adding child tags\");"
-		"}"
+		"error:err_alert"
 	"});"
 	"add_to_json_then('t2p', zipsplitarr([_tag_id], tagselect.val()), '/a/t2p.json', function(){"
 		"fn();"

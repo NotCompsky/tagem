@@ -21,6 +21,7 @@
 			"alert(\"Success\");"
 			"refetch_json('D', '/a/D.json');"
 		"},"
+		"error:err_alert,"
 		"dataType:\"text\""
 	"});"
 "}"

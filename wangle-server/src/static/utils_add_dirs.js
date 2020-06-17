@@ -29,6 +29,7 @@
 			"alert(\"Success\");"
 			"refetch_json('d', '/a/d.json');"
 		"},"
+		"error:err_alert,"
 		"dataType:\"text\""
 	"});"
 "}"

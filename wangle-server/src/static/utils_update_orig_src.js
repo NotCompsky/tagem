@@ -27,6 +27,7 @@
 		"data:url.substr(_dir_name.length),"
 		"success:function(){"
 			"hide_update_orig_src_dialog();"
-		"}"
+		"},"
+		"error:err_alert"
 	"});"
 "}"

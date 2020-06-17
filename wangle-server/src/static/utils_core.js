@@ -28,9 +28,7 @@
 		"dataType: \"json\","
 		"url: url,"
 		"success: fn,"
-		"error: function(){"
-			"alert(\"Error getting JSON from: \" + url);"
-		"}"
+		"error:err_alert"
 	"});"
 "}"
 "function set_var_to_json_then(var_name, url, fn){"
@@ -83,4 +81,12 @@
 		"}"
 	"}"
 	"return arr;"
+"}"
+
+"function error_alert(title, text){"
+	"alert(title + \"\\n\" + text);"
+"}"
+
+"function err_alert(r,title,text){"
+	"error_alert(r.statusText, text + \"\\nfor url: \" + this.url);"
 "}"
