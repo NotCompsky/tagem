@@ -96,10 +96,12 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"	mime [REGEX]\n" \
 	"		Filter a file's mimetype\n" \
 	"		Only valid when filtering the file table\n" \
-	"	same [ATTRIBUTE]\n" \
+	"	same [ATTRIBUTE] [MODE] [COUNT]\n" \
 	"		This filter is NOT to be preceded by a logical operator\n" \
 	"		Only for the file table\n" \
-	"		Filters results for files sharing an attribute\n" \
+	"		MODE must be one of \">\", \"<\", or \"=\", without the quotation marks\n" \
+	"		COUNT must be a non-negative integer\n" \
+	"		Filters results for files sharing an attribute, that attribute having [MODE COUNT] files associated with it.\n" \
 	"		The order in which this filter is applied matters\n" \
 	"			For many-to-one attributes (such as name, dir, mime, size, duration, md5, sha)\n" \
 	"				All other filters declared before this filter apply WITH this filter\n" \
@@ -108,15 +110,19 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"				It is a bit different\n" \
 	"		EXAMPLES\n" \
 	"			many-to-one\n" \
-	"				f name \"foo\" same dir\n" \
+	"				f name \"foo\" same dir > 1\n" \
 	"					Finds files matching the regexp \"foo\", so long as they share a directory with another file matching that regexp.\n" \
-	"				f same dir name \"foo\"\n" \
+	"				f same dir > 1 name \"foo\"\n" \
 	"					Finds files matching the regexp \"foo\", so long as there is another file in its directory\n" \
 	"			many-to-many\n" \
-	"				f name \"foo\" same dct\n" \
+	"				f name \"foo\" same dct > 1\n" \
 	"					Finds files whose DCT hashes overlap with those of files with names matching the regexp \"foo\"\n" \
-	"				f same dct name \"foo\"\n" \
+	"				f same dct > 1 name \"foo\"\n" \
 	"					Finds files matching the regexp \"foo\", so long as there is another file with overlapping DCT hashes\n" \
+	"				f same dct > 100\n" \
+	"					List files who have a DCT hash that at least 100 other files also have\n" \
+	"				f same dct < 2\n" \
+	"					List files who have a unique DCT hash\n" \
 	"		ATTRIBUTE must be one of\n" \
 	"			many-to-one options:\n" \
 	"				name (WARNING: Might take a VERY long time without other filters)\n" \

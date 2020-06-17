@@ -971,6 +971,12 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
+				const char comparison_mode = *(++qry);
+				if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=')) or (*(++qry) != ' '))
+					return successness::invalid;
+				const unsigned number_of_similarities = s2n<unsigned>(qry);
+				if (number_of_similarities == 0)
+					return successness::invalid;
 				const std::string old_where = where;
 				if (attribute_kind == attribute_kind::one_to_one){
 					where = "X.";
@@ -990,7 +996,10 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += std::to_string(user_id);
 					where += ")GROUP BY ";
 					where += attribute_name;
-					where += "\nHAVING COUNT(x)>1)";
+					where += "\nHAVING COUNT(x)";
+					where += comparison_mode;
+					where += std::to_string(number_of_similarities);
+					where += ")";
 				} else {
 					where = "X.id";
 					if (is_inverted)
@@ -1013,7 +1022,10 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += user_disallowed_X_tbl_filter_inner_pre;
 					where += std::to_string(user_id);
 					where += ")\n\t\tGROUP BY x";
-					where += "\n\t\tHAVING COUNT(x)>1\n\t)";
+					where += "\n\t\tHAVING COUNT(x)";
+					where += comparison_mode;
+					where += std::to_string(number_of_similarities);
+					where += "\n\t)";
 					where += "\n)";
 				}
 				join = "";
