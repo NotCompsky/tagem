@@ -108,7 +108,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"			f same dir name \"foo\"\n" \
 	"				Finds files matching the regexp \"foo\", so long as there is another file in its directory\n" \
 	"		ATTRIBUTE must be one of\n" \
-	"			name\n" \
+	"			name (WARNING: Might take a VERY long time without other filters)\n" \
 	"			dir\n" \
 	"			mime\n" \
 	"			size\n" \
