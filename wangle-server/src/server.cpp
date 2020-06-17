@@ -35,6 +35,13 @@
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag),\"\")"
+#define FILE_OVERVIEW_FIELDS \
+	FILE_THUMBNAIL \
+	"f.id," \
+	"f.name," \
+	"IFNULL(f.size,\"\")," \
+	DISTINCT_F2P_DB_AND_POST_IDS "," \
+	DISTINCT_F2T_TAG_IDS
 
 
 #include <curl/curl.h>
@@ -592,12 +599,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_THUMBNAIL
-				"f.dir,"
-				"f.name,"
-				"f.size,"
-				DISTINCT_F2P_DB_AND_POST_IDS ","
-				DISTINCT_F2T_TAG_IDS ","
+				FILE_OVERVIEW_FIELDS ","
 				"f.mimetype,"
 				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\")"
 			"FROM _file f "
@@ -1046,12 +1048,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_THUMBNAIL
-				"f.id,"
-				"f.name,"
-				"f.size,"
-				DISTINCT_F2P_DB_AND_POST_IDS ","
-				DISTINCT_F2T_TAG_IDS
+				FILE_OVERVIEW_FIELDS
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1087,12 +1084,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_THUMBNAIL
-				"f.id,"
-				"f.name,"
-				"f.size,"
-				DISTINCT_F2P_DB_AND_POST_IDS ","
-				DISTINCT_F2T_TAG_IDS
+				FILE_OVERVIEW_FIELDS
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1123,12 +1115,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_THUMBNAIL
-				"f.id,"
-				"f.name,"
-				"f.size,"
-				DISTINCT_F2P_DB_AND_POST_IDS ","
-				DISTINCT_F2T_TAG_IDS
+				FILE_OVERVIEW_FIELDS
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
