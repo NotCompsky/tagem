@@ -3,7 +3,7 @@
 
 #define USER_DISALLOWED_FILES_INNER_PRE \
 		"SELECT f2t.file_id " \
-		"FROM user2hidden_tag u2ht " \
+		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"JOIN file2tag f2t ON f2t.tag_id=t2pt.tag " \
 		"WHERE u2ht.user="
@@ -15,7 +15,7 @@
 	"AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 #define USER_DISALLOWED_TAGS_INNER_PRE \
 		"SELECT t2pt.tag " \
-		"FROM user2hidden_tag u2ht " \
+		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_TAGS(user_id) \
@@ -30,7 +30,7 @@
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
 		"SELECT device " \
-		"FROM user2hidden_device " \
+		"FROM user2blacklist_device " \
 		"WHERE user="
 #define USER_DISALLOWED_DEVICES(user_id) \
 	"(" \
@@ -42,7 +42,7 @@
 	")"
 #define USER_DISALLOWED_DIRS_INNER_PRE \
 		"SELECT dir " \
-		"FROM user2hidden_dir " \
+		"FROM user2blacklist_dir " \
 		"WHERE user="
 #define USER_DISALLOWED_DIRS(user_id) \
 	"(" \

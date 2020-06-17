@@ -28,7 +28,7 @@ CREATE TABLE _device (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
-CREATE TABLE user2hidden_device (
+CREATE TABLE user2blacklist_device (
 	user INT UNSIGNED NOT NULL,
 	device BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
@@ -52,7 +52,7 @@ CREATE TABLE _dir (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id)
 );
-CREATE TABLE user2hidden_dir (
+CREATE TABLE user2blacklist_dir (
 	user INT UNSIGNED NOT NULL,
 	dir BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
@@ -171,7 +171,7 @@ CREATE TABLE tag2parent_tree (
     PRIMARY KEY (tag, parent)
 );
 
-CREATE TABLE user2hidden_tag (
+CREATE TABLE user2blacklist_tag (
 	user INT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
@@ -434,7 +434,7 @@ AS
 	WHERE id NOT IN (
 		SELECT t2pt.tag
 		FROM user u
-		JOIN user2hidden_tag u2ht ON u2ht.user=u.id
+		JOIN user2blacklist_tag u2ht ON u2ht.user=u.id
 		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
 		WHERE u.name=SESSION_USER()
 	)
@@ -447,7 +447,7 @@ AS
 	WHERE id NOT IN (
 		SELECT f2t.file_id
 		FROM user u
-		JOIN user2hidden_tag u2ht ON u2ht.user=u.id
+		JOIN user2blacklist_tag u2ht ON u2ht.user=u.id
 		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
 		JOIN file2tag f2t ON f2t.tag_id=t2pt.tag
 		WHERE u.name=SESSION_USER()
