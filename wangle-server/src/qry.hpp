@@ -140,8 +140,14 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"	order [MODE] [ATTRIBUTE]\n" \
 	"		MODE must be one of a (ascending) or d (descending)\n" \
 	"		Order results by the ATTRIBUTE\n" \
+	"		For many-to-many attributes, files with multiple matching attributes will appear multiple times\n" \
 	"		ATTRIBUTE must be one of\n" \
-	"			name\n" \
+	"			file table additional options: Any of the attributes listed under the \"same\" filter\n" \
+	"			many-to-one options:\n" \
+	"				name\n" \
+	"			many-to-many options:\n" \
+	"				tag\n" \
+	"				dct\n" \
 	"	order-by-value [MODE] [[LIST_OF_NAMES]]\n" \
 	"		MODE must be one of a (ascending) or d (descending)\n" \
 	"		Order results by the named variables, in that order.\n" \
@@ -167,6 +173,10 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		List files with image mimetypes\n" \
 	"	f ( t \"Music\" and t \"Video\" ) or ( t \"Music\" and mime \"^video/\" )\n" \
 	"		List music videos\n" \
+	"	f name \"[.](png|jpe?g)\" same dct > 60 limit 1000\n" \
+	"		The command I used to locate all my neural style transfer renders\n" \
+	"	f name \"[.](mp4)\" same dct > 10 limit 1000\n" \
+	"		The command I used to locate videos by a Youtuber (using the same video intro in his videos)\n" \
 
 
 } // namespace sql_factory
