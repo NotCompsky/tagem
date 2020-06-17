@@ -92,6 +92,11 @@ INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi");
 CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	dir BIGINT UNSIGNED NOT NULL,
+	size BIGINT UNSIGNED,
+	duration BIGINT UNSIGNED,
+	sha256 BINARY(32),
+	md5 BINARY(16),
+	md5_of_path BINARY(16),
     name VARBINARY(1024),
     added_on DATETIME DEFAULT CURRENT_TIMESTAMP,
 	mimetype INT UNSIGNED NOT NULL DEFAULT 0,
@@ -122,9 +127,9 @@ CREATE TABLE file_backup (
 );
 
  
-CREATE TABLE file2 (
+CREATE TABLE file2var_key (
 	# Stores the user-defined variable tables
-	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	min BIGINT NOT NULL,
 	max BIGINT NOT NULL,
 	# NOTE: min and max are only relevant for GUI input. File sizes above 4GB would be impossible to input via Qt5 getInt method, but would be otherwise supported if the int type used is BIGINT or BIGINT UNSIGNED.
@@ -133,15 +138,37 @@ CREATE TABLE file2 (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
-INSERT INTO file2 (min, max, conversion, name) VALUES
+INSERT INTO file2var_key
+(min, max, conversion, name)
+VALUES
 (0, 9223372036854775807, 0, "duration")
 ;
+CREATE TABLE file2var_value (
+	file BIGINT UNSIGNED NOT NULL,
+	value BIGINT NOT NULL,
+	# If the key type demands a conversion - for instance, to a string - then this 'value' is the ID of the value in the corresponding file2var_convert_XXX table
+	key INT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES file2var_key (user),
+	FOREIGN KEY (key) REFERENCES file2var_key (key),
+	PRIMARY KEY (file,value,key,user)
+);
+CREATE TABLE file2var_convert_str (
+	id BIGINT NOT NULL PRIMARY KEY,
+	value VARCHAR(1000) NOT NULL UNIQUE KEY,
+	FOREIGN KEY (id) REFERENCES file2var_value (value)
+);
+CREATE TABLE file2var_convert_blob (
+	id BIGINT NOT NULL PRIMARY KEY,
+	value LONGTEXT NOT NULL UNIQUE KEY,
+	FOREIGN KEY (id) REFERENCES file2var_value (value)
+);
 
-CREATE TABLE user2hidden_file2 (
-	user BIGINT UNSIGNED NOT NULL,
-	file2 BIGINT UNSIGNED NOT NULL,
-	FOREIGN KEY (file2) REFERENCES file2 (id),
-	PRIMARY KEY (user,file2)
+CREATE TABLE user2hidden_file2var_key (
+	user INT UNSIGNED NOT NULL,
+	key INT UNSIGNED NOT NULL,
+	FOREIGN KEY (key) REFERENCES file2var_key (id),
+	PRIMARY KEY (user,key)
 );
 
 
@@ -220,24 +247,6 @@ CREATE TABLE file2audio_hash (
 	file BIGINT UNSIGNED NOT NULL,
 	x BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, x)
-);
-
-CREATE TABLE file2sha256 (
-	file BIGINT UNSIGNED NOT NULL,
-	x BINARY(32) NOT NULL,
-	PRIMARY KEY (file)
-);
-
-CREATE TABLE file2size (
-	file BIGINT UNSIGNED NOT NULL,
-	x BIGINT UNSIGNED NOT NULL,
-	PRIMARY KEY (file)
-);
-
-CREATE TABLE file2duration (
-	file BIGINT UNSIGNED NOT NULL,
-	x BIGINT UNSIGNED NOT NULL,
-	PRIMARY KEY (file)
 );
 
 CREATE TABLE box (
@@ -379,20 +388,6 @@ CREATE TABLE operators (
 	PRIMARY KEY (id)
 );
 INSERT INTO operators (id, string) VALUES (0,"AND"), (1,"OR"), (2,"XOR"), (3,"NOT");
-
-CREATE TABLE file2md5 (
-	# To use KDE thumbnails
-	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-	x BINARY(16) NOT NULL,
-	FOREIGN KEY (file) REFERENCES _file (id)
-);
-
-CREATE TABLE file2qt5md5 (
-	# To use KDE thumbnails
-	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-	x BINARY(16) NOT NULL,
-	FOREIGN KEY (file) REFERENCES _file (id)
-);
 
 CREATE TABLE file2thumbnail (
 	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,

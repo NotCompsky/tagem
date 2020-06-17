@@ -86,6 +86,64 @@ struct Size{};
 struct Duration{};
 
 
+struct ManyToMany {
+	constexpr
+	static
+	const char* const insert_pre_hash_name = "INSERT IGNORE INTO file2";
+	constexpr
+	static
+	const char* const insert_post_hash_name = "(x,file) VALUES (";
+	constexpr
+	static
+	const char* const insert_pre_file_id = ",";
+	
+	constexpr
+	static
+	size_t insert_trailing_length = std::char_traits<char>::length(",)");
+	
+	constexpr
+	static
+	const char* const filter_previously_completed_pre  = "f.id NOT IN (SELECT file FROM file2";
+	constexpr
+	static
+	const char* const filter_previously_completed_post = ")";
+	constexpr
+	static
+	const char* const delete_pre = "DELETE FROM file2";
+	constexpr
+	static
+	const char* const delete_post = " WHERE file=";
+};
+struct OneToOne {
+	constexpr
+	static
+	const char* const insert_pre_hash_name = "UPDATE _file SET ";
+	constexpr
+	static
+	const char* const insert_post_hash_name = "=";
+	constexpr
+	static
+	const char* const insert_pre_file_id = " WHERE id=";
+	
+	constexpr
+	static
+	size_t insert_trailing_length = std::char_traits<char>::length(",)");
+	
+	constexpr
+	static
+	const char* const filter_previously_completed_pre  = "f.";
+	constexpr
+	static
+	const char* const filter_previously_completed_post = " IS NULL";
+	constexpr
+	static
+	const char* const delete_pre = "UPDATE _file SET ";
+	constexpr
+	static
+	const char* const delete_post = "=NULL WHERE id=";
+};
+
+
 template<typename FileType,  typename Int>
 void asciify_hash(const FileType file_type_flag,  char*& itr,  const Int hash){
 	compsky::asciify::asciify(
@@ -132,29 +190,26 @@ void asciify_hash(const QT5_MD5_FLAG file_type_flag,  char*& itr,  const unsigne
 };
 
 
-template<typename FileType,  typename Int>
-void insert_hashes_into_db(const FileType file_type_flag,  const char* const file_id,  const Int* hashes,  const char* const hash_name,  int length_to_go){
+template<typename FileType,  typename Int,  typename RelationType>
+void insert_hashes_into_db(const FileType file_type_flag,  const char* const file_id,  const Int* hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	while(length_to_go != 0) {
 		char* itr = BUF;
 		
 		compsky::asciify::asciify(
 			itr,
-			"INSERT IGNORE INTO file2", hash_name, " "
-			"(file,x)"
-			"VALUES"
-			"("
+			which_relation.insert_pre_hash_name, hash_name, which_relation.insert_post_hash_name
 		);
 		
 		do {
 			--length_to_go;
 			
+			asciify_hash(file_type_flag, itr, hashes[length_to_go]);
+			
 			compsky::asciify::asciify(
 				itr,
-				file_id,
-				','
+				which_relation.insert_pre_file_id,
+				file_id
 			);
-			
-			asciify_hash(file_type_flag, itr, hashes[length_to_go]);
 			
 			compsky::asciify::asciify(
 				itr,
@@ -168,7 +223,7 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 		compsky::mysql::exec_buffer(
 			_mysql::obj,
 			BUF,
-			(uintptr_t)itr - (uintptr_t)BUF - std::char_traits<char>::length(",)") // Ignore trailing ",("
+			(uintptr_t)itr - (uintptr_t)BUF - which_relation.insert_trailing_length // Ignore trailing ",(", or "),(" if OneToOne relation
 		);
 	}
 };
@@ -188,9 +243,9 @@ template<typename Int>
 Int* get_ptr_to_if_not_already(Int* hashes){
 	return hashes;
 }
-template<typename FileType,  typename IntOrIntPtr>
-void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go){
-	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go);
+template<typename FileType,  typename IntOrIntPtr,  typename RelationType>
+void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
+	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
 	freemajig(hashes); // Just a quirk of the C standard
 };
 
@@ -201,7 +256,8 @@ uint64_t get_hash_of_image(const char* const fp){
 	return (rc == 0) ? hash : 0; // rc == 0 is success
 }
 
-void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	FILE* f = fopen(fp, "rb");
 	if (f == nullptr){
 		fprintf(stderr,  "Cannot read file: %s\n",  fp);
@@ -211,10 +267,11 @@ void save_hash(const Size file_type_flag,  const char* const hash_name,  const c
 	fseek(f, 0, SEEK_END);
 	const size_t sz = ftell(f);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &sz, hash_name, 1);
+	insert_hashes_into_db(file_type_flag, file_id, &sz, hash_name, 1, which_relation);
 }
 
-void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[32 + 1] = {};
 	
 	static SHA256_CTX sha256;
@@ -234,10 +291,11 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	
 	SHA256_Final(hash, &sha256);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
-void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[MD5_DIGEST_LENGTH + 1] = {};
 	
 	MD5_CTX md5_ctx;
@@ -257,10 +315,11 @@ void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  con
 	
 	MD5_Final(hash, &md5_ctx);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
-void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[16 + 1] = {};
 	
 	const QUrl url(QString("file://") + QString(fp));
@@ -284,7 +343,7 @@ void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name, 
 	
 	memcpy(hash, hash_signed, sizeof(hash));
 	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 	
 	
 	if (THUMBNAIL_DIR == nullptr)
@@ -314,7 +373,8 @@ void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name, 
 	//img.save(thumbName);
 }
 
-void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	const uint64_t hash = get_hash_of_image(fp);
 	
 	if (unlikely(hash == 0)){
@@ -322,11 +382,11 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hash, hash_name, 1);
+	insert_hashes_into_db_then_free(file_type_flag, file_id, hash, hash_name, 1, which_relation);
 }
 
-
-void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
@@ -335,11 +395,11 @@ void save_hash(const Video file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length);
+	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
-
-void save_hash(const Audio file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const Audio file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	constexpr static const int sample_rate = 8000;
 	constexpr static const int channels = 1;
 	int audiobuf_len;
@@ -358,20 +418,20 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length);
+	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
-
-void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp){
+template<typename RelationType>
+void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	const uint64_t hash = duration_of(fp);
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1);
+	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
 
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 	compsky::asciify::asciify(
 		itr,
-		"AND f.name REGEXP '\\.", file_ext_regexp, "'"
+		" AND f.name REGEXP '\\.", file_ext_regexp, "'"
 	);
 #define ADD_NAME_REGEXP_SZ (23+128)
 }
@@ -401,8 +461,8 @@ bool check_regex(const boost::regex* regex,  const char* const file_name,  const
 }
 
 
-template<typename FileType,  typename BoostRegex>
-void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name){
+template<typename FileType,  typename BoostRegex,  typename RelationType>
+void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
 	static char file_path[4096];
 	static size_t dir_prefix_len = 0;
 	
@@ -430,7 +490,7 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 		
 		if (e->d_type == DT_DIR){
 			if (recursive)
-				hash_all_from_dir(ename, recursive, regex, file_type_flag, hash_name);
+				hash_all_from_dir(ename, recursive, regex, file_type_flag, hash_name, which_relation);
 			continue;
 		}
 		
@@ -456,13 +516,13 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE d.name=\"", _f::esc, '"', file_path, "\" "
 			  "AND f.name=\"", _f::esc, '"', ename, "\" "
-			  "AND f.id NOT IN (SELECT file FROM file2", hash_name, ")"
+			  "AND ", which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 		);
 		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
 		const char* file_id;
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &file_id)){
 			// This can only have 0 or 1 iterations
-			save_hash(file_type_flag, hash_name, file_id, file_path);
+			save_hash(file_type_flag, hash_name, file_id, file_path, which_relation);
 		}
 	}
 	closedir(dir);
@@ -470,49 +530,40 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 }
 
 
-template<typename FileType>
-void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const char* const file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name){
+template<typename FileType,  typename RelationType>
+void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const char* const file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
 	boost::regex regex(file_ext_regexp, boost::regex::extended); // POSIX extended is the MySQL regex engine
-	hash_all_from_dir(dirpath, recursive, &regex, file_type_flag, hash_name);
+	hash_all_from_dir(dirpath, recursive, &regex, file_type_flag, hash_name, which_relation);
 }
 
 
-template<typename FileType>
-void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name){
-	hash_all_from_dir(dirpath, recursive, nullptr, file_type_flag, hash_name);
+template<typename FileType,  typename RelationType>
+void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
+	hash_all_from_dir(dirpath, recursive, nullptr, file_type_flag, hash_name, which_relation);
 }
 
 
-template<typename FileType,  typename String>
-void hash_all_from(const Options opts,  const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name){
+template<typename FileType,  typename String,  typename RelationType>
+void hash_all_from(const Options opts,  const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name,  const RelationType& which_relation){
 	if (opts.directory != nullptr){
-		hash_all_from_dir_root(opts.directory, opts.recursive, file_ext_regexp, file_type_flag, hash_name);
+		hash_all_from_dir_root(opts.directory, opts.recursive, file_ext_regexp, file_type_flag, hash_name, which_relation);
 		return;
 	}
 	
 	const char* _id;
 	const char* _fp;
 	
-	constexpr static const char* const qry_1 = 
-		"SELECT f.id, CONCAT(d.name, f.name) "
-		"FROM file f "
-		"JOIN dir d ON d.id=f.dir "
-		"WHERE f.id NOT IN ("
-			"SELECT file "
-			"FROM file2" /*, hash_name, */
-	;
-	
-	constexpr static const char* const qry_2 = 
-		")"
-	;
-	
-	static char buf[std::char_traits<char>::length(qry_1) + MAX_HASH_NAME_LENGTH + std::char_traits<char>::length(qry_2) + ADD_NAME_REGEXP_SZ]; // NOTE: Requires C++17+ // = qry_1;
-	char* itr = buf; // + std::char_traits<char>::length(qry_1);
+	static char buf[100 + MAX_HASH_NAME_LENGTH + ADD_NAME_REGEXP_SZ];
+	char* itr = buf;
 	
 	compsky::asciify::asciify(
 		// TODO: Compile-time string concatenation would be nice here, to use query_buffer instead.
 		itr,
-		qry_1, hash_name, qry_2
+		"SELECT f.id, CONCAT(d.name, f.name) "
+		"FROM _file f "
+		"JOIN _dir d ON d.id=f.dir "
+		"WHERE ",
+		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
 	and_name_regexp(itr, file_ext_regexp);
 	compsky::mysql::query_buffer(
@@ -524,13 +575,13 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_id, &_fp)){
 		try {
-			save_hash(file_type_flag, hash_name, _id, _fp);
+			save_hash(file_type_flag, hash_name, _id, _fp, which_relation);
 		} catch (...){
 			compsky::mysql::exec(
 				// Remove existing hashes so that file appears in the above result next time
 				_mysql::obj,
 				buf,
-				"DELETE FROM file2", hash_name, " WHERE file=", _id
+				which_relation.delete_pre, hash_name, which_relation.delete_post, _id
 			);
 		}
 	}
@@ -609,35 +660,39 @@ int main(const int argc,  char* const* argv){
 	constexpr static const Size   size_flag;
 	constexpr static const Duration duration_flag;
 	
+	constexpr static const ManyToMany many_to_many_flag;
+	constexpr static const OneToOne one_to_one_flag;
+	
 	const char* const file_types = *argv;
 	for (auto i = 0;  i < strlen(file_types);  ++i){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,  "(mp3|webm|mp4|mkv|avi)$", "audio_hash");
+				hash_all_from(opts,  audio_flag,  "(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from(opts,  duration_flag,   "(mp3|webm|mp4|mkv|avi|gif)$", "duration");
+				hash_all_from(opts,  duration_flag,   "(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,  "(png|jpe?g|webp|bmp)$",   "dct_hash");
+				hash_all_from(opts,  image_flag,  "(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
+				// many_to_many_flag because they use the same hash as video files.
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,  "(gif|webm|mp4|mkv|avi)$", "dct_hash");
+				hash_all_from(opts,  video_flag,  "(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
 				break;
 			case 's':
-				hash_all_from(opts,  sha256_flag, nullptr, "sha256");
+				hash_all_from(opts,  sha256_flag, nullptr, "sha256", one_to_one_flag);
 				break;
 			case 'm':
-				hash_all_from(opts,  md5_flag,    nullptr, "md5");
+				hash_all_from(opts,  md5_flag,    nullptr, "md5", one_to_one_flag);
 				break;
 			case 'M':
-				hash_all_from(opts,  qt5_md5_flag,nullptr, "qt5md5");
+				hash_all_from(opts,  qt5_md5_flag,nullptr, "md5_of_path", one_to_one_flag);
 				break;
 			case 'S':
-				hash_all_from(opts,  size_flag,   nullptr, "size");
+				hash_all_from(opts,  size_flag,   nullptr, "size", one_to_one_flag);
 				break;
 		}
 	}
