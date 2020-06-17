@@ -618,6 +618,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* md5_hash;
 		const char* dir_id;
 		const char* file_name;
+		const char* file_sz;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
@@ -629,14 +630,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
+				'"', file_sz, '"', ',', // Javascript cannot handle big numbers
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
-				'"', mimetype, '"', ',',
+				mimetype, ',',
 				'"', backup_dir_ids, '"'
 			);
 		}
