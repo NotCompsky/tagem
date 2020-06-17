@@ -31,7 +31,7 @@
 #include <mutex>
 #include <cstring> // for malloc
 
-#define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f2h.x)))), \"\"),"
+#define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f.md5_of_path)))), \"\"),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag_id),\"\")"
@@ -482,11 +482,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view parse_qry(const char* s){
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
-		
 		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
 		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
+		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
 		
 		this->itr = this->buf;
@@ -603,7 +603,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file_backup f2 ON f2.file=f.id "
 			"LEFT JOIN _dir d2 ON d2.id=f2.dir "
 			"WHERE f.id=", id, " "
@@ -1052,7 +1051,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN ("
 				"SELECT file_id "
@@ -1093,7 +1091,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
@@ -1128,7 +1125,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
 			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2qt5md5 f2h ON f2h.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.dir=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
