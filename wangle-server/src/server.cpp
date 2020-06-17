@@ -35,9 +35,9 @@
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag),\"\")"
-#define FILE_OVERVIEW_FIELDS \
+#define FILE_OVERVIEW_FIELDS(file_or_dir_id) \
 	FILE_THUMBNAIL \
-	"f.id," \
+	file_or_dir_id "," \
 	"f.name," \
 	"IFNULL(f.size,\"\")," \
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
@@ -599,7 +599,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_OVERVIEW_FIELDS ","
+				FILE_OVERVIEW_FIELDS("f.dir") ","
 				"f.mimetype,"
 				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\")"
 			"FROM _file f "
@@ -1048,7 +1048,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_OVERVIEW_FIELDS
+				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1084,7 +1084,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_OVERVIEW_FIELDS
+				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1115,7 +1115,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				FILE_OVERVIEW_FIELDS
+				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
