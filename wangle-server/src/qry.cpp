@@ -961,19 +961,22 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where = "X.id";
 					if (is_inverted)
 						where += "NOT";
-					where += " IN(SELECT file FROM file2";
+					where += " IN(SELECT file\n\tFROM file2";
 					where += attribute_name;
-					where += "\nf2_ JOIN ";
+					where += "\n\tWHERE x IN(\n\t\tSELECT x\n\t\tFROM file2";
+					where += attribute_name;
+					where += " f2_\n\t\tJOIN ";
 					where += tbl_full_name_of_base_tbl(which_tbl);
-					where += " X ON X.id=f2_.file\n";
+					where += " X ON X.id=f2_.file\n\t\t";
 					where += join;
-					where += "WHERE ";
+					where += "\n\t\tWHERE ";
 					where += (old_where.empty())?"TRUE":old_where;
-					where += "\nAND X.id NOT IN(";
+					where += "\n\t\tAND X.id NOT IN(";
 					where += user_disallowed_X_tbl_filter_inner_pre;
 					where += std::to_string(user_id);
-					where += ")GROUP BY f2_.x";
-					where += "\nHAVING COUNT(x)>1)";
+					where += ")\n\t\tGROUP BY f2_.x";
+					where += "\n\t\tHAVING COUNT(x)>1\n\t)";
+					where += "\n)";
 				}
 				join = "";
 				
