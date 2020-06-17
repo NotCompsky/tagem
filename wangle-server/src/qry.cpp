@@ -785,11 +785,17 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 	const char* bracket_operator_at_depth[max_bracket_depth] = {_operator_none};
 	unsigned bracket_depth = 0;
 	int n_args_since_operator = 0;
+	std::string join_for_auto_ordering = "";
+	std::string auto_order_by = "";
 	while(true){
 		const arg::ArgType arg_token = process_arg(qry);
 		const bool is_inverted = (arg_token & arg::NOT);
 		switch(arg_token & ~arg::NOT){ // Ignore the NOT flag
 			case arg::END_OF_STRING:
+				if (join.empty())
+					join = join_for_auto_ordering;
+				if (order_by.empty())
+					order_by = auto_order_by;
 				return ((bracket_depth == 0) and (n_args_since_operator == 1)) ? successness::ok : successness::invalid;
 				// WARNING: This also disallows using no filters altogether.
 				// TODO: Fix that.
@@ -1017,25 +1023,31 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += attribute_name;
 					where += "\n\tWHERE ";
 					where += attribute_field_name(attribute_name);
-					where += " IN(\n\t\tSELECT ";
-					where += attribute_field_name(attribute_name);
-					where += " AS x\n\t\tFROM file2";
-					where += attribute_name;
-					where += " f2_\n\t\tJOIN ";
-					where += tbl_full_name_of_base_tbl(which_tbl);
-					where += " X ON X.id=f2_.file\n\t\t";
-					where += join;
-					where += "\n\t\tWHERE ";
-					where += (old_where.empty())?"TRUE":old_where;
-					where += "\n\t\tAND X.id NOT IN(";
-					where += user_disallowed_X_tbl_filter_inner_pre;
-					where += std::to_string(user_id);
-					where += ")\n\t\tGROUP BY x";
-					where += "\n\t\tHAVING COUNT(x)";
-					where += comparison_mode;
-					where += std::to_string(number_of_similarities);
-					where += "\n\t)";
+					where += " IN";
+					
+					std::string derived_tbl = "";
+					derived_tbl += "(\n\t\tSELECT ";
+					derived_tbl += attribute_field_name(attribute_name);
+					derived_tbl += " AS x\n\t\tFROM file2";
+					derived_tbl += attribute_name;
+					derived_tbl += " f2_\n\t\tJOIN ";
+					derived_tbl += tbl_full_name_of_base_tbl(which_tbl);
+					derived_tbl += " X ON X.id=f2_.file\n\t\t";
+					derived_tbl += join;
+					derived_tbl += "\n\t\tWHERE ";
+					derived_tbl += (old_where.empty())?"TRUE":old_where;
+					derived_tbl += "\n\t\tAND X.id NOT IN(";
+					derived_tbl += user_disallowed_X_tbl_filter_inner_pre;
+					derived_tbl += std::to_string(user_id);
+					derived_tbl += ")\n\t\tGROUP BY x";
+					derived_tbl += "\n\t\tHAVING COUNT(x)";
+					derived_tbl += comparison_mode;
+					derived_tbl += std::to_string(number_of_similarities);
+					derived_tbl += "\n\t)";
+					where += derived_tbl;
 					where += "\n)";
+					join_for_auto_ordering = "JOIN file2" + std::string(attribute_name) + " f2_order ON f2_order.file=X.id\nJOIN " + derived_tbl + " f2_derived ON f2_order.x=f2_derived.x\n";
+					auto_order_by = "f2_order.x DESC";
 				}
 				join = "";
 				
