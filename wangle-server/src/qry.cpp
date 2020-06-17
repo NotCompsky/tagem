@@ -22,7 +22,8 @@ namespace arg {
 		dir,
 		dir_basename,
 		external_db,
-		order_by,
+		order_by_asc,
+		order_by_desc,
 		order_by_value_asc,
 		order_by_value_desc,
 		limit,
@@ -298,7 +299,21 @@ arg::ArgType process_arg(const char*& qry){
 										case 'r':
 											switch(*(++qry)){
 												case ' ':
-													return arg::order_by;
+													switch(*(++qry)){
+														case 'a':
+															switch(*(++qry)){
+																case ' ':
+																	return arg::order_by_asc;
+															}
+															break;
+														case 'd':
+															switch(*(++qry)){
+																case ' ':
+																	return arg::order_by_desc;
+															}
+															break;
+													}
+													break;
 												case '-':
 													switch(*(++qry)){
 														case 'b':
@@ -675,13 +690,16 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 				break;
 			}
 			
-			case arg::order_by: {
+			case arg::order_by_asc:
+			case arg::order_by_desc: {
 				if ((not order_by.empty()) or (*(++qry) != '"') or is_inverted)
 					return successness::invalid;
+				const char* const order_by_var = ++qry;
 				const size_t order_by_sz = go_to_next(qry, '"');
-				order_by = std::string(qry + 1,  order_by_sz);
+				// WARNING: Vulnerable to SQL Injection
 				if (*(++qry) != ' ')
 					return successness::invalid;
+				order_by = std::string(order_by_var,  order_by_sz + 1) + ((arg_token==arg::order_by_asc)?" ASC":" DESC");
 				break;
 			}
 			case arg::order_by_value_asc:

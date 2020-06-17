@@ -98,7 +98,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		Only valid when filtering the file table\n" \
 	"\n" \
 	"OPTIONS\n" \
-	"	order [STRING]\n" \
+	"	order [MODE] [STRING]\n" \
+	"		MODE must be one of a (ascending) or d (descending)\n" \
 	"		Order results by the STRING\n" \
 	"		The string must be surrounded by double quotes (\")\n" \
 	"	order-by-value [MODE] [[LIST_OF_NAMES]]\n" \
