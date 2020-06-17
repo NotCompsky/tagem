@@ -516,108 +516,108 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 					break;
 			}
 			break;
-			case 'm':
-				switch(*(++qry)){
-					case 'd':
-						switch(*(++qry)){
-							case '5':
-								switch(*(++qry)){
-									case ' ':
-										// same md5
-										attribute_name = "md5";
-										attribute_kind = attribute_kind::one_to_one;
-										return (which_tbl=='f') ? successness::ok : successness::invalid;
-								}
-								break;
-						}
-						break;
-					case 'i':
-						switch(*(++qry)){
-							case 'm':
-								switch(*(++qry)){
-									case 'e':
-										switch(*(++qry)){
-											case ' ':
-												// same mime
-												attribute_name = "mimetype";
-												attribute_kind = attribute_kind::one_to_one;
-												return (which_tbl=='f') ? successness::ok : successness::invalid;
-										}
-										break;
-								}
-								break;
-						}
-						break;
-				}
-				break;
-			case 's':
-				switch(*(++qry)){
-					case 'h':
-						switch(*(++qry)){
-							case 'a':
-								switch(*(++qry)){
-									case ' ':
-										attribute_name = "sha256";
-										attribute_kind = attribute_kind::one_to_one;
-										return (which_tbl=='f') ? successness::ok : successness::invalid;
-								}
-								break;
-						}
-						break;
-					case 'i':
-						switch(*(++qry)){
-							case 'z':
-								switch(*(++qry)){
-									case 'e':
-										switch(*(++qry)){
-											case ' ':
-												attribute_name = "size";
-												attribute_kind = attribute_kind::one_to_one;
-												return (which_tbl=='f') ? successness::ok : successness::invalid;
-										}
-										break;
-								}
-								break;
-						}
-						break;
-				}
-				break;
-			case 'n':
-				switch(*(++qry)){
-					case 'a':
-						switch(*(++qry)){
-							case 'm':
-								switch(*(++qry)){
-									case 'e':
-										switch(*(++qry)){
-											case ' ':
-												attribute_name = attribute_name::NAME;
-												attribute_kind = attribute_kind::one_to_one;
-												return successness::ok;
-										}
-										break;
-								}
-								break;
-						}
-						break;
-				}
-				break;
-			case 't':
-				switch(*(++qry)){
-					case 'a':
-						switch(*(++qry)){
-							case 'g':
-								switch(*(++qry)){
-									case ' ':
-										attribute_name = attribute_name::TAG;
-										attribute_kind = attribute_kind::many_to_many;
-										return (which_tbl=='f') ? successness::ok : successness::invalid;
-								}
-								break;
-						}
-						break;
-				}
-				break;
+		case 'm':
+			switch(*(++qry)){
+				case 'd':
+					switch(*(++qry)){
+						case '5':
+							switch(*(++qry)){
+								case ' ':
+									// same md5
+									attribute_name = "md5";
+									attribute_kind = attribute_kind::one_to_one;
+									return (which_tbl=='f') ? successness::ok : successness::invalid;
+							}
+							break;
+					}
+					break;
+				case 'i':
+					switch(*(++qry)){
+						case 'm':
+							switch(*(++qry)){
+								case 'e':
+									switch(*(++qry)){
+										case ' ':
+											// same mime
+											attribute_name = "mimetype";
+											attribute_kind = attribute_kind::one_to_one;
+											return (which_tbl=='f') ? successness::ok : successness::invalid;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+		case 's':
+			switch(*(++qry)){
+				case 'h':
+					switch(*(++qry)){
+						case 'a':
+							switch(*(++qry)){
+								case ' ':
+									attribute_name = "sha256";
+									attribute_kind = attribute_kind::one_to_one;
+									return (which_tbl=='f') ? successness::ok : successness::invalid;
+							}
+							break;
+					}
+					break;
+				case 'i':
+					switch(*(++qry)){
+						case 'z':
+							switch(*(++qry)){
+								case 'e':
+									switch(*(++qry)){
+										case ' ':
+											attribute_name = "size";
+											attribute_kind = attribute_kind::one_to_one;
+											return (which_tbl=='f') ? successness::ok : successness::invalid;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+		case 'n':
+			switch(*(++qry)){
+				case 'a':
+					switch(*(++qry)){
+						case 'm':
+							switch(*(++qry)){
+								case 'e':
+									switch(*(++qry)){
+										case ' ':
+											attribute_name = attribute_name::NAME;
+											attribute_kind = attribute_kind::one_to_one;
+											return successness::ok;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+		case 't':
+			switch(*(++qry)){
+				case 'a':
+					switch(*(++qry)){
+						case 'g':
+							switch(*(++qry)){
+								case ' ':
+									attribute_name = attribute_name::TAG;
+									attribute_kind = attribute_kind::many_to_many;
+									return (which_tbl=='f') ? successness::ok : successness::invalid;
+							}
+							break;
+					}
+					break;
+			}
+			break;
 		}
 }
 
