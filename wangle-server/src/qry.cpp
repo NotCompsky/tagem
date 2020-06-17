@@ -905,7 +905,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 			
 			case arg::order_by_asc:
 			case arg::order_by_desc: {
-				if ((not order_by.empty()) or (*(++qry) != '"') or is_inverted)
+				if ((not order_by.empty()) or is_inverted)
 					return successness::invalid;
 				
 				const char* attribute_name;
