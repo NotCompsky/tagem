@@ -268,32 +268,23 @@ R"=========(
 
 "</div>"
 
+#define COL_NAMES ("Name")
+#define COL_FILTERS (1,"regexp")
 #define TBL_ID "t"
-#define COL1_NAME "Name"
-#define COL1_IS_STR
 #define TBL_NAME_COLS "[0]"
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
+#define COL_NAMES ("Name")("Device")
+#define COL_FILTERS (1,"regexp")(1,"regexp")
 #define TBL_ID "d"
-#define COL1_NAME "Name"
-#define COL1_IS_STR
-#define COL2_NAME "Device"
-#define COL2_IS_STR
 #define TBL_NAME_COLS "[0,1]"
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
+#define COL_NAMES ("")("Name")("In Databases")("Tags")("Size")
+#define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"123.4 MB")
 #define TBL_ID "f"
-#define COL1_NAME ""
-#define COL2_NAME "Name"
-#define COL2_IS_STR
-#define COL3_NAME "In Databases"
-#define COL3_IS_STR
-#define COL4_NAME "Tags"
-#define COL4_IS_STR
-#define COL5_NAME "Size"
-#define COL5_IS_INT
 #define TBL_NAME_COLS "[1]"
 #define TBL_TAGS_COLS "[2]"
 #include "components/tbl.html"

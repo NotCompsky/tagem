@@ -1,10 +1,25 @@
-// TODO:
-//#define INPUT_FACTORY(type, placeholder) \
-//	"<input type=\"" type "\" placeholder=\"" placeholder "\"/>"
+#include <boost/preprocessor.hpp>
+
+#define CREATE_HEADER(r, data, name) \
+	"<div class=\"td\">" \
+		name \
+	"</div>"
+#define CREATE_FILTER(r, data, placeholder) \
+	BOOST_PP_IF( \
+		BOOST_PP_TUPLE_ELEM(0, placeholder), \
+		"<div class=\"td\">" \
+			"<input type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(1, placeholder) "\"/>" \
+		"</div>", \
+		"<div class=\"td\"></div>" \
+	)
+#define CREATE_SORT(r, data, is_sortable) \
+	BOOST_PP_IF( \
+		BOOST_PP_TUPLE_ELEM(0, is_sortable), \
+		"<div class=\"td sort\">Sort</div>", \
+		"<div class=\"td\"></div>" \
+	)
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
-
-#ifdef COL1_NAME
 "<div class=\"thead\">"
 	"<div class=\"tr\">"
 		"<div id=\"files-tagging\" class=\"td\">"
@@ -17,101 +32,24 @@
 
 	// Name row
 	"<div class=\"tr\">"
-		"<div class=\"td\">"
-			COL1_NAME
-		"</div>"
-# ifdef COL2_NAME
-		"<div class=\"td\">"
-			COL2_NAME
-		"</div>"
-# endif
-# ifdef COL3_NAME
-		"<div class=\"td\">"
-			COL3_NAME
-		"</div>"
-# endif
-# ifdef COL4_NAME
-		"<div class=\"td\">"
-			COL4_NAME
-		"</div>"
-# endif
-# ifdef COL5_NAME
-		"<div class=\"td\">"
-			COL5_NAME
-		"</div>"
-# endif
+BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, COL_NAMES)
+#undef CREATE_HEADER
+#undef COL_NAMES
 	"</div>"
 
 	// Filter row
 	"<div class=\"tr\">"
-		"<div class=\"td\">"
-# ifdef COL1_IS_STR
-			"<input type=\"text\" placeholder=\"regexp\"/>"
-# endif
-		"</div>"
-# ifdef COL2_NAME
-		"<div class=\"td\">"
-#  ifdef COL2_IS_STR
-			"<input type=\"text\" placeholder=\"regexp\"/>"
-#   undef COL2_IS_STR
-#  endif
-		"</div>"
-# endif
-# ifdef COL3_NAME
-		"<div class=\"td\">"
-#  ifdef COL3_IS_STR
-			"<input type=\"text\" placeholder=\"regexp\"/>"
-#   undef COL3_IS_STR
-#  endif
-		"</div>"
-# endif
-# ifdef COL4_NAME
-		"<div class=\"td\">"
-#  ifdef COL4_IS_STR
-			"<input type=\"text\" placeholder=\"regexp\"/>"
-#   undef COL4_IS_STR
-#  endif
-		"</div>"
-# endif
-# ifdef COL5_NAME
-		"<div class=\"td\">"
-#  ifdef COL5_IS_DATA_INT
-			"<input type=\"text\" placeholder=\"12.3 MiB\"/>"
-#   undef COL5_IS_DATA_INT
-#  endif
-		"</div>"
-# endif
+BOOST_PP_SEQ_FOR_EACH(CREATE_FILTER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
+#undef CREATE_FILTER
 	"</div>"
 
 	// Sort row
 	"<div class=\"tr\">"
-		"<div class=\"td sort\">"
-# ifdef COL1_IS_STR
-			"Sort"
-#  undef COL1_IS_STR
-# endif
-		"</div>"
-# ifdef COL2_NAME
-		"<div class=\"td sort\">Sort</div>"
-#  undef COL2_NAME
-# endif
-# ifdef COL3_NAME
-		"<div class=\"td sort\">Sort</div>"
-#  undef COL3_NAME
-# endif
-# ifdef COL4_NAME
-		"<div class=\"td sort\">Sort</div>"
-#  undef COL4_NAME
-# endif
-# ifdef COL5_NAME
-		"<div class=\"td sort\">Sort</div>"
-#  undef COL5_NAME
-# endif
+BOOST_PP_SEQ_FOR_EACH(CREATE_SORT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
+#undef CREATE_SORT
+#undef COL_FILTERS
 	"</div>"
-
 "</div>"
-#  undef COL1_NAME
-# endif
 "<div class=\"tbody\"></div>"
 "</div>"
 
