@@ -50,6 +50,14 @@ namespace arg {
 	};
 }
 
+namespace attribute_name {
+	constexpr static const char* const DCT_HASH = "dct_hash";
+	constexpr static const char* const DIR = "dir";
+	constexpr static const char* const DURATION = "duration";
+	constexpr static const char* const NAME = "name";
+	constexpr static const char* const TAG = "tag";
+}
+
 namespace _f {
 	using namespace compsky::asciify::flag;
 	constexpr StrLen strlen;
@@ -94,6 +102,16 @@ const char* tbl_full_name_of_base_tbl(const char tbl_alias){
 		default: // AKA case 't'
 			return "_tag";
 	}
+}
+
+static
+const char* attribute_field_name(const char* const attribute_name){
+	// NOTE: Thus far only used for many-to-many variables
+	// Compiler refuses to allow the switch operator
+	if (attribute_name == attribute_name::DCT_HASH)
+		return "x";
+	else // attribute_name::TAG
+		return "tag";
 }
 
 static
@@ -444,7 +462,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 						case 't':
 							switch(*(++qry)){
 								case ' ':
-									attribute_name = "dct_hash";
+									attribute_name = attribute_name::DCT_HASH;
 									attribute_kind = attribute_kind::many_to_many;
 									return (which_tbl=='f') ? successness::ok : successness::invalid;
 							}
@@ -456,7 +474,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 						case 'r':
 							switch(*(++qry)){
 								case ' ':
-									attribute_name = "dir";
+									attribute_name = attribute_name::DIR;
 									attribute_kind = attribute_kind::one_to_one;
 									return (which_tbl=='f') ? successness::ok : successness::invalid;
 							}
@@ -479,7 +497,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 																	switch(*(++qry)){
 																		case ' ':
 																			// same duration
-																			attribute_name = "duration";
+																			attribute_name = attribute_name::DURATION;
 																			attribute_kind = attribute_kind::one_to_one;
 																			return (which_tbl=='f') ? successness::ok : successness::invalid;
 																	}
@@ -573,7 +591,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 									case 'e':
 										switch(*(++qry)){
 											case ' ':
-												attribute_name = "name";
+												attribute_name = attribute_name::NAME;
 												attribute_kind = attribute_kind::one_to_one;
 												return successness::ok;
 										}
@@ -591,7 +609,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 							case 'g':
 								switch(*(++qry)){
 									case ' ':
-										attribute_name = "tag";
+										attribute_name = attribute_name::TAG;
 										attribute_kind = attribute_kind::many_to_many;
 										return (which_tbl=='f') ? successness::ok : successness::invalid;
 								}
@@ -837,9 +855,9 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
-				where += "_id FROM ";
+				where += " FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag_id WHERE t.name IN (";
+				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag WHERE t.name IN (";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
@@ -857,9 +875,9 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += "NOT ";
 				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
-				where += "_id FROM ";
+				where += " FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag_id JOIN _tag t ON t.id=t2pt.parent WHERE t.name IN (";
+				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag JOIN _tag t ON t.id=t2pt.parent WHERE t.name IN (";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
@@ -979,7 +997,11 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 						where += "NOT";
 					where += " IN(SELECT file\n\tFROM file2";
 					where += attribute_name;
-					where += "\n\tWHERE x IN(\n\t\tSELECT x\n\t\tFROM file2";
+					where += "\n\tWHERE ";
+					where += attribute_field_name(attribute_name);
+					where += " IN(\n\t\tSELECT ";
+					where += attribute_field_name(attribute_name);
+					where += " AS x\n\t\tFROM file2";
 					where += attribute_name;
 					where += " f2_\n\t\tJOIN ";
 					where += tbl_full_name_of_base_tbl(which_tbl);
@@ -990,7 +1012,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += "\n\t\tAND X.id NOT IN(";
 					where += user_disallowed_X_tbl_filter_inner_pre;
 					where += std::to_string(user_id);
-					where += ")\n\t\tGROUP BY f2_.x";
+					where += ")\n\t\tGROUP BY x";
 					where += "\n\t\tHAVING COUNT(x)>1\n\t)";
 					where += "\n)";
 				}
