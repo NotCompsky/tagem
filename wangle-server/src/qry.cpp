@@ -917,7 +917,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if(attribute_kind == attribute_kind::many_to_many){
 					join += "JOIN file2";
 					join += attribute_name;
-					join += " f2_join ON f2_join.file=X.id";
+					join += " f2_join ON f2_join.file=X.id\n";
 					order_by = "f2_join.";
 					order_by += attribute_field_name(attribute_name);
 					order_by += (arg_token==arg::order_by_asc)?" ASC":" DESC";
