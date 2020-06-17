@@ -101,22 +101,34 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		Only for the file table\n" \
 	"		Filters results for files sharing an attribute\n" \
 	"		The order in which this filter is applied matters\n" \
-	"			All other filters declared before this filter apply WITH this filter\n" \
-	"			All other filters declared after this filter apply AFTER this filter\n" \
+	"			For many-to-one attributes (such as name, dir, mime, size, duration, md5, sha)\n" \
+	"				All other filters declared before this filter apply WITH this filter\n" \
+	"				All other filters declared after this filter apply AFTER this filter\n" \
+	"			For many-to-many attributes (such as dct)\n" \
+	"				It is a bit different\n" \
 	"		EXAMPLES\n" \
-	"			f name \"foo\" same dir\n" \
-	"				Finds files matching the regexp \"foo\", so long as they share a directory with another file matching that regexp.\n" \
-	"			f same dir name \"foo\"\n" \
-	"				Finds files matching the regexp \"foo\", so long as there is another file in its directory\n" \
+	"			many-to-one\n" \
+	"				f name \"foo\" same dir\n" \
+	"					Finds files matching the regexp \"foo\", so long as they share a directory with another file matching that regexp.\n" \
+	"				f same dir name \"foo\"\n" \
+	"					Finds files matching the regexp \"foo\", so long as there is another file in its directory\n" \
+	"			many-to-many\n" \
+	"				f name \"foo\" same dct\n" \
+	"					Finds files whose DCT hashes overlap with those of files with names matching the regexp \"foo\"\n" \
+	"				f same dct name \"foo\"\n" \
+	"					Finds files matching the regexp \"foo\", so long as there is another file with overlapping DCT hashes\n" \
 	"		ATTRIBUTE must be one of\n" \
-	"			name (WARNING: Might take a VERY long time without other filters)\n" \
-	"			dir\n" \
-	"			mime\n" \
-	"			size\n" \
-	"			duration\n" \
-	"			md5\n" \
-	"			sha\n" \
-	"			dct (perceptual DCT hash)\n" \
+	"			many-to-one options:\n" \
+	"				name (WARNING: Might take a VERY long time without other filters)\n" \
+	"				dir\n" \
+	"				mime\n" \
+	"				size\n" \
+	"				duration\n" \
+	"				md5\n" \
+	"				sha\n" \
+	"			many-to-many options:\n" \
+	"				dct (perceptual DCT hash)\n" \
+	"				tag\n" \
 	"\n" \
 	"OPTIONS\n" \
 	"	order [MODE] [ATTRIBUTE]\n" \

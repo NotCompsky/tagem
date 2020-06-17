@@ -584,6 +584,22 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 						break;
 				}
 				break;
+			case 't':
+				switch(*(++qry)){
+					case 'a':
+						switch(*(++qry)){
+							case 'g':
+								switch(*(++qry)){
+									case ' ':
+										attribute_name = "tag";
+										attribute_kind = attribute_kind::many_to_many;
+										return (which_tbl=='f') ? successness::ok : successness::invalid;
+								}
+								break;
+						}
+						break;
+				}
+				break;
 		}
 }
 
