@@ -600,7 +600,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				"f.mimetype,"
 				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\")"
 			"FROM _file f "
-			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file_backup f2 ON f2.file=f.id "
@@ -657,9 +657,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		this->mysql_query(
 			"SELECT "
-				"tag_id "
+				"tag "
 			"FROM file2tag "
-			"WHERE file_id=", id, " "
+			"WHERE file=", id, " "
 			"LIMIT 1000"
 		);
 		
@@ -1049,13 +1049,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "
-			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN ("
-				"SELECT file_id "
+				"SELECT file "
 				"FROM file2tag "
-				"WHERE tag_id=", id,
+				"WHERE tag=", id,
 			")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
@@ -1089,7 +1089,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "
-			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
@@ -1123,7 +1123,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				DISTINCT_F2P_DB_AND_POST_IDS ","
 				DISTINCT_F2T_TAG_IDS
 			"FROM _file f "
-			"LEFT JOIN file2tag f2t ON f2t.file_id=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.dir=", id, " "
@@ -1378,10 +1378,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			this->mysql_query(
-				"SELECT tag_id, parent_id "
+				"SELECT tag, parent "
 				"FROM tag2parent t2p "
-				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS(user_id)
-				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				"WHERE t2p.tag NOT IN" USER_DISALLOWED_TAGS(user_id)
+				  "AND t2p.parent NOT IN" USER_DISALLOWED_TAGS(user_id)
 			);
 			this->itr = this->buf;
 			this->init_json(&this->itr, arr, nullptr, &id, &id2);
@@ -1395,10 +1395,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			this->mysql_query_buf(
-				"SELECT tag_id, parent_id "
+				"SELECT tag, parent "
 				"FROM tag2parent t2p "
-				"WHERE t2p.tag_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				  "AND t2p.parent_id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				"WHERE t2p.tag NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				  "AND t2p.parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(nullptr, arr, &_r::tag2parent_json, &id, &id2);
 		}
@@ -1766,7 +1766,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		this->mysql_exec(
 			"INSERT INTO tag2parent "
-			"(tag_id, parent_id, user)"
+			"(tag, parent, user)"
 			"SELECT t.id, p.id,", user_id, " "
 			"FROM _tag t "
 			"JOIN _tag p "
@@ -1774,7 +1774,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 			  "AND t.id NOT IN " USER_DISALLOWED_TAGS(user_id)
 			  "AND p.id NOT IN " USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE tag_id=tag_id"
+			"ON DUPLICATE KEY UPDATE tag=tag"
 		);
 		this->mysql_exec(
 			"INSERT INTO tag2parent_tree (tag, parent, depth) "
@@ -1844,7 +1844,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		this->mysql_exec(
 			"INSERT INTO file2tag "
-			"(file_id, tag_id, user)"
+			"(file, tag, user)"
 			"SELECT f.id, t.id,", user_id, " "
 			"FROM _file f "
 			"JOIN _dir d ON d.id=f.dir "
@@ -1854,7 +1854,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND f.dir=", dir_id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
-			"ON DUPLICATE KEY UPDATE file_id=file_id"
+			"ON DUPLICATE KEY UPDATE file=file"
 		);
 		
 		return false;
@@ -1978,7 +1978,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					);
 					this->mysql_exec(
 						"INSERT INTO file2tag"
-						"(file_id, tag_id, user)"
+						"(file, tag, user)"
 						"SELECT f.id, t.id,", user_id, " "
 						"FROM _file f "
 						"JOIN _tag t "
@@ -1987,7 +1987,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						  "AND t.id IN (", _f::strlen, tag_ids, tag_ids_len,") "
 						  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 						  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-						"ON DUPLICATE KEY UPDATE file_id=file_id"
+						"ON DUPLICATE KEY UPDATE file=file"
 					);
 					
 					url = s;
@@ -2003,7 +2003,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	void tag_parentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
 		this->mysql_exec(
-			"INSERT INTO tag2parent (tag_id, parent_id, user) "
+			"INSERT INTO tag2parent (tag, parent, user) "
 			"SELECT t.id, p.id,", user_id, " "
 			"FROM _tag t "
 			"JOIN _tag p "
@@ -2011,7 +2011,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE tag_id=tag_id"
+			"ON DUPLICATE KEY UPDATE tag=tag"
 		);
 		
 		this->mysql_exec(
@@ -2100,7 +2100,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		
 		this->mysql_exec(
-			"INSERT INTO file2tag (tag_id, file_id, user) "
+			"INSERT INTO file2tag (tag, file, user) "
 			"SELECT t.id,f.id,", user_id, " "
 			"FROM _tag t "
 			"JOIN _file f "
@@ -2108,7 +2108,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  "AND f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-			"ON DUPLICATE KEY UPDATE file_id=file_id"
+			"ON DUPLICATE KEY UPDATE file=file"
 		);
 		
 		return _r::post_ok;

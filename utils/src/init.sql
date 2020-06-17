@@ -188,13 +188,13 @@ UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
 # NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
 CREATE TABLE tag2parent (
-    tag_id BIGINT UNSIGNED NOT NULL,
-    parent_id BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	parent BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (tag_id) REFERENCES _tag (id),
-	FOREIGN KEY (parent_id) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (parent) REFERENCES _tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
-    PRIMARY KEY `tag2parent` (`tag_id`, `parent_id`)
+	PRIMARY KEY (tag, parent)
 );
 CREATE TABLE tag2parent_tree (
 	tag BIGINT UNSIGNED NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE tag2parent_tree (
 	depth INT UNSIGNED NOT NULL,
 	FOREIGN KEY (tag) REFERENCES _tag (id),
 	FOREIGN KEY (parent) REFERENCES _tag (id),
-    PRIMARY KEY (tag, parent)
+	PRIMARY KEY (tag, parent)
 );
 
 CREATE TABLE user2blacklist_tag (
@@ -214,13 +214,13 @@ CREATE TABLE user2blacklist_tag (
 );
 
 CREATE TABLE file2tag (
-    file_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,
+	file BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (file_id) REFERENCES file (id),
-	FOREIGN KEY (tag_id) REFERENCES _tag (id),
+	FOREIGN KEY (file) REFERENCES file (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
-    PRIMARY KEY `file2tag` (file_id, tag_id)
+	PRIMARY KEY (file, tag)
 );
 
 CREATE TABLE task (
@@ -447,11 +447,11 @@ AS
 	SELECT *
 	FROM _file
 	WHERE id NOT IN (
-		SELECT f2t.file_id
+		SELECT f2t.file
 		FROM user u
 		JOIN user2blacklist_tag u2ht ON u2ht.user=u.id
 		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
-		JOIN file2tag f2t ON f2t.tag_id=t2pt.tag
+		JOIN file2tag f2t ON f2t.tag=t2pt.tag
 		WHERE u.name=SESSION_USER()
 	)
 ;
