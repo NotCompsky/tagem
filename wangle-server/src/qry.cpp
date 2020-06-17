@@ -31,6 +31,7 @@ namespace arg {
 		value,
 		name,
 		mimetype,
+		same_attribute,
 		bracket_open,
 		bracket_close,
 		
@@ -376,6 +377,24 @@ arg::ArgType process_arg(const char*& qry){
 					break;
 			}
 			break;
+		case 's':
+			switch(*(++qry)){
+				case 'a':
+					switch(*(++qry)){
+						case 'm':
+							switch(*(++qry)){
+								case 'e':
+									switch(*(++qry)){
+										case ' ':
+											return arg::same_attribute;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
 		case 'v':
 			switch(*(++qry)){
 				case 'a':
@@ -406,6 +425,140 @@ arg::ArgType process_arg(const char*& qry){
 			break;
 	}
 	return arg::invalid;
+}
+
+static
+successness::ReturnType get_attribute_name(const char which_tbl,  const char*& qry,  const char*& attribute_name){
+	switch(*(++qry)){
+		case 'd':
+			switch(*(++qry)){
+				case 'i':
+					switch(*(++qry)){
+						case 'r':
+							switch(*(++qry)){
+								case ' ':
+									attribute_name = "dir";
+									return (which_tbl=='f') ? successness::ok : successness::invalid;
+							}
+							break;
+					}
+					break;
+				case 'u':
+					switch(*(++qry)){
+						case 'r':
+							switch(*(++qry)){
+								case 'a':
+									switch(*(++qry)){
+										case 't':
+											switch(*(++qry)){
+												case 'i':
+													switch(*(++qry)){
+														case 'o':
+															switch(*(++qry)){
+																case 'n':
+																	switch(*(++qry)){
+																		case ' ':
+																			// same duration
+																			attribute_name = "duration";
+																			return (which_tbl=='f') ? successness::ok : successness::invalid;
+																	}
+																	break;
+															}
+															break;
+													}
+													break;
+											}
+											break;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+			case 'm':
+				switch(*(++qry)){
+					case 'd':
+						switch(*(++qry)){
+							case '5':
+								switch(*(++qry)){
+									case ' ':
+										// same md5
+										attribute_name = "md5";
+										return (which_tbl=='f') ? successness::ok : successness::invalid;
+								}
+								break;
+						}
+						break;
+					case 'i':
+						switch(*(++qry)){
+							case 'm':
+								switch(*(++qry)){
+									case 'e':
+										switch(*(++qry)){
+											case ' ':
+												// same mime
+												attribute_name = "mimetype";
+												return (which_tbl=='f') ? successness::ok : successness::invalid;
+										}
+										break;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+			case 's':
+				switch(*(++qry)){
+					case 'h':
+						switch(*(++qry)){
+							case 'a':
+								switch(*(++qry)){
+									case ' ':
+										attribute_name = "sha256";
+										return (which_tbl=='f') ? successness::ok : successness::invalid;
+								}
+								break;
+						}
+						break;
+					case 'i':
+						switch(*(++qry)){
+							case 'z':
+								switch(*(++qry)){
+									case 'e':
+										switch(*(++qry)){
+											case ' ':
+												attribute_name = "size";
+												return (which_tbl=='f') ? successness::ok : successness::invalid;
+										}
+										break;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+			case 'n':
+				switch(*(++qry)){
+					case 'a':
+						switch(*(++qry)){
+							case 'm':
+								switch(*(++qry)){
+									case 'e':
+										switch(*(++qry)){
+											case ' ':
+												attribute_name = "name";
+												return successness::ok;
+										}
+										break;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+		}
 }
 
 static
@@ -562,7 +715,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 }
 
 static
-successness::ReturnType process_args(std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
+successness::ReturnType process_args(const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
@@ -694,12 +847,13 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 			case arg::order_by_desc: {
 				if ((not order_by.empty()) or (*(++qry) != '"') or is_inverted)
 					return successness::invalid;
-				const char* const order_by_var = ++qry;
-				const size_t order_by_sz = go_to_next(qry, '"');
-				// WARNING: Vulnerable to SQL Injection
-				if (*(++qry) != ' ')
-					return successness::invalid;
-				order_by = std::string(order_by_var,  order_by_sz + 1) + ((arg_token==arg::order_by_asc)?" ASC":" DESC");
+				
+				const char* attribute_name;
+				const auto rc = get_attribute_name(which_tbl, qry, attribute_name);
+				if (rc != successness::ok)
+					return rc;
+				
+				order_by = std::string(attribute_name) + ((arg_token==arg::order_by_asc)?" ASC":" DESC");
 				break;
 			}
 			case arg::order_by_value_asc:
@@ -746,6 +900,39 @@ successness::ReturnType process_args(std::string& join,  std::string& where,  st
 					return rc;
 				where += ")";
 				++n_args_since_operator;
+				break;
+			}
+			case arg::same_attribute: {
+				if (which_tbl != 'f')
+					return successness::invalid;
+				const char* attribute_name;
+				const auto rc = get_attribute_name(which_tbl, qry, attribute_name);
+				if (rc != successness::ok)
+					return rc;
+				const std::string old_where = where;
+				where = " X.";
+				where += attribute_name;
+				if (is_inverted)
+					where += "NOT ";
+				where += " IN(SELECT X.";
+				where += attribute_name;
+				where += " AS x\nFROM ";
+				where += tbl_full_name_of_base_tbl(which_tbl);
+				where += " X\n";
+				where += join;
+				where += "WHERE ";
+				where += (old_where.empty())?"TRUE":old_where;
+				where += "\nAND X.id NOT IN(";
+				where += user_disallowed_X_tbl_filter_inner_pre;
+				where += std::to_string(user_id);
+				where += ")GROUP BY ";
+				where += attribute_name;
+				where += "\nHAVING COUNT(x)>1)";
+				join = "";
+				
+				bracket_depth = 0;
+				n_args_since_operator = 1;
+				
 				break;
 			}
 			case arg::name: {
@@ -805,14 +992,6 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 		default: return successness::invalid;
 	}
 	
-	const auto rc = process_args(join, where, order_by, limit, offset, which_tbl, qry);
-	if (rc != successness::ok){
-		LOG("join == %s\n", join.c_str());
-		LOG("where == %s\n", where.c_str());
-		LOG("order_by == %s\n", order_by.c_str());
-		return rc;
-	}
-	
 	const char* user_disallowed_X_tbl_filter_inner_pre;
 	switch(which_tbl){
 		case 'f':
@@ -825,6 +1004,14 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_TAGS_INNER_PRE;
 			break;
 		// No other values are possible
+	}
+	
+	const auto rc = process_args(user_disallowed_X_tbl_filter_inner_pre, user_id, join, where, order_by, limit, offset, which_tbl, qry);
+	if (rc != successness::ok){
+		LOG("join == %s\n", join.c_str());
+		LOG("where == %s\n", where.c_str());
+		LOG("order_by == %s\n", order_by.c_str());
+		return rc;
 	}
 	
 	compsky::asciify::asciify(

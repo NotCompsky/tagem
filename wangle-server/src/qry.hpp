@@ -96,12 +96,32 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"	mime [REGEX]\n" \
 	"		Filter a file's mimetype\n" \
 	"		Only valid when filtering the file table\n" \
+	"	same [ATTRIBUTE]\n" \
+	"		Only for the file table\n" \
+	"		Filters results for files sharing an attribute\n" \
+	"		The order in which this filter is applied matters\n" \
+	"			All other filters declared before this filter apply WITH this filter\n" \
+	"			All other filters declared after this filter apply AFTER this filter\n" \
+	"		EXAMPLES\n" \
+	"			f name \"foo\" same dir\n" \
+	"				Finds files matching the regexp \"foo\", so long as they share a directory with another file matching that regexp.\n" \
+	"			f same dir name \"foo\"\n" \
+	"				Finds files matching the regexp \"foo\", so long as there is another file in its directory\n" \
+	"		ATTRIBUTE must be one of\n" \
+	"			name\n" \
+	"			dir\n" \
+	"			mime\n" \
+	"			size\n" \
+	"			duration\n" \
+	"			md5\n" \
+	"			sha\n" \
 	"\n" \
 	"OPTIONS\n" \
-	"	order [MODE] [STRING]\n" \
+	"	order [MODE] [ATTRIBUTE]\n" \
 	"		MODE must be one of a (ascending) or d (descending)\n" \
-	"		Order results by the STRING\n" \
-	"		The string must be surrounded by double quotes (\")\n" \
+	"		Order results by the ATTRIBUTE\n" \
+	"		ATTRIBUTE must be one of\n" \
+	"			name\n" \
 	"	order-by-value [MODE] [[LIST_OF_NAMES]]\n" \
 	"		MODE must be one of a (ascending) or d (descending)\n" \
 	"		Order results by the named variables, in that order.\n" \
