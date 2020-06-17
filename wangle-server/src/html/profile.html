@@ -1,3 +1,5 @@
+#include <boost/preprocessor.hpp>
+
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
 "<head>"
@@ -102,7 +104,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       <div class="side-title">SITEMAP</div>
       <div class="side-menu">
 )========="
-#include "components/sitemap.html"
+#define CREATE_SITEMAP_LINK(r, data, elem) \
+	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dirs()","All Dirs")("view_tags()","All Tags")("view_tasks()","All Tasks")("unhide('help')","Help")("add_tags_dialog()","+Tags")("add_files_dialog()","+Files")("add_dirs_dialog()","+Dirs")("add_devices_dialog()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -137,12 +141,11 @@ R"=========(
         </div>
         <img id="profile-cover"/>
 )========="
+#define CREATE_MENU_ITEM(r, data, elem) \
+	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "()\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
+
 		"<div id=\"profile-menu\">"
-			"<a onclick=\"view_dir()\">Dir</a>"
-			"<a onclick=\"view_tag()\">Tag</a>"
-			"<a onclick=\"view_tags()\">Tags</a>"
-			"<a onclick=\"view_file()\">File</a>"
-			"<a onclick=\"view_files()\">Files</a>"
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dir","Dir")("view_tag","Tag")("view_tags","Tags")("view_file","File")("view_files","Files")))
 		"</div>"
 	"</div>"
 
