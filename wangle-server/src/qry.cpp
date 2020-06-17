@@ -14,6 +14,7 @@ namespace sql_factory{
 
 namespace attribute_kind {
 	enum AttributeKind {
+		unique,
 		one_to_one,
 		many_to_many
 	};
@@ -56,6 +57,8 @@ namespace attribute_name {
 	constexpr static const char* const DURATION = "duration";
 	constexpr static const char* const NAME = "name";
 	constexpr static const char* const TAG = "tag";
+	constexpr static const char* const ID = "id";
+	constexpr static const char* const AUDIO_HASH = "audio_hash";
 }
 
 namespace _f {
@@ -108,7 +111,7 @@ static
 const char* attribute_field_name(const char* const attribute_name){
 	// NOTE: Thus far only used for many-to-many variables
 	// Compiler refuses to allow the switch operator
-	if (attribute_name == attribute_name::DCT_HASH)
+	if ((attribute_name == attribute_name::DCT_HASH) or (attribute_name == attribute_name::AUDIO_HASH))
 		return "x";
 	else // attribute_name::TAG
 		return "tag";
@@ -455,6 +458,30 @@ arg::ArgType process_arg(const char*& qry){
 static
 successness::ReturnType get_attribute_name(const char which_tbl,  const char*& qry,  const char*& attribute_name,  attribute_kind::AttributeKind& attribute_kind){
 	switch(*(++qry)){
+		case 'a':
+			switch(*(++qry)){
+				case 'u':
+					switch(*(++qry)){
+						case 'd':
+							switch(*(++qry)){
+								case 'i':
+									switch(*(++qry)){
+										case 'o':
+											switch(*(++qry)){
+												case ' ':
+													attribute_name = attribute_name::AUDIO_HASH;
+													attribute_kind = attribute_kind::many_to_many;
+													return (which_tbl=='f') ? successness::ok : successness::invalid;
+											}
+											break;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
 		case 'd':
 			switch(*(++qry)){
 				case 'c':
@@ -512,6 +539,18 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 									break;
 							}
 							break;
+					}
+					break;
+			}
+			break;
+		case 'i':
+			switch(*(++qry)){
+				case 'd':
+					switch(*(++qry)){
+						case ' ':
+							attribute_name = attribute_name::ID;
+							attribute_kind = attribute_kind::unique;
+							return successness::ok;
 					}
 					break;
 			}
@@ -993,6 +1032,8 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (number_of_similarities == 0)
 					return successness::invalid;
 				const std::string old_where = where;
+				if (attribute_kind == attribute_kind::unique)
+					return successness::invalid;
 				if (attribute_kind == attribute_kind::one_to_one){
 					where = "X.";
 					where += attribute_name;

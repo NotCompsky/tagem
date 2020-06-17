@@ -134,6 +134,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"				sha\n" \
 	"			many-to-many options:\n" \
 	"				dct (perceptual DCT hash)\n" \
+	"				audio (perceptual audio hash)\n" \
 	"				tag\n" \
 	"\n" \
 	"OPTIONS\n" \
@@ -142,12 +143,11 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		Order results by the ATTRIBUTE\n" \
 	"		For many-to-many attributes, files with multiple matching attributes will appear multiple times\n" \
 	"		ATTRIBUTE must be one of\n" \
-	"			file table additional options: Any of the attributes listed under the \"same\" filter\n" \
 	"			many-to-one options:\n" \
 	"				name\n" \
-	"			many-to-many options:\n" \
-	"				tag\n" \
-	"				dct\n" \
+	"			one-to-one options:\n" \
+	"				id\n" \
+	"			file table additional options: Any of the attributes listed under the \"same\" filter\n" \
 	"	order-by-value [MODE] [[LIST_OF_NAMES]]\n" \
 	"		MODE must be one of a (ascending) or d (descending)\n" \
 	"		Order results by the named variables, in that order.\n" \
