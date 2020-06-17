@@ -121,7 +121,7 @@ CREATE TABLE file_backup (
 	FOREIGN KEY (user) REFERENCES user (id)
 );
 
-
+ 
 CREATE TABLE file2 (
 	# Stores the user-defined variable tables
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -136,6 +136,13 @@ CREATE TABLE file2 (
 INSERT INTO file2 (min, max, conversion, name) VALUES
 (0, 9223372036854775807, 0, "duration")
 ;
+
+CREATE TABLE user2hidden_file2 (
+	user BIGINT UNSIGNED NOT NULL,
+	file2 BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (file2) REFERENCES file2 (id),
+	PRIMARY KEY (user,file2)
+);
 
 
 CREATE TABLE _tag (
