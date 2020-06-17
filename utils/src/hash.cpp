@@ -99,7 +99,7 @@ struct ManyToMany {
 	
 	constexpr
 	static
-	size_t insert_trailing_length = std::char_traits<char>::length(",)");
+	size_t insert_trailing_length = std::char_traits<char>::length(",(");
 	
 	constexpr
 	static
@@ -127,7 +127,7 @@ struct OneToOne {
 	
 	constexpr
 	static
-	size_t insert_trailing_length = std::char_traits<char>::length(",)");
+	size_t insert_trailing_length = std::char_traits<char>::length("),(");
 	
 	constexpr
 	static
@@ -267,6 +267,8 @@ void save_hash(const Size file_type_flag,  const char* const hash_name,  const c
 	fseek(f, 0, SEEK_END);
 	const size_t sz = ftell(f);
 	
+	fclose(f);
+	
 	insert_hashes_into_db(file_type_flag, file_id, &sz, hash_name, 1, which_relation);
 }
 
@@ -288,6 +290,8 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	while((i = fread(buf, 1, sizeof(buf), f))  !=  0){
 		SHA256_Update(&sha256, buf, i);
 	}
+	
+	fclose(f);
 	
 	SHA256_Final(hash, &sha256);
 	
@@ -312,6 +316,8 @@ void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  con
 	while((i = fread(buf, 1, sizeof(buf), f))  !=  0){
 		MD5_Update(&md5_ctx, buf, i);
 	}
+	
+	fclose(f);
 	
 	MD5_Final(hash, &md5_ctx);
 	
