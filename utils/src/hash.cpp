@@ -76,9 +76,18 @@ uint64_t duration_of(const char* fp){
 
 
 /* For function overloading */
-struct Image{};
-struct Video{};
-struct Audio{};
+struct Image{
+	constexpr static
+	const char* const name = "image"; // Actually unused
+};
+struct Video{
+	constexpr static
+	const char* const name = "video";
+};
+struct Audio{
+	constexpr static
+	const char* const name = "audio";
+};
 struct SHA256_FLAG{};
 struct MD5_FLAG{};
 struct QT5_MD5_FLAG{}; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
@@ -243,8 +252,24 @@ template<typename Int>
 Int* get_ptr_to_if_not_already(Int* hashes){
 	return hashes;
 }
+template<typename Int>
+bool is_nullptr(Int const ptr){
+	return false;
+}
+template<typename Int>
+bool is_nullptr(Int* const ptr){
+	return ptr == nullptr;
+}
 template<typename FileType,  typename IntOrIntPtr,  typename RelationType>
-void insert_hashes_into_db_then_free(const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
+void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
+	if (is_nullptr(hashes))
+		goto no_hashes_found__230jf0jfe;
+	if (length_to_go == 0){
+		free((void*)hashes);
+		no_hashes_found__230jf0jfe:
+		fprintf(stderr, "Cannot hash %s: %s\n", file_type_flag.name, fp);
+		return;
+	}
 	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
 	freemajig(hashes); // Just a quirk of the C standard
 };
@@ -388,25 +413,16 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hash, hash_name, 1, which_relation);
+	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hash, hash_name, 1, which_relation);
 }
+
 
 template<typename RelationType>
 void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
-	if (hashes == nullptr)
-		goto save_hash_video_err;
-	
-	if (length == 0){
-		free(const_cast<uint64_t*>(hashes));
-		save_hash_video_err:
-		fprintf(stderr, "Cannot hash video: %s\n", fp);
-		return;
-	}
-	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
@@ -424,17 +440,7 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint32_t* const hashes = ph_audiohash(audiobuf, audiobuf_len, sample_rate, length);
 	
-	if (hashes == nullptr)
-		goto save_hash_audio_err;
-	
-	if (length == 0){
-		free(const_cast<uint32_t*>(hashes));
-		save_hash_audio_err:
-		fprintf(stderr, "Cannot hash audio: %s\n", fp);
-		return;
-	}
-	
-	insert_hashes_into_db_then_free(file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
