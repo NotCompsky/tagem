@@ -1910,6 +1910,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		} while(true);
 	}
 	
+	std::string_view post__merge_files(const char* s){
+		const uint64_t orig_f_id = a2n<uint64_t>(&s);
+		++s; // Skip slash
+		
+		const char* const dupl_f_ids  = get_comma_separated_ints(&s, ' ');
+		if (dupl_f_ids == nullptr)
+			return _r::not_found;
+		const size_t dupl_f_ids_len  = (uintptr_t)s - (uintptr_t)dupl_f_ids;
+		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
+		// TODO: Check user against user2whitelisted_action
+		
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND tag IN (SELECT tag FROM file2tag WHERE file=", orig_f_id, ")");
+		this->mysql_exec("UPDATE file2tag SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		
+		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		
+		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND dir IN (SELECT dir FROM file_backup WHERE file=", orig_f_id, ")");
+		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		
+		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM _file f WHERE f.id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		this->mysql_exec("DELETE FROM _file WHERE id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__dl(const char* s){
 		static char url_buf[4096];
 		
@@ -2388,6 +2417,29 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 																	case ' ':
 																		// /login
 																		break;
+																}
+																break;
+														}
+														break;
+												}
+												break;
+										}
+										break;
+								}
+								break;
+							case 'm':
+								switch(*(s++)){
+									case 'e':
+										switch(*(s++)){
+											case 'r':
+												switch(*(s++)){
+													case 'g':
+														switch(*(s++)){
+															case 'e':
+																switch(*(s++)){
+																	case '/':
+																		// /merge/
+																		return this->post__merge_files(s);
 																}
 																break;
 														}

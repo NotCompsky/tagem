@@ -1,3 +1,6 @@
+#define CREATE_ACTION_BTN(r, data, elem) \
+	"<button onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>"
+
 #define CREATE_HEADER(r, data, name) \
 	"<div class=\"td\">" \
 		name \
@@ -18,6 +21,13 @@
 	)
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
+
+#ifdef ACTION_BTNS
+BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_BTNS))
+# undef ACTION_BTNS
+#endif
+#undef CREATE_ACTION_BTN
+
 "<div class=\"thead\">"
 	"<div class=\"tr\">"
 		"<div id=\"files-tagging\" class=\"td\">"
