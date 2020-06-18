@@ -58,6 +58,26 @@ const char* CURRENT_FILE_PATH = nullptr;
 const char* CURRENT_HASHING_METHOD = nullptr;
 
 extern "C"
+void intercept_exit(int){
+	fprintf(stderr,  "Exited.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
+	
+	if (CURRENT_FILE_PATH != nullptr)
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"DELETE f2h "
+			"FROM file2", CURRENT_HASHING_METHOD, " f2h "
+			"JOIN _file f ON f.id=f2h.file "
+			"JOIN _dir d ON d.id=f.dir "
+			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+		);
+	
+	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	
+	exit(0);
+}
+
+extern "C"
 void intercept_abort(int){
 	fprintf(stderr,  "Aborted.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
 	
@@ -462,7 +482,7 @@ template<typename RelationType>
 void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	// Set global variables for catching aborts
 	CURRENT_FILE_PATH = fp;
-	CURRENT_HASHING_METHOD = "video";
+	CURRENT_HASHING_METHOD = "dct_hash";
 	
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
@@ -727,6 +747,7 @@ int main(const int argc,  char* const* argv){
 		}
 	} while (true);
 	
+	signal(SIGINT,  &intercept_exit);
 	signal(SIGABRT, &intercept_abort);
 	
 	av_fmt_ctx = avformat_alloc_context();
