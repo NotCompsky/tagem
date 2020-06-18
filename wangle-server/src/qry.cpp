@@ -20,6 +20,13 @@ namespace attribute_kind {
 	};
 }
 
+namespace attribute_value_kind {
+	enum AttributeValueKind {
+		integer,
+		string
+	};
+}
+
 namespace arg {
 	typedef uint32_t ArgType;
 	enum Arg : ArgType {
@@ -37,8 +44,7 @@ namespace arg {
 		limit,
 		offset,
 		value,
-		name,
-		mimetype,
+		attribute,
 		same_attribute,
 		bracket_open,
 		bracket_close,
@@ -59,6 +65,10 @@ namespace attribute_name {
 	constexpr static const char* const TAG = "tag";
 	constexpr static const char* const ID = "id";
 	constexpr static const char* const AUDIO_HASH = "audio_hash";
+	constexpr static const char* const MD5 = "md5";
+	constexpr static const char* const MIMETYPE = "mimetype";
+	constexpr static const char* const SHA256 = "sha256";
+	constexpr static const char* const SIZE = "size";
 }
 
 namespace _f {
@@ -115,6 +125,14 @@ const char* attribute_field_name(const char* const attribute_name){
 		return "x";
 	else // attribute_name::TAG
 		return "tag";
+}
+
+static
+attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
+	if ((attribute_name == attribute_name::DIR) or (attribute_name == attribute_name::DURATION) or (attribute_name == attribute_name::ID) or (attribute_name == attribute_name::SIZE))
+		return attribute_value_kind::integer;
+	else // attribute_name::NAME
+		return attribute_value_kind::string;
 }
 
 static
@@ -193,6 +211,20 @@ arg::ArgType process_arg(const char*& qry){
 							break;
 					}
 					break;
+				case 't':
+					switch(*(++qry)){
+						case 't':
+							switch(*(++qry)){
+								case 'r':
+									switch(*(++qry)){
+										case ' ':
+											return arg::attribute;
+									}
+									break;
+							}
+							break;
+					}
+					break;
 			}
 			break;
 		case 'f':
@@ -247,40 +279,8 @@ arg::ArgType process_arg(const char*& qry){
 					break;
 			}
 			break;
-		case 'm':
-			switch(*(++qry)){
-				case 'i':
-					switch(*(++qry)){
-						case 'm':
-							switch(*(++qry)){
-								case 'e':
-									switch(*(++qry)){
-										case ' ':
-											return arg::mimetype;
-									}
-									break;
-							}
-							break;
-					}
-					break;
-			}
-			break;
 		case 'n':
 			switch(*(++qry)){
-				case 'a':
-					switch(*(++qry)){
-						case 'm':
-							switch(*(++qry)){
-								case 'e':
-									switch(*(++qry)){
-										case ' ':
-											return arg::name;
-									}
-									break;
-							}
-							break;
-					}
-					break;
 				case 'o':
 					switch(*(++qry)){
 						case 't':
@@ -563,7 +563,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 							switch(*(++qry)){
 								case ' ':
 									// same md5
-									attribute_name = "md5";
+									attribute_name = attribute_name::MD5;
 									attribute_kind = attribute_kind::one_to_one;
 									return (which_tbl=='f') ? successness::ok : successness::invalid;
 							}
@@ -578,7 +578,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 									switch(*(++qry)){
 										case ' ':
 											// same mime
-											attribute_name = "mimetype";
+											attribute_name = attribute_name::MIMETYPE;
 											attribute_kind = attribute_kind::one_to_one;
 											return (which_tbl=='f') ? successness::ok : successness::invalid;
 									}
@@ -596,7 +596,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 						case 'a':
 							switch(*(++qry)){
 								case ' ':
-									attribute_name = "sha256";
+									attribute_name = attribute_name::SHA256;
 									attribute_kind = attribute_kind::one_to_one;
 									return (which_tbl=='f') ? successness::ok : successness::invalid;
 							}
@@ -610,7 +610,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 								case 'e':
 									switch(*(++qry)){
 										case ' ':
-											attribute_name = "size";
+											attribute_name = attribute_name::SIZE;
 											attribute_kind = attribute_kind::one_to_one;
 											return (which_tbl=='f') ? successness::ok : successness::invalid;
 									}
@@ -657,7 +657,8 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 					break;
 			}
 			break;
-		}
+	}
+	return successness::invalid;
 }
 
 static
@@ -1002,21 +1003,6 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				++n_args_since_operator;
 				break;
 			}
-			case arg::mimetype: {
-				if (which_tbl != 'f')
-					return successness::invalid;
-				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
-				where += "IN (SELECT f.id FROM _file f JOIN mimetype m ON m.id=f.mimetype WHERE m.name REGEXP ";
-				const auto rc = append_escaped_str(where, qry);
-				if (rc != successness::ok)
-					return rc;
-				where += ")";
-				++n_args_since_operator;
-				break;
-			}
 			case arg::same_attribute: {
 				if (which_tbl != 'f')
 					return successness::invalid;
@@ -1097,15 +1083,55 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				
 				break;
 			}
-			case arg::name: {
-				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.name ";
-				if (is_inverted)
-					where += "NOT ";
-				where += "REGEXP ";
-				const auto rc = append_escaped_str(where, qry);
+			case arg::attribute: {
+				const char* attribute_name;
+				attribute_kind::AttributeKind attribute_kind;
+				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
+				printf("rc == %u\nattribute_name == %s\nattribute_kind == %u\n", rc, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
+				if (attribute_kind == attribute_kind::many_to_many)
+					return successness::invalid;
+				
+				printf("attribute_kind == %u\n", attribute_kind);
+				
+				const char comparison_mode = *(++qry);
+				if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=') or (comparison_mode == 'r')) or (*(++qry) != ' '))
+					return successness::invalid;
+				
+				where += bracket_operator_at_depth[bracket_depth];
+				if (is_inverted)
+					where += " NOT";
+				where += " X.";
+				where += attribute_name;
+				
+				switch(get_attribute_value_kind(attribute_name)){
+					case attribute_value_kind::integer: {
+						if (comparison_mode == 'r')
+							return successness::invalid;
+						where += comparison_mode;
+						const uint64_t n = s2n<uint64_t>(qry);
+						if (n == 0)
+							return successness::invalid;
+						where += std::to_string(n);
+						break;
+					}
+					default: // string
+						switch(comparison_mode){
+							case 'r':
+								where += " REGEXP ";
+								break;
+							case '=':
+								where += '=';
+								break;
+							default:
+								return successness::invalid;
+						}
+						const auto rc = append_escaped_str(where, qry);
+						if (rc != successness::ok)
+							return rc;
+				}
+				
 				++n_args_since_operator;
 				break;
 			}

@@ -90,12 +90,22 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"	value [MIN]-[MAX] [[LIST_OF_NAMES]]\n" \
 	"		Entries have a variable named one of the listed names, which has a value in the specified range\n" \
 	"		Each name is separated by a double quote (\")\n" \
-	"	name [REGEX]\n" \
-	"		Entries have a name that matches the regex\n" \
-	"		The regex must be surrounded by double quotes (\")\n" \
-	"	mime [REGEX]\n" \
-	"		Filter a file's mimetype\n" \
-	"		Only valid when filtering the file table\n" \
+	"	attr [ATTRIBUTE] [OPERATOR] [STRING_OR_INTEGER]\n" \
+	"		A filter that operates directly on the columns of the primary table.\n" \
+	"		OPERATOR must be one of\n" \
+	"			Integers only: \">\", \"<\"\n" \
+	"			Strings only:  \"r\" (regexp)\n" \
+	"			Any:           \"=\"\n" \
+	"		EXAMPLES\n" \
+	"			f attr name r \"[Pp]attern\"\n" \
+	"				Filter for files whose names match the regexp\n" \
+	"			f attr id < 99\n" \
+	"			f attr size < 1000*1000\n" \
+	"				Search for files under 1MB in size\n" \
+	"			f attr dir < 1000\n" \
+	"				Note that dir is an integer - it is not translated to a string with this filter\n" \
+	"		If it is a string, STRING_OR_INTEGER must be surrounded by double quotes, with any contained double quotes escaped\n" \
+	"		Otherwise it must be a positive integer\n" \
 	"	same [ATTRIBUTE] [MODE] [COUNT]\n" \
 	"		This filter is NOT to be preceded by a logical operator\n" \
 	"		Only for the file table\n" \
@@ -177,6 +187,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		The command I used to locate all my neural style transfer renders\n" \
 	"	f name \"[.](mp4)\" same dct > 10 limit 1000\n" \
 	"		The command I used to locate videos by a Youtuber (using the same video intro in his videos)\n" \
+	"	f name \"[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$\" same dct > 1 and name \"[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$\"\n" \
+	"		Find files which are probably screenshots of movies\n" \
 
 
 } // namespace sql_factory
