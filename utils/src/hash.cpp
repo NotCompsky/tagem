@@ -14,6 +14,7 @@ extern "C" {
 }
 #include <stdexcept>
 #include <stdio.h> // for fprintf
+#include <signal.h>
 
 // Only used for QT5MD5 hash
 #include <QUrl>
@@ -53,6 +54,26 @@ static AVFormatContext* av_fmt_ctx;
 static int verbosity = 0;
 
 
+const char* CURRENT_FILE_PATH = nullptr;
+const char* CURRENT_HASHING_METHOD = nullptr;
+
+extern "C"
+void intercept_abort(int){
+	fprintf(stderr,  "Aborted\n");
+	compsky::mysql::exec(
+		_mysql::obj,
+		BUF,
+		"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
+		"(file)"
+		"SELECT f.id "
+		"FROM _file f "
+		"JOIN _dir d ON d.id=f.dir "
+		"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+	);
+	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+}
+
+
 uint64_t duration_of(const char* fp){
 	uint64_t n = 0;
 	
@@ -78,7 +99,7 @@ uint64_t duration_of(const char* fp){
 /* For function overloading */
 struct Image{
 	constexpr static
-	const char* const name = "image"; // Actually unused
+	const char* const name = "image";
 };
 struct Video{
 	constexpr static
@@ -88,11 +109,26 @@ struct Audio{
 	constexpr static
 	const char* const name = "audio";
 };
-struct SHA256_FLAG{};
-struct MD5_FLAG{};
-struct QT5_MD5_FLAG{}; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
-struct Size{};
-struct Duration{};
+struct SHA256_FLAG{
+	constexpr static
+	const char* const name = "sha256";
+};
+struct MD5_FLAG{
+	constexpr static
+	const char* const name = "md5";
+};
+struct QT5_MD5_FLAG{
+	constexpr static
+	const char* const name = "qt5md5";
+}; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
+struct Size{
+	constexpr static
+	const char* const name = "size";
+};
+struct Duration{
+	constexpr static
+	const char* const name = "duration";
+};
 
 
 struct ManyToMany {
@@ -422,6 +458,10 @@ void save_hash(const Video file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
+	// Set global variables for catching aborts
+	CURRENT_FILE_PATH = fp;
+	CURRENT_HASHING_METHOD = "video";
+	
 	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
@@ -584,7 +624,8 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"SELECT f.id, CONCAT(d.name, f.name) "
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
-		"WHERE ",
+		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", file_type_flag.name, ") "
+		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
 	and_name_regexp(itr, file_ext_regexp);
@@ -670,6 +711,8 @@ int main(const int argc,  char* const* argv){
 				break;
 		}
 	} while (true);
+	
+	signal(SIGABRT, &intercept_abort);
 	
 	av_fmt_ctx = avformat_alloc_context();
 	
