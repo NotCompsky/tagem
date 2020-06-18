@@ -1,5 +1,6 @@
 "function add_files_dialog(){"
 	"hide_all_except(['dirselect-container','tagselect-files-container','add-files-dialog']);"
+	"$('#dirselect').val(null).trigger('change');"
 "}"
 
 "function add_file(){"
@@ -42,13 +43,17 @@
 
 "function add_files__append(){"
 	"const inp = document.getElementById('add-file-input');"
-	"const _dir_id = document.getElementById(\"dirselect\").value;"
+	"let _dir_id = document.getElementById(\"dirselect\").value;"
 	"const x = inp.value;"
 	"if(x === \"\"){"
 		"alert(\"Enter a file URL\");"
 		"return;"
 	"}"
-	"if(!x.startsWith(d[_dir_id][0])){"
+	"if(_dir_id === \"\"){"
+		// Guess the directory
+		"_dir_id = guess_parenty_thing_from_name('d', x);"
+		"$('#dirselect').val(_dir_id).trigger('change');"
+	"} else if(!x.startsWith(d[_dir_id][0])){"
 		"alert(\"Directory must be a prefix of the file URL\");"
 		"return;"
 	"}"

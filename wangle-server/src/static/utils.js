@@ -1,5 +1,6 @@
 #include "utils_global_vars.js"
 #include "utils_core.js"
+#include "utils_select2.js"
 #include "humanise.js"
 #include "utils_tags.js"
 #include "utils_dirs.js"
