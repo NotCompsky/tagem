@@ -59,18 +59,23 @@ const char* CURRENT_HASHING_METHOD = nullptr;
 
 extern "C"
 void intercept_abort(int){
-	fprintf(stderr,  "Aborted\n");
-	compsky::mysql::exec(
-		_mysql::obj,
-		BUF,
-		"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
-		"(file)"
-		"SELECT f.id "
-		"FROM _file f "
-		"JOIN _dir d ON d.id=f.dir "
-		"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
-	);
+	fprintf(stderr,  "Aborted.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
+	
+	if (CURRENT_FILE_PATH != nullptr)
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
+			"(file)"
+			"SELECT f.id "
+			"FROM _file f "
+			"JOIN _dir d ON d.id=f.dir "
+			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+		);
+	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	
+	return;
 }
 
 
@@ -455,12 +460,12 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 
 template<typename RelationType>
 void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
-	int length;
-	const uint64_t* const hashes = ph_dct_videohash(fp, length);
-	
 	// Set global variables for catching aborts
 	CURRENT_FILE_PATH = fp;
 	CURRENT_HASHING_METHOD = "video";
+	
+	int length;
+	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
 	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
@@ -503,10 +508,12 @@ void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
 
 struct Options {
 	char* directory;
+	char* device_regexp;
 	bool recursive;
 	
 	Options()
 	: directory(nullptr)
+	, device_regexp(".")
 	, recursive(false)
 	{}
 };
@@ -624,7 +631,9 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"SELECT f.id, CONCAT(d.name, f.name) "
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
+		"JOIN _device D ON D.id=d.device "
 		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", file_type_flag.name, ") "
+		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
 		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
@@ -679,6 +688,9 @@ int main(const int argc,  char* const* argv){
 				"		-t DIRECTORY\n"
 				"			Set thumbnail directory\n"
 				"			If Qt5 MD5 is used, will create all non-existing thumbnails\n"
+				"		-D [REGEXP]\n"
+				"			Limit tagging to a device\n"
+				"			Double quotes must be escaped\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
 				"		d	Duration\n"
@@ -697,6 +709,9 @@ int main(const int argc,  char* const* argv){
 			case 'd':
 				opts.directory = *(++argv);
 				ensure_endswith_slash(opts.directory);
+				break;
+			case 'D':
+				opts.device_regexp = *(++argv);
 				break;
 			case 'R':
 				opts.recursive = true;
