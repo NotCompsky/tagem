@@ -100,7 +100,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"			f attr name r \"[Pp]attern\"\n" \
 	"				Filter for files whose names match the regexp\n" \
 	"			f attr id < 99\n" \
-	"			f attr size < 1000*1000\n" \
+	"			f attr size < 1000000\n" \
 	"				Search for files under 1MB in size\n" \
 	"			f attr dir < 1000\n" \
 	"				Note that dir is an integer - it is not translated to a string with this filter\n" \
