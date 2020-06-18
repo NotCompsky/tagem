@@ -396,7 +396,12 @@ void save_hash(const Video file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
-	if (hashes == nullptr  ||  length == 0){
+	if (hashes == nullptr)
+		goto save_hash_video_err;
+	
+	if (length == 0){
+		free(const_cast<uint64_t*>(hashes));
+		save_hash_video_err:
 		fprintf(stderr, "Cannot hash video: %s\n", fp);
 		return;
 	}
@@ -419,7 +424,12 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint32_t* const hashes = ph_audiohash(audiobuf, audiobuf_len, sample_rate, length);
 	
-	if (hashes == nullptr  ||  length == 0){
+	if (hashes == nullptr)
+		goto save_hash_audio_err;
+	
+	if (length == 0){
+		free(const_cast<uint32_t*>(hashes));
+		save_hash_audio_err:
 		fprintf(stderr, "Cannot hash audio: %s\n", fp);
 		return;
 	}
