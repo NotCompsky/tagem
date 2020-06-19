@@ -44,6 +44,7 @@
 	"hide_all_except(['f','parents-container','children-container','files-tagging','tagselect-files-container']);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
+	"get_file_ids = get_selected_file_ids;"
 
 	"if (_dir_id !== undefined){"
 		"dir_id = _dir_id;"
