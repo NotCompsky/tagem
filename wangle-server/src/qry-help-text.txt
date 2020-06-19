@@ -54,18 +54,18 @@ Each must be separated by a logical operator - thus far the only implemented one
 				It is a bit different
 		EXAMPLES
 			many-to-one
-				f name "foo" same dir > 1
+				f name "foo" same dir 2-?
 					Finds files matching the regexp "foo", so long as they share a directory with another file matching that regexp.
-				f same dir > 1 name "foo"
+				f same dir 2-? name "foo"
 					Finds files matching the regexp "foo", so long as there is another file in its directory
 			many-to-many
-				f name "foo" same dct > 1
+				f name "foo" same dct 2-?
 					Finds files whose DCT hashes overlap with those of files with names matching the regexp "foo"
-				f same dct > 1 name "foo"
+				f same dct 2-? name "foo"
 					Finds files matching the regexp "foo", so long as there is another file with overlapping DCT hashes
-				f same dct > 100
+				f same dct 101-?
 					List files who have a DCT hash that at least 100 other files also have
-				f same dct < 2
+				f same dct 1-1
 					List files who have a unique DCT hash
 		ATTRIBUTE must be one of
 			many-to-one options:
@@ -117,12 +117,12 @@ EXAMPLES
 		List files with image mimetypes
 	f ( t "Music" and t "Video" ) or ( t "Music" and mime "^video/" )
 		List music videos
-	f name "[.](png|jpe?g)" same dct > 60 limit 1000
+	f name "[.](png|jpe?g)" same dct 60-? limit 1000
 		The command I used to locate all my neural style transfer renders
-	f name "[.](mp4)" same dct > 10 limit 1000
+	f name "[.](mp4)" same dct 10-? limit 1000
 		The command I used to locate videos by a Youtuber (using the same video intro in his videos)
-	f name "[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$" same dct > 1 and name "[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$"
+	f name "[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$" same dct 2-? and name "[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$"
 		Find files which are probably screenshots of movies
-	f same size > 1 limit 100 order d size
+	f same size 2-? limit 100 order d size
 		Find files that are probably duplicates, based only on their file sizes.
 )========="
