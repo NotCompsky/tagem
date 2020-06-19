@@ -1,3 +1,7 @@
+".tbody{"
+	"max-height:75vh;"
+	"overflow-y:scroll;"
+"}"
 ".tbody .tr{"
 	"display:inline-block;"
 	"overflow:hidden;"
