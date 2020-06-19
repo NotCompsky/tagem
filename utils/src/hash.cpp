@@ -54,6 +54,7 @@ static AVFormatContext* av_fmt_ctx;
 static int verbosity = 0;
 
 FILE* logfile = stderr;
+char* custom_regex = nullptr;
 
 
 const char* CURRENT_FILE_PATH = nullptr;
@@ -80,8 +81,8 @@ void intercept_exit(int){
 }
 
 extern "C"
-void intercept_abort(int){
-	fprintf(logfile,  "Aborted.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
+void intercept_abort(int _signal){
+	fprintf(logfile,  "Signal: %s.\nLast processed:\n\tHash Kind: %s\n\tFile Path: %s\n", (_signal==SIGKILL)?"SIGKILL":"SIGABRT", CURRENT_HASHING_METHOD, CURRENT_FILE_PATH);
 	
 	if (CURRENT_FILE_PATH != nullptr)
 		compsky::mysql::exec(
@@ -97,7 +98,7 @@ void intercept_abort(int){
 	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 	
-	return;
+	exit(1);
 }
 
 
@@ -654,7 +655,7 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
 		"JOIN _device D ON D.id=d.device "
-		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", file_type_flag.name, ") "
+		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", hash_name, ") "
 		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
 		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
@@ -716,6 +717,8 @@ int main(const int argc,  char* const* argv){
 				"			Limit tagging to a device\n"
 				"			Double quotes must be escaped\n"
 				"		-L /path/to/log/file.txt\n"
+				"		-r [REGEXP]\n"
+				"			Hash files whose names (not full paths) match the regexp\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
 				"		d	Duration\n"
@@ -750,6 +753,9 @@ int main(const int argc,  char* const* argv){
 				logfile = fopen(*(++argv), "wb");
 				assert(logfile != nullptr);
 				break;
+			case 'r':
+				custom_regex = *(++argv);
+				break;
 			default:
 				// case 0:
 				break;
@@ -779,30 +785,38 @@ int main(const int argc,  char* const* argv){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,  "(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
+				hash_all_from(opts,  audio_flag,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from(opts,  duration_flag,   "(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
+				hash_all_from(opts, duration_flag,(custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,  "(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  image_flag,  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
 				// many_to_many_flag because they use the same hash as video files.
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,  "(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  video_flag,  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
 				break;
 			case 's':
+				if(custom_regex!=nullptr)
+					abort();
 				hash_all_from(opts,  sha256_flag, nullptr, "sha256", one_to_one_flag);
 				break;
 			case 'm':
+				if(custom_regex!=nullptr)
+					abort();
 				hash_all_from(opts,  md5_flag,    nullptr, "md5", one_to_one_flag);
 				break;
 			case 'M':
+				if(custom_regex!=nullptr)
+					abort();
 				hash_all_from(opts,  qt5_md5_flag,nullptr, "md5_of_path", one_to_one_flag);
 				break;
 			case 'S':
+				if(custom_regex!=nullptr)
+					abort();
 				hash_all_from(opts,  size_flag,   nullptr, "size", one_to_one_flag);
 				break;
 		}
