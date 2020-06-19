@@ -8,9 +8,18 @@ INPUT DATA TYPES
 		MIN must be a non-negative integer
 		MAX must be either a non-negative integer, or "?" (without the quotation marks)
 	
+	NAME
+		A string surrounded by double quotes, with all double quotes within itself escaped
+		EXAMPLES
+			"Foo"
+			"Bar"
+			"Ree Gee"
+			"Jeremy \"Stark\" Smith"
+			"[.]mp4$"
+	
 	NAME_LIST
-		A list of strings, each surrounded by double quotes (")
-		If there is just one string in the list, it is interpreted as a regexp.
+		A list of NAMEs
+		If there is just one NAME in the list, it is interpreted as a regexp.
 		EXAMPLES
 			"English (Language)" "French (Language)"
 				A list of two strings that is interpreted as an array of literal strings
@@ -33,10 +42,14 @@ Each must be separated by a logical operator - thus far the only implemented one
 		Entries have a variable named one of the listed names, which has a value in the specified range
 	attr [ATTRIBUTE] [OPERATOR] [STRING_OR_INTEGER]
 		A filter that operates directly on the columns of the primary table.
+		If it is a string, STRING_OR_INTEGER must be surrounded by double quotes, with any contained double quotes escaped. Else it must be a positive integer
 		OPERATOR must be one of
 			Integers only: ">", "<"
 			Strings only:  "r" (regexp)
 			Any:           "="
+		SHORTHAND
+			A NAME on its own, without even specifying "attr", is interpreted as shorthand for
+				attr name r [NAME]
 		EXAMPLES
 			f attr name r "[Pp]attern"
 				Filter for files whose names match the regexp
@@ -45,8 +58,10 @@ Each must be separated by a logical operator - thus far the only implemented one
 				Search for files under 1MB in size
 			f attr dir < 1000
 				Note that dir is an integer - it is not translated to a string with this filter
-		If it is a string, STRING_OR_INTEGER must be surrounded by double quotes, with any contained double quotes escaped
-		Otherwise it must be a positive integer
+			f "^A"
+				Shorthand for
+					f attr name r "^A"
+				Lists all files beginning with "A"
 	backups [RANGE]
 		Filter for files with a number of backups in this range
 	same [ATTRIBUTE] [RANGE]
@@ -59,6 +74,19 @@ Each must be separated by a logical operator - thus far the only implemented one
 				All other filters declared after this filter apply AFTER this filter
 			For many-to-many attributes (such as dct)
 				It is a bit different
+		ATTRIBUTE must be one of
+			many-to-one options:
+				name (WARNING: Might take a VERY long time without other filters)
+				dir
+				mime
+				size
+				duration
+				md5
+				sha
+			many-to-many options:
+				dct (perceptual DCT hash)
+				audio (perceptual audio hash)
+				tag
 		EXAMPLES
 			many-to-one
 				f name "foo" same dir 2-?
@@ -74,19 +102,6 @@ Each must be separated by a logical operator - thus far the only implemented one
 					List files who have a DCT hash that at least 100 other files also have
 				f same dct 1-1
 					List files who have a unique DCT hash
-		ATTRIBUTE must be one of
-			many-to-one options:
-				name (WARNING: Might take a VERY long time without other filters)
-				dir
-				mime
-				size
-				duration
-				md5
-				sha
-			many-to-many options:
-				dct (perceptual DCT hash)
-				audio (perceptual audio hash)
-				tag
 
 OPTIONS
 	order [MODE] [ATTRIBUTE]
@@ -101,7 +116,7 @@ OPTIONS
 			file table additional options: Any of the attributes listed under the "same" filter
 	order-by-value [MODE] [[NAMES]]
 		MODE must be one of a (ascending) or d (descending)
-		NAMES must be a list of names (like a NAME_LIST, except a list of length 1 will not be interpreted as a regexp)
+		NAMES must be a list of NAMEs (like a NAME_LIST, except a list of length 1 will not be interpreted as a regexp)
 		Order results by the named variables, in that order.
 		The order is left-to-right, the value being a chain of IFNULLs
 	limit [INTEGER]

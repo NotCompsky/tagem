@@ -47,6 +47,7 @@ namespace arg {
 		value,
 		attribute,
 		same_attribute,
+		name,
 		bracket_open,
 		bracket_close,
 		
@@ -215,6 +216,9 @@ arg::ArgType process_arg(const char*& qry){
 					return arg::bracket_close;
 			}
 			break;
+		
+		case '"':
+			return arg::name;
 		
 		case 'a':
 			switch(*(++qry)){
@@ -889,10 +893,17 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
 	unsigned n_calls__backups = 0;
 	
+	const char* attribute_name;
+	attribute_kind::AttributeKind attribute_kind;
+	unsigned min;
+	unsigned max;
+	successness::ReturnType rc;
+	
 	while(true){
 		const arg::ArgType arg_token = process_arg(qry);
 		const bool is_inverted = (arg_token & arg::NOT);
-		switch(arg_token & ~arg::NOT){ // Ignore the NOT flag
+		const arg::ArgType arg_token_base = arg_token & ~arg::NOT;
+		switch(arg_token_base){ // Ignore the NOT flag
 			case arg::END_OF_STRING:
 				if (join.empty())
 					join = join_for_auto_ordering;
@@ -908,7 +919,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 			case arg::operator_and:
 				if (n_args_since_operator != 1)
 					return successness::invalid;
-				bracket_operator_at_depth[bracket_depth] = ((arg_token & ~arg::NOT) == arg::operator_or) ? _operator_or : _operator_and;
+				bracket_operator_at_depth[bracket_depth] = ((arg_token_base) == arg::operator_or) ? _operator_or : _operator_and;
 				n_args_since_operator = 0;
 				break;
 			
@@ -932,7 +943,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name REGEXP ";
-				const auto rc = append_escaped_str(where, qry);
+				rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -947,7 +958,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
-				const auto rc = append_escaped_str(where, qry);
+				rc = append_escaped_str(where, qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -966,7 +977,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += " FROM ";
 				where += tbl_full_name(which_tbl);
 				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag WHERE t.name";
-				const auto rc = process_name_list(where, 't', qry);
+				rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -985,7 +996,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += " FROM ";
 				where += tbl_full_name(which_tbl);
 				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag JOIN _tag t ON t.id=t2pt.parent WHERE t.name";
-				const auto rc = process_name_list(where, 't', qry);
+				rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -996,9 +1007,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if ((++n_calls__backups == 2) or (which_tbl != 'f'))
 					return successness::invalid;
 				
-				unsigned min;
-				unsigned max;
-				const auto rc = get_int_range(qry, min, max);
+				rc = get_int_range(qry, min, max);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -1022,7 +1031,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name";
-				const auto rc = process_name_list(where, 'x', qry);
+				rc = process_name_list(where, 'x', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -1035,9 +1044,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if ((++n_calls__order_by == 2) or (not order_by.empty()) or is_inverted)
 					return successness::invalid;
 				
-				const char* attribute_name;
-				attribute_kind::AttributeKind attribute_kind;
-				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
+				rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -1059,7 +1066,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					return successness::invalid;
 				
 				std::string order_by_end;
-				const auto rc = process_order_by_var_name_list(join, order_by, order_by_end, qry);
+				rc = process_order_by_var_name_list(join, order_by, order_by_end, qry);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -1074,7 +1081,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN (";
-				const auto rc = process_value_list(where, qry);
+				rc = process_value_list(where, qry);
 				if (rc != successness::ok)
 					return rc;
 				for (auto i = 0;  i < 7;  ++i)
@@ -1087,14 +1094,10 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 			case arg::same_attribute: {
 				if (which_tbl != 'f')
 					return successness::invalid;
-				const char* attribute_name;
-				attribute_kind::AttributeKind attribute_kind;
 				auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
 				
-				unsigned min;
-				unsigned max;
 				rc = get_int_range(qry, min, max);
 				if (rc != successness::ok)
 					return rc;
@@ -1167,21 +1170,24 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				
 				break;
 			}
+			case arg::name:
 			case arg::attribute: {
-				const char* attribute_name;
-				attribute_kind::AttributeKind attribute_kind;
-				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
-				printf("rc == %u\nattribute_name == %s\nattribute_kind == %u\n", rc, attribute_name, attribute_kind);
-				if (rc != successness::ok)
-					return rc;
-				if (attribute_kind == attribute_kind::many_to_many)
-					return successness::invalid;
-				
-				printf("attribute_kind == %u\n", attribute_kind);
-				
-				const char comparison_mode = *(++qry);
-				if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=') or (comparison_mode == 'r')) or (*(++qry) != ' '))
-					return successness::invalid;
+				char comparison_mode;
+				if (arg_token_base == arg::name){
+					attribute_name = attribute_name::NAME;
+					attribute_kind = attribute_kind::unique;
+					comparison_mode = 'r';
+				} else {
+					rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
+					if (rc != successness::ok)
+						return rc;
+					if (attribute_kind == attribute_kind::many_to_many)
+						return successness::invalid;
+					
+					comparison_mode = *(++qry);
+					if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=') or (comparison_mode == 'r')) or (*(++qry) != ' '))
+						return successness::invalid;
+				}
 				
 				where += bracket_operator_at_depth[bracket_depth];
 				if (is_inverted)
@@ -1211,7 +1217,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 							default:
 								return successness::invalid;
 						}
-						const auto rc = append_escaped_str(where, qry);
+						rc = append_escaped_str(where, qry);
 						if (rc != successness::ok)
 							return rc;
 				}
