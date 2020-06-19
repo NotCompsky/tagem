@@ -1,7 +1,5 @@
 #define CREATE_ACTION_BTN(r, data, elem) \
-	"<div class=\"td\">" \
-		"<button onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
-	"</div>"
+	"<button onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
 
 #define CREATE_HEADER(r, data, name) \
 	"<div class=\"td\">" \
@@ -24,11 +22,8 @@
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
-"<div class=\"thead\">"
-	"<div class=\"tr\">"
-		"<div class=\"td\">"
-			"<button class=\"filter-btn\" onclick=\"filter_tbl('" TBL_ID "'," TBL_NAME_COLS "," TBL_TAGS_COLS ");\">Filter</button>"
-		"</div>"
+	"<div class=\"action-btns\">"
+		"<button onclick=\"filter_tbl('" TBL_ID "'," TBL_NAME_COLS "," TBL_TAGS_COLS ");\">Filter</button>"
 #ifdef ACTION_BTNS
 BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_BTNS))
 # undef ACTION_BTNS
@@ -36,6 +31,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_
 #undef CREATE_ACTION_BTN
 	"</div>"
 
+"<div class=\"thead\">"
 	// Name row
 	"<div class=\"tr\">"
 BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, COL_NAMES)
