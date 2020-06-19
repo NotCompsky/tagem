@@ -89,14 +89,14 @@ Each must be separated by a logical operator - thus far the only implemented one
 				tag
 		EXAMPLES
 			many-to-one
-				f name "foo" same dir 2-?
+				f "foo" same dir 2-?
 					Finds files matching the regexp "foo", so long as they share a directory with another file matching that regexp.
-				f same dir 2-? name "foo"
+				f same dir 2-? "foo"
 					Finds files matching the regexp "foo", so long as there is another file in its directory
 			many-to-many
-				f name "foo" same dct 2-?
+				f "foo" same dct 2-?
 					Finds files whose DCT hashes overlap with those of files with names matching the regexp "foo"
-				f same dct 2-? name "foo"
+				f same dct 2-? "foo"
 					Finds files matching the regexp "foo", so long as there is another file with overlapping DCT hashes
 				f same dct 101-?
 					List files who have a DCT hash that at least 100 other files also have
@@ -134,7 +134,7 @@ EXAMPLES
 		List files from https://youtube.com/ in descending order of 'value', where the 'value' is either the file's "Musicness" or - if that is unavailable - the file's "Score"
 	f d "^http" and not t "Music"
 		List remote (over HTTP/HTTPS) files which are not tagged "Music"
-	f not t "!!ROOT TAG||" and not attr name r "[.](json|xml)$"
+	f not t "!!ROOT TAG||" and not "[.](json|xml)$"
 		List files which are not tagged with anything, ignoring JSON and XML files.
 	f mime "^image/"
 		List files with image mimetypes
@@ -142,7 +142,9 @@ EXAMPLES
 		List music videos
 	f attr name r "[.](png|jpe?g)" same dct 60-? limit 1000
 		The command I used to locate all my neural style transfer renders
-	f attr name r "[.](mp4)" same dct 10-? limit 1000
+	f "[.](mp4)" same dct 10-? limit 1000
+		Equivalent to
+			f attr name r "[.](mp4)" same dct 10-? limit 1000
 		The command I used to locate videos by a Youtuber (using the same video intro in his videos)
 	f attr name r "[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$" same dct 2-? and attr name r "[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$"
 		Find files which are probably screenshots of movies
