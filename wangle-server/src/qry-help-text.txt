@@ -125,4 +125,6 @@ EXAMPLES
 		Find files which are probably screenshots of movies
 	f same size 2-? limit 100 order d size
 		Find files that are probably duplicates, based only on their file sizes.
+	f d "^https://www.youtube.com/watch\?v=" same dct 2-? same size 2-? limit 100
+		Find files which have the same DCT hash and same size as a file from youtube.
 )========="
