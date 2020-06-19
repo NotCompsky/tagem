@@ -106,12 +106,12 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"				Note that dir is an integer - it is not translated to a string with this filter\n" \
 	"		If it is a string, STRING_OR_INTEGER must be surrounded by double quotes, with any contained double quotes escaped\n" \
 	"		Otherwise it must be a positive integer\n" \
-	"	same [ATTRIBUTE] [MODE] [COUNT]\n" \
+	"	backups [MIN]-[MAX]\n" \
+	"		Filter for files with a number of backups in this range\n" \
+	"	same [ATTRIBUTE] [MIN]-[MAX]\n" \
 	"		This filter is NOT to be preceded by a logical operator\n" \
 	"		Only for the file table\n" \
-	"		MODE must be one of \">\", \"<\", or \"=\", without the quotation marks\n" \
-	"		COUNT must be a non-negative integer\n" \
-	"		Filters results for files sharing an attribute, that attribute having [MODE COUNT] files associated with it.\n" \
+	"		Filters results for files sharing an attribute, that attribute having a number (in the given range) of files associated with it.\n" \
 	"		The order in which this filter is applied matters\n" \
 	"			For many-to-one attributes (such as name, dir, mime, size, duration, md5, sha)\n" \
 	"				All other filters declared before this filter apply WITH this filter\n" \

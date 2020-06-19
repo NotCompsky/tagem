@@ -36,6 +36,7 @@ namespace arg {
 		tag_tree,
 		dir,
 		dir_basename,
+		backups,
 		external_db,
 		order_by_asc,
 		order_by_desc,
@@ -159,6 +160,18 @@ Int s2n(const char*& qry){
 	}
 }
 
+template<typename Int>
+successness::ReturnType get_int_range(const char*& qry,  Int& min,  Int& max){
+	min = s2n<uint64_t>(qry);
+	if (*qry != '-')
+		return successness::invalid;
+	max = s2n<uint64_t>(qry);
+	if (*qry != ' ')
+		return successness::invalid;
+	
+	return successness::ok;
+}
+
 static
 successness::ReturnType append_escaped_str(std::string& result,  const char*& qry){
 	if (*(++qry) != '"')
@@ -219,6 +232,36 @@ arg::ArgType process_arg(const char*& qry){
 									switch(*(++qry)){
 										case ' ':
 											return arg::attribute;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+			break;
+		case 'b':
+			switch(*(++qry)){
+				case 'a':
+					switch(*(++qry)){
+						case 'c':
+							switch(*(++qry)){
+								case 'k':
+									switch(*(++qry)){
+										case 'u':
+											switch(*(++qry)){
+												case 'p':
+													switch(*(++qry)){
+														case 's':
+															switch(*(++qry)){
+																case ' ':
+																	return arg::backups;
+															}
+															break;
+													}
+													break;
+											}
+											break;
 									}
 									break;
 							}
@@ -704,12 +747,11 @@ static
 successness::ReturnType process_value_list(std::string& where,  const char*& qry){
 	LOG("process_value_list %s\n", qry);
 	
-	const uint64_t min = s2n<uint64_t>(qry);
-	if (*qry != '-')
-		return successness::invalid;
-	const uint64_t max = s2n<uint64_t>(qry);
-	if (*qry != ' ')
-		return successness::invalid;
+	uint64_t min;
+	uint64_t max;
+	const auto rc = get_int_range(qry, min, max);
+	if (rc != successness::ok)
+		return rc;
 	
 	LOG("  min == %lu\n", min);
 	LOG("  max == %lu\n", max);
@@ -827,6 +869,13 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 	int n_args_since_operator = 0;
 	std::string join_for_auto_ordering = "";
 	std::string auto_order_by = "";
+	
+	// Some arguments must only be encountered at most once
+	unsigned n_calls__order_by = 0;
+	unsigned n_calls__limit = 0;  // Doesn't reallly matter to the serverif multiple limits are specified
+	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
+	unsigned n_calls__backups = 0;
+	
 	while(true){
 		const arg::ArgType arg_token = process_arg(qry);
 		const bool is_inverted = (arg_token & arg::NOT);
@@ -932,6 +981,28 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				++n_args_since_operator;
 				break;
 			}
+			case arg::backups: {
+				if ((++n_calls__backups == 2) or (which_tbl != 'f'))
+					return successness::invalid;
+				
+				unsigned min;
+				unsigned max;
+				const auto rc = get_int_range(qry, min, max);
+				if (rc != successness::ok)
+					return rc;
+				
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
+				if (is_inverted)
+					where += "NOT ";
+				where += "IN(SELECT file FROM file_backup GROUP BY file HAVING COUNT(*)>=";
+				where += std::to_string(min);
+				where += " AND COUNT(*)<=";
+				where += std::to_string(max);
+				where += ")";
+				++n_args_since_operator;
+				break;
+			}
 			case arg::external_db: {
 				if (which_tbl != 'f')
 					return successness::invalid;
@@ -951,7 +1022,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 			
 			case arg::order_by_asc:
 			case arg::order_by_desc: {
-				if ((not order_by.empty()) or is_inverted)
+				if ((++n_calls__order_by == 2) or (not order_by.empty()) or is_inverted)
 					return successness::invalid;
 				
 				const char* attribute_name;
@@ -974,7 +1045,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 			}
 			case arg::order_by_value_asc:
 			case arg::order_by_value_desc: {
-				if ((not order_by.empty()) or is_inverted)
+				if ((++n_calls__order_by == 2) or (not order_by.empty()) or is_inverted)
 					return successness::invalid;
 				
 				std::string order_by_end;
@@ -1008,15 +1079,16 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					return successness::invalid;
 				const char* attribute_name;
 				attribute_kind::AttributeKind attribute_kind;
-				const auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
+				auto rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 				if (rc != successness::ok)
 					return rc;
-				const char comparison_mode = *(++qry);
-				if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=')) or (*(++qry) != ' '))
-					return successness::invalid;
-				const unsigned number_of_similarities = s2n<unsigned>(qry);
-				if (number_of_similarities == 0)
-					return successness::invalid;
+				
+				unsigned min;
+				unsigned max;
+				rc = get_int_range(qry, min, max);
+				if (rc != successness::ok)
+					return rc;
+				
 				const std::string old_where = where;
 				if (attribute_kind == attribute_kind::unique)
 					return successness::invalid;
@@ -1038,9 +1110,10 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					where += std::to_string(user_id);
 					where += ")GROUP BY ";
 					where += attribute_name;
-					where += "\nHAVING COUNT(x)";
-					where += comparison_mode;
-					where += std::to_string(number_of_similarities);
+					where += "\nHAVING COUNT(*)>=";
+					where += std::to_string(min);
+					where += " AND COUNT(*)<=";
+					where += std::to_string(max);
 					where += ")";
 				} else {
 					where = "X.id";
@@ -1067,9 +1140,10 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					derived_tbl += user_disallowed_X_tbl_filter_inner_pre;
 					derived_tbl += std::to_string(user_id);
 					derived_tbl += ")\n\t\tGROUP BY x";
-					derived_tbl += "\n\t\tHAVING COUNT(x)";
-					derived_tbl += comparison_mode;
-					derived_tbl += std::to_string(number_of_similarities);
+					derived_tbl += "\nHAVING COUNT(*)>=";
+					derived_tbl += std::to_string(min);
+					derived_tbl += " AND COUNT(*)<=";
+					derived_tbl += std::to_string(max);
 					derived_tbl += "\n\t)";
 					where += derived_tbl;
 					where += "\n)";
@@ -1136,6 +1210,9 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				break;
 			}
 			case arg::limit: {
+				if (++n_calls__limit == 2)
+					return successness::invalid;
+				
 				limit = s2n<unsigned>(qry);
 				if (*qry != ' ')
 					return successness::invalid;
@@ -1144,6 +1221,9 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				break;
 			}
 			case arg::offset: {
+				if (++n_calls__offset == 2)
+					return successness::invalid;
+				
 				offset = s2n<unsigned>(qry);
 				if (*qry != ' ')
 					return successness::invalid;
