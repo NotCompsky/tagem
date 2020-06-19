@@ -53,13 +53,15 @@ static AVFormatContext* av_fmt_ctx;
 
 static int verbosity = 0;
 
+FILE* logfile = stderr;
+
 
 const char* CURRENT_FILE_PATH = nullptr;
 const char* CURRENT_HASHING_METHOD = nullptr;
 
 extern "C"
 void intercept_exit(int){
-	fprintf(stderr,  "Exited.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
+	fprintf(logfile,  "Exited.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
 	
 	if (CURRENT_FILE_PATH != nullptr)
 		compsky::mysql::exec(
@@ -79,7 +81,7 @@ void intercept_exit(int){
 
 extern "C"
 void intercept_abort(int){
-	fprintf(stderr,  "Aborted.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
+	fprintf(logfile,  "Aborted.\nLast file being processed: %s\n", CURRENT_FILE_PATH);
 	
 	if (CURRENT_FILE_PATH != nullptr)
 		compsky::mysql::exec(
@@ -103,12 +105,12 @@ uint64_t duration_of(const char* fp){
 	uint64_t n = 0;
 	
 	if (avformat_open_input(&av_fmt_ctx, fp, NULL, NULL) != 0){
-		fprintf(stderr,  "Unable to open video file: %s\n",  fp);
+		fprintf(logfile,  "Unable to open video file: %s\n",  fp);
 		return 0;
 	}
 	
 	if (avformat_find_stream_info(av_fmt_ctx, NULL) < 0){
-		fprintf(stderr,  "Unknown error processing file: %s\n",  fp);
+		fprintf(logfile,  "Unknown error processing file: %s\n",  fp);
 		goto cleanup;
 	}
 	
@@ -328,7 +330,7 @@ void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_
 	if (length_to_go == 0){
 		free((void*)hashes);
 		no_hashes_found__230jf0jfe:
-		fprintf(stderr, "Cannot hash %s: %s\n", file_type_flag.name, fp);
+		fprintf(logfile, "Cannot hash %s: %s\n", file_type_flag.name, fp);
 		return;
 	}
 	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
@@ -346,7 +348,7 @@ template<typename RelationType>
 void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	FILE* f = fopen(fp, "rb");
 	if (f == nullptr){
-		fprintf(stderr,  "Cannot read file: %s\n",  fp);
+		fprintf(logfile,  "Cannot read file: %s\n",  fp);
 		return;
 	}
 	
@@ -367,7 +369,7 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	
 	FILE* f = fopen(fp, "rb");
 	if (f == nullptr){
-		fprintf(stderr,  "Cannot read file: %s\n",  fp);
+		fprintf(logfile,  "Cannot read file: %s\n",  fp);
 		return;
 	}
 	
@@ -393,7 +395,7 @@ void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  con
 	
 	FILE* f = fopen(fp, "rb");
 	if (f == nullptr){
-		fprintf(stderr,  "Cannot read file: %s\n",  fp);
+		fprintf(logfile,  "Cannot read file: %s\n",  fp);
 		return;
 	}
 	
@@ -459,7 +461,7 @@ void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name, 
 	
 	//QImage img;
 	//if (not THUMB_CREATOR.create(url, 256, 256, img)){
-		fprintf(stderr, "Failed to create thumbnail for: %s\n", fp);
+		fprintf(logfile, "Failed to create thumbnail for: %s\n", fp);
 	//	return;
 	//}
 	//img.save(thumbName);
@@ -470,7 +472,7 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 	const uint64_t hash = get_hash_of_image(fp);
 	
 	if (unlikely(hash == 0)){
-		fprintf(stderr, "Cannot get DCT hash: %s\n", fp);
+		fprintf(logfile, "Cannot get DCT hash: %s\n", fp);
 		return;
 	}
 	
@@ -498,7 +500,7 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 	float* audiobuf = ph_readaudio(fp, sample_rate, channels, nullptr, audiobuf_len);
 	
 	if (audiobuf == nullptr){
-		fprintf(stderr,  "Cannot read audio: %s\n", fp);
+		fprintf(logfile,  "Cannot read audio: %s\n", fp);
 		return;
 	}
 	
@@ -587,7 +589,7 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 			continue;
 		
 		if (!(check_regex(regex,  ename,  strlen(ename)))){
-			printf("Failed regex: %s\n", ename);
+			fprintf(logfile, "Failed regex: %s\n", ename);
 			continue;
 		}
 		
@@ -697,7 +699,8 @@ int main(const int argc,  char* const* argv){
 		++argv;
 		const char* const arg = *argv;
 		if (arg == nullptr){
-			printf(
+			fprintf(
+				stderr,
 				"Usage: [OPTIONS] HASH_TYPES\n"
 				"	OPTIONS\n"
 				"		-d DIRECTORY\n"
@@ -712,6 +715,7 @@ int main(const int argc,  char* const* argv){
 				"		-D [REGEXP]\n"
 				"			Limit tagging to a device\n"
 				"			Double quotes must be escaped\n"
+				"		-L /path/to/log/file.txt\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
 				"		d	Duration\n"
@@ -742,6 +746,10 @@ int main(const int argc,  char* const* argv){
 				break;
 			case 'v':
 				++verbosity;
+			case 'L':
+				logfile = fopen(*(++argv), "wb");
+				assert(logfile != nullptr);
+				break;
 			default:
 				// case 0:
 				break;
