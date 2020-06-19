@@ -7,6 +7,10 @@
 ".selected3{"
 	"background:#ffc;"
 "}"
+"p.selected1, p.selected2, p.selected3{"
+	// For help text
+	"display:inline!important;"
+"}"
 ".hidden{"
 	"display:none!important;"
 "}"
