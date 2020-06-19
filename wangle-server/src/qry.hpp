@@ -189,6 +189,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"		The command I used to locate videos by a Youtuber (using the same video intro in his videos)\n" \
 	"	f name \"[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$\" same dct > 1 and name \"[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$\"\n" \
 	"		Find files which are probably screenshots of movies\n" \
+	"	f same size > 1 limit 100 order d size\n" \
+	"		Find files that are probably duplicates, based only on their file sizes.\n" \
 
 
 } // namespace sql_factory
