@@ -136,7 +136,7 @@
 	"document.getElementById(\"db-links\").innerHTML = s;"
 "}"
 "function view_file(_file_id){"
-	"hide_all_except(['tags-container','file-info','tagselect-files-container']);"
+	"hide_all_except(['tags-container','file-info','tagselect-files-container','tagselect-files-btn']);"
 	
 	"file_tagger_fn = after_tagged_this_file;"
 	"get_file_ids = get_file_id;"
@@ -194,7 +194,7 @@
 "}"
 
 "function view_files(ls){"
-	"hide_all_except(['f','tagselect-files-container']);"
+	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn']);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"

@@ -68,7 +68,7 @@
 
 
 "function view_tag(_tag_id){"
-	"hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-self-p-container','tagselect-self-c-container']);"
+	"hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn']);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
