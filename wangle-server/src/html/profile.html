@@ -285,7 +285,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr')","Deselect All")("(merge_files()","Merge Files")
+#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr')","Deselect All")("merge_files()","Merge Files")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"123.4 MB")
