@@ -711,7 +711,10 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& q
 static
 successness::ReturnType process_name_list(std::string& where,  const char tbl_alias,  const char*& qry){
 	LOG("process_name_list %c %s\n", tbl_alias, qry);
+	const size_t where_length_orig = where.size();
+	where += " REGEXP "; // This is overwritten with " IN (   " if there is only one value in this list
 	const char* qry_begin = qry;
+	unsigned n_elements = 0;
 	while(true){
 		switch(*(++qry)){
 			case '"': {
@@ -730,6 +733,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 						where += ',';
 						if (*(++qry) != ' ')
 							return successness::invalid;
+						++n_elements;
 						break;
 					}
 					if (c == 0)
@@ -738,10 +742,15 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 				break;
 			}
 			default:
-				if (qry == qry_begin + 1)
+				if (n_elements == 0)
 					// then we haven't encountered any names in this list
 					return successness::invalid;
 				--qry;
+				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
+				if (n_elements == 1){
+					where.replace(where_length_orig, 8, " IN (   ");
+					where += ")";
+				}
 				return successness::ok;
 		}
 	}
@@ -956,12 +965,11 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += tbl_full_name(which_tbl);
 				where += " FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag WHERE t.name IN (";
+				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag WHERE t.name";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
-				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
-				where += "))";
+				where += ")";
 				++n_args_since_operator;
 				break;
 			}
@@ -976,12 +984,11 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += tbl_full_name(which_tbl);
 				where += " FROM ";
 				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag JOIN _tag t ON t.id=t2pt.parent WHERE t.name IN (";
+				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag JOIN _tag t ON t.id=t2pt.parent WHERE t.name";
 				const auto rc = process_name_list(where, 't', qry);
 				if (rc != successness::ok)
 					return rc;
-				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
-				where += "))";
+				where += ")";
 				++n_args_since_operator;
 				break;
 			}
@@ -1014,12 +1021,11 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name IN (";
+				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name";
 				const auto rc = process_name_list(where, 'x', qry);
 				if (rc != successness::ok)
 					return rc;
-				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
-				where += "))";
+				where += ")";
 				++n_args_since_operator;
 				break;
 			}

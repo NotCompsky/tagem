@@ -2,18 +2,26 @@ R"=========(
 USAGE
 	[TABLE_ALIAS] [[FILTERS]] [[OPTIONS]]
 
-RANGE
-	An integer range is of the form [MIN]-[MAX]
-	MIN must be a non-negative integer
-	MAX must be either a non-negative integer, or "?" (without the quotation marks)
+INPUT DATA TYPES
+	RANGE
+		An integer range is of the form [MIN]-[MAX]
+		MIN must be a non-negative integer
+		MAX must be either a non-negative integer, or "?" (without the quotation marks)
+	
+	NAME_LIST
+		A list of strings, each surrounded by double quotes (")
+		If there is just one string in the list, it is interpreted as a regexp.
+		EXAMPLES
+			"English (Language)" "French (Language)"
+				A list of two strings that is interpreted as an array of literal strings
+			"[^ ]+ \(Language\)$"
+				A list of one string that is interpreted as a regexp
 
 FILTERS
 Each may be preceded by "not" (without the quotation marks) to invert the filter
 Each must be separated by a logical operator - thus far the only implemented ones are "and" and "or" (use without the quotation marks)
-	[TABLE_ALIAS] [[LIST OF NAMES]]
+	[TABLE_ALIAS] [NAME_LIST]
 		Entries have relations to entries of one of these names in this table
-		Each name is separated by a double quote (")
-		e.g. t "English (Language)" "French (Language)"
 		TABLE_ALIAS must be one of:
 			t (tag - matching against child tags too)
 			T (tag)
@@ -21,9 +29,8 @@ Each must be separated by a logical operator - thus far the only implemented one
 			d (dir)
 			D (dir - matching against only the basename)
 			x (for file only - file appears in the named external database)
-	value [RANGE] [[LIST_OF_NAMES]]
+	value [RANGE] [NAME_LIST]
 		Entries have a variable named one of the listed names, which has a value in the specified range
-		Each name is separated by a double quote (")
 	attr [ATTRIBUTE] [OPERATOR] [STRING_OR_INTEGER]
 		A filter that operates directly on the columns of the primary table.
 		OPERATOR must be one of
@@ -92,8 +99,9 @@ OPTIONS
 			one-to-one options:
 				id
 			file table additional options: Any of the attributes listed under the "same" filter
-	order-by-value [MODE] [[LIST_OF_NAMES]]
+	order-by-value [MODE] [[NAMES]]
 		MODE must be one of a (ascending) or d (descending)
+		NAMES must be a list of names (like a NAME_LIST, except a list of length 1 will not be interpreted as a regexp)
 		Order results by the named variables, in that order.
 		The order is left-to-right, the value being a chain of IFNULLs
 	limit [INTEGER]
@@ -103,25 +111,25 @@ KNOWN BUGS
 	At least one filter must be included
 
 EXAMPLES
-	f t "Music" t "English (Language)" "French (Language)" "German (Language)" and value 90-100 "Musicness" "Score" and name "[.]webm$" limit 100
+	f t "Music" t "English (Language)" "French (Language)" "German (Language)" and value 90-100 "Musicness" "Score" and attr name r "[.]webm$" limit 100
 		List 100 WEBM files tagged Music and also tagged one of: English, French or German language, having either a musicness or score of between 90 and 100
-	f name "\\\\.mp4" and d "^/" limit 100
+	f attr name r "\\\\.mp4" and d "^/" limit 100
 		List 100 MP4 files on the server
 	f d "^https://www[.]youtube[.]com/" order-by-value d "Musicness" "Score"
 		List files from https://youtube.com/ in descending order of 'value', where the 'value' is either the file's "Musicness" or - if that is unavailable - the file's "Score"
 	f d "^http" and not t "Music"
 		List remote (over HTTP/HTTPS) files which are not tagged "Music"
-	f not t "!!ROOT TAG||" and not name "[.](json|xml)$"
+	f not t "!!ROOT TAG||" and not attr name r "[.](json|xml)$"
 		List files which are not tagged with anything, ignoring JSON and XML files.
 	f mime "^image/"
 		List files with image mimetypes
 	f ( t "Music" and t "Video" ) or ( t "Music" and mime "^video/" )
 		List music videos
-	f name "[.](png|jpe?g)" same dct 60-? limit 1000
+	f attr name r "[.](png|jpe?g)" same dct 60-? limit 1000
 		The command I used to locate all my neural style transfer renders
-	f name "[.](mp4)" same dct 10-? limit 1000
+	f attr name r "[.](mp4)" same dct 10-? limit 1000
 		The command I used to locate videos by a Youtuber (using the same video intro in his videos)
-	f name "[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$" same dct 2-? and name "[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$"
+	f attr name r "[.](mp4|MP4|mkv|MKV|avi|AVI|webm|WEBM)$" same dct 2-? and attr name r "[.](png|jpe?g|PNG|JPE?G|gif|GIF|bmp|BMP)$"
 		Find files which are probably screenshots of movies
 	f same size 2-? limit 100 order d size
 		Find files that are probably duplicates, based only on their file sizes.
