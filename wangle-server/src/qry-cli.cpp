@@ -6,7 +6,9 @@
 int main(const int argc,  const char* const* const argv){
 	if (argc != 3){
 		fprintf(stderr, "USAGE: ./qry 'FILTER STRING HERE ' USER_ID\n");
-		fprintf(stderr, QRY_USAGE);
+		fprintf(stderr,
+			#include "qry-help-text.txt"
+		);
 		return 1;
 	}
 	char buf[4096];
