@@ -703,6 +703,7 @@ int main(const int argc,  char* const* argv){
 				"		-d DIRECTORY\n"
 				"			Tag all files in a directory (adding them to the database if necessary)\n"
 				"		-R\n"
+				"			Recursive\n"
 				"		-v\n"
 				"			Add verbosity\n"
 				"		-t DIRECTORY\n"
@@ -748,6 +749,7 @@ int main(const int argc,  char* const* argv){
 	} while (true);
 	
 	signal(SIGINT,  &intercept_exit);
+	signal(SIGKILL, &intercept_abort);
 	signal(SIGABRT, &intercept_abort);
 	
 	av_fmt_ctx = avformat_alloc_context();
