@@ -218,6 +218,7 @@ arg::ArgType process_arg(const char*& qry){
 			break;
 		
 		case '"':
+			--qry;
 			return arg::name;
 		
 		case 'a':
@@ -751,7 +752,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 					return successness::invalid;
 				--qry;
 				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
-				if (n_elements == 1){
+				if (n_elements > 1){
 					where.replace(where_length_orig, 8, " IN (   ");
 					where += ")";
 				}
