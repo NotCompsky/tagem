@@ -49,7 +49,7 @@
 	"return file_id;"
 "}"
 "function get_selected_file_ids(){"
-	"return $(\"#f .tbody .tr.selected\").map((i, el) => el.dataset.id).get().join(\",\");"
+	"return $(\"#f .tbody .tr.selected1\").map((i, el) => el.dataset.id).get().join(\",\");"
 "}"
 
 "function tag_files_then(file_ids, selector, fn){"

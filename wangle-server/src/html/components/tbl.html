@@ -22,6 +22,19 @@
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
+#ifdef IS_SELECTABLE
+	// Display examples of what each selection colour means
+	"<div>"
+		"<h3>Selection Types</h3>"
+		"<p>Primary selection is used for assigning tags</p>"
+		"<p>Secondary selection is used only to select duplicates of a file for merging</p>"
+		"<div class=\"selected1\">Primary</div>"
+		"<div class=\"selected2\">Secondary</div>"
+		"<div class=\"selected3\">Tertiary</div>"
+	"</div>"
+# undef IS_SELECTABLE
+#endif
+
 	"<div class=\"action-btns\">"
 		"<button onclick=\"filter_tbl('" TBL_ID "'," TBL_NAME_COLS "," TBL_TAGS_COLS ");\">Filter</button>"
 #ifdef ACTION_BTNS
