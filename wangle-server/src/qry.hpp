@@ -73,6 +73,10 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"USAGE\n" \
 	"	[TABLE_ALIAS] [[FILTERS]] [[OPTIONS]]\n" \
 	"\n" \
+	"RANGE\n" \
+	"	An integer range is of the form [MIN]-[MAX]\n" \
+	"	MIN must be a non-negative integer\n" \
+	"	MAX must be either a non-negative integer, or \"?\" (without the quotation marks)\n" \
 	"FILTERS\n" \
 	"Each may be preceded by \"not\" (without the quotation marks) to invert the filter\n" \
 	"Each must be separated by a logical operator - thus far the only implemented ones are \"and\" and \"or\" (use without the quotation marks)\n" \
@@ -87,7 +91,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"			d (dir)\n" \
 	"			D (dir - matching against only the basename)\n" \
 	"			x (for file only - file appears in the named external database)\n" \
-	"	value [MIN]-[MAX] [[LIST_OF_NAMES]]\n" \
+	"	value [RANGE] [[LIST_OF_NAMES]]\n" \
 	"		Entries have a variable named one of the listed names, which has a value in the specified range\n" \
 	"		Each name is separated by a double quote (\")\n" \
 	"	attr [ATTRIBUTE] [OPERATOR] [STRING_OR_INTEGER]\n" \
@@ -106,9 +110,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 	"				Note that dir is an integer - it is not translated to a string with this filter\n" \
 	"		If it is a string, STRING_OR_INTEGER must be surrounded by double quotes, with any contained double quotes escaped\n" \
 	"		Otherwise it must be a positive integer\n" \
-	"	backups [MIN]-[MAX]\n" \
+	"	backups [RANGE]\n" \
 	"		Filter for files with a number of backups in this range\n" \
-	"	same [ATTRIBUTE] [MIN]-[MAX]\n" \
+	"	same [ATTRIBUTE] [RANGE]\n" \
 	"		This filter is NOT to be preceded by a logical operator\n" \
 	"		Only for the file table\n" \
 	"		Filters results for files sharing an attribute, that attribute having a number (in the given range) of files associated with it.\n" \

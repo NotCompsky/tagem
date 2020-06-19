@@ -166,6 +166,10 @@ successness::ReturnType get_int_range(const char*& qry,  Int& min,  Int& max){
 	if (*qry != '-')
 		return successness::invalid;
 	max = s2n<uint64_t>(qry);
+	if (*qry == '?'){
+		max = -1;
+		++qry;
+	}
 	if (*qry != ' ')
 		return successness::invalid;
 	
