@@ -45,3 +45,13 @@ target_link_libraries(server wangle::wangle mariadbclient curl)
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
 endif()
+
+add_custom_target(
+	auto__server_determine_response_hpp ALL
+	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/server-endpoints.txt" "${SRC_DIR}/auto__server-determine-response.hpp"
+	BYPRODUCTS auto__server-determine-response.hpp
+	COMMENT "Generating bigboi switch statement"
+)
+
+add_dependencies(server auto__server_determine_response_hpp)
