@@ -6,6 +6,7 @@
 
 constexpr
 bool is_cookie_header(const char*& str){
+	--str;
 	STR2SWITCH(7,"Cookie: ",return true;)
 	return false;
 }
