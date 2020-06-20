@@ -25,36 +25,36 @@ GET /a/exec.json?>
 	return this->get_exec_json(str)
 
 GET /a/d/i/>
-	return this->dir_info(str)
+	return this->dir_info(++str)
 
 GET /a/f/id/>
-	return this->files_given_ids(str)
+	return this->files_given_ids(++str)
 GET /a/f/i/>
-	return this->file_info(str)
+	return this->file_info(++str)
 GET /a/f/d/>
-	return this->files_given_dir(str)
+	return this->files_given_dir(++str)
 GET /a/f/t/>
-	return this->files_given_tag(str)
+	return this->files_given_tag(++str)
 
 GET /a/t/f/>
-	return this->tags_given_file(str)
+	return this->tags_given_file(++str)
 
 GET /a/x/u/p/c/>
-	return this->external_user_posts(str, DatabaseInfo::has_cmnt_tbl, "cmnt", "post")
+	return this->external_user_posts(++str, DatabaseInfo::has_cmnt_tbl, "cmnt", "post")
 GET /a/x/u/p/l/>
-	return this->external_user_posts(str, DatabaseInfo::has_post2like_tbl, "post2like", "post")
+	return this->external_user_posts(++str, DatabaseInfo::has_post2like_tbl, "post2like", "post")
 GET /a/x/u/p/u/>
-	return this->external_user_posts(str, DatabaseInfo::has_post_tbl, "post", "id")
+	return this->external_user_posts(++str, DatabaseInfo::has_post_tbl, "post", "id")
 
 GET /a/x/u/i/>
-	return this->external_user_info(str)
+	return this->external_user_info(++str)
 GET /a/x/p/i/>
-	return this->external_post_info(str)
+	return this->external_post_info(++str)
 GET /a/x/p/l/>
-	return this->external_post_likes(str)
+	return this->external_post_likes(++str)
 
 GET /i/>
-	return this->return_img(str)
+	return this->return_img(++str)
 GET /favicon.ico >
 	return
 		std::string_view(
@@ -96,38 +96,38 @@ GET /s/tbl2.css >
 		#include "static/table_as_table.css"
 
 GET /S/f/>
-	return this->stream_file(str)
+	return this->stream_file(++str)
 
 
 POST /add-D/>
-	return this->add_to_tbl('D', str)
+	return this->add_to_tbl('D', ++str)
 POST /add-d/>
-	return this->add_to_tbl('d', str)
+	return this->add_to_tbl('d', ++str)
 POST /add-f/>
-	return this->add_to_tbl('f', str)
+	return this->add_to_tbl('f', ++str)
 POST /add-t/>
-	return this->add_to_tbl('t', str)
+	return this->add_to_tbl('t', ++str)
 POST /x/c/rm/>
-	return this->external_cmnt_rm(str)
+	return this->external_cmnt_rm(++str)
 POST /dl/>
-	return this->post__dl(str)
+	return this->post__dl(++str)
 POST /t/c/>
-	return this->post__add_children_to_tags(str)
+	return this->post__add_children_to_tags(++str)
 POST /t/p/>
-	return this->post__add_parents_to_tags(str)
+	return this->post__add_parents_to_tags(++str)
 POST /exec/>
-	return this->exec_task(str)
+	return this->exec_task(++str)
 POST /f/save/>
-	return this->post__save_file(str)
+	return this->post__save_file(++str)
 POST /f/orig/>
-	return this->replace_file_path_and_set_old_path_as_backup(str)
+	return this->replace_file_path_and_set_old_path_as_backup(++str)
 POST /f/v/>
-	return this->post__add_var_to_file(str)
+	return this->post__add_var_to_file(++str)
 POST /f/t/>
-	return this->post__add_tag_to_file(str)
+	return this->post__add_tag_to_file(++str)
 POST /q/ >
-	return this->parse_qry(str)
+	return this->parse_qry(++str)
 POST /login >
 	break
 POST /f/merge/>
-	return this->post__merge_files(str)
+	return this->post__merge_files(++str)
