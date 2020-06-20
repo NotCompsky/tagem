@@ -1,6 +1,14 @@
 #pragma once
 
 #include "nullable_string_view.hpp"
+#include <compsky/macros/str2switch.hpp>
+
+
+constexpr
+bool is_cookie_header(const char*& str){
+	STR2SWITCH(7,"Cookie: ",return true;)
+	return false;
+}
 
 
 constexpr
@@ -9,44 +17,10 @@ const char* get_cookies(const char* headers){
 	while(*(++headers) != 0){ // NOTE: headers is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
 		if (*headers != '\n')
 			continue;
-		bool is_cookie_header = false;
-		switch(*(++headers)){
-			case 'C':
-				switch(*(++headers)){
-					case 'o':
-						switch(*(++headers)){
-							case 'o':
-								switch(*(++headers)){
-									case 'k':
-										switch(*(++headers)){
-											case 'i':
-												switch(*(++headers)){
-													case 'e':
-														switch(*(++headers)){
-															case ':':
-																switch(*(++headers)){
-																	case ' ':
-																		is_cookie_header = true;
-																		break;
-																}
-																break;
-														}
-														break;
-												}
-												break;
-										}
-										break;
-								}
-								break;
-						}
-						break;
-				}
-				break;
-		}
+		if (likely(not is_cookie_header(headers)))
+			continue;
 		if (unlikely(*headers == 0))
 			break;
-		if (likely(not is_cookie_header))
-			continue;
 		
 		return headers;
 	}
