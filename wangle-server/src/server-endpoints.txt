@@ -94,13 +94,6 @@ GET /s/tbl2.css >
 		#include "headers/Cache-Control/1day.c"
 		"\n"
 		#include "static/table_as_table.css"
-GET /s/u.js >
-	return
-		#include "headers/return_code/OK.c"
-		#include "headers/Content-Type/javascript.c"
-		#include "headers/Cache-Control/1day.c"
-		"\n"
-		#include "static/utils.js"
 
 GET /S/f/>
 	return this->stream_file(str)
