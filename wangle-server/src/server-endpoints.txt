@@ -125,7 +125,7 @@ POST /f/v/>
 	return this->post__add_var_to_file(str)
 POST /f/t/>
 	return this->post__add_tag_to_file(str)
-POST /q/>
+POST /q/ >
 	return this->parse_qry(str)
 POST /login >
 	break
