@@ -2277,6 +2277,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	constexpr
 	std::string_view determine_response(const char* str){
+		--str;
 #		include "auto__server-determine-response.hpp"
 		return _r::not_found;
 	}
