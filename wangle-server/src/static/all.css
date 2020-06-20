@@ -45,7 +45,7 @@
 
 #include "profile.css"
 
-".help p, .task-content{"
+".help p, .task-content, #text-edit{"
 	"background:#fff;"
 	"color:#000;"
 	"font-family:monospace;"

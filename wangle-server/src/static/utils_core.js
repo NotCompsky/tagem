@@ -8,6 +8,7 @@
 	"for(const id of ["
 		"'help',"
 		"'qry-help',"
+		"'text-editor',"
 		"'f',"
 		"'d',"
 		"'t',"

@@ -14,6 +14,7 @@
 #include "utils_add_devices.js"
 #include "utils_update_orig_src.js"
 #include "utils_cookies.js"
+#include "text-editor.js"
 #include "qry.js"
 
 "function init_selects(var_name){"

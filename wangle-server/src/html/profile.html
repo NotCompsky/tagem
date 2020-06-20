@@ -106,7 +106,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 )========="
 #define CREATE_SITEMAP_LINK(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dirs()","All Dirs")("view_tags()","All Tags")("view_tasks()","All Tasks")("unhide('help')","Help")("add_tags_dialog()","+Tags")("add_files_dialog()","+Files")("add_dirs_dialog()","+Dirs")("add_devices_dialog()","+Devices")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dirs()","All Dirs")("view_tags()","All Tags")("view_tasks()","All Tasks")("unhide('help')","Help")("view_text_editor()","Text Editor")("add_tags_dialog()","+Tags")("add_files_dialog()","+Files")("add_dirs_dialog()","+Dirs")("add_devices_dialog()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -269,6 +269,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 #undef FILE_TAGGER_FN
 #undef FILE_TAGGER_FILE_IDS
 
+"</div>"
+
+"<div id=\"text-editor\">"
+	"<h2 contenteditable=\"true\">Edit file name here...</h2>"
+	"<button onclick=\"text_editor_save()\">Save</button>"
+	"<div id=\"text-edit\" contenteditable=\"true\">"
+		"Write text here..."
+	"</div>"
 "</div>"
 
 #define COL_NAMES ("Name")

@@ -10,6 +10,7 @@ const char* skip_to(const char* s,  const char c){
 			return nullptr;
 		if (*s == c)
 			return s;
+		++s;
 	}
 }
 

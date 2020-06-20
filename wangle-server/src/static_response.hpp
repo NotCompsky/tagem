@@ -20,6 +20,12 @@ namespace _r {
 		"Server error"
 	;
 	
+	constexpr static const std::string_view not_implemented_yet =
+		#include "headers/return_code/SERVER_ERROR.c"
+		"\n"
+		"Not implemented yet"
+	;
+	
 	constexpr static const std::string_view post_ok =
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/text.c"

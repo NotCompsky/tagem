@@ -488,6 +488,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
+	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
+		this->mysql_query("SELECt id FROM _dir WHERE id=", dir_id, " AND id NOT IN" USER_DISALLOWED_DIRS(user_id));
+		const bool rc = (this->mysql_assign_next_row());
+		if (rc)
+			this->mysql_free_res();
+		return rc;
+	}
+	
 	std::string_view parse_qry(const char* s){
 		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
 		if (user_id == user_auth::SpecialUserID::invalid)
@@ -712,8 +720,118 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		*this->itr = 0;
 	}
 	
+	std::string_view post__save_file(const char* s){
+		uint64_t file_id = a2n<uint64_t>(&s);
+		if(*s != '/')
+			return _r::not_found;
+		++s;
+		const uint64_t dir_id  = a2n<uint64_t>(&s);
+		if(*s != '/')
+			return _r::not_found;
+		++s;
+		
+		const char* const tag_ids = get_comma_separated_ints(&s, ' ');
+		if (tag_ids == nullptr)
+			return _r::not_found;
+		const size_t tag_ids_len = (uintptr_t)s - (uintptr_t)tag_ids;
+		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if (user_id == user_auth::SpecialUserID::invalid)
+			return _r::not_found;
+		
+		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
+			return _r::not_found;
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		const char* const file_name = s;
+		const char* const b4_file_contents = skip_to(s, '\n');
+		const size_t file_name_length = (uintptr_t)b4_file_contents - (uintptr_t)file_name;
+		
+		if(unlikely(b4_file_contents == nullptr))
+			return _r::not_found;
+		
+		const char* const file_contents = b4_file_contents + 1;
+		
+		if (file_id != 0)
+			// Update an existing file
+			return _r::not_implemented_yet;
+		
+		this->mysql_query(
+			"SELECT CONCAT(d.name, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
+			"FROM _dir d "
+			"WHERE d.id=", dir_id
+		);
+		const char* path;
+		if(unlikely(not this->mysql_assign_next_row(&path)))
+			// Invalid dir_id
+			return _r::not_found;
+		
+		FILE* f = fopen(path, "rb");
+		if(unlikely(f != nullptr)){
+			fclose(f);
+			this->mysql_free_res();
+			return 
+				#include "headers/return_code/SERVER_ERROR.c"
+				"\n"
+				"File already exists"
+			;
+		}
+		
+		f = fopen(path, "wb");
+		printf("Creating file: %s\n", path);
+		this->mysql_free_res();
+		if(unlikely(f == nullptr))
+			return _r::server_error;
+		fwrite(file_contents, 1, strlen(file_contents), f);
+		fclose(f);
+		
+		this->mysql_query(
+			"SELECT id "
+			"FROM _file "
+			"WHERE dir=", dir_id, " "
+			  "AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
+		);
+		while(this->mysql_assign_next_row(&file_id));
+		if (file_id != 0){
+			fprintf(stderr, "Warning: File existed in DB but not on FS\n");
+		} else {
+			const unsigned mimetype_id = 17; // "text/plain"
+			
+			/*
+			 * WARNING: Probably violates law of least surprise.
+			 * If file exists on filesystem: nothing happens
+			 * Else if file exists on DB:    file is created on FS and DB, and tagged
+			 * Else if file not exist:       file is created on DB, and tagged
+			 */
+			this->mysql_exec(
+				"INSERT INTO _file "
+				"(dir,user,mimetype,name)"
+				"VALUES(",
+					dir_id, ',',
+					user_id, ',',
+					mimetype_id, ',',
+					'"', _f::esc, '"', _f::strlen, file_name_length, file_name, '"',
+				")"
+			);
+			
+			this->mysql_query(
+				"SELECT id "
+				"FROM _file "
+				"WHERE dir=", dir_id, " "
+				"AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
+			);
+			while(this->mysql_assign_next_row(&file_id));
+		}
+		
+		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, file_id);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
-		const unsigned file_id = a2n<unsigned>(&s);
+		const uint64_t file_id = a2n<uint64_t>(&s);
 		++s;
 		const uint64_t new_path__dir_id = a2n<uint64_t>(s);
 		
@@ -2109,6 +2227,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	template<typename... Args>
+	void add_tags_to_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... file_ids_args){
+		this->mysql_exec(
+			"INSERT INTO file2tag (tag, file, user) "
+			"SELECT t.id,f.id,", user_id, " "
+			"FROM _tag t "
+			"JOIN _file f "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  "AND f.id IN (", file_ids_args..., ")"
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
+			"ON DUPLICATE KEY UPDATE file=file"
+		);
+	}
+	
 	std::string_view post__add_tag_to_file(const char* s){
 		const char* const file_ids = get_comma_separated_ints(&s, '/');
 		if (file_ids == 0)
@@ -2124,17 +2257,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (user_id == user_auth::SpecialUserID::invalid)
 			return _r::not_found;
 		
-		this->mysql_exec(
-			"INSERT INTO file2tag (tag, file, user) "
-			"SELECT t.id,f.id,", user_id, " "
-			"FROM _tag t "
-			"JOIN _file f "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-			"ON DUPLICATE KEY UPDATE file=file"
-		);
+		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
 		
 		return _r::post_ok;
 	}
@@ -2361,6 +2484,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 								switch(*(s++)){
 									case '/':
 										switch(*(s++)){
+											case 's':
+												switch(*(s++)){
+													case 'a':
+														switch(*(s++)){
+															case 'v':
+																switch(*(s++)){
+																	case 'e':
+																		switch(*(s++)){
+																			case '/':
+																				// /f/save/FILE_ID/DIR_ID/TAG_IDS
+																				return this->post__save_file(s);
+																		}
+																		break;
+																}
+																break;
+														}
+														break;
+												}
+												break;
 											case 'o':
 												switch(*(s++)){
 													case 'r':
