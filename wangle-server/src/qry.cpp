@@ -943,8 +943,8 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name REGEXP ";
-				rc = append_escaped_str(where, qry);
+				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name";
+				rc = process_name_list(where, 'd', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -958,8 +958,8 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1) REGEXP ";
-				rc = append_escaped_str(where, qry);
+				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1)";
+				rc = process_name_list(where, 'd', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
