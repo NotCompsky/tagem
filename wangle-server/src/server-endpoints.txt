@@ -7,6 +7,8 @@ GET / >
 		"\n"
 		#include "html/profile.html"
 
+GET /a/d.json?>
+	return this->get_dir_json(str)
 GET /a/D.json?>
 	return this->get_device_json(str)
 GET /a/P.json?>
