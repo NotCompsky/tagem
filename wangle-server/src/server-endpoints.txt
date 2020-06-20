@@ -7,19 +7,19 @@ GET / >
 		"\n"
 		#include "html/profile.html"
 
-GET /a/D.json >
+GET /a/D.json?>
 	return this->get_device_json(str)
-GET /a/P.json >
+GET /a/P.json?>
 	return this->get_protocol_json(str)
-GET /a/t.json >
+GET /a/t.json?>
 	return this->get_tag_json(str)
-GET /a/t2p.json >
+GET /a/t2p.json?>
 	return this->get_tag2parent_json(str)
-GET /a/mt.json >
+GET /a/mt.json?>
 	return this->get_mimetype_json(str)
-GET /a/x.json >
+GET /a/x.json?>
 	return _r::external_db_json
-GET /a/exec.json >
+GET /a/exec.json?>
 	return this->get_exec_json(str)
 
 GET /a/d/i/>
