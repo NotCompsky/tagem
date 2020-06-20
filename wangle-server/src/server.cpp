@@ -1731,7 +1731,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		static char dst_pth[4096];
 		
 		const char* dir_name = nullptr;
-		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
+		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		if (not this->mysql_assign_next_row(&dir_name)){
 			// No visible directory with the requested ID
 			// MySQL results already freed
