@@ -67,8 +67,6 @@ namespace successness {
 	};
 }
 
-__attribute__((visibility("default")))
-extern "C"
 successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned user_id);
 
 

@@ -1,12 +1,6 @@
 #include "qry.hpp"
+#include <compsky/asciify/asciify.hpp>
 #include <cstddef> // for size_t
-#include <inttypes.h> // for uintX_t
-typedef unsigned long size_t; // Because emscripten defines it as unsigned int... which causes a bunch of errors
-#include <string>
-
-#ifndef __linux__
-# warning "Just compile with -D__linux__, for some reason em++ just doesn't set it..."
-#endif
 
 #ifndef NOTTDEBUG
 # include <cstdio>
@@ -77,6 +71,11 @@ namespace attribute_name {
 	constexpr static const char* const MIMETYPE = "mimetype";
 	constexpr static const char* const SHA256 = "sha256";
 	constexpr static const char* const SIZE = "size";
+}
+
+namespace _f {
+	using namespace compsky::asciify::flag;
+	constexpr StrLen strlen;
 }
 
 struct SQLArg {
@@ -1251,8 +1250,6 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 	}
 }
 
-__attribute__((visibility("default")))
-extern "C"
 successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned user_id){
 	// TODO: Look into filtering the filters with the user_id permission filters, to avoid brute-forcing.
 	// Not sure this is a big issue.
@@ -1302,9 +1299,19 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 		return rc;
 	}
 	
-	std::string itr_string = std::string("SELECT X.id\nFROM ") + tbl_full_name_of_base_tbl(which_tbl) + std::string(" X\n") + join + std::string("WHERE ") + where + std::string("\nAND X.id NOT IN(") + user_disallowed_X_tbl_filter_inner_pre + std::to_string(user_id) + std::string(")ORDER BY ") + order_by + std::string("\nLIMIT ") + std::to_string(limit) + std::string("OFFSET ") + std::to_string(offset);
-	
-	memcpy(itr, itr_string.c_str(), itr_string.size());
+	compsky::asciify::asciify(
+		itr,
+		"SELECT "
+			"X.id\n"
+		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
+		join.c_str(),
+		"WHERE ", where.c_str(), "\n"
+		  "AND X.id NOT IN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")"
+		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
+		"LIMIT ", limit, " "
+		"OFFSET ", offset,
+		'\0'
+	);
 	
 	LOG("Query OK\n");
 	
