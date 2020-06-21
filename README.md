@@ -8,7 +8,7 @@ In active development. Documentation almost non-existent as yet, though plenty o
 
 ## Web App
 
-![Tag Page](https://user-images.githubusercontent.com/30552567/85212393-25b82b80-b34a-11ea-9627-0a2af66005da.png)
+![Tag Page](https://user-images.githubusercontent.com/30552567/85228009-b9383d80-b3d8-11ea-84ae-bffde7c83b24.png)
 ![File Page](https://user-images.githubusercontent.com/30552567/85212396-2b157600-b34a-11ea-8823-f77fde1e91a0.png)
 ![Lightweight](https://user-images.githubusercontent.com/30552567/85212398-2bae0c80-b34a-11ea-8d46-fe9d2aa3bf96.png)
 ![Query1](https://user-images.githubusercontent.com/30552567/85212569-04f0d580-b34c-11ea-968d-78a63d2cdc11.png)
