@@ -39,7 +39,7 @@
 		"return;"
 	"}"
 	"$.post({"
-		"url:\"/merge/\"+master_f_id+\"/\"+dupl_file_ids.join(\",\"),"
+		"url:\"/f/merge/\"+master_f_id+\"/\"+dupl_file_ids.join(\",\"),"
 		"success:function(){"
 			"deselect_rows('#f .tbody .tr', 1);"
 			"$(\"#f .tbody .tr.selected2\").remove();"
