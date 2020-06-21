@@ -38,10 +38,15 @@ def get_return_value(gen:BIterator) -> str:
 
 if __name__ == '__main__':
 	import sys
+	import os
 	
-	src:str = open(sys.argv[1]).read()
+	src:str = sys.argv[1]
+	dst:str = sys.argv[2]
 	
-	gen = BIterator([line for line in src.split("\n")])
+	if os.path.getmtime(dst) >= os.path.getmtime(src):
+		exit(0)
+	
+	gen = BIterator([line for line in open(src).read().split("\n")])
 	ls:list = []
 	for line in gen:
 		if line == "":
@@ -49,4 +54,4 @@ if __name__ == '__main__':
 		if line.endswith(">"):
 			ls.append((line[:-1], get_return_value(gen)))
 	
-	open(sys.argv[2],"w").write(generate_list(True, ls, 1))
+	open(dst,"w").write(generate_list(True, ls, 1))
