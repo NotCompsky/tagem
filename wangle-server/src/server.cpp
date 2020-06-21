@@ -48,6 +48,13 @@
 	if (user_id == user_auth::SpecialUserID::invalid) \
 		return _r::not_found;
 
+#define GET_DB_INFO \
+	const unsigned db_indx = a2n<unsigned>(&s); \
+	if ((db_indx == 0) or (db_indx >= db_infos.size())) \
+		return _r::not_found; \
+	const unsigned db_id = db_indx2id[db_indx]; \
+	DatabaseInfo& db_info = db_infos.at(db_id);
+
 
 #include <curl/curl.h>
 
@@ -864,16 +871,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view external_user_posts(const char* s,  const unsigned required_db_info_bool_indx,  const char* const tbl_name,  const char* const col_name){
-		const unsigned db_indx = a2n<unsigned>(&s);
+		GET_DB_INFO
 		++s;
 		const uint64_t external_user_id = a2n<uint64_t>(s);
-		
-		if ((db_indx == 0) or (db_indx >= db_infos.size()))
-			return _r::not_found;
-		
-		const unsigned db_id = db_indx2id[db_indx];
-		
-		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		if (not db_info.is_true(required_db_info_bool_indx))
 			return _r::not_found;
@@ -929,16 +929,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view external_user_info(const char* s){
 		// Viewing the user's liked posts and comments etc. is in a separate function
 		
-		const unsigned db_indx = a2n<unsigned>(&s);
+		GET_DB_INFO
 		++s;
 		const uint64_t user_id = a2n<uint64_t>(s);
-		
-		if ((db_indx == 0) or (db_indx >= db_infos.size()))
-			return _r::not_found;
-		
-		const unsigned db_id = db_indx2id[db_indx];
-		
-		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		this->mysql_query_db_by_id(
 			db_info,
@@ -983,15 +976,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view external_cmnt_rm(const char* s){
-		const unsigned db_indx = a2n<unsigned>(&s);
+		GET_DB_INFO
 		++s;
 		const uint64_t cmnt_id = a2n<uint64_t>(s);
-		
-		if ((db_indx == 0) or (db_indx >= db_infos.size()))
-			return _r::not_found;
-		
-		const unsigned db_id = db_indx2id[db_indx];
-		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		if (not db_info.is_true(DatabaseInfo::has_cmnt_tbl))
 			return _r::not_found;
@@ -1007,16 +994,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view external_post_likes(const char* s){
-		const unsigned db_indx = a2n<unsigned>(&s);
+		GET_DB_INFO
 		++s;
 		const uint64_t post_id = a2n<uint64_t>(s);
-		
-		if ((db_indx == 0) or (db_indx >= db_infos.size()))
-			return _r::not_found;
-		
-		const unsigned db_id = db_indx2id[db_indx];
-		
-		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		if (not db_info.is_true(DatabaseInfo::has_post2like_tbl))
 			return _r::EMPTY_JSON_LIST;
@@ -1040,16 +1020,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view external_post_info(const char* s){
 		// Data comes in two parts: data excluding comments, and then comments
 		
-		const unsigned db_indx = a2n<unsigned>(&s);
+		GET_DB_INFO
 		++s;
 		const uint64_t post_id = a2n<uint64_t>(s);
-		
-		if ((db_indx == 0) or (db_indx >= db_infos.size()))
-			return _r::not_found;
-		
-		const unsigned db_id = db_indx2id[db_indx];
-		
-		DatabaseInfo& db_info = db_infos.at(db_id);
 		
 		char* const _buf_plus_offset = this->buf + 300;
 		char* _itr_plus_offset = _buf_plus_offset;
