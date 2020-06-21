@@ -13,7 +13,7 @@
 		"return;"
 	"$.ajax({"
 		"type:\"POST\","
-		"url:\"http://localhost:1999/add-t/\" + parent_ids.join(\",\") + \"/\","
+		"url:\"http://localhost:1999/t/add/\" + parent_ids.join(\",\") + \"/\","
 		// The trailing slash is to make it slightly easier for the server
 		"data:tag_names.join(\"\\n\"),"
 		"success:function(){"
