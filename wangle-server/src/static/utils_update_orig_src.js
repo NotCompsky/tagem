@@ -23,7 +23,7 @@
 	"$.ajax({"
 		"type:\"POST\","
 		"dataType:\"text\","
-		"url:\"http://localhost:1999/f/orig/\" + file_id + \"/\" + dir,"
+		"url:\"/f/orig/\" + file_id + \"/\" + dir,"
 		"data:url.substr(_dir_name.length),"
 		"success:function(){"
 			"hide_update_orig_src_dialog();"
