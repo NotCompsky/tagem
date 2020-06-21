@@ -51,7 +51,7 @@
 			"return;"
 		"$.ajax({"
 			"type:\"POST\","
-			"url:\"http://localhost:1999/t/add/\" + parent_ids.join(\",\") + \"/\","
+			"url:\"/t/add/\" + parent_ids.join(\",\") + \"/\","
 			// The trailing slash is to make it slightly easier for the server
 			"data:tag_names.join(\"\\n\"),"
 			"success:function(){"
@@ -103,7 +103,7 @@
 	"}"
 	"$.ajax({"
 		"type:\"POST\","
-		"url:\"http://localhost:1999/\" + obj_type + \"/add/\" + ((obj_type==='f')?tag_ids.join(\",\")+\"/\":\"\")," // Trailing slash is for server's convenience
+		"url:\"/\" + obj_type + \"/add/\" + ((obj_type==='f')?tag_ids.join(\",\")+\"/\":\"\")," // Trailing slash is for server's convenience
 		"data:urls.map(([parent,url]) => parent+'\\t'+url).join('\\n'),"
 		"success:function(){"
 			"if(obj_type==='f')"
