@@ -24,7 +24,7 @@ const char* skip_to_post_data(const char* s){
 constexpr
 bool is_range_header(const char*& str){
 	--str;
-	STR2SWITCH(7,"Range: bytes=",return true;)
+	STR2SWITCH(13,"Range: bytes=",return true;)
 	return false;
 }
 
