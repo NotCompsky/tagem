@@ -1663,6 +1663,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
+	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
+		url = id_and_url;
+		parent_id = a2n<uint64_t>(&url);
+		if(unlikely(*url != '\t'))
+			return true;
+		++url;
+		url_length = id_and_url_length - ( (uintptr_t)url - (uintptr_t)id_and_url );
+		return false;
+	}
+	
 	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
 		this->mysql_exec(
 			"INSERT INTO _tag "
@@ -1706,7 +1716,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		regenerate_tag_json = true;
 	}
 	
-	void add_D_to_db(const UserIDIntType user_id,  const unsigned protocol,  const char* const url,  const size_t url_len){
+	bool add_D_to_db(const UserIDIntType user_id,  const char* const id_and_url,  const size_t id_and_url_len){
+		const char* url;
+		size_t url_len;
+		uint64_t protocol;
+		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, protocol, url, url_len)))
+			return true;
+		
 		this->mysql_exec(
 			"INSERT INTO _device "
 			"(protocol, name,user)"
@@ -1717,9 +1733,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"LIMIT 1"
 		);
 		regenerate_device_json = true;
+		return false;
 	}
 	
-	void add_d_to_db(const UserIDIntType user_id,  const uint64_t device,  const char* const url,  const size_t url_len){
+	bool add_d_to_db(const UserIDIntType user_id,  const char* const id_and_url,  const size_t id_and_url_len){
+		const char* url;
+		size_t url_len;
+		uint64_t device;
+		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, device, url, url_len)))
+			return true;
+		
 		this->mysql_exec(
 			"INSERT INTO _dir "
 			"(device, name, user)"
@@ -1731,15 +1754,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"LIMIT 1"
 		);
 		regenerate_dir_json = true;
+		return false;
 	}
 	
-	bool add_f_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* url,  const size_t dir_id_and_url_len){
-		const char* const dir_id_and_url = url;
-		const uint64_t dir_id = a2n<uint64_t>(&url);
-		if(unlikely(*url != '\t'))
+	bool add_f_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* id_and_url,  const size_t id_and_url_len){
+		const char* url;
+		size_t url_len;
+		uint64_t dir_id;
+		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, dir_id, url, url_len)))
 			return true;
-		++url;
-		const size_t url_len = dir_id_and_url_len - ( (uintptr_t)url - (uintptr_t)dir_id_and_url );
 		
 		this->mysql_exec(
 			"INSERT INTO _file "
@@ -1786,12 +1809,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (user_id == user_auth::SpecialUserID::invalid)
 			return _r::not_found;
 		
-		uint64_t parent_id;
-		if ((tbl != 'f') and (tbl != 't')){
-			parent_id = a2n<uint64_t>(&s);
-			// device for tbl d, protocol (unsigned) for tbl D
-		}
-		
 		s = skip_to_post_data(s);
 		if (s == nullptr)
 			return _r::not_found;
@@ -1810,10 +1827,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 						return _r::not_found;
 					break;
 				case 'd':
-					this->add_d_to_db(user_id, parent_id, url, url_len);
+					if (unlikely(this->add_d_to_db(user_id, url, url_len)))
+						return _r::not_found;
 					break;
 				case 'D':
-					this->add_D_to_db(user_id, parent_id, url, url_len);
+					if (unlikely(this->add_D_to_db(user_id, url, url_len)))
+						return _r::not_found;
 					break;
 				case 't':
 					this->add_t_to_db(user_id, tag_ids, tag_ids_len, url, url_len);

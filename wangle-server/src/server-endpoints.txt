@@ -99,13 +99,13 @@ GET /S/f/>
 	return this->stream_file(++str)
 
 
-POST /add-D/>
+POST /D/add/>
 	return this->add_to_tbl('D', ++str)
-POST /add-d/>
+POST /d/add/>
 	return this->add_to_tbl('d', ++str)
-POST /add-f/>
+POST /f/add/>
 	return this->add_to_tbl('f', ++str)
-POST /add-t/>
+POST /t/add/>
 	return this->add_to_tbl('t', ++str)
 POST /x/c/rm/>
 	return this->external_cmnt_rm(++str)
