@@ -214,9 +214,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 
 #include "components/add-tags-dialog.html"
 
-#include "components/add-files-dialog.html"
-#include "components/add-dirs-dialog.html"
-#include "components/add-devices-dialog.html"
+#define CREATE__ADD_TO_DB__DIALOG(r, data, elem) \
+	"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-dialog\">" \
+		"<input id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-input\" type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(1, elem) "\"/>" \
+		"<button class=\"inline\" onclick=\"add_to_db__append('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">+</button>" \
+		"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-queue\" contenteditable=\"true\"></div>" \
+		"<button onclick=\"add_to_db('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">Add to database</button>" \
+	"</div>"
+BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"
