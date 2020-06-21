@@ -5,6 +5,7 @@
 	"document.getElementById(id).classList.remove(\"hidden\");"
 "}"
 "function hide_all_except(ls){"
+	"document.getElementById('profile-img').removeAttribute('onclick');"
 	"for(const id of ["
 		"'help',"
 		"'qry-help',"

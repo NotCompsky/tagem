@@ -1843,6 +1843,33 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		} while(true);
 	}
 	
+	std::string_view update_tag_thumbnail(const char* s){
+		const uint64_t tag_id = a2n<uint64_t>(&s);
+		if((tag_id == 0) or (*(++s) != '/'))
+			// Skip slash
+			return _r::not_found;
+		
+		const char* const url = s;
+		size_t url_length = 0;
+		while((*s != ' ') and (*s != 0))
+			++url_length;
+		
+		if(*s == 0)
+			return _r::not_found;
+		
+		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
+		if ((user_id == user_auth::SpecialUserID::invalid) or (user_id == user_auth::SpecialUserID::guest))
+			return _r::not_found;
+		
+		this->mysql_exec(
+			"UPDATE tag "
+			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
+			"WHERE id=", tag_id
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__merge_files(const char* s){
 		const uint64_t orig_f_id = a2n<uint64_t>(&s);
 		++s; // Skip slash

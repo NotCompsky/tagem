@@ -99,6 +99,8 @@ GET /S/f/>
 	return this->stream_file(++str)
 
 
+POST /p/thumb/>
+	return this->update_tag_thumbnail(++str)
 POST /D/add/>
 	return this->add_to_tbl('D', ++str)
 POST /d/add/>

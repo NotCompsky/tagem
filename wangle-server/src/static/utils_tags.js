@@ -66,9 +66,28 @@
 	"});"
 "}"
 
+"function update_tag_thumb(){"
+	"const url = prompt(\"New Thumbnail URL\", \"\");"
+	"if(url===\"\")"
+		"return;"
+	"$.ajax({"
+		"type:\"POST\","
+		"url:\"http://localhost:1999/t/thumb/\" + tag_id + \"/\" + url,"
+		// The trailing slash is to make it slightly easier for the server
+		"data:tag_names.join(\"\\n\"),"
+		"success:function(){"
+			"tagselect.val(\"\").change();"
+			"queue.innerHTML = \"\";" // Remove URLs
+			"alert(\"Success\");"
+			"refetch_json('t', '/a/t.json');"
+		"},"
+		"dataType:\"text\""
+	"});"
+"}"
 
 "function view_tag(_tag_id){"
 	"hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn']);"
+	"document.getElementById('profile-img').onclick = update_tag_thumb;"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"
