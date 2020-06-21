@@ -39,7 +39,10 @@
 	"const queue = document.getElementById('add-'+obj_type+'-queue');"
 	
 	"if(obj_type==='t'){"
-		"const tag_names = Array.from(queue.getElementsByTagName('ul')).map(x => x.textContent);"
+		"const tag_names = [];"
+		"queue.innerText.replace(/(?:^|\\n)([^\\n]+)/g, function(group0, group1){"
+			"tag_names.push(group1);"
+		"});"
 		"if(tag_names.length===0)"
 			"return;"
 		"const tagselect = $('#tagselect-self-p');"
