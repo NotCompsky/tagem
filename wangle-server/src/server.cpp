@@ -1845,14 +1845,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	std::string_view update_tag_thumbnail(const char* s){
 		const uint64_t tag_id = a2n<uint64_t>(&s);
-		if((tag_id == 0) or (*(++s) != '/'))
-			// Skip slash
+		if (tag_id == 0)
 			return _r::not_found;
+		
+		++s; // Skip slash
 		
 		const char* const url = s;
 		size_t url_length = 0;
-		while((*s != ' ') and (*s != 0))
+		while((*s != ' ') and (*s != 0)){
+			++s;
 			++url_length;
+		}
 		
 		if(*s == 0)
 			return _r::not_found;
@@ -1862,7 +1865,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		
 		this->mysql_exec(
-			"UPDATE tag "
+			"UPDATE _tag "
 			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
 			"WHERE id=", tag_id
 		);

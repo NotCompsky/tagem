@@ -73,13 +73,9 @@
 	"$.ajax({"
 		"type:\"POST\","
 		"url:\"http://localhost:1999/t/thumb/\" + tag_id + \"/\" + url,"
-		// The trailing slash is to make it slightly easier for the server
-		"data:tag_names.join(\"\\n\"),"
 		"success:function(){"
-			"tagselect.val(\"\").change();"
-			"queue.innerHTML = \"\";" // Remove URLs
 			"alert(\"Success\");"
-			"refetch_json('t', '/a/t.json');"
+			"t[tag_id][1] = url;"
 		"},"
 		"dataType:\"text\""
 	"});"
