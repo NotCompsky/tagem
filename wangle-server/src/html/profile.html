@@ -206,13 +206,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 	"<a onclick=\"display_posts(db_id,user_id,'c')\">Commented Posts</a>"
 "</div>"
 
-#include "components/select-dir.html"
-#include "components/select-device.html"
-#include "components/select-protocol.html"
+#define CREATE_SELECT(r, data, elem) \
+	"<div id=\"" elem "select-container\">" \
+		"<select id=\"" elem "select\"></select>" \
+	"</div>"
+BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 
 #include "components/change-file-to-backup.html"
-
-#include "components/add-tags-dialog.html"
 
 #define CREATE__ADD_TO_DB__DIALOG(r, data, elem) \
 	"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-dialog\">" \
@@ -221,7 +221,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 		"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-queue\" contenteditable=\"true\"></div>" \
 		"<button onclick=\"add_to_db('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">Add to database</button>" \
 	"</div>"
-BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
+BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"
@@ -333,14 +333,12 @@ R"=========(
       </span>
     </div>
 )========="
-#define SIDE_WRAPPER "parents"
-#include "components/side-wrapper.html"
-
-#define SIDE_WRAPPER "children"
-#include "components/side-wrapper.html"
-
-#define SIDE_WRAPPER "tags"
-#include "components/side-wrapper.html"
+#define CREATE_SIDE_WRAPPER(r, data, elem) \
+	"<div id=\"" elem "-container\" class=\"side-wrapper\">" \
+		"<div class=\"side-title\">" elem "</div>" \
+		"<div id=\"" elem "\"></div>" \
+	"</div>"
+BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("parents")("children")("tags"))
 R"=========(
     <div class="search-bar right-search">
       <input type="text" placeholder="Search" />

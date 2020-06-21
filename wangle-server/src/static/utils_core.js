@@ -28,7 +28,7 @@
 		"'tagselect-self-p-btn',"
 		"'tagselect-self-c-container',"
 		"'tagselect-self-c-btn',"
-		"'add-tags-dialog',"
+		"'add-t-dialog',"
 		"'add-f-dialog',"
 		"'add-d-dialog',"
 		"'add-D-dialog',"
