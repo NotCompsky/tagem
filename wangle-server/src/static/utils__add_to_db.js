@@ -73,10 +73,12 @@
 		"alert(\"No URLs\");"
 		"return;"
 	"}"
+	"let tagselect;"
+	"let tag_ids;"
 	"if(obj_type==='f'){"
 		// TODO: Allow tagging of directories and devices
-		"const tagselect = $('#tagselect-files');"
-		"const tag_ids = tagselect.val();"
+		"tagselect = $('#tagselect-files');"
+		"tag_ids = tagselect.val();"
 		"if(tag_ids.length === 0){"
 			// TODO: Replace with confirmation dialog
 			"alert(\"No tags\");"
