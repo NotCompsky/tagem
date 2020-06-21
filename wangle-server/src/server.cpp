@@ -43,6 +43,12 @@
 	DISTINCT_F2T_TAG_IDS
 
 
+#define GET_USER_ID \
+	const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username=")); \
+	if (user_id == user_auth::SpecialUserID::invalid) \
+		return _r::not_found;
+
+
 #include <curl/curl.h>
 
 
@@ -496,9 +502,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view parse_qry(const char* s){
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
@@ -563,17 +567,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
 	}
 	
-	std::string_view dir_info(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
+	std::string_view dir_info(const char* s){
+		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(id_str, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT name "
@@ -592,17 +594,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view file_info(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
+	std::string_view file_info(const char* s){
+		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(id_str, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT "
@@ -734,9 +734,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t tag_ids_len = (uintptr_t)s - (uintptr_t)tag_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
 			return _r::not_found;
@@ -837,9 +835,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if ((file_id == 0) or (new_path__dir_id == 0))
 			return _r::not_found;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		if (unlikely(skip_to_body(&s)))
 			return _r::not_found;
@@ -882,9 +878,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (not db_info.is_true(required_db_info_bool_indx))
 			return _r::not_found;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query_db_by_id(
 			db_info,
@@ -1153,17 +1147,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(_buf_plus_offset,  (uintptr_t)_itr_plus_offset - (uintptr_t)_buf_plus_offset);
 	}
 	
-	std::string_view files_given_tag(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
+	std::string_view files_given_tag(const char* s){
+		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(id_str, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT "
@@ -1197,9 +1189,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t file_ids_len  = (uintptr_t)s - (uintptr_t)file_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT "
@@ -1220,17 +1210,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view files_given_dir(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
+	std::string_view files_given_dir(const char* s){
+		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_dir, id))
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(id_str, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT "
@@ -1271,9 +1259,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_dir_json(const char* s){
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
 			uint64_t id;
 			const char* str1;
@@ -1309,9 +1295,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_device_json(const char* s){
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
 			uint64_t id;
 			const char* name;
@@ -1349,9 +1333,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_exec_json(const char* s){
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		if (user_id == user_auth::SpecialUserID::guest)
 			return
@@ -1379,8 +1361,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view exec_task(const char* s){
 		const unsigned task_id = a2n<unsigned>(s);
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if ((user_id == user_auth::SpecialUserID::invalid)  or  (user_id == user_auth::SpecialUserID::guest))
+		GET_USER_ID
+		if (user_id == user_auth::SpecialUserID::guest)
 			return _r::not_found;
 		
 		this->mysql_query(
@@ -1441,9 +1423,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		#define get_tag_json_qry_postfix \
 			  "AND p.id NOT IN"  
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
 			uint64_t id;
 			const char* name;
@@ -1483,9 +1463,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_tag2parent_json(const char* s){
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
 			uint64_t id;
 			uint64_t id2;
@@ -1560,9 +1538,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (unlikely( (to != 0) and (to <= from) ))
 			return _r::not_found;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->mysql_query(
 			"SELECT m.name, CONCAT(d.name, f", (dir_id==0)?"":"2", ".name) "
@@ -1805,9 +1781,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			++s; // Skip trailing slash
 		}
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		s = skip_to_post_data(s);
 		if (s == nullptr)
@@ -1860,8 +1834,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if(*s == 0)
 			return _r::not_found;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if ((user_id == user_auth::SpecialUserID::invalid) or (user_id == user_auth::SpecialUserID::guest))
+		GET_USER_ID
+		if (user_id == user_auth::SpecialUserID::guest)
 			return _r::not_found;
 		
 		this->mysql_exec(
@@ -1882,9 +1856,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t dupl_f_ids_len  = (uintptr_t)s - (uintptr_t)dupl_f_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		// TODO: Check user against user2whitelisted_action
 		
@@ -1914,9 +1886,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
 		++s; // Skip slash
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		const char* url = s;
 		unsigned n_errors = 0;
@@ -2042,9 +2012,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t parent_ids_len  = (uintptr_t)s - (uintptr_t)parent_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->tag_parentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
 		
@@ -2063,9 +2031,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t child_ids_len  = (uintptr_t)s - (uintptr_t)child_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->tag_parentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
 		
@@ -2098,9 +2064,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
 		
-		const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username="));
-		if (user_id == user_auth::SpecialUserID::invalid)
-			return _r::not_found;
+		GET_USER_ID
 		
 		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
 		
