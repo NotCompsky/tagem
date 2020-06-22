@@ -37,6 +37,7 @@
 
 "function add_to_db(obj_type){"
 	"const queue = document.getElementById('add-'+obj_type+'-queue');"
+	"const parent_type = obj_type2parent_type(obj_type);"
 	
 	"if(obj_type==='t'){"
 		"const tag_names = [];"
@@ -66,8 +67,9 @@
 	"}"
 	
 	"const urls = [];"
-	"queue.innerText.replace(/(?:^|\\n)([0-9]+)[\\s]+([^\\n]+)/g, function(group0, group1, group2){"
-		"urls.push([group1, group2]);"
+	"queue.innerText.replace(/(?:^|\\n)URL:[\\s]*([^\\n]+)\\nParent:[\\s]*([^\\n]+)/g, function(group0, url, parent){"
+		"const parent_id = Object.entries(window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];"
+		"urls.push([parent_id, url]);"
 	"});"
 	"if(urls.length===0){"
 		"alert(\"No URLs\");"
@@ -86,7 +88,6 @@
 		"}"
 	"}"
 	
-	"const parent_type = obj_type2parent_type(obj_type);"
 	"for(const [_parent_id, url] of urls){"
 		"const parent_name = window[parent_type][parseInt(_parent_id)][0];"
 		"if(!url.startsWith(parent_name)){"
@@ -129,9 +130,9 @@
 	"}else{"
 		"const parent_type = obj_type2parent_type(obj_type);"
 		"const parent_select_id = nickname2name(parent_type) + \"select\";"
-		"let parent_id = document.getElementById(parent_select_id).value;"
+		"let parent_name = window[parent_type][document.getElementById(parent_select_id).value];"
 		
-		"if((parent_id === \"\") || (!x.startsWith(window[parent_type][parent_id][0]))){"
+		"if(parent_name === undefined){"
 			// Guess the directory
 			"const tpl = guess_parenty_thing_from_name(parent_type, x);"
 			"if(tpl === undefined){"
@@ -139,10 +140,9 @@
 				"alert(\"Cannot find suitable \" + parent_type_name + \"\\nPlease create a \" + parent_type_name + \" object that is a prefix of the \" + nickname2fullname(obj_type) + \" URL\");"
 				"return;"
 			"}"
-			"parent_id = tpl[0];"
-			"$('#' + parent_select_id).val(parent_id).trigger('change');"
+			"parent_name = tpl[1];"
 		"}"
-		"document.getElementById('add-' + obj_type + '-queue').innerText += \"\\n\" + parent_id + \"\\t\" + inp.value;"
+		"document.getElementById('add-' + obj_type + '-queue').innerText += \"\\nURL:    \" + inp.value + \"\\nParent: \" + parent_name + \"\\n\";"
 	"}"
 	"inp.value = \"\";"
 "}"

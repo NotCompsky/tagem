@@ -1368,15 +1368,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view get_protocol_json(const char* s){
-		this->mysql_query_buf("SELECT id, name FROM protocol");
+		this->mysql_query_buf("SELECT id, name, \"\" FROM protocol");
 		
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
 			uint64_t id; // unsigned, really - just can't justify creating another function for template
 			const char* name;
+			const char* empty; // To deliver it as id:[name] rather than id:name
 			constexpr _r::flag::Dict dict;
-			this->init_json(nullptr, dict, &_r::protocol_json, &id, &name);
+			this->init_json(nullptr, dict, &_r::protocol_json, &id, &name, &empty);
 		}
 		return _r::protocol_json;
 	}
