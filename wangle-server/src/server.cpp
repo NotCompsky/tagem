@@ -1818,6 +1818,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE id=", tag_id
 		);
 		
+		regenerate_tag_json = true;
+		
 		return _r::post_ok;
 	}
 	
