@@ -63,28 +63,34 @@
 #define DEFINE_SQL_ARGS(r, data, elem) \
 	BOOST_PP_TUPLE_ELEM(0, elem) BOOST_PP_TUPLE_ELEM(1, elem);
 
+#define MORDOR1(sql_args) \
+	BOOST_PP_SEQ_FOR_EACH(DEFINE_SQL_ARGS, _, sql_args)
+
+#define MORDOR2(sql_args) \
+	BOOST_PP_SEQ_FOR_EACH(PRECEDE_WITH_COMMA_AND, _, sql_args)
+
 #define CONCAT(x, y) CONCAT_(x, y)
 #define CONCAT_(x, y) x ## y
 
 #define RETURN_JSON_FOR_USER_OR_GUEST(json_name, is_dict, sql_args, qry) \
 	constexpr static const _r::flag:: BOOST_PP_IF(is_dict, Dict, Arr) dict_or_arr; \
 	if (user_id != user_auth::SpecialUserID::guest){ \
-		BOOST_PP_SEQ_FOR_EACH(DEFINE_SQL_ARGS, _, sql_args) \
+		MORDOR1(sql_args) \
 		this->itr = this->buf; \
 		this->mysql_query( \
 			qry \
 		); \
-		this->init_json(&this->itr, dict_or_arr, nullptr, BOOST_PP_SEQ_FOR_EACH(PRECEDE_WITH_COMMA_AND, _, sql_args)); \
+		this->init_json(&this->itr, dict_or_arr, nullptr, MORDOR2(sql_args)); \
 		return this->get_buf_as_string_view(); \
 	} \
 	std::unique_lock lock(_r::mutex:: json_name); \
 	if (unlikely(_r::regenerate:: json_name)){ \
 		_r::regenerate:: json_name = false; \
-		BOOST_PP_SEQ_FOR_EACH(DEFINE_SQL_ARGS, _, sql_args) \
+		MORDOR1(sql_args) \
 		this->mysql_query( \
 			qry \
 		); \
-		this->init_json(nullptr, dict_or_arr, &_r:: json_name, BOOST_PP_SEQ_FOR_EACH(PRECEDE_WITH_COMMA_AND, _, sql_args)); \
+		this->init_json(nullptr, dict_or_arr, &_r:: json_name, MORDOR2(sql_args)); \
 	} \
 	return _r:: json_name;
 
@@ -1266,7 +1272,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	std::string_view get_dir_json(const char* s){
 		GET_USER_ID
-		RETURN_JSON_FOR_USER_OR_GUEST(dir_json, TRUE, BOOST_PP_VARIADIC_SEQ_TO_SEQ((uint64_t,id)(const char*,str1)(const char*,str2)), \
+		#define ARGS BOOST_PP_VARIADIC_SEQ_TO_SEQ((uint64_t,id)(const char*,str1)(const char*,str2))
+		RETURN_JSON_FOR_USER_OR_GUEST(dir_json, TRUE, ARGS, \
 			"SELECT id, name, device " \
 			"FROM _dir " \
 			"WHERE id NOT IN" USER_DISALLOWED_DIRS(user_id) \
@@ -1275,7 +1282,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	std::string_view get_device_json(const char* s){
 		GET_USER_ID
-		RETURN_JSON_FOR_USER_OR_GUEST(device_json, TRUE, BOOST_PP_VARIADIC_SEQ_TO_SEQ((uint64_t,id)(const char*,name)(unsigned,protocol)(const char*,embed_pre)(const char*,embed_post)), \
+		#define ARGS BOOST_PP_VARIADIC_SEQ_TO_SEQ((uint64_t,id)(const char*,name)(unsigned,protocol)(const char*,embed_pre)(const char*,embed_post))
+		RETURN_JSON_FOR_USER_OR_GUEST(device_json, TRUE, ARGS, \
 			"SELECT id, name, protocol, embed_pre, embed_post " \
 			"FROM _device " \
 			"WHERE id NOT IN" USER_DISALLOWED_DEVICES(user_id) \
