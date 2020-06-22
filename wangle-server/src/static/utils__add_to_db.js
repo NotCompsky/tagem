@@ -111,6 +111,7 @@
 				"tagselect.val(\"\").change();"
 			"queue.innerHTML = \"\";" // Remove URLs
 			"alert(\"Success\");"
+			"refetch_json(parent_type, '/a/'+parent_type+'.json');"
 		"},"
 		"error:err_alert,"
 		"dataType:\"text\""
