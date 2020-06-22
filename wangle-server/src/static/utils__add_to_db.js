@@ -132,9 +132,9 @@
 	"}else{"
 		"const parent_type = obj_type2parent_type(obj_type);"
 		"const parent_select_id = nickname2name(parent_type) + \"select\";"
-		"let parent_name = window[parent_type][document.getElementById(parent_select_id).value];"
-		
-		"if(parent_name === undefined){"
+		"const parent = window[parent_type][document.getElementById(parent_select_id).value];"
+		"let parent_name;"
+		"if(parent === undefined){"
 			// Guess the directory
 			"const tpl = guess_parenty_thing_from_name(parent_type, x);"
 			"if(tpl === undefined){"
@@ -143,6 +143,8 @@
 				"return;"
 			"}"
 			"parent_name = tpl[1];"
+		"} else {"
+			"parent_name = parent[0];"
 		"}"
 		"document.getElementById('add-' + obj_type + '-queue').innerText += \"\\nURL:    \" + inp.value + \"\\nParent: \" + parent_name + \"\\n\";"
 	"}"

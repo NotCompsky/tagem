@@ -68,7 +68,7 @@
 
 "function update_tag_thumb(){"
 	"const url = prompt(\"New Thumbnail URL\", \"\");"
-	"if(url===\"\")"
+	"if(url===\"\" || url===null)"
 		"return;"
 	"$.ajax({"
 		"type:\"POST\","
