@@ -30,7 +30,9 @@
 #include <mutex>
 #include <cstring> // for malloc
 
-#define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f.md5_of_path)))), \"data:,\"),"
+#define NULL_IMG_SRC "\"data:,\""
+
+#define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f.md5_of_path)))), " NULL_IMG_SRC "),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag),\"\")"
@@ -1387,12 +1389,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT "\
 				"t.id,"\
 				"t.name,"\
-				"GROUP_CONCAT(p.thumbnail ORDER BY (1/(1+t2pt.depth))*(p.thumbnail!=\"\") DESC LIMIT 1),"\
+				"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1),"\
 				"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "\
 			"FROM _tag t "\
 			"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "\
 			"JOIN _tag p ON p.id=t2pt.parent "\
-			"WHERE (t2pt.depth=0 OR p.thumbnail != \"\" OR p.cover != \"\")"\
+			"WHERE (t2pt.depth=0 OR p.thumbnail IS NOT NULL OR p.cover != \"\")"\
 			  "AND t.id NOT IN"
 		#define get_tag_json_qry_postfix \
 			  "AND p.id NOT IN"  

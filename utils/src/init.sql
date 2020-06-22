@@ -89,6 +89,27 @@ INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/webm");
 INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp");
 INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi");
 
+CREATE TABLE ext2mimetype (
+	ext VARBINARY(10) NOT NULL PRIMARY KEY,
+	mimetype INT UNSIGNED NOT NULL,
+	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
+);
+INSERT INTO ext2mimetype
+(ext,mimetype)
+SELECT REGEXP_REPLACE(SUBSTRING_INDEX(name, '/', -1), '^x-', ''), id
+FROM mimetype
+WHERE SUBSTRING_INDEX(name, '/', -1) NOT IN ("plain","mpeg","webm","javascript","!!NONE!!","quicktime","x-ms-asf")
+  AND name NOT IN ("video/ogg")
+UNION
+SELECT "mp4", id FROM mimetype WHERE name='video/mpeg'
+UNION
+SELECT "mp3", id FROM mimetype WHERE name='audio/mpeg'
+UNION
+SELECT "jpg", id FROM mimetype WHERE name='image/jpeg'
+ON DUPLICATE KEY UPDATE mimetype=mimetype
+;
+
+
 CREATE TABLE _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	dir BIGINT UNSIGNED NOT NULL,
@@ -119,7 +140,7 @@ CREATE TABLE file_backup (
 	name VARBINARY(1024) NOT NULL,
 	mimetype INT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	PRIMARY KEY (file, dir),
+	PRIMARY KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES _dir (id),
 	FOREIGN KEY (file) REFERENCES _file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
@@ -176,7 +197,7 @@ CREATE TABLE _tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	user INT UNSIGNED NOT NULL,
     name VARBINARY(128),
-	thumbnail VARBINARY(200) NOT NULL DEFAULT "",
+	thumbnail VARBINARY(200),
 	cover VARBINARY(200) NOT NULL DEFAULT "",
     UNIQUE KEY (name),
 	FOREIGN KEY (user) REFERENCES user (id),
