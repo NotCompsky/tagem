@@ -68,12 +68,7 @@
 "}"
 
 "function toggle_row_selected(tr, which){"
-	"const _s = \"selected\" + which;"
-	"if (tr.classList.contains(_s)){"
-		"tr.classList.remove(_s);"
-	"} else {"
-		"tr.classList.add(_s);"
-	"}"
+	"tr.classList.toggle(\"selected\" + which);"
 "}"
 "function select_rows(selector){"
 	"$(selector).addClass(\"selected1\");"
