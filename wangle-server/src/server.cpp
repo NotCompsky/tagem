@@ -1643,9 +1643,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
+	char file_path[4096];
+	
 	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
-		FunctionSuccessness rc;
-		static char dst_pth[4096];
+		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
 		if (in_str(file_name, '/')){
@@ -1675,7 +1676,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
 		
-		compsky::asciify::asciify(dst_pth, dir_name, file_name, '\0');
+		compsky::asciify::asciify(this->file_path, dir_name, file_name, '\0');
 		this->mysql_free_res();
 		
 		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
@@ -1685,20 +1686,36 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			if (is_ytdl)
 				rc = FunctionSuccessness::malicious_request;
 			else
-				rc = (std::filesystem::copy_file(url, dst_pth)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
+				rc = (std::filesystem::copy_file(url, this->file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
 			if (is_ytdl){
-				char path_fmt[4096];
+				char dummy[1];
 				compsky::asciify::asciify(
-					path_fmt,
+					this->file_path,
 					dir_name,
-					_f::repeat, '%', file_name, // Escape % as %%
+					"%(extractor)s-%(id)s.%(ext)s",
 					'\0'
 				);
-				const char* ytdl_args[] = {"youtube-dl", "-o", path_fmt, "-f", YTDL_FORMAT, url, nullptr};
-				rc = (proc::exec(3600, ytdl_args)) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
+				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
+				if (proc::exec(3600, ytdl_args, dummy)){
+					rc = FunctionSuccessness::server_error;
+					goto dl_or_cp_file__return;
+				}
+				
+				// Now run youtube-dl a second time, to paste the output filename into this->file_path, because it has no option to print the filename without only simulating
+				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
+				if (proc::exec(3600, ytdl2_args, this->file_path)){
+					rc = FunctionSuccessness::server_error;
+					goto dl_or_cp_file__return;
+				}
+				
+				replace_first_instance_of(this->file_path, '\n', '\0');
+				
+				printf("YTDL to: %s\n", this->file_path);
+				
+				rc = FunctionSuccessness::ok;
 			} else
-				rc = dl_file__curl(user_headers, url, dst_pth, overwrite_existing, mimetype);
+				rc = dl_file__curl(user_headers, url, this->file_path, overwrite_existing, mimetype);
 		}
 		
 		dl_or_cp_file__return:
@@ -1994,13 +2011,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_exec(
 			"INSERT INTO file_backup "
 			"(file,dir,name,mimetype,user)"
-			"SELECT ", file_id, ',', dir_id, ",f.name,mt.id,", user_id, " "
+			"SELECT ", file_id, ',', dir_id, ",SUBSTR(\"", _f::esc, '"', this->file_path, "\",LENGTH(d.name)+1),mt.id,", user_id, " "
 			"FROM _file f "
+			"JOIN _dir d "
 			"JOIN mimetype mt ON mt.",
 				(is_mimetype_set)?"name=\"":"id=f.mimetype",
 				(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
 				(is_mimetype_set)?"\"":"", " "
 			"WHERE f.id=", file_id, " "
+			  "AND d.id=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
 		);
 		
