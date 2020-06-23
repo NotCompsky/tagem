@@ -1925,8 +1925,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		
 		GET_USER_ID
-		if (user_id == user_auth::SpecialUserID::guest)
-			return _r::not_found;
+		BLACKLIST_GUEST
 		
 		this->mysql_exec(
 			"UPDATE _tag "
