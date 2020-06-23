@@ -133,5 +133,7 @@ POST /login >
 	break
 POST /f/merge/>
 	return this->post__merge_files(++str)
+POST /f/backup/>
+	return this->post__backup_file(++str)
 POST /x/dl/reddit/p/>
 	return this->archive_reddit_post(++str)

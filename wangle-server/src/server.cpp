@@ -30,6 +30,8 @@
 #include <mutex>
 #include <cstring> // for malloc
 
+#include <filesystem> // for std::filesystem::copy_file
+
 #define NULL_IMG_SRC "\"data:,\""
 
 #define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f.md5_of_path)))), " NULL_IMG_SRC "),"
@@ -48,6 +50,9 @@
 #define GET_USER_ID \
 	const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username=")); \
 	if (user_id == user_auth::SpecialUserID::invalid) \
+		return _r::not_found;
+#define BLACKLIST_GUEST \
+	if (user_id == user_auth::SpecialUserID::guest) \
 		return _r::not_found;
 
 #define GET_DB_INFO \
@@ -70,6 +75,8 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::JSONEscape json_esc;
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
+
+constexpr static const size_t MAX_MIMETYPE_SZ = 100;
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
 
@@ -99,7 +106,29 @@ enum FunctionSuccessness {
 
 std::vector<std::string> banned_client_addrs;
 
-FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth,  const bool overwrite_existing){
+bool is_local_file_or_dir(const char* const url){
+	return (url[0] == '/');
+}
+
+bool in_str(const char* str,  const char c){
+	while(*str != 0){
+		if (*str == c)
+			return true;
+		++str;
+	}
+	return false;
+}
+
+bool endswith(const char* str,  const char c){
+	if (*str == 0)
+		// Guarantee at least one iteration of the loop
+		return false;
+	while(*str != 0)
+		++str;
+	return (*(--str) == c);
+}
+
+FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
 	if (not overwrite_existing){
 		if (fopen(dst_pth, "rb") != nullptr)
 			return FunctionSuccessness::ok;
@@ -117,6 +146,11 @@ FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_
 	curl_easy_perform(handle);
 	
 	fclose(f);
+	
+	char* _mimetype = nullptr;
+	const auto rc = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, _mimetype);
+	if (not rc  and  _mimetype)
+		memccpy(mimetype, _mimetype, 0, MAX_MIMETYPE_SZ);
 	
 	curl_easy_cleanup(handle);
 	
@@ -1339,8 +1373,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const unsigned task_id = a2n<unsigned>(s);
 		
 		GET_USER_ID
-		if (user_id == user_auth::SpecialUserID::guest)
-			return _r::not_found;
+		BLACKLIST_GUEST
 		
 		this->mysql_query(
 			"SELECT t.content "
@@ -1594,27 +1627,61 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing){
-		FunctionSuccessness rc = FunctionSuccessness::ok;
+	FunctionSuccessness dl_or_cp_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype){
+		FunctionSuccessness rc;
 		static char dst_pth[4096];
-		
 		const char* dir_name = nullptr;
+		
+		if (in_str(file_name, '/')){
+			// TODO: Allow for this
+			rc = FunctionSuccessness::server_error;
+			goto dl_or_cp_file__return;
+		}
+		
 		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		if (not this->mysql_assign_next_row(&dir_name)){
 			// No visible directory with the requested ID
 			// MySQL results already freed
-			return FunctionSuccessness::malicious_request;
+			rc = FunctionSuccessness::malicious_request;
+			goto dl_or_cp_file__return;
+		}
+		
+		if (not endswith(dir_name, '/')){
+			// TODO: Allow for this
+			rc = FunctionSuccessness::server_error;
+			goto dl_or_cp_file__return;
+		}
+		
+		if (not is_local_file_or_dir(dir_name)){
+			rc = FunctionSuccessness::malicious_request;
+			goto dl_or_cp_file__return;
 		}
 		
 		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
 		
 		compsky::asciify::asciify(dst_pth, dir_name, file_name, '\0');
-		
-		rc = dl_file__curl(url, dst_pth, overwrite_existing);
-		
-		dl_file__cleanup:
 		this->mysql_free_res();
+		
+		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
+		// TODO: Check device is mounted
+		
+		if (is_local_file_or_dir(url)){
+			rc = (std::filesystem::copy_file(url, dst_pth)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
+		} else {
+			rc = dl_file__curl(url, dst_pth, overwrite_existing, mimetype);
+		}
+		
+		dl_or_cp_file__return:
+		// For possible cleanups
+		
 		return rc;
+	}
+	
+	FunctionSuccessness dl_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote){
+		if (is_local_file_or_dir(url) and force_remote)
+			return FunctionSuccessness::malicious_request;
+		
+		return this->dl_or_cp_file(user_id, dir_id, file_name, url, overwrite_existing, mimetype);
 	}
 	
 	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
@@ -1866,6 +1933,50 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view post__backup_file(const char* s){
+		const uint64_t file_id = a2n<uint64_t>(&s);
+		++s; // Skip slash
+		const uint64_t dir_id = a2n<uint64_t>(s);
+		if ((dir_id == 0) or (file_id == 0))
+			return _r::not_found;
+		
+		GET_USER_ID
+		
+		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
+		
+		this->mysql_query("SELECT d.name, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id=", file_id);
+		char orig_file_path[4096];
+		const char* orig_dir_name;
+		const char* file_name;
+		if (unlikely(not this->mysql_assign_next_row(&orig_dir_name, &file_name)))
+			// No results
+			return _r::not_found;
+		
+		char mimetype[100] = {0};
+		MYSQL_RES* const prev_res = this->res;
+		const auto rc = this->dl_or_cp_file(user_id, dir_id, file_name, orig_file_path, false, mimetype);
+		mysql_free_result(prev_res);
+		if (rc != FunctionSuccessness::ok)
+			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
+		
+		const bool is_mimetype_set = (mimetype[0]);
+		
+		this->mysql_exec(
+			"INSERT INTO file_backup "
+			"(file,dir,name,mimetype,user)"
+			"SELECT ", file_id, ',', dir_id, ",f.name,mt.id,", user_id, " "
+			"FROM _file f "
+			"JOIN mimetype mt ON mt.",
+				(is_mimetype_set)?"name=\"":"id=f.mimetype",
+				(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
+				(is_mimetype_set)?"\"":"", " "
+			"WHERE f.id=", file_id, " "
+			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__dl(const char* s){
 		static char url_buf[4096];
 		
@@ -1907,7 +2018,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					++file_name; // Skip the slash
 					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
-					switch(dl_file(user_id, dir_id, file_name, url_buf, is_html_file)){
+					char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
+					switch(this->dl_file(user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
@@ -1916,13 +2028,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 							return _r::not_found;
 					}
 					
+					const bool is_mimetype_set = (mimetype[0]);
+					
 					this->mysql_exec(
 						"INSERT INTO _file"
-						"(name, dir, user)"
+						"(name, dir, user, mimetype)"
 						"VALUES(",
 							'"', _f::esc, '"', file_name, '"', ',',
 							dir_id, ',',
-							user_id,
+							user_id, ',',
+							(is_mimetype_set)?"(SELECT id FROM mimetype WHERE name=\"":"",
+							(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
+							(is_mimetype_set)?"\")":"0",
 						")"
 						"ON DUPLICATE KEY UPDATE dir=dir"
 					);

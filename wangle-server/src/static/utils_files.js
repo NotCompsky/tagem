@@ -137,6 +137,7 @@
 "}"
 "function view_file(_file_id){"
 	"hide_all_except(['tags-container','file-info','tagselect-files-container','tagselect-files-btn']);"
+	"hide('add-f-backup');"
 	
 	"file_tagger_fn = after_tagged_this_file;"
 	"get_file_ids = get_file_id;"
@@ -208,6 +209,23 @@
 	"window.location.hash = '';"
 	
 	"document.getElementById(\"profile-name\").textContent = \"Files\";"
+"}"
+
+"function view_file_add_backup_dialog(){"
+	"unhide('dirselect-container');"
+	"unhide('add-f-backup');"
+"}"
+"function backup_file(){"
+	"const _dir_id = document.getElementById(\"dirselect\").value;"
+	"$.post({"
+		"url: \"/f/backup/\" + file_id + \"/\" + _dir_id,"
+		"dataType:\"text\","
+		"success:function(){"
+			"hide('dirselect-container');"
+			"hide('add-f-backup');"
+		"},"
+		"error:err_alert"
+	"});"
 "}"
 
 "let playlist__file_ids = [];"
