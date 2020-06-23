@@ -10,21 +10,25 @@
 namespace proc {
 
 template<size_t output_buf_sz>
-bool exec(int timeout,  const char* const* argv,  char(&output_buf)[output_buf_sz]){
+bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  char(&output_buf)[output_buf_sz]){
 	int status;
 	const char* which_err;
 	int pipefd[2];
 	
 	pipe(pipefd);
 	const pid_t pid = fork();
+	if (unlikely(pid < 0)){
+		fprintf(stderr, "Forking failed\n");
+		return true;
+	}
 	if (pid == 0){
 		// Redirect fork's stdout to pipefd
 		close(pipefd[0]);
-		dup2(pipefd[1], STDOUT_FILENO);
+		dup2(pipefd[1], which_std_to_pipe);
 		
 		if (execvp(argv[0], (char**)argv)){
-			which_err = "Cannot";
-			goto print_args_and_return;
+			fprintf(stderr, "Cannot execute: %s\n", argv[0]);
+			exit(1);
 		}
 	}
 	close(pipefd[1]);

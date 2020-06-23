@@ -22,6 +22,21 @@ const char* skip_to(const char* s,  const char c){
 	}
 }
 
+template<typename Char, size_t sz>
+Char* skip_to_after(Char* s,  const char(&A)[sz]){
+	do {
+		const char* a = A;
+		Char* const S = s;
+		while(*s == *a){
+			++s;
+			++a;
+			if (*a == 0)
+				return S + sz - 1;
+		}
+	} while(*(++s) != 0);
+	return nullptr;
+}
+
 constexpr
 const char* get_comma_separated_ints(const char** str,  const char separator){
 	const char* const start = *str;
@@ -65,12 +80,39 @@ bool endswith(const char* str,  const char c){
 static_assert(endswith("foo",'o'));
 static_assert(not endswith("bar",'o'));
 
+constexpr
+void replace_first_instance_of(char* str,  const char a,  const char b){
+	// str is guaranteed to be max characters long
+	while(*str != 0){
+		if(*str == a){
+			*str = b;
+			return;
+		}
+		++str;
+	}
+}
+
 template<size_t N>
 void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
 	// str is guaranteed to be max characters long
 	for(size_t i = 0;  i < N;  ++i){
 		if(str[i] == a){
 			str[i] = b;
+			return;
+		}
+	}
+}
+
+template<size_t N>
+void replace_first_instance_of(char(&str)[N],  const char a,  const char* b,  const char c){
+	// str is guaranteed to be max characters long
+	for(size_t i = 0;  i < N;  ++i){
+		if(str[i] == a){
+			while(*b != 0){
+				str[i++] = *(b++);
+			}
+			// WARNING: No bounds checking (laziness)
+			str[i] = c;
 			return;
 		}
 	}

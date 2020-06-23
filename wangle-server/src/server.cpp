@@ -1689,7 +1689,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				rc = (std::filesystem::copy_file(url, this->file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
 			if (is_ytdl){
-				char dummy[1];
 				compsky::asciify::asciify(
 					this->file_path,
 					dir_name,
@@ -1697,20 +1696,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					'\0'
 				);
 				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(3600, ytdl_args, dummy)){
+				if (proc::exec(60, ytdl_args, STDERR_FILENO, this->file_path)){
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
+				}
+				this->file_path[sizeof(this->file_path)-1] = 0;
+				char* const file_extension = skip_to_after<char>(this->file_path, "Requested formats are incompatible for merge and will be merged into ");
+				if (file_extension != nullptr){
+					replace_first_instance_of(file_extension, '.', '\0');
+					
+					compsky::asciify::asciify(
+						this->file_path,
+						dir_name,
+						"%(extractor)s-%(id)s.", // Omit the file extension, as youtube-dl does not get the correct extension in this case when simulating (why force simulating then?!)
+						'\0'
+					);
 				}
 				
 				// Now run youtube-dl a second time, to paste the output filename into this->file_path, because it has no option to print the filename without only simulating
 				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(3600, ytdl2_args, this->file_path)){
+				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, this->file_path)){
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
 				}
 				
-				replace_first_instance_of(this->file_path, '\n', '\0');
-				
+				if (file_extension == nullptr){
+					replace_first_instance_of(this->file_path, '\n', '\0');
+				} else {
+					replace_first_instance_of(this->file_path, '\n', file_extension, '\0');
+				}
 				printf("YTDL to: %s\n", this->file_path);
 				
 				rc = FunctionSuccessness::ok;
