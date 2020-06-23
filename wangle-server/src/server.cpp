@@ -54,6 +54,9 @@
 #define BLACKLIST_GUEST \
 	if (user_id == user_auth::SpecialUserID::guest) \
 		return _r::not_found;
+#define GREYLIST_GUEST \
+	if (user_id == user_auth::SpecialUserID::guest) \
+		return _r::requires_login;
 
 #define GET_DB_INFO \
 	const unsigned db_indx = a2n<unsigned>(&s); \
@@ -1390,13 +1393,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	std::string_view get_exec_json(const char* s){
 		GET_USER_ID
-		
-		if (user_id == user_auth::SpecialUserID::guest)
-			return
-				#include "headers/return_code/UNAUTHORISED.c"
-				"\n"
-				"You need to log in to see tasks"
-			;
+		GREYLIST_GUEST
 		
 		uint64_t id;
 		const char* name;

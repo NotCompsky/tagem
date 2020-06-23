@@ -8,6 +8,12 @@ namespace _r {
 		"Not Found"
 	;
 	
+	constexpr static const std::string_view requires_login =
+		#include "headers/return_code/UNAUTHORISED.c"
+		"\n"
+		"Requires login"
+	;
+	
 	constexpr static const std::string_view invalid_file = 
 		#include "headers/return_code/NOT_FOUND.c"
 		"\n"
