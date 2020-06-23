@@ -1,37 +1,14 @@
 #pragma once
 
+#include "read_request.hpp"
 #include "nullable_string_view.hpp"
 #include <compsky/macros/str2switch.hpp>
 
 
 constexpr
-bool is_cookie_header(const char*& str){
-	// No need to --str, since it starts on the newline before the start of the header
-	STR2SWITCH(8,"Cookie: ",return true;)
-	return false;
-}
-
-
-constexpr
-const char* get_cookies(const char* headers){
-	// Returns a pointer to the character immediately BEFORE the cookies list (i.e. the space character in "Cookie: "). This is a silly little micro-optimistaion.
-	while(*(++headers) != 0){ // NOTE: headers is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
-		if (*headers != '\n')
-			continue;
-		if (likely(not is_cookie_header(headers)))
-			continue;
-		if (unlikely(*headers == 0))
-			break;
-		
-		return headers;
-	}
-	return nullptr;
-}
-
-constexpr
-NullableStringView get_cookie(const char* s,  const char* const cookie_name){
+NullableStringView get_cookie(const char* headers,  const char* const cookie_name){
 	// NOTE: cookie_name should include the equals sign
-	const char* cookies = get_cookies(s);
+	const char* cookies = SKIP_TO_HEADER(8,"Cookie: ")(headers);
 	NullableStringView desired_cookie;
 	if (cookies == nullptr){
 		return desired_cookie;

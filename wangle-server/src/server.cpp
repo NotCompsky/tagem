@@ -106,10 +106,12 @@ enum FunctionSuccessness {
 
 std::vector<std::string> banned_client_addrs;
 
+constexpr
 bool is_local_file_or_dir(const char* const url){
 	return (url[0] == '/');
 }
 
+constexpr
 bool in_str(const char* str,  const char c){
 	while(*str != 0){
 		if (*str == c)
@@ -118,7 +120,10 @@ bool in_str(const char* str,  const char c){
 	}
 	return false;
 }
+static_assert(in_str("foo",'f'));
+static_assert(not in_str("bar",'f'));
 
+constexpr
 bool endswith(const char* str,  const char c){
 	if (*str == 0)
 		// Guarantee at least one iteration of the loop
@@ -127,8 +132,23 @@ bool endswith(const char* str,  const char c){
 		++str;
 	return (*(--str) == c);
 }
+static_assert(endswith("foo",'o'));
+static_assert(not endswith("bar",'o'));
 
-FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
+template<size_t N>
+void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
+	// str is guaranteed to be max characters long
+	for(size_t i = 0;  i < N;  ++i){
+		if(str[i] == a){
+			str[i] = b;
+			return;
+		}
+	}
+}
+
+FunctionSuccessness dl_file__curl(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
+	FunctionSuccessness rc;
+	
 	if (not overwrite_existing){
 		if (fopen(dst_pth, "rb") != nullptr)
 			return FunctionSuccessness::ok;
@@ -143,18 +163,43 @@ FunctionSuccessness dl_file__curl(const char* const url,  const char* const dst_
 	CURL* const handle = curl_easy_init();
 	curl_easy_setopt(handle, CURLOPT_URL, url);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, f);
-	curl_easy_perform(handle);
 	
+	/* Copy headers */
+	struct curl_slist* headers = nullptr;
+	char user_agent_buf[1000];
+	const char* const user_agent = SKIP_TO_HEADER(12,"User-Agent: ")(user_headers);
+	if (user_agent == nullptr)
+		return FunctionSuccessness::malicious_request;
+	memccpy(user_agent_buf,  user_agent - 11,  '\r',  sizeof(user_agent_buf));
+	replace_first_instance_of(user_agent_buf, '\r', '\0');
+	headers = curl_slist_append(headers, user_agent_buf);
+	headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+	headers = curl_slist_append(headers, "Accept-Language: en-GB,en;q=0.5");
+	headers = curl_slist_append(headers, "Accept-Encoding: gzip, deflate, br");
+	headers = curl_slist_append(headers, "Connection: keep-alive");
+	headers = curl_slist_append(headers, "Upgrade-Insecure-Requests: 1");
+	headers = curl_slist_append(headers, "DNT: 1");
+	headers = curl_slist_append(headers, "Pragma: no-cache");
+	headers = curl_slist_append(headers, "Cache-Control: no-cache");
+	headers = curl_slist_append(headers, "TE: Trailers");
+	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
+	
+	const CURLcode curl_rc = curl_easy_perform(handle);
 	fclose(f);
-	
-	char* _mimetype = nullptr;
-	const auto rc = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, _mimetype);
-	if (not rc  and  _mimetype)
-		memccpy(mimetype, _mimetype, 0, MAX_MIMETYPE_SZ);
+	if (curl_rc != CURLE_OK){
+		remove(dst_pth);
+		rc = FunctionSuccessness::server_error;
+	} else {
+		char* _mimetype = nullptr;
+		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, _mimetype);
+		if (not curl_rc2  and  _mimetype)
+			memccpy(mimetype, _mimetype, 0, MAX_MIMETYPE_SZ);
+		rc = FunctionSuccessness::ok;
+	}
 	
 	curl_easy_cleanup(handle);
 	
-	return FunctionSuccessness::ok;
+	return rc;
 }
 
 namespace _r {
@@ -1627,7 +1672,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_or_cp_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype){
+	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype){
 		FunctionSuccessness rc;
 		static char dst_pth[4096];
 		const char* dir_name = nullptr;
@@ -1668,7 +1713,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (is_local_file_or_dir(url)){
 			rc = (std::filesystem::copy_file(url, dst_pth)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
-			rc = dl_file__curl(url, dst_pth, overwrite_existing, mimetype);
+			rc = dl_file__curl(user_headers, url, dst_pth, overwrite_existing, mimetype);
 		}
 		
 		dl_or_cp_file__return:
@@ -1677,11 +1722,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
-	FunctionSuccessness dl_file(const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote){
+	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote){
 		if (is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(user_id, dir_id, file_name, url, overwrite_existing, mimetype);
+		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, url, overwrite_existing, mimetype);
 	}
 	
 	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
@@ -1936,9 +1981,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view post__backup_file(const char* s){
 		const uint64_t file_id = a2n<uint64_t>(&s);
 		++s; // Skip slash
-		const uint64_t dir_id = a2n<uint64_t>(s);
+		const uint64_t dir_id = a2n<uint64_t>(&s);
 		if ((dir_id == 0) or (file_id == 0))
 			return _r::not_found;
+		
+		const char* const user_headers = s;
 		
 		GET_USER_ID
 		
@@ -1951,10 +1998,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (unlikely(not this->mysql_assign_next_row(&orig_dir_name, &file_name)))
 			// No results
 			return _r::not_found;
+		compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
 		
 		char mimetype[100] = {0};
 		MYSQL_RES* const prev_res = this->res;
-		const auto rc = this->dl_or_cp_file(user_id, dir_id, file_name, orig_file_path, false, mimetype);
+		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, orig_file_path, false, mimetype);
 		mysql_free_result(prev_res);
 		if (rc != FunctionSuccessness::ok)
 			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
@@ -1989,6 +2037,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const size_t tag_ids_len  = (uintptr_t)s - (uintptr_t)tag_ids;
 		++s; // Skip slash
 		
+		const char* const user_headers = s;
+		
 		GET_USER_ID
 		
 		const char* url = s;
@@ -2019,7 +2069,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
 					char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-					switch(this->dl_file(user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true)){
+					switch(this->dl_file(user_headers, user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
