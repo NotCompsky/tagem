@@ -47,7 +47,7 @@
 	DISTINCT_F2T_TAG_IDS
 
 #define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, var_length, str_name, terminating_char) \
-	const char* const var  = get_comma_separated_ints(&str_name, ' '); \
+	const char* const var  = get_comma_separated_ints(&str_name, terminating_char); \
 	if (var == nullptr) \
 		return _r::not_found; \
 	const size_t var_length  = (uintptr_t)str_name - (uintptr_t)var;
