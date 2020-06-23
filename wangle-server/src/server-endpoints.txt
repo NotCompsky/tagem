@@ -21,7 +21,7 @@ GET /a/mt.json?>
 	return this->get_mimetype_json(str)
 GET /a/x.json?>
 	return _r::external_db_json
-GET /a/exec.json?>
+GET /a/exec.json >
 	return this->get_exec_json(str)
 
 GET /a/d/i/>
