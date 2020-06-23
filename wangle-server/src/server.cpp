@@ -12,6 +12,7 @@
 #include "help.hpp"
 #include "user_auth.hpp"
 #include "static_response.hpp"
+#include "proc.hpp"
 
 #include "get_cookies.hpp"
 #include "read_request.hpp"
@@ -31,6 +32,13 @@
 #include <cstring> // for malloc
 
 #include <filesystem> // for std::filesystem::copy_file
+
+/*
+ * The following initial contents of YTDL_FORMAT are copyright TheFrenchGhostys (https://gitlab.com/TheFrenchGhosty)
+ * Modified content from https://gitlab.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
+ * GPL v3: https://github.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts/raw/291b526c82f10b980c09ee5da9b432a039a1f0b0/LICENSE
+ */
+const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvideo[vcodec^=vp9.2][height=720][fps>30]/bestvideo[vcodec^=vp9][height=720][fps>30]/bestvideo[vcodec^=avc1][height=720][fps>30]/bestvideo[height=720][fps>30]/bestvideo[vcodec^=av01][height=720]/bestvideo[vcodec^=vp9.2][height=720]/bestvideo[vcodec^=vp9][height=720]/bestvideo[vcodec^=avc1][height=720]/bestvideo[height=720]/bestvideo[vcodec^=av01][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=480][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=480][fps>30]/bestvideo[height<720][height>=480][fps>30]/bestvideo[vcodec^=av01][height<720][height>=480]/bestvideo[vcodec^=vp9.2][height<720][height>=480]/bestvideo[vcodec^=vp9][height<720][height>=480]/bestvideo[vcodec^=avc1][height<720][height>=480]/bestvideo[height<720][height>=480]/bestvideo[vcodec^=av01][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=360][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=360][fps>30]/bestvideo[height<720][height>=360][fps>30]/bestvideo[vcodec^=av01][height<720][height>=360]/bestvideo[vcodec^=vp9.2][height<720][height>=360]/bestvideo[vcodec^=vp9][height<720][height>=360]/bestvideo[vcodec^=avc1][height<720][height>=360]/bestvideo[height<720][height>=360]/bestvideo[vcodec^=av01][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=240][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=240][fps>30]/bestvideo[height<720][height>=240][fps>30]/bestvideo[vcodec^=av01][height<720][height>=240]/bestvideo[vcodec^=vp9.2][height<720][height>=240]/bestvideo[vcodec^=vp9][height<720][height>=240]/bestvideo[vcodec^=avc1][height<720][height>=240]/bestvideo[height<720][height>=240]/bestvideo[vcodec^=av01][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=144][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=144][fps>30]/bestvideo[height<720][height>=144][fps>30]/bestvideo[vcodec^=av01][height<720][height>=144]/bestvideo[vcodec^=vp9.2][height<720][height>=144]/bestvideo[vcodec^=vp9][height<720][height>=144]/bestvideo[vcodec^=avc1][height<720][height>=144]/bestvideo[height<720][height>=144]/bestvideo)+(bestaudio[acodec^=opus]/bestaudio)/best";
 
 #define NULL_IMG_SRC "\"data:,\""
 
@@ -84,6 +92,7 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::AlphaNumeric alphanum;
 	constexpr static const compsky::asciify::flag::StrLen strlen;
 	constexpr static const compsky::asciify::flag::JSONEscape json_esc;
+	constexpr static const compsky::asciify::flag::Repeat repeat;
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
 
@@ -1634,7 +1643,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype){
+	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
 		FunctionSuccessness rc;
 		static char dst_pth[4096];
 		const char* dir_name = nullptr;
@@ -1673,9 +1682,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		// TODO: Check device is mounted
 		
 		if (is_local_file_or_dir(url)){
-			rc = (std::filesystem::copy_file(url, dst_pth)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
+			if (is_ytdl)
+				rc = FunctionSuccessness::malicious_request;
+			else
+				rc = (std::filesystem::copy_file(url, dst_pth)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
-			rc = dl_file__curl(user_headers, url, dst_pth, overwrite_existing, mimetype);
+			if (is_ytdl){
+				char path_fmt[4096];
+				compsky::asciify::asciify(
+					path_fmt,
+					dir_name,
+					_f::repeat, '%', file_name, // Escape % as %%
+					'\0'
+				);
+				const char* ytdl_args[] = {"youtube-dl", "-o", path_fmt, "-f", YTDL_FORMAT, url, nullptr};
+				rc = (proc::exec(3600, ytdl_args)) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
+			} else
+				rc = dl_file__curl(user_headers, url, dst_pth, overwrite_existing, mimetype);
 		}
 		
 		dl_or_cp_file__return:
@@ -1684,11 +1707,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
-	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote){
+	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
 		if (is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, url, overwrite_existing, mimetype);
+		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
 	}
 	
 	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
@@ -1933,8 +1956,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const uint64_t dir_id = a2n<uint64_t>(&s);
 		if ((dir_id == 0) or (file_id == 0))
 			return _r::not_found;
-		++s; // Skip slash
-		const char* const url = s; // An URL to use instead of the original file URL
+		
+		//++s; // Do not skip slash, as it is skipped by the following macro
+		const bool is_ytdl = (IS_STR_EQL(s, 5, "ytdl/"));
+		
+		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
 		const size_t url_length = count_until(url, ' ');
 		
 		const char* const user_headers = s;
@@ -1951,14 +1977,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			// No results
 			return _r::not_found;
 		
-		if (url_length != 0)
+		if ((url_length != 0) and not is_ytdl)
 			compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
 		else
 			compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
 		
 		char mimetype[100] = {0};
 		MYSQL_RES* const prev_res = this->res;
-		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, orig_file_path, false, mimetype);
+		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, orig_file_path, false, mimetype, is_ytdl);
 		mysql_free_result(prev_res);
 		if (rc != FunctionSuccessness::ok)
 			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
@@ -1994,6 +2020,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		GET_USER_ID
 		
+		const bool is_ytdl = false; // TODO: Allow ytdl
+		
 		const char* url = s;
 		unsigned n_errors = 0;
 		while(true){
@@ -2022,7 +2050,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
 					char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-					switch(this->dl_file(user_headers, user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true)){
+					switch(this->dl_file(user_headers, user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true, is_ytdl)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
@@ -2251,6 +2279,9 @@ int main(int argc,  char** argv){
 					fprintf(stderr, "Cannot open file to write external commands to: %s\n", *argv);
 					abort();
 				}
+				break;
+			case 'Y':
+				YTDL_FORMAT = *(++argv);
 				break;
 			default:
 				goto help;

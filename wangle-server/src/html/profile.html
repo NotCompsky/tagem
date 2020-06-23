@@ -1,5 +1,11 @@
 #include <boost/preprocessor.hpp>
 
+#define ADD_TOGGLE(id, name) \
+	"<div id=\"" id "-container\" class=\"toggle-container\">" \
+		"<b class=\"toggle-name\">" name "</b>" \
+		"<input id=\"" id "\" type=\"checkbox\" class=\"toggle-input\"/>" \
+	"</div>"
+
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
 "<head>"
@@ -223,21 +229,20 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
-"<div id=\"add-f-backup\">"
-	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
-	"<a onclick=\"backup_file()\">Send backup request</a>"
-"</div>"
-
 "<div id=\"file-info\">"
+	"<div id=\"add-f-backup\" class=\"hidden\">"
+		"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
+		ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
+		"<a onclick=\"backup_file()\">Send backup request</a>"
+	"</div>"
+	
 	"<a id=\"dir_name\"></a>"
 	"<br/>"
-	"<a onclick=\"view_file_add_backup_dialog()\">+Backups</a>"
+	"<a onclick=\"toggle_file_add_backup_dialog()\">+Backups</a>"
 	"<br/>"
 	"<div id=\"view\"></div>"
 	"<br/>"
-	#define TOGGLE_ID "autoplay"
-	#define TOGGLE_NAME "Autoplay"
-	#include "components/toggle.html"
+	ADD_TOGGLE("autoplay","Autoplay")
 	"<button onclick=\"show_update_orig_src_dialog()\">Update src</button>"
 	"<div id=\"view-btns-container\">"
 		"View"

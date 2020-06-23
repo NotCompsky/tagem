@@ -42,11 +42,7 @@
 	"}"
 "}"
 "function toggle(id){"
-	"const x = document.getElementById(id);"
-	"if (x.classList.contains(\"hidden\"))"
-		"unhide(id);"
-	" else "
-		"hide(id);"
+	"document.getElementById(id).classList.toggle(\"hidden\");"
 "}"
 
 "function timestamp2dt(t){"

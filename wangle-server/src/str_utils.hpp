@@ -1,6 +1,14 @@
 #pragma once
 
 #include <compsky/macros/likely.hpp>
+#include <compsky/macros/str2switch.hpp>
+
+
+#define IS_STR_EQL(str_to_be_tested,length,name) \
+	[](const char*& str)->bool { /* NOTE: str is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id */ \
+		STR2SWITCH(length,name,return true;) \
+		return false; \
+	}(str_to_be_tested)
 
 
 constexpr

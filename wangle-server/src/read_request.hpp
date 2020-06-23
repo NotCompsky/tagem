@@ -1,13 +1,10 @@
 #pragma once
 
-#include <compsky/macros/str2switch.hpp>
+#include "str_utils.hpp"
 
 
 #define TEST_IS_HEADER(length,name) \
-	likely(not [](const char*& str)->bool { /* NOTE: str is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id */ \
-		STR2SWITCH(length,name,return true;) \
-		return false; \
-	}(str))
+	likely(not IS_STR_EQL(str,length,name))
 
 #define SKIP_TO_HEADER(length,name) \
 	/* Returns a pointer to the character immediately BEFORE the cookies list (i.e. the space character in "Cookie: "). This is a silly little micro-optimistaion. */ \
