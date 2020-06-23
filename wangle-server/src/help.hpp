@@ -5,8 +5,16 @@ namespace help {
 	constexpr
 	const char* const text =
 		"USAGE\n"
-		"	p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]\n"
+		"	[[OPTIONS]] p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]\n"
 		"\n"
+		"OPTIONS\n"
+		"	X /path/to/file\n"
+		"		Write external commands to this file\n"
+		"		Hint: If these are BASH commands, could execute these lines as they are written:\n"
+		"			mkfifo /tmp/tagem-external-cmds.pipe\n"
+		"			(./server X /tmp/tagem-external-cmds.txt ...)&\n"
+		"			while read line; do  eval \"$line\";  done < /tmp/tagem-external-cmds.pipe\n"
+		"		Obviously security concerns etc.\n"
 		"EXTERNAL DATABASES\n"
 		"	Optional\n"
 		"	List of environmental variables, each preceded by \"x\", pointing to files of the same format as $TAGEM_MYSQL_CFG, containing login data for foreign databases\n"

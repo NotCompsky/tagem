@@ -71,6 +71,8 @@ namespace _f {
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
 
+FILE* EXTERNAL_CMDS_TO_RUN = stderr;
+
 static
 std::vector<DatabaseInfo> db_infos;
 
@@ -1825,6 +1827,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view archive_reddit_post(const char* s){
+		const char* const permalink = s;
+		while((*s != 0) and (*s != ' '))
+			++s;
+		if(*s == 0)
+			return _r::not_found;
+		const size_t permalink_length = (uintptr_t)s - (uintptr_t)permalink;
+		fprintf(EXTERNAL_CMDS_TO_RUN, "rscrape-submission %.*s\n",  (int)permalink_length,  permalink);
+		fflush(EXTERNAL_CMDS_TO_RUN);
+		return _r::post_ok;
+	}
+	
 	std::string_view post__merge_files(const char* s){
 		const uint64_t orig_f_id = a2n<uint64_t>(&s);
 		++s; // Skip slash
@@ -2133,6 +2147,13 @@ int main(int argc,  char** argv){
 				break;
 			case 'x':
 				external_db_env_vars.push_back(*(++argv));
+				break;
+			case 'X':
+				EXTERNAL_CMDS_TO_RUN = fopen(*(++argv), "wb");
+				if(unlikely(EXTERNAL_CMDS_TO_RUN == nullptr)){
+					fprintf(stderr, "Cannot open file to write external commands to: %s\n", *argv);
+					abort();
+				}
 				break;
 			default:
 				goto help;
