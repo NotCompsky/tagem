@@ -32,3 +32,38 @@ const char* get_comma_separated_ints(const char** str,  const char separator){
 		return (**str == separator) ? start : nullptr;
 	}
 }
+
+constexpr
+bool in_str(const char* str,  const char c){
+	while(*str != 0){
+		if (*str == c)
+			return true;
+		++str;
+	}
+	return false;
+}
+static_assert(in_str("foo",'f'));
+static_assert(not in_str("bar",'f'));
+
+constexpr
+bool endswith(const char* str,  const char c){
+	if (*str == 0)
+		// Guarantee at least one iteration of the loop
+		return false;
+	while(*str != 0)
+		++str;
+	return (*(--str) == c);
+}
+static_assert(endswith("foo",'o'));
+static_assert(not endswith("bar",'o'));
+
+template<size_t N>
+void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
+	// str is guaranteed to be max characters long
+	for(size_t i = 0;  i < N;  ++i){
+		if(str[i] == a){
+			str[i] = b;
+			return;
+		}
+	}
+}
