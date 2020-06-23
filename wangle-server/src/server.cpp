@@ -46,12 +46,14 @@
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
 	DISTINCT_F2T_TAG_IDS
 
-#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, var_length, str_name, terminating_char) \
-	const char* const var  = get_comma_separated_ints(&str_name, terminating_char); \
+#define TRUE 1
+#define FALSE 0
+
+#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
+	BOOST_PP_IF(var_decl, const char* const,) var  = get_comma_separated_ints(&str_name, terminating_char); \
 	if (var == nullptr) \
 		return _r::not_found; \
-	const size_t var_length  = (uintptr_t)str_name - (uintptr_t)var;
-
+	BOOST_PP_IF(var_decl, const size_t,) var_length  = (uintptr_t)str_name - (uintptr_t)var;
 
 #define GET_USER_ID \
 	const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username=")); \
@@ -793,7 +795,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		++s;
 		
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
 		
 		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
@@ -1210,7 +1212,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_ids(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, file_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
 		GET_USER_ID
 		
 		this->mysql_query(
@@ -1824,7 +1826,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		size_t tag_ids_len;
 		
 		if((tbl == 'f') or (tbl == 't')){
-			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, '/')
+			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
 			++s; // Skip trailing slash
 		}
 		
@@ -1910,7 +1912,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	std::string_view post__merge_files(const char* s){
 		const uint64_t orig_f_id = a2n<uint64_t>(&s);
 		++s; // Skip slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(dupl_f_ids, dupl_f_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dupl_f_ids, dupl_f_ids_len, s, ' ')
 		GET_USER_ID
 		
 		// TODO: Check user against user2whitelisted_action
@@ -1982,7 +1984,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const uint64_t dir_id = a2n<uint64_t>(&s);
 		++s;
 		
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip slash
 		
 		const char* const user_headers = s;
@@ -2108,9 +2110,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view post__add_parents_to_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, parent_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
 		GET_USER_ID
 		
 		this->tag_parentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
@@ -2119,9 +2121,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view post__add_children_to_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, child_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
 		GET_USER_ID
 		
 		this->tag_parentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
@@ -2145,9 +2147,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view post__add_tag_to_file(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, file_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
 		
 		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
