@@ -1874,11 +1874,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		++s; // Skip slash
 		
 		const char* const url = s;
-		size_t url_length = 0;
-		while((*s != ' ') and (*s != 0)){
-			++s;
-			++url_length;
-		}
+		const size_t url_length = count_until(url, ' ');
 		
 		if(*s == 0)
 			return _r::not_found;
@@ -1937,6 +1933,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const uint64_t dir_id = a2n<uint64_t>(&s);
 		if ((dir_id == 0) or (file_id == 0))
 			return _r::not_found;
+		++s; // Skip slash
+		const char* const url = s; // An URL to use instead of the original file URL
+		const size_t url_length = count_until(url, ' ');
 		
 		const char* const user_headers = s;
 		
@@ -1951,7 +1950,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (unlikely(not this->mysql_assign_next_row(&orig_dir_name, &file_name)))
 			// No results
 			return _r::not_found;
-		compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
+		
+		if (url_length != 0)
+			compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
+		else
+			compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
 		
 		char mimetype[100] = {0};
 		MYSQL_RES* const prev_res = this->res;

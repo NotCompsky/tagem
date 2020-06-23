@@ -223,11 +223,15 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
+"<div id=\"add-f-backup\">"
+	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
+	"<a onclick=\"backup_file()\">Send backup request</a>"
+"</div>"
+
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"
 	"<br/>"
 	"<a onclick=\"view_file_add_backup_dialog()\">+Backups</a>"
-	"<a id=\"add-f-backup\" onclick=\"backup_file()\">Send backup request</a>"
 	"<br/>"
 	"<div id=\"view\"></div>"
 	"<br/>"

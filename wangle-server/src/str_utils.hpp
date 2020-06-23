@@ -67,3 +67,15 @@ void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
 		}
 	}
 }
+
+constexpr
+size_t count_until(const char* s,  const char c){
+	// NOTE: Not inclusive
+	size_t n = 0;
+	while((*s != c) and (*s != 0)){
+		++s;
+		++n;
+	}
+	return n;
+}
+static_assert(count_until("foobar",'b')==3);
