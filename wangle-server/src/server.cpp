@@ -2028,14 +2028,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT ", file_id, ',', dir_id, ",SUBSTR(\"", _f::esc, '"', this->file_path, "\",LENGTH(d.name)+1),mt.id,", user_id, " "
 			"FROM _file f "
 			"JOIN _dir d "
-			"JOIN mimetype mt ON mt.",
-				(is_mimetype_set)?"name=\"":"id=f.mimetype",
-				(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
-				(is_mimetype_set)?"\"":"", " "
+			"LEFT JOIN ",
+				(is_mimetype_set)?"mimetype mt ON mt.name=\"":"ext2mimetype mt ON mt.name=SUBSTRING_INDEX(\"",
+				_f::esc, '"',
+				(is_mimetype_set)?mimetype:this->file_path, // TODO: Escape mimetype properly
+				(is_mimetype_set)?"\"":"\",'.',-1)", " "
 			"WHERE f.id=", file_id, " "
 			  "AND d.id=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
 		);
+		// WARNING: The above will crash if there is no such extension in ext2mimetype
+		// This is deliberate, to tell me to add it to the DB.
 		
 		return _r::post_ok;
 	}
