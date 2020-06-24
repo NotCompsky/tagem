@@ -191,7 +191,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 	"add_child_tags_then(tag_id, '#tagselect-self-c', function(){" \
 		"display_child_tags(tag_id, '#children');" \
 	"})"
-BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",TAG_FN1) "view_tag","Tag")("tagselect-self-c","Add Child Tags",TAG_FN2))
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",TAG_FN1)("tagselect-self-c","Add Child Tags",TAG_FN2)))
 
 "<div id=\"user-info\">"
 	"<h3 id=\"user-fullname\"></h3>"
