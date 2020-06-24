@@ -47,7 +47,7 @@
 	"document.getElementById(id).classList.toggle(\"hidden\");"
 "}"
 "function set_page_title(str){"
-	"document.getElementyById('profile-name').innerText = file_name;"
+	"document.getElementById('profile-name').innerText = str;"
 "}"
 
 "function timestamp2dt(t){"
