@@ -150,7 +150,7 @@ CREATE TABLE file_backup (
 );
 
  
-CREATE TABLE file2var_key (
+CREATE TABLE file2 (
 	# Stores the user-defined variable tables
 	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	min BIGINT NOT NULL,
@@ -161,37 +161,17 @@ CREATE TABLE file2var_key (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
-INSERT INTO file2var_key
+INSERT INTO file2
 (min, max, conversion, name)
 VALUES
 (0, 9223372036854775807, 0, "duration")
 ;
-CREATE TABLE file2var_value (
-	file BIGINT UNSIGNED NOT NULL,
-	value BIGINT NOT NULL,
-	# If the key type demands a conversion - for instance, to a string - then this 'value' is the ID of the value in the corresponding file2var_convert_XXX table
-	key INT UNSIGNED NOT NULL,
-	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (user) REFERENCES file2var_key (user),
-	FOREIGN KEY (key) REFERENCES file2var_key (key),
-	PRIMARY KEY (file,value,key,user)
-);
-CREATE TABLE file2var_convert_str (
-	id BIGINT NOT NULL PRIMARY KEY,
-	value VARCHAR(1000) NOT NULL UNIQUE KEY,
-	FOREIGN KEY (id) REFERENCES file2var_value (value)
-);
-CREATE TABLE file2var_convert_blob (
-	id BIGINT NOT NULL PRIMARY KEY,
-	value LONGTEXT NOT NULL UNIQUE KEY,
-	FOREIGN KEY (id) REFERENCES file2var_value (value)
-);
 
-CREATE TABLE user2hidden_file2var_key (
+CREATE TABLE user2hidden_file2 (
 	user INT UNSIGNED NOT NULL,
-	key INT UNSIGNED NOT NULL,
-	FOREIGN KEY (key) REFERENCES file2var_key (id),
-	PRIMARY KEY (user,key)
+	file2 INT UNSIGNED NOT NULL,
+	FOREIGN KEY (file2) REFERENCES file2 (id),
+	PRIMARY KEY (user,file2)
 );
 
 
