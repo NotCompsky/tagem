@@ -44,6 +44,7 @@
 	"var t2p;"
 	"var x;"
 	"var mt;" // mimetypes
+	"var f2;" // CSV of file2 variable names that needs to be split into an array
 	
 	"const tbl2selector = {"
 		"\"t\":\".tagselect\","
@@ -60,8 +61,9 @@
 	"};"
 	
 	"function when_data_loaded(){"
-		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined)"
+		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined)"
 			"return;"
+		"f2 = f2.split(\",\");"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
 			"case \"f\": view_file(_x); break;"
@@ -89,6 +91,7 @@
 		"refetch_json('t2p', '/a/t2p.json', when_data_loaded);"
 		"refetch_json('x', '/a/x.json', when_data_loaded);"
 		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
+		"refetch_json('f2', '/a/f2.json', when_data_loaded);"
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
@@ -338,7 +341,7 @@ R"=========(
 		"<div class=\"side-title\">" elem "</div>" \
 		"<div id=\"" elem "\"></div>" \
 	"</div>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("parents")("children")("tags"))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("values")("parents")("children")("tags"))
 R"=========(
     <div class="search-bar right-search">
       <input type="text" placeholder="Search" />

@@ -1,4 +1,8 @@
 #define DEBUG
+
+#define USE_VECTOR
+#include <compsky/asciify/asciify.hpp>
+
 #include "FrameDecoder.h"
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
@@ -22,7 +26,6 @@
 #endif
 
 #include <compsky/mysql/query.hpp>
-#include <compsky/asciify/asciify.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
@@ -63,6 +66,10 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found; \
 	BOOST_PP_IF(var_decl, const size_t,) var_length  = (uintptr_t)str_name - (uintptr_t)var;
 
+#define GET_USER \
+	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
+	if (user == nullptr) \
+		return _r::not_found;
 #define GET_USER_ID \
 	const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username=")); \
 	if (user_id == user_auth::SpecialUserID::invalid) \
@@ -93,6 +100,8 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::StrLen strlen;
 	constexpr static const compsky::asciify::flag::JSONEscape json_esc;
 	constexpr static const compsky::asciify::flag::Repeat repeat;
+	constexpr static const compsky::asciify::flag::Zip3 zip3;
+	constexpr static const compsky::asciify::flag::NElements n_elements;
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
 
@@ -105,6 +114,15 @@ std::vector<DatabaseInfo> db_infos;
 
 static
 unsigned db_indx2id[128];
+
+static
+std::vector<const char*> file2_variables;
+
+static
+std::vector<const char*> left_join_unique_name_for_each_file2_var;
+
+static
+std::vector<const char*> select_unique_name_for_each_file2_var;
 
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
@@ -677,19 +695,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
 #endif
 		
-		GET_USER_ID
+		GET_USER
+		const UserIDIntType user_id = user->id;
 		
+		const size_t n = user->allowed_file2_vars.size();
 		this->mysql_query(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir") ","
 				"f.mimetype,"
-				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\")"
+				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\"),"
+				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file_backup f2 ON f2.file=f.id "
-			"LEFT JOIN _dir d2 ON d2.id=f2.dir "
+			"LEFT JOIN _dir d2 ON d2.id=f2.dir ",
+			_f::zip3, n, "LEFT JOIN file2", user->allowed_file2_vars, left_join_unique_name_for_each_file2_var,
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
@@ -705,6 +727,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* tag_ids;
 		const char* mimetype;
 		const char* backup_dir_ids;
+		const char* file2_values;
 		this->reset_buf_index();
 		this->asciify(
 			#include "headers/return_code/OK.c"
@@ -712,7 +735,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids, &file2_values)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
@@ -721,7 +744,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				mimetype, ',',
-				'"', backup_dir_ids, '"'
+				'"', backup_dir_ids, '"', ',',
+				'"', file2_values, '"'
 			);
 		}
 		this->asciify(']');
@@ -1272,6 +1296,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
 #endif
 		
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view get_allowed_file2_vars_json(const char* s){
+		GET_USER
+		this->reset_buf_index();
+		this->asciify(
+			#include "headers/return_code/OK.c"
+			#include "headers/Content-Type/json.c"
+			"\n"
+			"\"NONE,", user->allowed_file2_vars_csv, "\""
+		);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -2376,12 +2412,46 @@ int main(int argc,  char** argv){
 	
 	printf("_r::external_db_json set\n");
 	
-	compsky::mysql::query_buffer(db_infos.at(0).mysql_obj, res, "SELECT id, name FROM user");
+	compsky::mysql::query_buffer(
+		db_infos.at(0).mysql_obj,
+		res,
+		"SELECT "
+			"u.id,"
+			"u.name,"
+			"IFNULL(GROUP_CONCAT(f2.name),\"\")" // WARNING: file2 variables must not include commas
+		"FROM user u "
+		"LEFT JOIN user2shown_file2 u2v ON u2v.user=u.id "
+		"LEFT JOIN file2 f2 ON f2.id=u2v.file2 "
+		"GROUP BY u.id"
+	);
 	user_auth::users.reserve(compsky::mysql::n_results<size_t>(res));
 	UserIDIntType id;
 	const char* name;
-	while(compsky::mysql::assign_next_row__no_free(res, &row, &id, &name))
-		user_auth::users.emplace_back(name, id);
+	char* allowed_file2_vars;
+	while(compsky::mysql::assign_next_row__no_free(res, &row, &id, &name, &allowed_file2_vars))
+		const user_auth::User& user = user_auth::users.emplace_back(name, id, allowed_file2_vars);
+	
+	MYSQL_RES* res2;
+	compsky::mysql::query_buffer(
+		db_infos.at(0).mysql_obj,
+		res2,
+		"SELECT CONCAT(\" file2_\", id, \" ON file2_\", id, \".file=f.id \")"
+		"FROM file2"
+	);
+	left_join_unique_name_for_each_file2_var.reserve(compsky::mysql::n_results<size_t>(res2));
+	while(compsky::mysql::assign_next_row__no_free(res2, &row, &name))
+		left_join_unique_name_for_each_file2_var.push_back(name);
+	
+	MYSQL_RES* res3;
+	compsky::mysql::query_buffer(
+		db_infos.at(0).mysql_obj,
+		res3,
+		"SELECT CONCAT(\",',',IFNULL(file2_\", id, \".x,0)\")"
+		"FROM file2"
+	);
+	select_unique_name_for_each_file2_var.reserve(compsky::mysql::n_results<size_t>(res3));
+	while(compsky::mysql::assign_next_row__no_free(res3, &row, &name))
+		select_unique_name_for_each_file2_var.push_back(name);
 	
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());

@@ -135,8 +135,13 @@
 	"}"
 	"document.getElementById(\"db-links\").innerHTML = s;"
 "}"
+
+"function display_file2_var(name, value){"
+	"return \"<div class='value'><div class='value-name'><a onclick='view_files_by_value(\" + name + \")'>\" + name + \"</a></div>\" + value + \"</div>\";"
+"}"
+
 "function view_file(_file_id){"
-	"hide_all_except(['tags-container','file-info','tagselect-files-container','tagselect-files-btn']);"
+	"hide_all_except(['values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);"
 	"hide('add-f-backup');"
 	
 	"file_tagger_fn = after_tagged_this_file;"
@@ -148,13 +153,21 @@
 			"dataType: \"json\","
 			"url: \"/a/f/i/\"+file_id,"
 			"success: function(data){"
-				"const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups] = data;"
+				"const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups, file2_values_csv] = data;"
 				"document.getElementById('profile-img').src = thumb;"
 				"dir_id = _dir_id;"
 				"file_name = name;"
 				"const db_and_post_ids = ext_db_n_post_ids;"
 				"if (db_and_post_ids !== \"\")"
 					"display_external_dbs(db_and_post_ids.split(\",\").map(x => x.split(\":\")));"
+				
+				"let _vals = \"\";"
+				"const file2_values = file2_values_csv.split(\",\");"
+				"for(var i=0, len=file2_values.length;  i<len;  ++i){"
+					"if(file2_values[i] !== \"0\")"
+						"_vals += display_file2_var(f2[i], file2_values[i]);"
+				"}"
+				"document.getElementById('values').innerHTML = _vals;"
 				
 				"if(tag_ids === \"\")"
 					"file_tags = [];"

@@ -22,19 +22,58 @@ struct User {
 	NullableStringView name;
 	UserIDIntType id; // WARNING: User ID of 0 is reserved for INVALID, ID of 1 is reserved for GUEST.
 	
-	User(const char* const _name,  const UserIDIntType _id)
+	char* allowed_file2_vars_csv;
+	std::vector<const char*> allowed_file2_vars;
+	
+	User(const char* const _name,  const UserIDIntType _id,  char* _allowed_file2_vars)
 	: name(_name, strlen(_name))
 	, id(_id)
-	{}
+	, allowed_file2_vars_csv(nullptr)
+	{
+		if(*_allowed_file2_vars == 0)
+			return;
+		this->allowed_file2_vars_csv = reinterpret_cast<char*>(malloc(strlen(_allowed_file2_vars)));
+		if (unlikely(allowed_file2_vars_csv == nullptr))
+			abort();
+		memcpy(this->allowed_file2_vars_csv,  _allowed_file2_vars,  strlen(_allowed_file2_vars) + 1);
+		while(true){
+			const char* const file2_var_start = _allowed_file2_vars;
+			// NOTE: First character cannot be a comma
+			while((*_allowed_file2_vars != ',') and (*_allowed_file2_vars != 0))
+				++_allowed_file2_vars;
+			this->allowed_file2_vars.push_back(file2_var_start);
+			if(*_allowed_file2_vars == 0)
+				break;
+			*_allowed_file2_vars = 0;
+			++_allowed_file2_vars;
+		}
+	}
+	
+	~User(){
+		if(this->allowed_file2_vars_csv != nullptr)
+			free(this->allowed_file2_vars_csv);
+	}
 };
 
 
 std::vector<User> users;
 
+User* get_user(NullableStringView username){
+	if(username.data == nullptr){
+		username.data = "GUEST";
+		username.sz   = 5;
+	}
+	for(User& user : users){
+		if(user.name == username)
+			return &user;
+	}
+	return nullptr;
+}
+
 UserIDIntType get_user_id(const NullableStringView username){
 	if(username.data == nullptr)
 		return SpecialUserID::guest;
-	for(const User user : users){
+	for(const User& user : users){
 		if(user.name == username)
 			return user.id;
 	}
