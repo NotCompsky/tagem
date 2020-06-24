@@ -37,6 +37,8 @@ GET /a/f/d/>
 	return this->files_given_dir(++str)
 GET /a/f/t/>
 	return this->files_given_tag(++str)
+GET /a/f/f2/>
+	return this->files_given_value(++str)
 
 GET /a/t/f/>
 	return this->tags_given_file(++str)

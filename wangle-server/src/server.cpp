@@ -149,6 +149,27 @@ bool is_local_file_or_dir(const char* const url){
 	return (url[0] == '/');
 }
 
+bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  const char* b){
+	// WARNING: b should be guaranteed to either be empty, or contain non-empty strings delineated by commas
+	while(*b != 0){
+		const char* a = A;
+		while((*b == *a) and (*a != ' ') and (*a != 0) and (*b != ',') and (*b != 0)){
+			++b;
+			++a;
+		}
+		if ((*a == ' ') and ((*b == ',') or (*b == 0)))
+			return true;
+		while((*b != ',') and (*b != 0))
+			++b;
+		if (*b == 0)
+			return false;
+		++b; // Skip the comma
+	}
+	return false;
+}
+
+
+
 FunctionSuccessness dl_file__curl(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
 	FunctionSuccessness rc;
 	
@@ -550,6 +571,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	void asciify_json_list_response(const QuoteAndEscape,  const char** str){
 		this->asciify(
 			'"', _f::esc, '"',  *str, '"', ','
+		);
+	}
+	void asciify_json_list_response(const QuoteNoEscape,  const char** str){
+		this->asciify(
+			'"', *str, '"', ','
 		);
 	}
 	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteNoEscape,  const char** str2){
@@ -1295,6 +1321,36 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
 #endif
+		
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view files_given_value(const char* s){
+		const char* const file2_var_name = s;
+		while((*s != ' ') and (*s != 0))
+			++s;
+		const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name;
+		// No need to check for empty string - the later function does that
+		GET_USER
+		if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv)))
+			return _r::not_found;
+		
+		this->mysql_query(
+			"SELECT "
+				FILE_OVERVIEW_FIELDS("f.id")
+			"FROM _file f "
+			"JOIN file2", _f::strlen, file2_var_name, file2_var_name_len, " f2v ON f2v.file=f.id "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
+			"WHERE TRUE "
+			  FILE_TBL_USER_PERMISSION_FILTER(user->id)
+			"GROUP BY f.id "
+			"LIMIT 100"
+			// No need to impose a limit - this is very quick
+		);
+		
+		this->asciify_file_info();
 		
 		return this->get_buf_as_string_view();
 	}
@@ -2325,6 +2381,11 @@ class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
 
 int main(int argc,  char** argv){
 	curl_global_init(CURL_GLOBAL_ALL);
+	
+	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,foo,they"));
+	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,they,foo"));
+	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","foo,what,does"));
+	assert(not matches__left_up_to_space__right_up_to_comma_or_null("bar foo","who,does,foo"));
 	
 	char** dummy_argv = argv;
 	int port_n = 0;

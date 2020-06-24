@@ -136,8 +136,15 @@
 	"document.getElementById(\"db-links\").innerHTML = s;"
 "}"
 
+"function view_files_by_value(var_name){"
+	"populate_f_table('/a/f/f2/'+var_name);"
+	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn']);"
+	"get_file_ids = get_selected_file_ids;"
+	"window.location.hash = '$' + var_name;"
+	"set_page_title('Files assigned ' + var_name);"
+"}"
 "function display_file2_var(name, value){"
-	"return \"<div class='value'><div class='value-name'><a onclick='view_files_by_value(\" + name + \")'>\" + name + \"</a></div>\" + value + \"</div>\";"
+	"return \"<div class='value'><div class='value-name'><a onclick='view_files_by_value(\\\"\" + name + \"\\\")'>\" + name + \"</a></div>\" + value + \"</div>\";"
 "}"
 
 "function view_file(_file_id){"
@@ -181,7 +188,7 @@
 				"document.getElementById('dir_name').onclick = view_this_files_dir;"
 				"set_dir_name_from_id(dir_id, \"dir_name\");"
 				
-				"$('#profile-name').text(file_name);"
+				"set_page_title(file_name);"
 				
 				"let _s = \"\";"
 				"if (autoplay()){"

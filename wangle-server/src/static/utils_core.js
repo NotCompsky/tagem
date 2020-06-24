@@ -18,6 +18,7 @@
 		"'file-info',"
 		"'user-info',"
 		"'post-container',"
+		"'values-container',"
 		"'tags-container',"
 		"'parents-container',"
 		"'children-container',"
@@ -44,6 +45,9 @@
 "}"
 "function toggle(id){"
 	"document.getElementById(id).classList.toggle(\"hidden\");"
+"}"
+"function set_page_title(str){"
+	"document.getElementyById('profile-name').innerText = file_name;"
 "}"
 
 "function timestamp2dt(t){"
