@@ -90,7 +90,7 @@ INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp");
 INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi");
 
 CREATE TABLE ext2mimetype (
-	ext VARBINARY(10) NOT NULL PRIMARY KEY,
+	name VARBINARY(10) NOT NULL PRIMARY KEY,
 	mimetype INT UNSIGNED NOT NULL,
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
 );
@@ -106,6 +106,8 @@ UNION
 SELECT "mp3", id FROM mimetype WHERE name='audio/mpeg'
 UNION
 SELECT "jpg", id FROM mimetype WHERE name='image/jpeg'
+UNION
+SELECT "webm", id FROM mimetype WHERE name='video/webm'
 ON DUPLICATE KEY UPDATE mimetype=mimetype
 ;
 
