@@ -2005,7 +2005,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* file_id_str;
 		const char* orig_dir_name;
 		const char* file_name;
-		while(this->mysql_assign_next_row(&orig_dir_name, &file_name)){
+		while(this->mysql_assign_next_row(&file_id_str, &orig_dir_name, &file_name)){
 		
 		if ((url_length != 0) and not is_ytdl)
 			compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
@@ -2015,7 +2015,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		char mimetype[100] = {0};
 		MYSQL_RES* const prev_res = this->res;
 		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, orig_file_path, false, mimetype, is_ytdl);
-		mysql_free_result(prev_res);
+		this->res = prev_res;
 		if (rc != FunctionSuccessness::ok)
 			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
 		
