@@ -177,27 +177,21 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 
 "<div id=\"tagging\">"
 
-#define TAG_FN \
+// elem = (id,text,fn)
+#define CREATE_TAG_SELECT(r, data, elem) \
+	"<div id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-container\" class=\"tagselect-container\">" \
+		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+		"<select class=\"tagselect\" id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\" multiple=\"multiple\"></select>" \
+	"</div>"
+#define TAG_FN1 \
 	"add_parent_tags_then(tag_id, '#tagselect-self-p', function(){" \
 		"display_parent_tags(tag_id, '#parents');" \
 	"})"
-#define TAGSELECT_ID "tagselect-self-p"
-#define TAG_TEXT "Add Parent Tags"
-#include "components/add_tag_select.html"
-#undef TAG_FN
-#undef TAGSELECT_ID
-#undef TAG_TEXT
-
-#define TAG_FN \
+#define TAG_FN2 \
 	"add_child_tags_then(tag_id, '#tagselect-self-c', function(){" \
 		"display_child_tags(tag_id, '#children');" \
 	"})"
-#define TAGSELECT_ID "tagselect-self-c"
-#define TAG_TEXT "Add Child Tags"
-#include "components/add_tag_select.html"
-#undef TAG_FN
-#undef TAGSELECT_ID
-#undef TAG_TEXT
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",TAG_FN1) "view_tag","Tag")("tagselect-self-c","Add Child Tags",TAG_FN2))
 
 "<div id=\"user-info\">"
 	"<h3 id=\"user-fullname\"></h3>"
@@ -280,13 +274,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"</div>"
 "</div>"
 
-#define TAG_TEXT "Add Tags to Files"
-#define TAG_FN "tag_files_then(get_file_ids(), '#tagselect-files', file_tagger_fn)"
-#define TAGSELECT_ID "tagselect-files"
-#include "components/add_tag_select.html"
-#undef TAG_FN
-#undef TAGSELECT_ID
-#undef TAG_TEXT
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files","tag_files_then(get_file_ids(), '#tagselect-files', file_tagger_fn)")))
 #undef FILE_TAGGER_FN
 #undef FILE_TAGGER_FILE_IDS
 
