@@ -47,6 +47,7 @@
 	"var f2;" // CSV of file2 variable names that needs to be split into an array
 	
 	"const tbl2selector = {"
+		"\"f2\":\"#file2-select\","
 		"\"t\":\".tagselect\","
 		"\"d\":\"#dirselect\","
 		"\"D\":\"#deviceselect\","
@@ -54,6 +55,7 @@
 	"};"
 	
 	"const tbl2namecol = {"
+		"\"f2\":null,"
 		"\"t\":0,"
 		"\"d\":0,"
 		"\"D\":0,"
@@ -63,7 +65,8 @@
 	"function when_data_loaded(){"
 		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined)"
 			"return;"
-		"f2 = f2.split(\",\");"
+		"if(!(f2 instanceof Array))"
+			"f2 = f2.split(\",\");"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
 			"case \"f\": view_file(_x); break;"
@@ -178,6 +181,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 "</div>"
 
 #include "components/help.html"
+
+"<div id=\"file2-container\">"
+	"<h3>Assign Value</h3>"
+	"<select id=\"file2-select\"></select>"
+	"<input id=\"file2-value\" type=\"text\" pattern=\"\\d*\" placeholder=\"12345\"/>"
+	"<button onclick=\"assign_value_to_file()\">Update DB</button>"
+"</div>"
 
 "<div id=\"tagging\">"
 
@@ -306,7 +316,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")("toggle_file_add_backup_dialog()","Backup")
+#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")("toggle_file_add_backup_dialog()","Backup")("toggle('file2-container')","Add/Update Value")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"123.4 MB")

@@ -89,6 +89,17 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	DatabaseInfo& db_info = db_infos.at(db_id);
 
 
+#define GET_FILE2_VAR_NAME(s) \
+	const char* const file2_var_name = s; \
+	while((*s != ' ') and (*s != 0)) \
+		++s; \
+	const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name; \
+	/* No need to check for empty string - the later function does that*/ \
+	GET_USER \
+	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv))) \
+		return _r::not_found;
+
+
 #include <curl/curl.h>
 
 
@@ -1326,14 +1337,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_value(const char* s){
-		const char* const file2_var_name = s;
-		while((*s != ' ') and (*s != 0))
-			++s;
-		const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name;
-		// No need to check for empty string - the later function does that
-		GET_USER
-		if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv)))
-			return _r::not_found;
+		GET_FILE2_VAR_NAME(s)
 		
 		this->mysql_query(
 			"SELECT "
@@ -2318,6 +2322,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view post__add_var_to_file(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		++s; // Skip trailing slash
+		const uint64_t value = a2n<uint64_t>(&s);
+		++s; // Skip trailing slash
+		GET_FILE2_VAR_NAME(s)
+		
+		const UserIDIntType user_id = user->id;
+		GREYLIST_GUEST
+		
+		this->mysql_exec(
+			"INSERT INTO file2", _f::strlen, file2_var_name, file2_var_name_len, " "
+			"(file,x)"
+			"SELECT f.id,", value, " "
+			"FROM _file f "
+			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			"ON DUPLICATE KEY UPDATE x=x"
+		);
 		
 		return _r::post_ok;
 	}

@@ -101,7 +101,7 @@
 	"display:block;"
 "}"
 
-"#add-f-backup{"
+"#add-f-backup,#file2-container{"
 	"outline:#f00 solid 1px;"
 	"padding:10px;"
 	"outline-offset:-5px;"

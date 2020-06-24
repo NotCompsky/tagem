@@ -127,7 +127,7 @@ POST /f/save/>
 	return this->post__save_file(++str)
 POST /f/orig/>
 	return this->replace_file_path_and_set_old_path_as_backup(++str)
-POST /f/v/>
+POST /f/f2/>
 	return this->post__add_var_to_file(++str)
 POST /f/t/>
 	return this->post__add_tag_to_file(++str)
