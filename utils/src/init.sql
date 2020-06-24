@@ -167,7 +167,7 @@ VALUES
 (0, 9223372036854775807, 0, "duration")
 ;
 
-CREATE TABLE user2hidden_file2 (
+CREATE TABLE user2shown_file2 (
 	user INT UNSIGNED NOT NULL,
 	file2 INT UNSIGNED NOT NULL,
 	FOREIGN KEY (file2) REFERENCES file2 (id),
