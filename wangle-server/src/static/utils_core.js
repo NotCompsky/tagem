@@ -10,6 +10,7 @@
 		"'help',"
 		"'qry-help',"
 		"'text-editor',"
+		"'add-f-backup',"
 		"'f',"
 		"'d',"
 		"'t',"

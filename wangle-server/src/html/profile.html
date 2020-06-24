@@ -223,13 +223,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
+"<div id=\"add-f-backup\" class=\"hidden\">"
+	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
+	ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
+	"<a onclick=\"backup_files()\">Send backup request</a>"
+"</div>"
+
 "<div id=\"file-info\">"
-	"<div id=\"add-f-backup\" class=\"hidden\">"
-		"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
-		ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
-		"<a onclick=\"backup_file()\">Send backup request</a>"
-	"</div>"
-	
 	"<a id=\"dir_name\"></a>"
 	"<br/>"
 	"<a onclick=\"toggle_file_add_backup_dialog()\">+Backups</a>"
@@ -302,7 +302,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")
+#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")("toggle_file_add_backup_dialog()","Backup")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"123.4 MB")

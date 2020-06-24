@@ -1982,10 +1982,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view post__backup_file(const char* s){
-		const uint64_t file_id = a2n<uint64_t>(&s);
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip slash
 		const uint64_t dir_id = a2n<uint64_t>(&s);
-		if ((dir_id == 0) or (file_id == 0))
+		if (dir_id == 0)
 			return _r::not_found;
 		
 		//++s; // Do not skip slash, as it is skipped by the following macro
@@ -2000,13 +2000,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
-		this->mysql_query("SELECT d.name, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id=", file_id);
+		this->mysql_query("SELECT f.id, d.name, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
 		char orig_file_path[4096];
+		const char* file_id_str;
 		const char* orig_dir_name;
 		const char* file_name;
-		if (unlikely(not this->mysql_assign_next_row(&orig_dir_name, &file_name)))
-			// No results
-			return _r::not_found;
+		while(this->mysql_assign_next_row(&orig_dir_name, &file_name)){
 		
 		if ((url_length != 0) and not is_ytdl)
 			compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
@@ -2025,7 +2024,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_exec(
 			"INSERT INTO file_backup "
 			"(file,dir,name,mimetype,user)"
-			"SELECT ", file_id, ',', dir_id, ",SUBSTR(\"", _f::esc, '"', this->file_path, "\",LENGTH(d.name)+1),mt.id,", user_id, " "
+			"SELECT ", file_id_str, ',', dir_id, ",SUBSTR(\"", _f::esc, '"', this->file_path, "\",LENGTH(d.name)+1),mt.id,", user_id, " "
 			"FROM _file f "
 			"JOIN _dir d "
 			"LEFT JOIN ",
@@ -2033,12 +2032,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				_f::esc, '"',
 				(is_mimetype_set)?mimetype:this->file_path, // TODO: Escape mimetype properly
 				(is_mimetype_set)?"\"":"\",'.',-1)", " "
-			"WHERE f.id=", file_id, " "
+			"WHERE f.id=", file_id_str, " "
 			  "AND d.id=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
 		);
 		// WARNING: The above will crash if there is no such extension in ext2mimetype
 		// This is deliberate, to tell me to add it to the DB.
+		
+		}
 		
 		return _r::post_ok;
 	}
