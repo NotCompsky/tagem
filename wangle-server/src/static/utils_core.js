@@ -5,6 +5,9 @@
 	"document.getElementById(id).classList.remove(\"hidden\");"
 "}"
 "function hide_all_except(ls){"
+	// More like 'page switch' event now
+	"if(!ls.includes('file-info'))"
+		"playlist_file_ids = undefined;" // Destroy playlist
 	"document.getElementById('profile-img').removeAttribute('onclick');"
 	"for(const id of ["
 		"'help',"

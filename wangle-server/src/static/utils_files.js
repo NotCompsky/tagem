@@ -321,6 +321,8 @@
 "const playlist_listeners_fns = [playlist_listener_delayed, playlist_listener, playlist_listener, playlist_listener_delayed, playlist_listener_delayed];"
 "var playlist_file_ids;"
 "function playlist_listener(){"
+	"if(playlist_file_ids===undefined)"
+		"return;"
 	"playlist_file_ids.push(playlist_file_ids.shift());"
 	"view_file(playlist_file_ids[0]);"
 "}"
