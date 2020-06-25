@@ -129,3 +129,23 @@ size_t count_until(const char* s,  const char c){
 	return n;
 }
 static_assert(count_until("foobar",'b')==3);
+
+constexpr
+bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  const char* b){
+	// WARNING: b should be guaranteed to either be empty, or contain non-empty strings delineated by commas
+	while(*b != 0){
+		const char* a = A;
+		while((*b == *a) and (*a != ' ') and (*a != 0) and (*b != ',') and (*b != 0)){
+			++b;
+			++a;
+		}
+		if ((*a == ' ') and ((*b == ',') or (*b == 0)))
+			return true;
+		while((*b != ',') and (*b != 0))
+			++b;
+		if (*b == 0)
+			return false;
+		++b; // Skip the comma
+	}
+	return false;
+}

@@ -17,6 +17,7 @@
 #include "user_auth.hpp"
 #include "static_response.hpp"
 #include "proc.hpp"
+#include "curl_utils.hpp"
 
 #include "get_cookies.hpp"
 #include "read_request.hpp"
@@ -100,9 +101,6 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found;
 
 
-#include <curl/curl.h>
-
-
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
 namespace _f {
@@ -115,8 +113,6 @@ namespace _f {
 	constexpr static const compsky::asciify::flag::NElements n_elements;
 	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
 }
-
-constexpr static const size_t MAX_MIMETYPE_SZ = 100;
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
 
@@ -145,14 +141,6 @@ static bool regenerate_protocol_json = true;
 static bool regenerate_tag_json = true;
 static bool regenerate_tag2parent_json = true;
 
-enum FunctionSuccessness {
-	ok,
-	malicious_request,
-	server_error,
-	unimplemented,
-	COUNT
-};
-
 std::vector<std::string> banned_client_addrs;
 
 constexpr
@@ -160,82 +148,6 @@ bool is_local_file_or_dir(const char* const url){
 	return (url[0] == '/');
 }
 
-bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  const char* b){
-	// WARNING: b should be guaranteed to either be empty, or contain non-empty strings delineated by commas
-	while(*b != 0){
-		const char* a = A;
-		while((*b == *a) and (*a != ' ') and (*a != 0) and (*b != ',') and (*b != 0)){
-			++b;
-			++a;
-		}
-		if ((*a == ' ') and ((*b == ',') or (*b == 0)))
-			return true;
-		while((*b != ',') and (*b != 0))
-			++b;
-		if (*b == 0)
-			return false;
-		++b; // Skip the comma
-	}
-	return false;
-}
-
-
-
-FunctionSuccessness dl_file__curl(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
-	FunctionSuccessness rc;
-	
-	if (not overwrite_existing){
-		if (fopen(dst_pth, "rb") != nullptr)
-			return FunctionSuccessness::ok;
-	}
-	
-	FILE* const f = fopen(dst_pth, "w");
-	if (f == nullptr){
-		fprintf(stderr,  "Cannot open file for writing: %s\n",  dst_pth);
-		return FunctionSuccessness::server_error;
-	}
-	
-	CURL* const handle = curl_easy_init();
-	curl_easy_setopt(handle, CURLOPT_URL, url);
-	curl_easy_setopt(handle, CURLOPT_WRITEDATA, f);
-	
-	/* Copy headers */
-	struct curl_slist* headers = nullptr;
-	char user_agent_buf[1000];
-	const char* const user_agent = SKIP_TO_HEADER(12,"User-Agent: ")(user_headers);
-	if (user_agent == nullptr)
-		return FunctionSuccessness::malicious_request;
-	memccpy(user_agent_buf,  user_agent - 11,  '\r',  sizeof(user_agent_buf));
-	replace_first_instance_of(user_agent_buf, '\r', '\0');
-	headers = curl_slist_append(headers, user_agent_buf);
-	headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-	headers = curl_slist_append(headers, "Accept-Language: en-GB,en;q=0.5");
-	headers = curl_slist_append(headers, "Accept-Encoding: gzip, deflate, br");
-	headers = curl_slist_append(headers, "Connection: keep-alive");
-	headers = curl_slist_append(headers, "Upgrade-Insecure-Requests: 1");
-	headers = curl_slist_append(headers, "DNT: 1");
-	headers = curl_slist_append(headers, "Pragma: no-cache");
-	headers = curl_slist_append(headers, "Cache-Control: no-cache");
-	headers = curl_slist_append(headers, "TE: Trailers");
-	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
-	
-	const CURLcode curl_rc = curl_easy_perform(handle);
-	fclose(f);
-	if (curl_rc != CURLE_OK){
-		remove(dst_pth);
-		rc = FunctionSuccessness::server_error;
-	} else {
-		char* _mimetype = nullptr;
-		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, _mimetype);
-		if (not curl_rc2  and  _mimetype)
-			memccpy(mimetype, _mimetype, 0, MAX_MIMETYPE_SZ);
-		rc = FunctionSuccessness::ok;
-	}
-	
-	curl_easy_cleanup(handle);
-	
-	return rc;
-}
 
 namespace _r {
 	static const char* mimetype_json;
