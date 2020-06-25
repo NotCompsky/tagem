@@ -29,11 +29,8 @@
 #include <compsky/mysql/query.hpp>
 
 #include <folly/init/Init.h>
-#include <folly/ssl/Init.h>
-#include <folly/io/async/AsyncSSLSocket.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
 #include <wangle/channel/AsyncSocketHandler.h>
-#include <wangle/ssl/TLSCredProcessor.h>
 
 #include <mutex>
 #include <cstring> // for malloc
@@ -2316,25 +2313,6 @@ class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
 		}
 };
 
-
-// Init the processor callbacks.  It's fine to do this
-// even if nothing is being watched
-template<typename T>
-void initCredProcessorCallbacks(
-	wangle::ServerBootstrap<T>& sb,
-    wangle::TLSCredProcessor& processor) {
-  // set up ticket seed callback
-  processor.addTicketCallback([&](wangle::TLSTicketKeySeeds seeds) {
-      sb.getSharedSSLContextManager()->updateTLSTicketKeys(seeds);
-  });
-
-  // Reconfigure SSL when we detect cert or CA changes.
-  processor.addCertCallback([&] {
-      sb.getSharedSSLContextManager()->reloadSSLContextConfigs();
-  });
-}
-
-
 int main(int argc,  char** argv){
 	curl_global_init(CURL_GLOBAL_ALL);
 	
@@ -2342,9 +2320,6 @@ int main(int argc,  char** argv){
 	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,they,foo"));
 	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","foo,what,does"));
 	assert(not matches__left_up_to_space__right_up_to_comma_or_null("bar foo","who,does,foo"));
-	
-	const char* tls_key_path;
-	const char* tls_cert_path;
 	
 	char** dummy_argv = argv;
 	int port_n = 0;
@@ -2376,20 +2351,10 @@ int main(int argc,  char** argv){
 			case 'Y':
 				YTDL_FORMAT = *(++argv);
 				break;
-			case '-':
-				goto main__double_break;
 			default:
 				goto help;
 		}
 	}
-	main__double_break:
-	
-	if(*(++argv) == nullptr)
-		goto help;
-	tls_key_path = *argv;
-	if(*(++argv) == nullptr)
-		goto help;
-	tls_cert_path = *argv;
 	
 	if (port_n == 0){
 		help:
@@ -2402,29 +2367,6 @@ int main(int argc,  char** argv){
 	
 	int dummy_argc = 0;
 	folly::Init init(&dummy_argc, &dummy_argv);
-	
-	
-	wangle::ServerSocketConfig cfg;
-	wangle::ServerBootstrap<RTaggerPipeline> server;
-	
-	wangle::SSLContextConfig sslCfg;
-	sslCfg.isDefault = true;
-	sslCfg.setCertificate(
-		tls_cert_path,
-		tls_key_path,
-		""
-	);
-	cfg.sslContextConfigs.push_back(sslCfg);
-	// IMPORTANT: when allowing both plaintext and ssl on the same port,
-	// the acceptor requires 9 bytes of data to determine what kind of
-	// connection is coming in.  If the client does not send 9 bytes the
-	// connection will idle out before the EchoCallback receives data.
-	cfg.allowInsecureConnectionsOnSecureServer = false;
-	
-	
-	
-	
-	
 	
 	if (mysql_library_init(0, NULL, NULL))
 		throw compsky::mysql::except::SQLLibraryInit();
@@ -2506,12 +2448,8 @@ int main(int argc,  char** argv){
 	while(compsky::mysql::assign_next_row__no_free(res3, &row, &name))
 		select_unique_name_for_each_file2_var.push_back(name);
 	
-#define N_WORKERS 2
-	auto workers = std::make_shared<folly::IOThreadPoolExecutor>(N_WORKERS);
-	server.acceptorConfig(cfg);
+	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
-	server.setUseSharedSSLContextManager(true);
-	server.group(workers);
 	server.bind(port_n);
 	server.waitForStop();
 	
