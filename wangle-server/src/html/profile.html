@@ -248,7 +248,17 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"<br/>"
 	"<a onclick=\"toggle_file_add_backup_dialog()\">+Backups</a>"
 	"<br/>"
-	"<div id=\"view\"></div>"
+	"<div id=\"view\">"
+		"<video id=\"view-video\" controls>"
+			"<source>Browser does not support videos</source>"
+		"</video>"
+		"<audio id=\"view-audio\" controls>"
+			"<source>Browser does not support audio</source>"
+		"</audio>"
+		"<img id=\"view-img\"/>"
+		"<iframe id=\"view-iframe\" frameborder=\"0\" scrolling=\"no\" allow=\"autoplay; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen>Browser does not support iframes</iframe>"
+		"<object id=\"view-object\">Browser does not support object elements</object>"
+	"</div>"
 	"<br/>"
 	ADD_TOGGLE("autoplay","Autoplay")
 	"<button onclick=\"show_update_orig_src_dialog()\">Update src</button>"
@@ -316,7 +326,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")("toggle_file_add_backup_dialog()","Backup")("toggle('file2-container')","Add/Update Value")
+#define ACTION_BTNS ("select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge_files()","Merge Files")("toggle_file_add_backup_dialog()","Backup")("toggle('file2-container')","Add/Update Value")("view_files_as_playlist(get_file_ids())","View as Playlist")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"123.4 MB")
