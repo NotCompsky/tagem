@@ -5,7 +5,7 @@ namespace help {
 	constexpr
 	const char* const text =
 		"USAGE\n"
-		"	[[OPTIONS]] p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]\n"
+		"	[[OPTIONS]] p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]] - [TLS_KEY_PATH] [TLS_CERT_PATH]\n"
 		"\n"
 		"OPTIONS\n"
 		"	X /path/to/file\n"
