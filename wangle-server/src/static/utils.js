@@ -18,6 +18,8 @@
 #include "text-editor.js"
 #include "qry.js"
 
+"const YOUTUBE_DEVICE_ID = \"1\";"
+
 "function init_selects(var_name){"
 	"let s = \"\";"
 	"const col = tbl2namecol[var_name];"
