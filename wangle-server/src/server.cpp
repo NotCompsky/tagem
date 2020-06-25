@@ -1745,7 +1745,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
-		if (in_str(file_name, '/')){
+		if (in_str(file_name, '/') and not is_ytdl){
 			// TODO: Allow for this
 			rc = FunctionSuccessness::server_error;
 			goto dl_or_cp_file__return;
