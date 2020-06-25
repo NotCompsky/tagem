@@ -13,13 +13,11 @@
 	#include "components/jquery.html"
 	#include "components/select2.html"
 	
-	"<script type=\"text/javascript\">"
-		#include "../static/utils.js"
-	"</script>"
-	
 	#include "components/all.css.html"
 "</head>"
-"<script>"
+"<script type=\"text/javascript\">"
+	#include "../static/utils.js"
+	
 	"var tag_id;"
 	"var file_id;"
 	"var file_name;"
@@ -45,6 +43,7 @@
 	"var x;"
 	"var mt;" // mimetypes
 	"var f2;" // CSV of file2 variable names that needs to be split into an array
+	"var yt_player;"
 	
 	"const tbl2selector = {"
 		"\"f2\":\"#file2-select\","
@@ -62,8 +61,19 @@
 		"\"P\":0"
 	"};"
 	
+	"function onYouTubeIframeAPIReady(){"
+		"yt_player = new YT.Player('yt-player', {"
+			"height: '390',"
+			"width: '640',"
+			"events:{"
+				"'onStateChange':YTPlayer_onStateChange"
+			"}"
+		"});"
+		"when_data_loaded();"
+	"}"
+	
 	"function when_data_loaded(){"
-		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined)"
+		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined || yt_player === undefined)"
 			"return;"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
@@ -94,6 +104,12 @@
 		"refetch_json('x', '/a/x.json', when_data_loaded);"
 		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
 		"refetch_json('f2', '/a/f2.json', function(){f2=f2.split(\",\");when_data_loaded()});"
+		
+		// From google's documentation: This code loads the IFrame Player API code asynchronously.
+		"let node = document.createElement('script');"
+		"node.src = \"https://www.youtube.com/iframe_api\";"
+		"let firstScriptTag = document.getElementsByTagName('script')[0];"
+		"firstScriptTag.parentNode.insertBefore(node, firstScriptTag);"
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
@@ -256,6 +272,10 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 		"<img id=\"view-img\"/>"
 		"<iframe id=\"view-iframe\" frameborder=\"0\" scrolling=\"no\" allow=\"autoplay; encrypted-media; gyroscope; picture-in-picture\" allowfullscreen>Browser does not support iframes</iframe>"
 		"<object id=\"view-object\">Browser does not support object elements</object>"
+		"<div id=\"view-yt-player\">"
+			"<div id=\"yt-player\"></div>"
+			// This div is *replaced* by the Youtube IFrame API, so causes issues when told to hide while it is loading
+		"</div>"
 	"</div>"
 	"<br/>"
 	ADD_TOGGLE("autoplay","Autoplay")
