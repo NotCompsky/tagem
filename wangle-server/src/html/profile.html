@@ -13,11 +13,13 @@
 	#include "components/jquery.html"
 	#include "components/select2.html"
 	
+	"<script type=\"text/javascript\">"
+		#include "../static/utils.js"
+	"</script>"
+	
 	#include "components/all.css.html"
 "</head>"
-"<script type=\"text/javascript\">"
-	#include "../static/utils.js"
-	
+"<script>"
 	"var tag_id;"
 	"var file_id;"
 	"var file_name;"
@@ -43,7 +45,6 @@
 	"var x;"
 	"var mt;" // mimetypes
 	"var f2;" // CSV of file2 variable names that needs to be split into an array
-	"var yt_player;"
 	
 	"const tbl2selector = {"
 		"\"f2\":\"#file2-select\","
@@ -61,19 +62,8 @@
 		"\"P\":0"
 	"};"
 	
-	"function onYouTubeIframeAPIReady(){"
-		"console.log(\"onYouTubeIframeAPIReady called\");"
-		"yt_player = new YT.Player('yt-player', {"
-			"events:{"
-				"'onStateChange': YTPlayer_onStateChange"
-			"}"
-		"});"
-		"yt_player.addEventListener(\"onStateChange\", \"YTPlayer_onStateChange\");"
-		"when_data_loaded();"
-	"}"
-	
 	"function when_data_loaded(){"
-		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined || yt_player === undefined)"
+		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined)"
 			"return;"
 		"if(!(f2 instanceof Array))"
 			"f2 = f2.split(\",\");"
@@ -111,8 +101,6 @@
 		"init_qry();"
 	"});"
 "</script>"
-
-"<script type=\"text/javascript\" src=\"https://www.youtube.com/iframe_api\"></script>"
 
 "<body>"
 
