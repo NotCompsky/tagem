@@ -18,6 +18,10 @@
 #include "text-editor.js"
 #include "qry.js"
 
+"function sleep(ms){"
+	"return new Promise(resolve => setTimeout(resolve, ms));"
+"}"
+
 "function init_selects(var_name){"
 	"let s = \"\";"
 	"const col = tbl2namecol[var_name];"
