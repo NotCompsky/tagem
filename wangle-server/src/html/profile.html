@@ -65,8 +65,6 @@
 	"function when_data_loaded(){"
 		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined)"
 			"return;"
-		"if(!(f2 instanceof Array))"
-			"f2 = f2.split(\",\");"
 		"const _x = window.location.hash.substr(2);"
 		"switch(window.location.hash.substr(1,1)){"
 			"case \"f\": view_file(_x); break;"
@@ -95,7 +93,7 @@
 		"refetch_json('t2p', '/a/t2p.json', when_data_loaded);"
 		"refetch_json('x', '/a/x.json', when_data_loaded);"
 		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
-		"refetch_json('f2', '/a/f2.json', when_data_loaded);"
+		"refetch_json('f2', '/a/f2.json', function(){f2=f2.split(\",\");when_data_loaded()});"
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
