@@ -83,11 +83,11 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::requires_login;
 
 #define GET_DB_INFO \
-	const unsigned db_indx = a2n<unsigned>(&s); \
-	if ((db_indx == 0) or (db_indx >= db_infos.size())) \
+	const unsigned db_id = a2n<unsigned>(&s); \
+	const unsigned db_indx = external_db_id2indx(db_id); \
+	if (db_indx == 0) \
 		return _r::not_found; \
-	const unsigned db_id = db_indx2id[db_indx]; \
-	DatabaseInfo& db_info = db_infos.at(db_id);
+	DatabaseInfo& db_info = db_infos.at(db_indx);
 
 
 #define GET_FILE2_VAR_NAME(s) \
@@ -120,7 +120,15 @@ static
 std::vector<DatabaseInfo> db_infos;
 
 static
-unsigned db_indx2id[128];
+unsigned db_indx2id[128] = {};
+
+unsigned external_db_id2indx(const unsigned id){
+	for (size_t i = 0;  i < sizeof(db_indx2id);  ++i){
+		if (id == db_indx2id[i])
+			return i;
+	}
+	return 0;
+}
 
 static
 std::vector<const char*> file2_variables;
@@ -2377,7 +2385,7 @@ int main(int argc,  char** argv){
 		#include "headers/Content-Type/json.c"
 		#include "headers/Cache-Control/1day.c"
 		"\n"
-		"[\""
+		"{\""
 	;
 	MYSQL_RES* res;
 	MYSQL_ROW row;
@@ -2385,8 +2393,6 @@ int main(int argc,  char** argv){
 		char* const db_env_name = external_db_env_vars.at(i);
 		
 		const DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
-		db_name2id_json += db_info.name();
-		db_name2id_json += "\",\"";
 		
 		if (i == 0)
 			continue;
@@ -2395,17 +2401,16 @@ int main(int argc,  char** argv){
 		compsky::mysql::query(db_infos.at(0).mysql_obj, res, buf, "SELECT id FROM external_db WHERE name=\"", db_info.name(), "\"");
 		unsigned id = 0;
 		while(compsky::mysql::assign_next_row(res, &row, &id));
+		db_name2id_json += std::to_string(id) + std::string("\":\"") + db_info.name() + std::string("\",\"");
 		if (id == 0){
 			fprintf(stderr,  "External database not recorded in external_db table: %s\n", db_info.name());
 			return 1;
 		}
 		db_indx2id[i] = id;
 	}
-	db_name2id_json.pop_back();   // Remove trailing quotation mark
-	db_name2id_json.back() = ']'; // Replace trailing comma
+	db_name2id_json.pop_back();
+	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
-	
-	printf("_r::external_db_json set\n");
 	
 	compsky::mysql::query_buffer(
 		db_infos.at(0).mysql_obj,
