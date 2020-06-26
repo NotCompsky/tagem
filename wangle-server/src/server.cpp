@@ -1661,11 +1661,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	char file_path[4096];
 	
-	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
+	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
-		if (in_str(file_name, '/') and not is_ytdl){
+		if (in_str(file_name, '/') and (file_id==nullptr) and not is_ytdl){
 			// TODO: Allow for this
 			rc = FunctionSuccessness::server_error;
 			goto dl_or_cp_file__return;
@@ -1690,9 +1690,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			goto dl_or_cp_file__return;
 		}
 		
+		// If YTDL, then this->file_path is the template of the path of the output file; else it is the path of the output file
+		compsky::asciify::asciify(this->file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
+		
 		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
 		
-		compsky::asciify::asciify(this->file_path, dir_name, file_name, '\0');
 		this->mysql_free_res();
 		
 		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
@@ -1754,11 +1756,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return rc;
 	}
 	
-	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
+	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
 		if (is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
+		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
 	}
 	
 	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
@@ -2032,7 +2034,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		char mimetype[100] = {0};
 		MYSQL_RES* const prev_res = this->res;
-		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_name, orig_file_path, false, mimetype, is_ytdl);
+		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
 		this->res = prev_res;
 		if (rc != FunctionSuccessness::ok)
 			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
@@ -2105,7 +2107,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 					
 					char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-					switch(this->dl_file(user_headers, user_id, dir_id, file_name, url_buf, is_html_file, mimetype, true, is_ytdl)){
+					switch(this->dl_file(user_headers, user_id, dir_id, nullptr, file_name, url_buf, is_html_file, mimetype, true, is_ytdl)){
 						case FunctionSuccessness::server_error:
 							++n_errors;
 						case FunctionSuccessness::ok:
