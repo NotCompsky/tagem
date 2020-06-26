@@ -1992,6 +1992,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
 		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM _file f WHERE f.id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
+		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT post FROM file2post WHERE file=", orig_f_id, ") AND file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		this->mysql_exec("DELETE FROM _file WHERE id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
 		return _r::post_ok;
