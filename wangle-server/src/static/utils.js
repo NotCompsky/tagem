@@ -31,8 +31,10 @@
 		"ajax:{"
 			"transport: function (params, success, failure){"
 				"let arr = Object.entries(window[var_name]);" // WARNING: I don't see why there aren't scope issues
-				"if(params.data.q !== undefined)"
-					"arr = arr.filter(x => x[1][0].search(params.data.q)>=0);"
+				"if(params.data.q !== undefined){"
+					"const pattern = (use_regex) ? new RegExp(params.data.q) : params.data.q;"
+					"arr = arr.filter(x => x[1][0].search(pattern)>=0);"
+				"}"
 				"if(arr.length > 50){"
 					"arr = arr.slice(0, 50);"
 					"arr.unshift(['0', ['Truncated to 50 results']]);"

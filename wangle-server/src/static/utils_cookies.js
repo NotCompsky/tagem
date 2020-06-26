@@ -3,7 +3,7 @@
 	// NOTE: Previous cookies are NOT overwritten
 "}"
 "function get_cookie(name){"
-	"const regexp = new RegExp('(?:^|;)' + name + \"=([^;]+)\");"
+	"const regexp = new RegExp('(?:^|;) ?' + name + \"=([^;]+)\");"
 	"const x = regexp.exec(document.cookie);"
 	"if (x === null)"
 		"return undefined;"

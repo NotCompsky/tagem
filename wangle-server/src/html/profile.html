@@ -45,6 +45,9 @@
 	"var f2;" // CSV of file2 variable names that needs to be split into an array
 	"var yt_player;"
 	
+	// User options stored in cookies
+	"var use_regex;"
+	
 	"const tbl2selector = {"
 		"\"f2\":\"#file2-select\","
 		"\"t\":\".tagselect\","
@@ -110,6 +113,16 @@
 		"node.src = \"https://www.youtube.com/iframe_api\";"
 		"let firstScriptTag = document.getElementsByTagName('script')[0];"
 		"firstScriptTag.parentNode.insertBefore(node, firstScriptTag);"
+		
+		"if(use_regex === undefined){"
+			"use_regex = get_cookie(\"use_regex\");"
+			"if(use_regex !== undefined){"
+				"use_regex = (use_regex === \"1\");"
+			"}else{"
+				"use_regex = confirm(\"Use Regular Expressions?\\nSay no if you don't know what they are\");"
+				"set_cookie(\"use_regex\", (use_regex)?\"1\":\"0\", 3600);"
+			"}"
+		"}"
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
