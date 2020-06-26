@@ -40,7 +40,7 @@ target_compile_definitions(qry PRIVATE DEBUG)
 
 add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/FrameDecoder.cpp" "${SRC_DIR}/qry.cpp" "${SRC_DIR}/skip_to_body.cpp")
 set_property(TARGET server PROPERTY CXX_STANDARD 17)
-target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${CMAKE_CURRENT_SOURCE_DIR}/../include")
+target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(server wangle::wangle mariadbclient curl)
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")

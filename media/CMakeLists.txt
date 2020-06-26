@@ -10,6 +10,8 @@ endif()
 find_package(Compsky REQUIRED COMPONENTS asciify mysql)
 set(CMAKE_AUTOMOC ON)
 
+set(PROJECT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include") # PROJECT_SOURCE_DIR being where the master CMakeLists.txt file is
+
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -75,11 +77,11 @@ add_executable(tagem-tag-manager
 	
 	src/add_new_tag.cpp
 	src/name_dialog.cpp
-	../include/dropdown_dialog.cpp
+	"${PROJECT_INCLUDE_DIR}/dropdown_dialog.cpp"
 	src/unlink_tag_btn.cpp
 )
 target_compile_definitions(tagem-tag-manager PRIVATE TAG_MANAGER)
-target_include_directories(tagem-tag-manager PRIVATE "../include")
+target_include_directories(tagem-tag-manager PRIVATE "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(tagem-tag-manager Qt5::Widgets compsky_asciify compsky_mysql)
 target_sources(tagem-tag-manager PRIVATE ${TAG_MANAGER_SOURCES})
 target_sources(tagem-tag-manager PRIVATE ${COMPLETER_SOURCES} src/add_new_tag.cpp)
@@ -89,7 +91,7 @@ add_executable(tagem-add-tag
 	src/name_dialog.cpp
 	src/add_new_tag.cpp
 )
-target_include_directories(tagem-add-tag PRIVATE "../include")
+target_include_directories(tagem-add-tag PRIVATE "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(tagem-add-tag Qt5::Widgets compsky_asciify compsky_mysql)
 target_sources(tagem-add-tag PRIVATE ${COMPLETER_SOURCES})
 
@@ -101,7 +103,7 @@ foreach(file_type ${MY_TARGETS})
 		src/keyreceiver.cpp
 		src/name_dialog.cpp
 		src/inlist_filter_dialog.cpp
-		../include/dropdown_dialog.cpp
+		"${PROJECT_INCLUDE_DIR}/dropdown_dialog.cpp"
 		src/info_dialog.cpp
 		src/unlink_tag_btn.cpp
 		src/add_new_tag.cpp
@@ -115,7 +117,7 @@ foreach(file_type ${MY_TARGETS})
 	endif()
 	target_sources("${tgt}" PRIVATE ${TAG_MANAGER_SOURCES})
 	target_compile_definitions("${tgt}" PRIVATE MAINWINDOW FILE2)
-    target_include_directories("${tgt}" PRIVATE "../include")
+    target_include_directories("${tgt}" PRIVATE "${PROJECT_INCLUDE_DIR}")
     target_link_libraries("${tgt}" Qt5::Widgets Qt5::Network compsky_asciify compsky_mysql)
     foreach(dfn ${MY_DEFINITIONS})
         target_compile_definitions("${tgt}" PRIVATE "${dfn}")
