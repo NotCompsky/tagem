@@ -1,0 +1,39 @@
+R"=========(
+USAGE
+	[[OPTIONS]] p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]
+
+OPTIONS
+	X /path/to/file
+		Write external commands to this file
+		Hint: If these are BASH commands, could execute these lines as they are written:
+			mkfifo /tmp/tagem-external-cmds.pipe
+			(./server X /tmp/tagem-external-cmds.txt ...)&
+			while read line; do  eval "$line";  done < /tmp/tagem-external-cmds.pipe
+		Obviously security concerns etc.
+	Y [youtube-dl format]
+		DEFAULT
+			The default value restricts downloads to [height<=720] and prioritises the most compressed formats.
+		EXAMPLES
+			See https://github.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
+
+EXTERNAL DATABASES
+	Optional
+	List of environmental variables, each preceded by "x", pointing to files of the same format as $TAGEM_MYSQL_CFG, containing login data for foreign databases
+	Eg
+		x REDDIT_MYSQL_CFG x TWITTER_MYSQL_CFG
+	These foreign databases should contain, at a minimum, a "post" table
+	Each database should be of a unique name.
+	The tagem database itself contains the "post2file" table, which maps the external database's posts to tagem's files
+		// The alternative - the external database containing this table - would involve a lot more database calls. With this system, we can do a simple join, to tell clients that which posts are available in which external databases, and then only access the external database from file info and advanced queries.
+	Other obtional tables, that will be recognised and used if available, are:
+		"user" for users
+		"user2tagem_tag" linking the user to tagem's tag table
+		"follow" linking users to other users
+		"post2mention" and "post2like" linking users to posts
+		"cmnt" for comments
+		"cmnt2mention" and "cmnt2like" linking users to comments
+		"hashtag2tagem_tag" linking tagem's tag table to the foreign hashtags
+		"hashtag"
+		"post2hashtag" linking posts to hashtags
+		"follow_hashtag" linking users to hashtags
+)========="

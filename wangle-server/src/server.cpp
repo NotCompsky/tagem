@@ -13,7 +13,6 @@
 #include "convert_str.hpp"
 #include "str_utils.hpp"
 #include "db_info.hpp"
-#include "help.hpp"
 #include "user_auth.hpp"
 #include "static_response.hpp"
 #include "proc.hpp"
@@ -2372,7 +2371,7 @@ int main(int argc,  char** argv){
 		help:
 		fprintf(
 			stderr,
-			help::text
+			#include "help.txt"
 		);
 		return 1;
 	}
