@@ -96,9 +96,7 @@
 		"}"
 	"}"
 	
-	"$(document).ready(function(){" // Only execute after page has finished loading
-		"hide_all_except([]);"
-		
+	"function refetch_all_jsons(){"
 		"refetch_json('t', '/a/t.json', when_data_loaded);"
 		"refetch_json('d', '/a/d.json', when_data_loaded);"
 		"refetch_json('D', '/a/D.json', when_data_loaded);"
@@ -107,6 +105,15 @@
 		"refetch_json('x', '/a/x.json', when_data_loaded);"
 		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
 		"refetch_json('f2', '/a/f2.json', function(){f2=f2.split(\",\");when_data_loaded()});"
+	"}"
+	
+	"$(document).ready(function(){" // Only execute after page has finished loading
+		"hide_all_except([]);"
+		
+		"const uname = get_cookie(\"username\");"
+		"document.getElementById('username').innerText = (uname === undefined)?\"GUEST\":uname;"
+		
+		"refetch_all_jsons();"
 		
 		// From google's documentation: This code loads the IFrame Player API code asynchronously.
 		"let node = document.createElement('script');"
@@ -388,9 +395,9 @@ R"=========(
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
         </svg>
       </button>
-      <span class="account-user"><p id="username">Guest</p>
+      <span class="account-user"><p id="username"></p>
         <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Google_Contacts_icon.svg" class="account-profile" alt="">
-        <span>▼</span>
+        <button onclick="if(get_cookie('username')===undefined)login();else logout()">▼</button>
       </span>
     </div>
 )========="
