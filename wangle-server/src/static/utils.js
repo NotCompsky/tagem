@@ -28,6 +28,7 @@
 	"let s = \"\";"
 	"const col = tbl2namecol[var_name];"
 	"$(tbl2selector[var_name]).select2({"
+		"placeholder: nickname2fullname[var_name] + (use_regex)?\" pattern\":\"\","
 		"ajax:{"
 			"transport: function (params, success, failure){"
 				"let arr = Object.entries(window[var_name]);" // WARNING: I don't see why there aren't scope issues
