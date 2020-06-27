@@ -83,6 +83,11 @@
 	"for(let type of ['img','video','audio','iframe','object','yt-player']){"
 		"if(type === except){"
 			"unhide('view-'+type);"
+			"const node = document.getElementById('view-'+type).getElementsByTagName('source')[0];"
+			"if(node !== undefined)"
+				"node.removeAttribute('src');"
+			"if(type === 'yt-player')"
+				"yt_player.pauseVideo();" // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 			"continue;"
 		"}"
 		"hide('view-'+type);"
