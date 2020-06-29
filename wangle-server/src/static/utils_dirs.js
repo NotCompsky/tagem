@@ -41,7 +41,13 @@
 
 
 "function view_dir(_dir_id_or_path, is_from_db){"
-	"hide_all_except(['f','parents-container','children-container','files-tagging','tagselect-files-container','tagselect-files-btn']);"
+	"let ls = ['f','parents-container','children-container','files-tagging','tagselect-files-container','tagselect-files-btn'];"
+	"if(is_from_db === undefined){"
+		"ls.push('merge-files-btn');"
+		"ls.push('backup-files-btn');"
+		"ls.push('view-as-playlist-btn');"
+	"}"
+	"hide_all_except(ls);"
 	
 	"file_tagger_fn = after_tagged_selected_files;"
 	"get_file_ids = get_selected_file_ids;"

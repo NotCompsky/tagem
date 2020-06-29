@@ -1,5 +1,5 @@
 #define CREATE_ACTION_BTN(r, data, elem) \
-	"<button onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+	"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(1, elem) "\">" BOOST_PP_TUPLE_ELEM(2, elem) "</button>" \
 
 #define CREATE_HEADER(r, data, name) \
 	"<div class=\"td\">" \
