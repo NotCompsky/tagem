@@ -695,6 +695,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
 			MD5_Final(hash.data(), &md5_ctx);
 			
+			compsky::asciify::asciify(this->file_path, dir_path, ename, '\0');
+			
 			static struct stat st;
 			stat(this->file_path+7, &st);
 			this->asciify(
