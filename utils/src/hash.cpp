@@ -16,13 +16,6 @@ extern "C" {
 #include <stdio.h> // for fprintf
 #include <signal.h>
 
-// Only used for QT5MD5 hash
-#include <QUrl>
-#include <QByteArray>
-#include <QCryptographicHash>
-#include <QString>
-#include <QFile>
-
 
 #define MAX_HASH_NAME_LENGTH 10
 
@@ -83,18 +76,6 @@ void intercept_exit(int){
 extern "C"
 void intercept_abort(int _signal){
 	fprintf(logfile,  "Signal: %s.\nLast processed:\n\tHash Kind: %s\n\tFile Path: %s\n", (_signal==SIGKILL)?"SIGKILL":"SIGABRT", CURRENT_HASHING_METHOD, CURRENT_FILE_PATH);
-	
-	if (CURRENT_FILE_PATH != nullptr)
-		compsky::mysql::exec(
-			_mysql::obj,
-			BUF,
-			"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
-			"(file)"
-			"SELECT f.id "
-			"FROM _file f "
-			"JOIN _dir d ON d.id=f.dir "
-			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
-		);
 	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 	
@@ -217,8 +198,10 @@ struct OneToOne {
 };
 
 
-template<typename FileType,  typename Int>
+template<size_t sz,  typename FileType,  typename Int>
+// sz of 0 indicates integer type, or non-constlength string; sz above 0 indicates const-length string
 void asciify_hash(const FileType file_type_flag,  char*& itr,  const Int hash){
+	static_assert(sz == 0);
 	compsky::asciify::asciify(
 		itr,
 		hash
@@ -226,12 +209,14 @@ void asciify_hash(const FileType file_type_flag,  char*& itr,  const Int hash){
 };
 
 
+template<size_t sz>
 void asciify_hash(const SHA256_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
+	static_assert(sz != 0);
 	compsky::asciify::asciify(
 		itr,
 		'"'
 	);
-	for (auto i = 0;  i < 32;  ++i){
+	for (auto i = 0;  i < sz;  ++i){
 		const char c = hash[i];
 		if (c == 0  ||  c == '"'  ||  c == '\\'){
 			compsky::asciify::asciify(
@@ -250,20 +235,20 @@ void asciify_hash(const SHA256_FLAG file_type_flag,  char*& itr,  const unsigned
 	);
 };
 
-
+template<size_t sz>
 void asciify_hash(const MD5_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
 	constexpr static const SHA256_FLAG f;
-	asciify_hash(f,  itr,  hash);
+	asciify_hash<sz>(f,  itr,  hash);
 };
 
-
+template<size_t sz>
 void asciify_hash(const QT5_MD5_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
 	constexpr static const SHA256_FLAG f;
-	asciify_hash(f,  itr,  hash);
+	asciify_hash<sz>(f,  itr,  hash);
 };
 
 
-template<typename FileType,  typename Int,  typename RelationType>
+template<size_t hash_sz,  typename FileType,  typename Int,  typename RelationType>
 void insert_hashes_into_db(const FileType file_type_flag,  const char* const file_id,  const Int* hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	while(length_to_go != 0) {
 		char* itr = BUF;
@@ -276,7 +261,7 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 		do {
 			--length_to_go;
 			
-			asciify_hash(file_type_flag, itr, hashes[length_to_go]);
+			asciify_hash<hash_sz>(file_type_flag, itr, hashes[length_to_go]);
 			
 			compsky::asciify::asciify(
 				itr,
@@ -324,7 +309,7 @@ template<typename Int>
 bool is_nullptr(Int* const ptr){
 	return ptr == nullptr;
 }
-template<typename FileType,  typename IntOrIntPtr,  typename RelationType>
+template<size_t hash_sz,  typename FileType,  typename IntOrIntPtr,  typename RelationType>
 void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	if (is_nullptr(hashes))
 		goto no_hashes_found__230jf0jfe;
@@ -334,7 +319,7 @@ void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_
 		fprintf(logfile, "Cannot hash %s: %s\n", file_type_flag.name, fp);
 		return;
 	}
-	insert_hashes_into_db(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
+	insert_hashes_into_db<hash_sz>(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
 	freemajig(hashes); // Just a quirk of the C standard
 };
 
@@ -358,12 +343,12 @@ void save_hash(const Size file_type_flag,  const char* const hash_name,  const c
 	
 	fclose(f);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &sz, hash_name, 1, which_relation);
+	insert_hashes_into_db<0>(file_type_flag, file_id, &sz, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
 void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
-	static unsigned char hash[32 + 1] = {};
+	static unsigned char hash[32] = {};
 	
 	static SHA256_CTX sha256;
 	SHA256_Init(&sha256);
@@ -384,12 +369,12 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	
 	SHA256_Final(hash, &sha256);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<32>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
 void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
-	static unsigned char hash[MD5_DIGEST_LENGTH + 1] = {};
+	static unsigned char hash[MD5_DIGEST_LENGTH] = {};
 	
 	MD5_CTX md5_ctx;
 	MD5_Init(&md5_ctx);
@@ -410,62 +395,21 @@ void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  con
 	
 	MD5_Final(hash, &md5_ctx);
 	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<MD5_DIGEST_LENGTH>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
 void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
-	static unsigned char hash[16 + 1] = {};
+	static unsigned char hash[16] = {};
 	
-	const QUrl url(QString("file://") + QString(fp));
+	MD5_CTX md5_ctx;
+	MD5_Init(&md5_ctx);
+	static char buf[7 + 4096];
+	compsky::asciify::asciify(buf, "file://", fp, '\0');
+	MD5_Update(&md5_ctx, buf, strlen(buf));
+	MD5_Final(hash, &md5_ctx);
 	
-	// The following is from https://api.kde.org/frameworks/kio/html/previewjob_8cpp_source.html
-	// Slightly modified (some variables designated const)
-	// BEGIN copyrighted text
-	/*
-	Copyright (C) GPLv2 or later
-		2000 David Faure <faure@kde.org>
-		2000 Carsten Pfeiffer <pfeiffer@kde.org>
-		2001 Malte Starostik <malte.starostik@t-online.de>
-	*/
-	const QByteArray origName = url.toEncoded();
-	QCryptographicHash md5(QCryptographicHash::Md5);
-	md5.addData(QFile::encodeName(QString::fromUtf8(origName)));
-	// END copyrighted text
-	
-	const QByteArray hash_ba = md5.result();
-	const char* hash_signed = hash_ba.data();
-	
-	memcpy(hash, hash_signed, sizeof(hash));
-	
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
-	
-	
-	if (THUMBNAIL_DIR == nullptr)
-		return;
-	
-	
-	// The following is from PreviewJobPrivate::statResultThumbnail https://api.kde.org/frameworks/kio/html/previewjob_8cpp_source.html
-	// Slightly modified (some variables designated const)
-	// BEGIN copyrighted text
-	/*
-	Copyright (C) GPLv2 or later
-		2000 David Faure <faure@kde.org>
-		2000 Carsten Pfeiffer <pfeiffer@kde.org>
-		2001 Malte Starostik <malte.starostik@t-online.de>
-	*/
-	const QString thumbName = QString::fromUtf8(QFile::encodeName(QString::fromLatin1(md5.result().toHex()))) + QLatin1String(".png");
-	// END copyrighted text
-	
-	if (QFile::exists(thumbName))
-		return;
-	
-	//QImage img;
-	//if (not THUMB_CREATOR.create(url, 256, 256, img)){
-		fprintf(logfile, "Failed to create thumbnail for: %s\n", fp);
-	//	return;
-	//}
-	//img.save(thumbName);
+	insert_hashes_into_db<16>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
@@ -477,7 +421,7 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hash, hash_name, 1, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hash, hash_name, 1, which_relation);
 }
 
 
@@ -490,7 +434,7 @@ void save_hash(const Video file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
-	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
@@ -508,14 +452,25 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint32_t* const hashes = ph_audiohash(audiobuf, audiobuf_len, sample_rate, length);
 	
-	insert_hashes_into_db_then_free(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
 void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
 	const uint64_t hash = duration_of(fp);
-	insert_hashes_into_db(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<0>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
 }
+
+
+void and_dir_regexp(char*& itr,  const char* const dir_regexp){
+	compsky::asciify::asciify(
+		itr,
+		" AND d.name REGEXP \"", _f::esc, '"', dir_regexp, "\""
+	);
+#define ADD_DIR_REGEXP_SZ (23+128)
+}
+
+void and_dir_regexp(char*&,  const std::nullptr_t){}
 
 
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
@@ -526,7 +481,7 @@ void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 #define ADD_NAME_REGEXP_SZ (23+128)
 }
 
-void and_name_regexp(char*& itr,  const std::nullptr_t file_ext_regexp){}
+void and_name_regexp(char*&,  const std::nullptr_t){}
 
 
 struct Options {
@@ -635,8 +590,8 @@ void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  c
 }
 
 
-template<typename FileType,  typename String,  typename RelationType>
-void hash_all_from(const Options opts,  const FileType file_type_flag,  const String file_ext_regexp,  const char* const hash_name,  const RelationType& which_relation){
+template<typename FileType,  typename String1,  typename String2,  typename RelationType>
+void hash_all_from(const Options opts,  const FileType file_type_flag,  const String1 dir_regexp,  const String2 file_ext_regexp,  const char* const hash_name,  const RelationType& which_relation){
 	if (opts.directory != nullptr){
 		hash_all_from_dir_root(opts.directory, opts.recursive, file_ext_regexp, file_type_flag, hash_name, which_relation);
 		return;
@@ -645,7 +600,7 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	const char* _id;
 	const char* _fp;
 	
-	static char buf[100 + MAX_HASH_NAME_LENGTH + ADD_NAME_REGEXP_SZ];
+	static char buf[100 + MAX_HASH_NAME_LENGTH + ADD_DIR_REGEXP_SZ + ADD_NAME_REGEXP_SZ];
 	char* itr = buf;
 	
 	compsky::asciify::asciify(
@@ -655,11 +610,11 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
 		"JOIN _device D ON D.id=d.device "
-		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", hash_name, ") "
-		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
+		"WHERE D.name REGEXP \"", opts.device_regexp, "\" "
 		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
+	and_dir_regexp(itr,  dir_regexp);
 	and_name_regexp(itr, file_ext_regexp);
 	compsky::mysql::query_buffer(
 		_mysql::obj,
@@ -785,39 +740,39 @@ int main(const int argc,  char* const* argv){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
+				hash_all_from(opts,  audio_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from(opts, duration_flag,(custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
+				hash_all_from(opts, duration_flag,  nullptr,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  image_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
 				// many_to_many_flag because they use the same hash as video files.
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  video_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
 				break;
 			case 's':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  sha256_flag, nullptr, "sha256", one_to_one_flag);
+				hash_all_from(opts,  sha256_flag,   nullptr,  nullptr, "sha256", one_to_one_flag);
 				break;
 			case 'm':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  md5_flag,    nullptr, "md5", one_to_one_flag);
+				hash_all_from(opts,  md5_flag,      nullptr,  nullptr, "md5", one_to_one_flag);
 				break;
 			case 'M':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  qt5_md5_flag,nullptr, "md5_of_path", one_to_one_flag);
+				hash_all_from(opts,  qt5_md5_flag,  "^/",     nullptr, "md5_of_path", one_to_one_flag);
 				break;
 			case 'S':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  size_flag,   nullptr, "size", one_to_one_flag);
+				hash_all_from(opts,  size_flag,     nullptr,  nullptr, "size", one_to_one_flag);
 				break;
 		}
 	}
