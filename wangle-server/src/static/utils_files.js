@@ -12,7 +12,7 @@
 			"s += \"<div class='tr' data-id='\" + id + \"'>\";"
 				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + thumb + '\"></img></div>';"
 				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
-				"s += \"<div class='td fname'><a onclick='view_file(\" + id + \")'>\" + name + \"</a></div>\";" // File ID and name
+				"s += \"<div class='td fname'><a onclick='view_file(this.parentNode.parentNode.dataset.id)'>\" + name + \"</a></div>\";" // File ID and name
 				"s += \"<div class='td'>\" + ext_db_n_post_ids + \"</div>\";" // 3rd column i.e. col[2]
 				"s += \"<div class='td'>\" + tag_ids + \"</div>\";" // 4th column i.e. col[3]
 				"s += \"<div class='td' data-n=\" + sz + \">\" + bytes2human(parseInt(sz)) + \"</div>\";" // 5th column i.e. col[4]
@@ -25,6 +25,25 @@
 		"document.querySelector(\"#f .tbody\").innerHTML = s;"
 		"column_id2name('x', \"#f .tbody\", 'view_db', 2);"
 		"column_id2name('t', \"#f .tbody\", 'view_tag', 3);"
+		"}"
+	"});"
+"}"
+
+"function add_files_to_db(nodes){"
+	"if(dir_id===0){"
+		"alert(\"Cannot add files to DB unless their directory ID is set\");"
+		"return;"
+	"}"
+	"if(nodes.length===0)"
+		"return;"
+	"$.post({"
+		"url:\"/f/record/\"+dir_id,"
+		"data:nodes.map(x => '\"'+x.getElementsByClassName('fname')[0].innerText.replace('\"','\\\"')+'\"').join('\\n'),"
+		"success:function(data){"
+			"for(let node of nodes){"
+				"node.dataset.id = data[node.getElementsByClassName('fname')[0].innerText];"
+			"}"
+			"alert(\"Files newly registered.\\nPlease now repeat your command.\");"
 		"}"
 	"});"
 "}"
@@ -62,12 +81,27 @@
 	"return $(\"#f .tbody .tr.selected2\").map((i, el) => el.dataset.id).get().join(\",\");"
 "}"
 "function get_selected_file_ids(){"
-	"return $(\"#f .tbody .tr.selected1\").map((i, el) => el.dataset.id).get().join(\",\");"
+	"let file_ids = [];"
+	"let files_wo_ids = [];"
+	"for(let node of document.getElementById('f').getElementsByClassName('tbody')[0].getElementsByClassName('selected1')){"
+		"if(node.dataset.id===\"0\")"
+			"files_wo_ids.push(node);"
+		"else "
+			"file_ids.push(node.dataset.id)"
+	"}"
+	"if(files_wo_ids.length!==0){"
+		"add_files_to_db(files_wo_ids);"
+		// Seems I can't simply wait for a promise and take the value; I'd have to transform every function relying on it
+		"return \"\";"
+	"}"
+	"return file_ids;"
 "}"
 
 "function tag_files_then(file_ids, selector, fn){"
 	"const tagselect = $(selector);"
 	"const tag_ids = tagselect.val();"
+	"if(file_ids===\"\")"
+		"return;"
 	"$.post({"
 		"url: \"/f/t/\" + file_ids + \"/\" + tag_ids.join(\",\"),"
 		"success: function(){"

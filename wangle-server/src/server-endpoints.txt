@@ -125,6 +125,8 @@ POST /t/p/>
 	return this->post__add_parents_to_tags(++str)
 POST /exec/>
 	return this->exec_task(++str)
+POST /f/record/>
+	return this->post__record_files(++str)
 POST /f/save/>
 	return this->post__save_file(++str)
 POST /f/orig/>

@@ -26,6 +26,7 @@
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/mysql/qryqry.hpp>
+#include <compsky/utils/is_str_dblqt_escaped.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
@@ -251,6 +252,18 @@ namespace _r {
 		return std::char_traits<char>::length("\"1234567890123456789\":\"\",") + 2*strlen(*str);
 	}
 	
+	void asciifiis(const flag::Dict& _flag,  char*& itr,  const char* const* str1,  const char* const* str2){
+		compsky::asciify::asciify(
+			itr,
+			'"', _f::esc, '"', *str1, '"', ':',
+				'"', _f::esc, '"', *str2, '"',
+			','
+		);
+	}
+	size_t strlens(const flag::Dict& _flag,  const char* const* str1,  const char* const* str2){
+		return std::char_traits<char>::length("\"\":\"\",") + 2*strlen(*str1) + 2*strlen(*str2);
+	}
+	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
 		compsky::asciify::asciify(
 			itr,
@@ -339,6 +352,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->mysql_mutex.lock();
 		compsky::mysql::exec_buffer(db_info.mysql_obj, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_exec_buf(){
+		this->mysql_exec_buf_db_by_id(db_infos.at(0), this->buf, this->buf_indx());
 	}
 	
 	void mysql_exec_buf(const char* const _buf,  const size_t _buf_sz){
@@ -876,6 +893,50 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			--this->itr; // ...wherein a trailing comma was left
 		this->asciify(']');
 		*this->itr = 0;
+	}
+	
+	std::string_view post__record_files(const char* s){
+		uint64_t dir_id = a2n<uint64_t>(&s);
+		if ((*s != ' ') or (dir_id == 0))
+			return _r::not_found;
+		
+		GET_USER_ID
+		GREYLIST_GUEST
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		const char* const body = s;
+		
+		this->reset_buf_index();
+		this->asciify(
+			"INSERT INTO _file "
+			"(user,dir,name)"
+			"VALUES"
+		);
+		while(*s != 0){
+			const char* const file_name_begin = s;
+			if(unlikely(not compsky::utils::is_str_dblqt_escaped(s, ',', '\0')))
+				return _r::not_found;
+			const size_t file_name_len = (uintptr_t)s - (uintptr_t)file_name_begin;
+			this->asciify('(', user_id, ',', dir_id, ',', _f::strlen, file_name_begin, file_name_len, ')', ',');
+		}
+		if (unlikely(this->last_char_in_buf() != ','))
+			// No file names were provided
+			return _r::not_found;
+		--this->itr; // Remove trailing comma
+		this->asciify("ON DUPLICATE KEY UPDATE user=user");
+		*this->itr = 0;
+		
+		this->mysql_exec_buf();
+		
+		// Now return a map of name to ID
+		this->mysql_query("SELECT name, id FROM _file WHERE name IN(", body, ")");
+		const char* id;
+		const char* name;
+		constexpr _r::flag::Dict dict;
+		this->reset_buf_index();
+		this->init_json(&this->itr, dict, nullptr, &name, &id);
+		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view post__save_file(const char* s){
