@@ -108,6 +108,21 @@
 		"refetch_json('f2', '/a/f2.json', function(){f2=f2.split(\",\");when_data_loaded()});"
 	"}"
 	
+	"function add_key_intercepts(){"
+		"whenipress('p').whenReleased().then(view_files_as_playlist);"
+		"whenipress('v').whenReleased().then(e => toggle('file2-container'));"
+		"whenipress('b').whenReleased().then(toggle_file_add_backup_dialog);"
+		"whenipress('m').whenReleased().then(merge_files);"
+		"whenipress('q').whenReleased().then(e => focus('qry'));"
+	"}"
+	"function del_key_intercepts(){"
+		"whenipress('p').removeKeyUpListener();"
+		"whenipress('v').removeKeyUpListener();"
+		"whenipress('b').removeKeyUpListener();"
+		"whenipress('m').removeKeyUpListener();"
+		"whenipress('q').removeKeyUpListener();"
+	"}"
+	
 	"$(document).ready(function(){" // Only execute after page has finished loading
 		"hide_all_except([]);"
 		
@@ -135,11 +150,10 @@
 		"fancify_tbl(\"f\");"
 		"init_qry();"
 		
-		"whenipress('p').then(view_files_as_playlist);"
-		"whenipress('v').then(e => toggle('file2-container'));"
-		"whenipress('b').then(toggle_file_add_backup_dialog);"
-		"whenipress('m').then(merge_files);"
-		"whenipress('q').then(e => focus('qry'));"
+		"for(node of document.getElementsByTagName('input')){"
+			"node.addEventListener('focusin',  del_key_intercepts);"
+			"node.addEventListener('focusout', add_key_intercepts);"
+		"}"
 		
 		"document.getElementById('help-text').innerText = `"
 R"=========(
