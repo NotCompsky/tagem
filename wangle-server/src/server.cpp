@@ -36,7 +36,7 @@
 
 #include <filesystem> // for std::filesystem::copy_file
 
-#ifdef VIEW_DIR_FS
+#ifndef NO_VIEW_DIR_FS
 # include <dirent.h> // TODO: Replace with std::filesystem
 # include <openssl/md5.h>
 #endif
@@ -108,14 +108,17 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
 namespace _f {
-	constexpr static const compsky::asciify::flag::Escape esc;
-	constexpr static const compsky::asciify::flag::AlphaNumeric alphanum;
-	constexpr static const compsky::asciify::flag::StrLen strlen;
-	constexpr static const compsky::asciify::flag::JSONEscape json_esc;
-	constexpr static const compsky::asciify::flag::Repeat repeat;
-	constexpr static const compsky::asciify::flag::Zip3 zip3;
-	constexpr static const compsky::asciify::flag::NElements n_elements;
-	//constexpr static const compsky::asciify::flag::MaxBufferSize max_sz;
+	using namespace compsky::asciify::flag;
+	constexpr static const Escape esc;
+	constexpr static const AlphaNumeric alphanum;
+	constexpr static const StrLen strlen;
+	constexpr static const JSONEscape json_esc;
+	constexpr static const Repeat repeat;
+	constexpr static const Zip3 zip3;
+	constexpr static const NElements n_elements;
+	constexpr static const Hex hex;
+	constexpr static const grammatical_case::Lower lower_case;
+	//constexpr static const MaxBufferSize max_sz;
 }
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
@@ -649,7 +652,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir__filesystem(const char* s){
-#ifdef VIEW_DIR_FS
+#ifndef NO_VIEW_DIR_FS
 		GET_USER_ID
 		GREYLIST_GUEST
 		
@@ -658,7 +661,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const char* const dir_path = s;
 		
-		unsigned char hash[16];
+		unsigned char hash[16+1];
+		hash[16] = 0;
 		
 		DIR* const dir = opendir(dir_path);
 		if (unlikely(dir == nullptr))
@@ -687,18 +691,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			
 			MD5_CTX md5_ctx;
 			MD5_Init(&md5_ctx);
-			compsky::asciify::asciify(this->file_path, "file://", fp, '\0');
+			compsky::asciify::asciify(this->file_path, "file://", dir_path, ename, '\0');
+			printf("  Getting hash of %s\n", this->file_path);
 			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
 			MD5_Final(hash, &md5_ctx);
 			
 			static struct stat st;
-			stat(epath, &st);
+			stat(this->file_path+7, &st);
 			this->asciify(
 				// Should be equivalent to asciify_file_info
 				'[',
-					'"', hash, '"', ',',
-					//dir_id, ',',
-					//'"', _f::esc, '"', dir_name, '"', ',',
+					"\"/i/f/", _f::lower_case, _f::hex, hash, "\"", ',',
 					0, ',',
 					'"', _f::esc, '"', ename,   '"', ',',
 					'"', st.st_size, '"', ',',
