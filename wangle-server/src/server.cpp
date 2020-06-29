@@ -684,6 +684,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		this->asciify_file_info__no_end();
 		
 		struct dirent* e;
+		struct stat st;
 		while ((e=readdir(dir)) != 0){
 			const char* const ename = e->d_name;
 			
@@ -713,8 +714,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			
 			compsky::asciify::asciify(this->file_path, dir_path, ename, '\0');
 			
-			static struct stat st;
-			stat(this->file_path+7, &st);
+			stat(this->file_path, &st);
 			this->asciify(
 				// Should be equivalent to asciify_file_info
 				'[',
