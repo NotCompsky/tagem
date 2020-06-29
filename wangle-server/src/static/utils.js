@@ -24,6 +24,10 @@
 
 "const YOUTUBE_DEVICE_ID = \"1\";"
 
+"function focus(id){"
+	"document.getElementById(id).focus();"
+"}"
+
 "function init_selects(var_name){"
 	"let s = \"\";"
 	"const col = tbl2namecol[var_name];"

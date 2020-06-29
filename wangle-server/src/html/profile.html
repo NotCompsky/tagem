@@ -15,6 +15,7 @@
 	
 	#include "components/all.css.html"
 "</head>"
+"<script src=\"https://cdn.jsdelivr.net/npm/whenipress@1.1.0/dist/whenipress.js\"></script>"
 "<script type=\"text/javascript\">"
 	#include "../static/utils.js"
 	
@@ -133,6 +134,12 @@
 		
 		"fancify_tbl(\"f\");"
 		"init_qry();"
+		
+		"whenipress('p').then(view_files_as_playlist);"
+		"whenipress('v').then(e => toggle('file2-container'));"
+		"whenipress('b').then(toggle_file_add_backup_dialog);"
+		"whenipress('m').then(merge_files);"
+		"whenipress('q').then(e => focus('qry'));"
 		
 		"document.getElementById('help-text').innerText = `"
 R"=========(
@@ -370,7 +377,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select-all","select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all","deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge-files","merge_files()","Merge Files")("backup-files","toggle_file_add_backup_dialog()","Backup")("add-file2","toggle('file2-container')","Add/Update Value")("view-as-playlist","view_files_as_playlist(get_file_ids())","View as Playlist")
+#define ACTION_BTNS ("select-all","select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all","deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge-files","merge_files()","Merge Files")("backup-files","toggle_file_add_backup_dialog()","Backup")("add-file2","toggle('file2-container')","Add/Update Value")("view-as-playlist","view_files_as_playlist()","View as Playlist")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size (Range)")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"12.3KB - 45.6MB")
