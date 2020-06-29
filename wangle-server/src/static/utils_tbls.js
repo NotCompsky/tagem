@@ -19,7 +19,7 @@
 "}"
 "function filter_tbl(tbl_id, name_col_ids, tags_col_ids){"
 	"const tbl = document.getElementById(tbl_id);"
-	"const filters = tbl.getElementsByClassName('thead')[0].getElementsByClassName('tr')[2].getElementsByClassName('td');"
+	"const filters = tbl.getElementsByClassName('thead')[0].getElementsByClassName('tr')[1].getElementsByClassName('td');"
 	
 	"const name_regexps = [];"
 	"for (const name_col_id of name_col_ids){"
