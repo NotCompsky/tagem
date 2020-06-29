@@ -36,6 +36,11 @@
 
 #include <filesystem> // for std::filesystem::copy_file
 
+#ifdef VIEW_DIR_FS
+# include <dirent.h> // TODO: Replace with std::filesystem
+# include <openssl/md5.h>
+#endif
+
 /*
  * The following initial contents of YTDL_FORMAT are copyright TheFrenchGhostys (https://gitlab.com/TheFrenchGhosty)
  * Modified content from https://gitlab.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
@@ -641,6 +646,79 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 #endif
 		
 		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view files_given_dir__filesystem(const char* s){
+#ifdef VIEW_DIR_FS
+		GET_USER_ID
+		GREYLIST_GUEST
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		const char* const dir_path = s;
+		
+		unsigned char hash[16];
+		
+		DIR* const dir = opendir(dir_path);
+		if (unlikely(dir == nullptr))
+			return _r::server_error;
+		
+		this->begin_json_response();
+		this->asciify('[');
+		
+		struct dirent* e;
+		while ((e=readdir(dir)) != 0){
+			const char* const ename = e->d_name;
+			
+			if (ename == nullptr)
+				continue;
+			
+			if (ename[0] == '.'){
+				if (ename[1] == 0)
+					continue;
+				if (ename[1] == '.')
+					continue;
+			}
+			
+			if (e->d_type == DT_DIR){
+				continue;
+			}
+			
+			MD5_CTX md5_ctx;
+			MD5_Init(&md5_ctx);
+			compsky::asciify::asciify(this->file_path, "file://", fp, '\0');
+			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
+			MD5_Final(hash, &md5_ctx);
+			
+			static struct stat st;
+			stat(epath, &st);
+			this->asciify(
+				// Should be equivalent to asciify_file_info
+				'[',
+					'"', hash, '"', ',',
+					//dir_id, ',',
+					//'"', _f::esc, '"', dir_name, '"', ',',
+					0, ',',
+					'"', _f::esc, '"', ename,   '"', ',',
+					'"', st.st_size, '"', ',',
+					'"', '"', ',',
+					'"', '"',
+				']',
+				','
+			);
+		}
+		closedir(dir);
+		
+		if (this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		*this->itr = 0;
+		
+		return this->get_buf_as_string_view();
+#else
+		return _r::not_found;
+#endif
 	}
 	
 	std::string_view file_info(const char* s){
