@@ -3,9 +3,9 @@
 #include "file2.hpp"
 #include "basename.hpp"
 #include "device.hpp"
-#include "streq.hpp"
 
 #include <compsky/mysql/query.hpp>
+#include <compsky/utils/streq.hpp>
 
 #include <QLabel>
 #include <QLineEdit>
@@ -59,14 +59,14 @@ InfoDialog::InfoDialog(const uint64_t file_id,  const qint64 file_sz,  QWidget* 
 		l->addWidget(_file_path_line_edit);
 	}
 	
-	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT t.id, t.name FROM file2tag f2t, tag t WHERE t.id=f2t.tag_id AND f2t.file_id=", this->file_id);
+	compsky::mysql::query(_mysql::obj, RES1, BUF, "SELECT t.id, t.name FROM file2tag f2t, tag t WHERE t.id=f2t.tag AND f2t.file=", this->file_id);
 	uint64_t _tagid;
 	const char* _tagname;
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_tagid, &_tagname)){
 		QHBoxLayout* hbox = new QHBoxLayout;
 		
 		hbox->addWidget(new QLabel(_tagname));
-		hbox->addWidget(new UnlinkTagBtn("DELETE FROM file2tag WHERE file_id=", this->file_id, " AND tag_id=",_tagid, this));
+		hbox->addWidget(new UnlinkTagBtn("DELETE FROM file2tag WHERE file=", this->file_id, " AND tag=",_tagid, this));
 		
 		l->addLayout(hbox);
 	}
@@ -84,7 +84,7 @@ void InfoDialog::update_file_path(){
 	const QByteArray ba = s.toLocal8Bit();
 	const char* const _file_path = ba.data();
 	
-	if (streq(this->file_path, _file_path))
+	if (compsky::utils::streq(this->file_path, _file_path))
 		return;
 	
 	int rc;

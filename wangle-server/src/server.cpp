@@ -7,7 +7,6 @@
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
 #include "qry.hpp"
-#include "streq.hpp"
 #include "protocol.hpp"
 #include "verify_str.hpp"
 #include "convert_str.hpp"
@@ -26,6 +25,7 @@
 #endif
 
 #include <compsky/mysql/query.hpp>
+#include <compsky/mysql/qryqry.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
@@ -667,8 +667,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (unlikely(dir == nullptr))
 			return _r::server_error;
 		
-		this->begin_json_response();
-		this->asciify('[');
+		// Determine if files exist in the database - if so, supply all the usual data
+		this->mysql_query(
+			"SELECT "
+				FILE_OVERVIEW_FIELDS("f.id")
+			"FROM _file f "
+			"JOIN _dir d ON d.id=f.dir "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
+			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			"GROUP BY f.id "
+			"LIMIT 100"
+		);
+		this->asciify_file_info__no_end();
 		
 		struct dirent* e;
 		while ((e=readdir(dir)) != 0){
@@ -688,10 +701,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				continue;
 			}
 			
+			if (compsky::mysql::in_results<2>(ename, this->res))
+				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
+				continue;
+			
 			MD5_CTX md5_ctx;
 			MD5_Init(&md5_ctx);
 			compsky::asciify::asciify(this->file_path, "file://", _f::esc_spaces_and_non_ascii, dir_path, _f::esc_spaces_and_non_ascii, ename, '\0');
-			printf("  Getting hash of %s\n", this->file_path);
 			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
 			MD5_Final(hash.data(), &md5_ctx);
 			
@@ -713,6 +729,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			);
 		}
 		closedir(dir);
+		this->mysql_free_res();
 		
 		if (this->last_char_in_buf() == ',')
 			--this->itr;
@@ -822,7 +839,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return this->get_buf_as_string_view();
 	}
 	
-	void asciify_file_info(){
+	void asciify_file_info__no_end(){
 		//const char* protocol_id;
 		const char* md5_hex;
 		//const char* dir_id;
@@ -834,7 +851,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* tag_ids;
 		this->begin_json_response();
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hex, &f_id, &f_name, &f_sz, &external_db_and_post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_sz, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -849,6 +866,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				','
 			);
 		}
+	}
+	
+	void asciify_file_info(){
+		this->asciify_file_info__no_end();
+		this->mysql_free_res();
 		if (this->last_char_in_buf() == ',')
 			// If there was at least one iteration of the loop...
 			--this->itr; // ...wherein a trailing comma was left

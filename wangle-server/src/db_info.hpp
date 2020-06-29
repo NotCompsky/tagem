@@ -1,6 +1,7 @@
 #pragma once
 
 #include <compsky/mysql/query.hpp>
+#include <compsky/utils/streq.hpp>
 
 
 struct DatabaseInfo {
@@ -47,6 +48,8 @@ struct DatabaseInfo {
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools)
 	: bools{}
 	{
+		using namespace compsky::utils; // for streq
+		
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
 		
