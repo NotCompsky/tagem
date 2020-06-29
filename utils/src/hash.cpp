@@ -77,6 +77,18 @@ extern "C"
 void intercept_abort(int _signal){
 	fprintf(logfile,  "Signal: %s.\nLast processed:\n\tHash Kind: %s\n\tFile Path: %s\n", (_signal==SIGKILL)?"SIGKILL":"SIGABRT", CURRENT_HASHING_METHOD, CURRENT_FILE_PATH);
 	
+	if (CURRENT_FILE_PATH != nullptr)
+		compsky::mysql::exec(
+			_mysql::obj,
+			BUF,
+			"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
+			"(file)"
+			"SELECT f.id "
+			"FROM _file f "
+			"JOIN _dir d ON d.id=f.dir "
+			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+		);
+	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
 	
 	exit(1);
@@ -313,12 +325,14 @@ template<size_t hash_sz,  typename FileType,  typename IntOrIntPtr,  typename Re
 void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	if (is_nullptr(hashes))
 		goto no_hashes_found__230jf0jfe;
+	
 	if (length_to_go == 0){
 		free((void*)hashes);
 		no_hashes_found__230jf0jfe:
 		fprintf(logfile, "Cannot hash %s: %s\n", file_type_flag.name, fp);
 		return;
 	}
+	
 	insert_hashes_into_db<hash_sz>(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
 	freemajig(hashes); // Just a quirk of the C standard
 };
@@ -610,7 +624,8 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
 		"JOIN _device D ON D.id=d.device "
-		"WHERE D.name REGEXP \"", opts.device_regexp, "\" "
+		"WHERE f.id NOT IN (SELECT file FROM hash_abortions__", hash_name, ") "
+		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
 		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
