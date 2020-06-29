@@ -118,7 +118,7 @@ namespace _f {
 	constexpr static const NElements n_elements;
 	constexpr static const Hex hex;
 	constexpr static const grammatical_case::Lower lower_case;
-	//constexpr static const MaxBufferSize max_sz;
+	constexpr static const esc::SpacesAndNonAscii esc_spaces_and_non_ascii;
 }
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
@@ -661,8 +661,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		const char* const dir_path = s;
 		
-		unsigned char hash[16+1];
-		hash[16] = 0;
+		std::array<uint8_t, 16> hash;
 		
 		DIR* const dir = opendir(dir_path);
 		if (unlikely(dir == nullptr))
@@ -691,10 +690,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			
 			MD5_CTX md5_ctx;
 			MD5_Init(&md5_ctx);
-			compsky::asciify::asciify(this->file_path, "file://", dir_path, ename, '\0');
+			compsky::asciify::asciify(this->file_path, "file://", _f::esc_spaces_and_non_ascii, dir_path, _f::esc_spaces_and_non_ascii, ename, '\0');
 			printf("  Getting hash of %s\n", this->file_path);
 			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
-			MD5_Final(hash, &md5_ctx);
+			MD5_Final(hash.data(), &md5_ctx);
 			
 			static struct stat st;
 			stat(this->file_path+7, &st);

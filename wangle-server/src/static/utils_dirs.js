@@ -47,7 +47,7 @@
 	"get_file_ids = get_selected_file_ids;"
 
 	"if (_dir_id_or_path !== undefined){"
-		"if(is_from_db){"
+		"if(is_from_db===undefined){"
 			"dir_id = _dir_id_or_path;"
 			"$.ajax({"
 				"dataType: \"json\","
@@ -65,12 +65,12 @@
 		"}"
 	"}"
 	
-	"set_dir_name_from_id(dir_id, 'profile-name');"
-	
-	"display_parent_dirs(dir_id);"
-	"display_child_dirs(dir_id);"
-	
-	"window.location.hash = 'd' + dir_id;"
+	"if(is_from_db===undefined){"
+		"set_dir_name_from_id(dir_id, 'profile-name');"
+		"display_parent_dirs(dir_id);"
+		"display_child_dirs(dir_id);"
+		"window.location.hash = 'd' + dir_id;"
+	"}"
 "}"
 "function view_dirs(ls){"
 	"hide_all_except(['d']);"
