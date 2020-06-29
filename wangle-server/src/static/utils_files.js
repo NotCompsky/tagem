@@ -189,7 +189,7 @@
 
 "function view_files_by_value(var_name){"
 	"populate_f_table('/a/f/f2/'+var_name);"
-	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn']);"
+	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);"
 	"get_file_ids = get_selected_file_ids;"
 	"window.location.hash = '$' + var_name;"
 	"set_page_title('Files assigned ' + var_name);"
