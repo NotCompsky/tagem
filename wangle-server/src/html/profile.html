@@ -15,7 +15,7 @@
 	
 	#include "components/all.css.html"
 "</head>"
-"<script src=\"https://cdn.jsdelivr.net/npm/whenipress@1.1.0/dist/whenipress.js\"></script>"
+"<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 "<script type=\"text/javascript\">"
 	#include "../static/utils.js"
 	
@@ -109,18 +109,18 @@
 	"}"
 	
 	"function add_key_intercepts(){"
-		"whenipress('p').whenReleased().then(view_files_as_playlist);"
-		"whenipress('v').whenReleased().then(e => toggle('file2-container'));"
-		"whenipress('b').whenReleased().then(toggle_file_add_backup_dialog);"
-		"whenipress('m').whenReleased().then(merge_files);"
-		"whenipress('q').whenReleased().then(e => focus('qry'));"
+		"Mousetrap.bind('p', view_files_as_playlist);"
+		"Mousetrap.bind('v', e => toggle('file2-container'));"
+		"Mousetrap.bind('b', toggle_file_add_backup_dialog);"
+		"Mousetrap.bind('m', merge_files);"
+		"Mousetrap.bind('q', e => focus('qry'));"
 	"}"
 	"function del_key_intercepts(){"
-		"whenipress('p').removeKeyUpListener();"
-		"whenipress('v').removeKeyUpListener();"
-		"whenipress('b').removeKeyUpListener();"
-		"whenipress('m').removeKeyUpListener();"
-		"whenipress('q').removeKeyUpListener();"
+		"Mousetrap.unbind('p');"
+		"Mousetrap.unbind('v');"
+		"Mousetrap.unbind('b');"
+		"Mousetrap.unbind('m');"
+		"Mousetrap.unbind('q');"
 	"}"
 	
 	"$(document).ready(function(){" // Only execute after page has finished loading
@@ -154,6 +154,7 @@
 			"node.addEventListener('focusin',  del_key_intercepts);"
 			"node.addEventListener('focusout', add_key_intercepts);"
 		"}"
+		"add_key_intercepts();"
 		
 		"document.getElementById('help-text').innerText = `"
 R"=========(
