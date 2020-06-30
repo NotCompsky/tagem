@@ -147,6 +147,11 @@ std::vector<const char*> left_join_unique_name_for_each_file2_var;
 static
 std::vector<const char*> select_unique_name_for_each_file2_var;
 
+static
+std::vector<uint64_t> connected_local_devices;
+static
+std::string connected_local_devices_str = "";
+
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
@@ -582,7 +587,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			return _r::not_found;
 		
 		this->itr = this->buf;
-		if (sql_factory::parse_into(this->itr, s, user_id) != sql_factory::successness::ok)
+		if (sql_factory::parse_into(this->itr, s, connected_local_devices_str, user_id) != sql_factory::successness::ok)
 			return _r::post_not_necessarily_malicious_but_invalid;
 		
 		this->asciify(
@@ -2580,6 +2585,10 @@ int main(int argc,  char** argv){
 	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
 	
+	UserIDIntType user_id;
+	uint64_t id;
+	const char* name;
+	
 	compsky::mysql::query_buffer(
 		db_infos.at(0).mysql_obj,
 		res,
@@ -2593,11 +2602,9 @@ int main(int argc,  char** argv){
 		"GROUP BY u.id"
 	);
 	user_auth::users.reserve(compsky::mysql::n_results<size_t>(res));
-	UserIDIntType id;
-	const char* name;
 	char* allowed_file2_vars;
-	while(compsky::mysql::assign_next_row__no_free(res, &row, &id, &name, &allowed_file2_vars))
-		const user_auth::User& user = user_auth::users.emplace_back(name, id, allowed_file2_vars);
+	while(compsky::mysql::assign_next_row__no_free(res, &row, &user_id, &name, &allowed_file2_vars))
+		const user_auth::User& user = user_auth::users.emplace_back(name, user_id, allowed_file2_vars);
 	
 	MYSQL_RES* res2;
 	compsky::mysql::query_buffer(
@@ -2620,6 +2627,24 @@ int main(int argc,  char** argv){
 	select_unique_name_for_each_file2_var.reserve(compsky::mysql::n_results<size_t>(res3));
 	while(compsky::mysql::assign_next_row__no_free(res3, &row, &name))
 		select_unique_name_for_each_file2_var.push_back(name);
+	
+	MYSQL_RES* res4;
+	compsky::mysql::query_buffer(
+		db_infos.at(0).mysql_obj,
+		res4,
+		"SELECT id, name "
+		"FROM _device "
+		"WHERE name LIKE '/%'"
+	);
+	connected_local_devices.reserve(compsky::mysql::n_results<size_t>(res4));
+	while(compsky::mysql::assign_next_row(res4, &row, &id, &name)){
+		FILE* const f = fopen(name, "rb");
+		if (f == nullptr)
+			continue;
+		connected_local_devices.push_back(id);
+		connected_local_devices_str += std::to_string(id) + ",";
+	}
+	connected_local_devices_str.pop_back();
 	
 	wangle::ServerBootstrap<RTaggerPipeline> server;
 	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());

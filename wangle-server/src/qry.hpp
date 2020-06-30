@@ -1,6 +1,9 @@
 #pragma once
 
 
+#include <string>
+
+
 #define USER_DISALLOWED_FILES_INNER_PRE \
 		"SELECT f2t.file " \
 		"FROM user2blacklist_tag u2ht " \
@@ -67,7 +70,7 @@ namespace successness {
 	};
 }
 
-successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned user_id);
+successness::ReturnType parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id);
 
 
 } // namespace sql_factory

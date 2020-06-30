@@ -33,11 +33,14 @@ Each must be separated by a logical operator - thus far the only implemented one
 		Entries have relations to entries of one of these names in this table
 		TABLE_ALIAS must be one of:
 			t (tag - matching against child tags too)
-			T (tag)
+			t! (tag)
 			f (file)
 			d (dir)
-			D (dir - matching against only the basename)
+			d! (dir - matching against only the basename)
 			x (for file only - file appears in the named external database)
+	D exists
+		Only available for file and directory tables.
+		Filters for files/dirs that reside on a device that the server can access with an fopen call (i.e. files that are both local and readable)
 	value [RANGE] [NAME_LIST]
 		Entries have a variable named one of the listed names, which has a value in the specified range
 	attr [ATTRIBUTE] [OPERATOR] [STRING_OR_INTEGER]

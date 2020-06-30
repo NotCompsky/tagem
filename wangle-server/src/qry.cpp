@@ -36,6 +36,7 @@ namespace arg {
 		tag_tree,
 		dir,
 		dir_basename,
+		device_exists,
 		backups,
 		external_db,
 		order_by_asc,
@@ -289,24 +290,58 @@ arg::ArgType process_arg(const char*& qry){
 			switch(*(++qry)){
 				case ' ':
 					return arg::tag_tree;
-			}
-			break;
-		case 'T':
-			switch(*(++qry)){
-				case ' ':
-					return arg::tag;
+				case '!':
+					switch(*(++qry)){
+						case ' ':
+							return arg::tag;
+					}
+					break;
 			}
 			break;
 		case 'd':
 			switch(*(++qry)){
 				case ' ':
 					return arg::dir;
+				case '!':
+					switch(*(++qry)){
+						case ' ':
+							return arg::dir_basename;
+					}
+					break;
 			}
 			break;
 		case 'D':
 			switch(*(++qry)){
 				case ' ':
-					return arg::dir_basename;
+					switch(*(++qry)){
+						case 'e':
+							switch(*(++qry)){
+								case 'x':
+									switch(*(++qry)){
+										case 'i':
+											switch(*(++qry)){
+												case 's':
+													switch(*(++qry)){
+														case 't':
+															switch(*(++qry)){
+																case 's':
+																	switch(*(++qry)){
+																		case ' ':
+																			return arg::device_exists;
+																	}
+																	break;
+															}
+															break;
+													}
+													break;
+											}
+											break;
+									}
+									break;
+							}
+							break;
+					}
+					break;
 			}
 			break;
 		case 'l':
@@ -875,7 +910,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 }
 
 static
-successness::ReturnType process_args(const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
+successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
@@ -964,6 +999,21 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 					return rc;
 				where += ")";
 				++n_args_since_operator;
+				break;
+			}
+			case arg::device_exists: {
+				if ((which_tbl != 'f') and (which_tbl != 'd'))
+					return successness::unimplemented;
+				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
+				if (is_inverted)
+					where += "NOT ";
+				if (which_tbl == 'f')
+					where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.device IN(" + connected_local_devices_str + "))";
+				else
+					where += "IN (SELECT id FROM _dir WHERE device IN(" + connected_local_devices_str + ")";
+				++n_args_since_operator;
+				break;
 				break;
 			}
 			case arg::tag: {
@@ -1250,7 +1300,7 @@ successness::ReturnType process_args(const char* const user_disallowed_X_tbl_fil
 	}
 }
 
-successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned user_id){
+successness::ReturnType parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id){
 	// TODO: Look into filtering the filters with the user_id permission filters, to avoid brute-forcing.
 	// Not sure this is a big issue.
 	
@@ -1291,7 +1341,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const unsigned 
 		// No other values are possible
 	}
 	
-	const auto rc = process_args(user_disallowed_X_tbl_filter_inner_pre, user_id, join, where, order_by, limit, offset, which_tbl, qry);
+	const auto rc = process_args(connected_local_devices_str, user_disallowed_X_tbl_filter_inner_pre, user_id, join, where, order_by, limit, offset, which_tbl, qry);
 	if (rc != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
