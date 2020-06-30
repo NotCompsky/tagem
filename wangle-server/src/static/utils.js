@@ -48,7 +48,7 @@
 			"},"
 			"processResults: function(data){"
 				"return{"
-					"results: data.map(([id,tpl]) => ({id:id, text:tpl[0]}))"
+					"results: data.map(([id,tpl]) => ({id:id, text:((col===null)?tpl:tpl[col])}))"
 				"};"
 			"}"
 		"}"
