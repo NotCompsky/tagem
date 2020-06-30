@@ -1,406 +1,404 @@
-"function populate_f_table(url, post_data){"
-	"$.ajax({"
-		"type:(post_data===undefined)?\"GET\":\"POST\","
-		"dataType: \"json\","
-		"url: url,"
-		"data:post_data,"
-		"error:err_alert,"
-		"success:function(data){"
-		"let s = \"\";"
-		"file2post = {};"
-		"for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){"
-			"s += \"<div class='tr' data-id='\" + id + \"'>\";"
-				"s += '<div class=\"td\"><img class=\"thumb\" src=\"' + thumb + '\"></img></div>';"
-				//"s += \"<td><a href='/d#\" + ls[1] + \"'>\" + ls[2] + \"</a></td>\";" // Dir  ID and name
-				"s += \"<div class='td fname'><a onclick='view_file(this.parentNode.parentNode.dataset.id)'>\" + name + \"</a></div>\";" // File ID and name
-				"s += \"<div class='td'>\" + ext_db_n_post_ids + \"</div>\";" // 3rd column i.e. col[2]
-				"s += \"<div class='td'>\" + tag_ids + \"</div>\";" // 4th column i.e. col[3]
-				"s += \"<div class='td' data-n=\" + sz + \">\" + bytes2human(parseInt(sz)) + \"</div>\";" // 5th column i.e. col[4]
-				
-				// Populate file2post dictionary
-				"file2post[id] = ext_db_n_post_ids.split(\":\");" // database_ids, post_ids
-				
-			"s += \"</div>\";"
-		"}"
-		"document.querySelector(\"#f .tbody\").innerHTML = s;"
-		"column_id2name('x', \"#f .tbody\", 'view_db', 2);"
-		"column_id2name('t', \"#f .tbody\", 'view_tag', 3);"
-		"}"
-	"});"
-"}"
+function $$$populate_f_table(url, post_data){
+	$.ajax({
+		type:(post_data===undefined)?"GET":"POST",
+		dataType: "json",
+		url: url,
+		data:post_data,
+		error:$$$err_alert,
+		success:function(data){
+			let s = "";
+			$$$file2post = {};
+			for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){
+				s += "<div class='tr' data-id='" + id + "'>";
+					s += '<div class="td"><img class="thumb" src="' + thumb + '"></img></div>';
+					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
+					s += "<div class='td fname'><a onclick='$$$view_file(this.parentNode.parentNode.dataset.id)'>" + name + "</a></div>"; // File ID and name
+					s += "<div class='td'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
+					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
+					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
+					
+					// Populate file2post dictionary
+					$$$file2post[id] = ext_db_n_post_ids.split(":"); // database_ids, post_ids
+					
+				s += "</div>";
+			}
+			document.querySelector("#f .tbody").innerHTML = s;
+			$$$column_id2name('x', "#f .tbody", '$$$view_db', 2);
+			$$$column_id2name('t', "#f .tbody", '$$$view_tag', 3);
+		}
+	});
+}
 
-"function add_files_to_db(nodes){"
-	"if(dir_id===0){"
-		"alert(\"Cannot add files to DB unless their directory ID is set\");"
-		"return;"
-	"}"
-	"if(nodes.length===0)"
-		"return;"
-	"$.post({"
-		"url:\"/f/record/\"+dir_id,"
-		"data:nodes.map(x => '\"'+x.getElementsByClassName('fname')[0].innerText.replace('\"','\\\"')+'\"').join('\\n'),"
-		"success:function(data){"
-			"for(let node of nodes){"
-				"node.dataset.id = data[node.getElementsByClassName('fname')[0].innerText];"
-			"}"
-			"alert(\"Files newly registered.\\nPlease now repeat your command.\");"
-		"}"
-	"});"
-"}"
+function $$$add_files_to_db(nodes){
+	if($$$dir_id===0){
+		alert("Cannot add files to DB unless their directory ID is set");
+		return;
+	}
+	if(nodes.length===0)
+		return;
+	$.post({
+		url:"/f/record/"+$$$dir_id,
+		data:nodes.map(x => '"'+x.getElementsByClassName('fname')[0].innerText.replace('"','\\"')+'"').join('\\n'),
+		success:function(data){
+			for(let node of nodes){
+				node.dataset.id = data[node.getElementsByClassName('fname')[0].innerText];
+			}
+			alert("Files newly registered.\\nPlease now repeat your command.");
+		}
+	});
+}
 
-"function merge_files(){"
-	"const master_file_ids = get_selected_file_ids().split(\",\");"
-	"const dupl_file_ids   = get_selected2_file_ids().split(\",\");"
-	"if(master_file_ids.length !== 1){"
-		"alert(\"There must be exactly one master file (use left mouse button to select them)\");"
-		"return;"
-	"}"
-	"if(dupl_file_ids.length === 0){"
-		"alert(\"No duplicate files selected (use middle mouse button to select them)\");"
-		"return;"
-	"}"
-	"const master_f_id = master_file_ids[0];"
-	"if(dupl_file_ids.includes(master_f_id)){"
-		"alert(\"File cannot be selected as both master and duplicate\");"
-		"return;"
-	"}"
-	"$.post({"
-		"url:\"/f/merge/\"+master_f_id+\"/\"+dupl_file_ids.join(\",\"),"
-		"success:function(){"
-			"deselect_rows('#f .tbody .tr', 1);"
-			"$(\"#f .tbody .tr.selected2\").remove();"
-		"},"
-		"error:err_alert"
-	"});"
-"}"
+function $$$merge_files(){
+	const master_file_ids = $$$get_selected_file_ids().split(",");
+	const dupl_file_ids   = $$$get_selected2_file_ids().split(",");
+	if(master_file_ids.length !== 1){
+		alert("There must be exactly one master file (use left mouse button to select them)");
+		return;
+	}
+	if(dupl_file_ids.length === 0){
+		alert("No duplicate files selected (use middle mouse button to select them)");
+		return;
+	}
+	const master_f_id = master_file_ids[0];
+	if(dupl_file_ids.includes(master_f_id)){
+		alert("File cannot be selected as both master and duplicate");
+		return;
+	}
+	$.post({
+		url:"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
+		success:function(){
+			$$$deselect_rows('#f .tbody .tr', 1);
+			$("#f .tbody .tr.selected2").remove();
+		},
+		error:$$$err_alert
+	});
+}
 
-"function get_file_id(){"
-	"return file_id;"
-"}"
-"function get_selected2_file_ids(){"
-	"return $(\"#f .tbody .tr.selected2\").map((i, el) => el.dataset.id).get().join(\",\");"
-"}"
-"function get_selected_file_ids(){"
-	"let file_ids = \"\";"
-	"let files_wo_ids = [];"
-	"for(let node of document.getElementById('f').getElementsByClassName('tbody')[0].getElementsByClassName('selected1')){"
-		"if(node.dataset.id===\"0\")"
-			"files_wo_ids.push(node);"
-		"else "
-			"file_ids += \",\" + node.dataset.id"
-	"}"
-	"if(files_wo_ids.length!==0){"
-		"add_files_to_db(files_wo_ids);"
+function $$$get_file_id(){
+	return $$$file_id;
+}
+function $$$get_selected2_file_ids(){
+	return $("#f .tbody .tr.selected2").map((i, el) => el.dataset.id).get().join(",");
+}
+function $$$get_selected_file_ids(){
+	let file_ids = "";
+	let files_wo_ids = [];
+	for(let node of $$$document_getElementById('f').getElementsByClassName('tbody')[0].getElementsByClassName('selected1')){
+		if(node.dataset.id==="0")
+			files_wo_ids.push(node);
+		else 
+			file_ids += "," + node.dataset.id
+	}
+	if(files_wo_ids.length!==0){
+		$$$add_files_to_db(files_wo_ids);
 		// Seems I can't simply wait for a promise and take the value; I'd have to transform every function relying on it
-		"return \"\";"
-	"}"
-	"return file_ids.substr(1);"
-"}"
+		return "";
+	}
+	return file_ids.substr(1);
+}
 
-"function tag_files_then(file_ids, selector, fn){"
-	"const tagselect = $(selector);"
-	"const tag_ids = tagselect.val();"
-	"if(file_ids===\"\")"
-		"return;"
-	"$.post({"
-		"url: \"/f/t/\" + file_ids + \"/\" + tag_ids.join(\",\"),"
-		"success: function(){"
-			"tagselect.val(\"\").change();" // Deselect all
-			"fn(file_ids, tag_ids);"
-		"},"
-		"error:err_alert"
-	"});"
-"}"
-"function after_tagged_this_file(file_ids, tag_ids){"
-	"display_tags_add(tag_ids, '#tags')"
-"}"
-"function after_tagged_selected_files(file_ids, tag_ids){"
+function $$$tag_files_then(file_ids, selector, fn){
+	const tagselect = $(selector);
+	const tag_ids = tagselect.val();
+	if(file_ids==="")
+		return;
+	$.post({
+		url: "/f/t/" + file_ids + "/" + tag_ids.join(","),
+		success: function(){
+			tagselect.val("").change(); // Deselect all
+			fn(file_ids, tag_ids);
+		},
+		error:$$$err_alert
+	});
+}
+function $$$after_tagged_this_file(file_ids, tag_ids){
+	$$$display_tags_add(tag_ids, '#tags')
+}
+function $$$after_tagged_selected_files(file_ids, tag_ids){
 	// TODO
-"}"
+}
 
 
-"function hide_all_views_except(except){"
-	"console.log(\"hide_all_views_except\", except);"
-	"for(let type of ['img','video','audio','iframe','object','yt-player']){"
-		"if(type === except){"
-			"unhide('view-'+type);"
-			"const node = document.getElementById('view-'+type).getElementsByTagName('source')[0];"
-			"if(node !== undefined)"
-				"node.removeAttribute('src');"
-			"if(type === 'yt-player')"
-				"yt_player.pauseVideo();" // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
-			"continue;"
-		"}"
-		"hide('view-'+type);"
-	"}"
-	"if(except !== null)"
-		"unhide('view-'+except);"
-"}"
-"function set_file_view_src(type, src, _mimetype){"
-	"hide_all_views_except(type);"
-	"const x = document.getElementById('view-'+type);"
-	"x.src = src;"
-"}"
-"function play(type, src, _mimetype){"
-	"hide_all_views_except(type);"
-	"const player = document.getElementById('view-'+type).getElementsByTagName('source')[0];"
-	"player.type = _mimetype;"
-	"player.src = src;"
-	"player.parentNode.load();"
-	"player.parentNode.play();"
-"}"
+function $$$hide_all_views_except(except){
+	for(let type of ['img','video','audio','iframe','object','yt-player']){
+		if(type === except){
+			$$$unhide('view-'+type);
+			const node = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
+			if(node !== undefined)
+				node.removeAttribute('src');
+			if(type === 'yt-player')
+				$$$yt_player.pauseVideo(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
+			continue;
+		}
+		$$$hide('view-'+type);
+	}
+	if(except !== null)
+		$$$unhide('view-'+except);
+}
+function $$$set_file_view_src(type, src, _mimetype){
+	$$$hide_all_views_except(type);
+	const x = $$$document_getElementById('view-'+type);
+	x.src = src;
+}
+function $$$play(type, src, _mimetype){
+	$$$hide_all_views_except(type);
+	const player = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
+	player.type = _mimetype;
+	player.src = src;
+	player.parentNode.load();
+	player.parentNode.play();
+}
 
-"function YTPlayer_onStateChange(e){"
-	"if ((e.data != YT.PlayerState.ENDED) || (playlist_file_ids===undefined))"
-		"return;"
-	"playlist_listener();"
-"}"
-"function view_yt_video(idstr){"
-	"yt_player.loadVideoById(idstr);"
-	"hide_all_views_except('yt-player');"
-"}"
+function $$$YTPlayer_onStateChange(e){
+	if ((e.data != YT.PlayerState.ENDED) || ($$$playlist_file_ids===undefined))
+		return;
+	$$$playlist_listener();
+}
+function $$$view_yt_video(idstr){
+	$$$yt_player.loadVideoById(idstr);
+	$$$hide_all_views_except('yt-player');
+}
 
-"function set_embed_html(_dir_id, _mimetype, _file_name){"
-	"const [_dir_name, _device_id] = d[(_dir_id === undefined) ? dir_id : _dir_id];"
-	"if(_device_id === YOUTUBE_DEVICE_ID)"
-		"return view_yt_video(_file_name);"
-	"const embed_pre = D[_device_id][2];"
-	"if (embed_pre === \"\"){"
-		"const _src_end = (_dir_id === undefined) ? \"\" : \"/\" + _dir_id;"
-		"const src = (_dir_name.startsWith(\"http\")) ? (_dir_name + _file_name) : (\"/S/f/\" + file_id + _src_end);"
+function $$$set_embed_html(_dir_id, _mimetype, _file_name){
+	const [_dir_name, _device_id] = d[(_dir_id === undefined) ? $$$dir_id : _dir_id];
+	if(_device_id === $$$YOUTUBE_DEVICE_ID)
+		return $$$view_yt_video(_file_name);
+	const embed_pre = $$$D[_device_id][2];
+	if (embed_pre === ""){
+		const _src_end = (_dir_id === undefined) ? "" : "/" + _dir_id;
+		const src = (_dir_name.startsWith("http")) ? (_dir_name + _file_name) : ("/S/f/" + $$$file_id + _src_end);
 		
-		"const _mimetype_str = mt[(_mimetype===undefined)?mimetype:_mimetype];"
-		"switch(_mimetype_str.substring(0, _mimetype_str.indexOf('/'))){"
-			"case 'image':"
-				"set_file_view_src('img', src, null);"
-				"break;"
-			"case 'audio':"
-				"play('audio', src, _mimetype_str);"
-				"break;"
-			"case 'video':"
-				"play('video', src, _mimetype_str);"
-				"break;"
-			"case '':"
+		const _mimetype_str = $$$mt[(_mimetype===undefined)?$$$mimetype:_mimetype];
+		switch(_mimetype_str.substring(0, _mimetype_str.indexOf('/'))){
+			case 'image':
+				$$$set_file_view_src('img', src, null);
+				break;
+			case 'audio':
+				$$$play('audio', src, _mimetype_str);
+				break;
+			case 'video':
+				$$$play('video', src, _mimetype_str);
+				break;
+			case '':
 				// If no slash in the mimetype (probably "!!NONE!!")
-				"set_file_view_src('iframe', src, null);"
-				"break;"
-			"default:"
-				"set_file_view_src('object', src, _mimetype_str);"
-		"}"
+				$$$set_file_view_src('iframe', src, null);
+				break;
+			default:
+				$$$set_file_view_src('object', src, _mimetype_str);
+		}
 		
-		"if(playlist_file_ids === undefined)"
-			"for(var i=0; i<5; ++i)"
-				"document.getElementById('view-'+playlist_listeners_types[i]).removeEventListener(playlist_listeners_eventnames[i], playlist_listeners[i]);"
-	"} else {"
-		"set_file_view_src('iframe', embed_pre+_file_name+D[_device_id][3], null);"
-	"}"
-"}"
+		if($$$playlist_file_ids === undefined)
+			for(var i=0; i<5; ++i)
+				$$$document_getElementById('view-'+$$$playlist_listeners_types[i]).removeEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
+	} else {
+		$$$set_file_view_src('iframe', embed_pre+_file_name+$$$D[_device_id][3], null);
+	}
+}
 
-"function view_this_files_dir(){"
-	"view_dir(dir_id);"
-"}"
-"function display_this_file(_dir_id, _mimetype){"
-	"set_embed_html(_dir_id, _mimetype, file_name);"
-	"hide(\"view-btns-container\");"
-"}"
-"function undisplay_this_file(){"
-	"hide_all_views_except(null);"
-	"unhide(\"view-btns-container\");"
-"}"
-"function autoplay(){"
-	"return document.getElementById('autoplay').checked;"
-"}"
-"function display_external_db(id, name, post_id){"
-	"return \"<a class='db-link' onclick='view_post(\" + id + \",\\\"\" + post_id + \"\\\")'>View post on \" + name + \"</a>\";" // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
-"}"
-"function display_external_dbs(db_and_post_ids){"
-	"let s = \"\";"
-	"for (var i = 0;  i < db_and_post_ids.length;  ++i){"
-		"s += display_external_db(db_and_post_ids[i][0], x[db_and_post_ids[i][0]], db_and_post_ids[i][1]) + \"<br/>\";"
-	"}"
-	"document.getElementById(\"db-links\").innerHTML = s;"
-"}"
+function $$$view_this_files_dir(){
+	$$$view_dir($$$dir_id);
+}
+function $$$display_this_file(_dir_id, _mimetype){
+	$$$set_embed_html(_dir_id, _mimetype, $$$file_name);
+	$$$hide("view-btns-container");
+}
+function $$$undisplay_this_file(){
+	$$$hide_all_views_except(null);
+	$$$unhide("view-btns-container");
+}
+function $$$autoplay(){
+	return $$$document_getElementById('autoplay').checked;
+}
+function $$$display_external_db(id, name, post_id){
+	return "<a class='db-link' onclick='$$$view_post(" + id + ",\\"" + post_id + "\\")'>View post on " + name + "</a>"; // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
+}
+function $$$display_external_dbs(db_and_post_ids){
+	let s = "";
+	for (var i = 0;  i < db_and_post_ids.length;  ++i){
+		s += $$$display_external_db(db_and_post_ids[i][0], $$$x[db_and_post_ids[i][0]], db_and_post_ids[i][1]) + "<br/>";
+	}
+	$$$document_getElementById("db-links").innerHTML = s;
+}
 
-"function view_files_by_value(var_name){"
-	"populate_f_table('/a/f/f2/'+var_name);"
-	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);"
-	"get_file_ids = get_selected_file_ids;"
-	"window.location.hash = '$' + var_name;"
-	"set_page_title('Files assigned ' + var_name);"
-"}"
-"function display_file2_var(name, value){"
-	"return \"<div class='value'><div class='value-name'><a onclick='view_files_by_value(\\\"\" + name + \"\\\")'>\" + name + \"</a></div>\" + value + \"</div>\";"
-"}"
-"function assign_value_to_file(){"
-	"const select = $('#file2-select');"
-	"const var_indx = select.val();"
-	"if(var_indx.length === 0)"
-		"return;"
-	"const _file_ids = get_file_ids();"
-	"if(_file_ids===\"\")"
-		"return;"
-	"const input = document.getElementById('file2-value');"
-	"const value = input.value;"
-	"if(value===\"\")"
-		"return;"
-	"$.post({"
-		"url: \"/f/f2/\"+_file_ids+\"/\"+value+\"/\"+f2[var_indx],"
-		"dataType:\"text\","
-		"success:function(){"
-			"select.val(\"\").change();" // Deselect all
-			"input.value = \"\";"
-			"if(is_visible('values'))"
-				"document.getElementById('values').innerHTML += display_file2_var(f2[var_indx], value);"
-		"},"
-		"error:err_alert"
-	"});"
-"}"
+function $$$view_files_by_value(var_name){
+	$$$populate_f_table('/a/f/f2/'+var_name);
+	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
+	$$$get_file_ids = $$$get_selected_file_ids;
+	window.location.hash = '$' + var_name;
+	$$$set_page_title('Files assigned ' + var_name);
+}
+function $$$display_file2_var(name, value){
+	return "<div class='value'><div class='value-name'><a onclick='$$$view_files_by_value(\\"" + name + "\\")'>" + name + "</a></div>" + value + "</div>";
+}
+function $$$assign_value_to_file(){
+	const select = $('#file2-select');
+	const var_indx = select.val();
+	if(var_indx.length === 0)
+		return;
+	const _file_ids = $$$get_file_ids();
+	if(_file_ids==="")
+		return;
+	const input = $$$document_getElementById('file2-value');
+	const value = input.value;
+	if(value==="")
+		return;
+	$.post({
+		url: "/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[var_indx],
+		dataType:"text",
+		success:function(){
+			select.val("").change(); // Deselect all
+			input.value = "";
+			if($$$is_visible('values'))
+				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[var_indx], value);
+		},
+		error:$$$err_alert
+	});
+}
 
-"function view_file(_file_id){"
-	"hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);"
-	"hide('add-f-backup');"
+function $$$view_file(_file_id){
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);
+	$$$hide('add-f-backup');
 	
-	"file_tagger_fn = after_tagged_this_file;"
-	"get_file_ids = get_file_id;"
+	$$$file_tagger_fn = $$$after_tagged_this_file;
+	$$$get_file_ids = $$$get_file_id;
 	
-	"if (_file_id !== undefined){"
-		"file_id = _file_id;"
-		"$.ajax({"
-			"dataType: \"json\","
-			"url: \"/a/f/i/\"+file_id,"
-			"success: function(data){"
-				"const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups, file2_values_csv] = data;"
-				"document.getElementById('profile-img').src = thumb;"
-				"dir_id = _dir_id;"
-				"file_name = name;"
-				"const db_and_post_ids = ext_db_n_post_ids;"
-				"if (db_and_post_ids !== \"\")"
-					"display_external_dbs(db_and_post_ids.split(\",\").map(x => x.split(\":\")));"
+	if (_file_id !== undefined){
+		$$$file_id = _file_id;
+		$.ajax({
+			dataType: "json",
+			url: "/a/f/i/"+$$$file_id,
+			success: function(data){
+				const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups, file2_values_csv] = data;
+				$$$document_getElementById('profile-img').src = thumb;
+				$$$dir_id = _dir_id;
+				$$$file_name = name;
+				const db_and_post_ids = ext_db_n_post_ids;
+				if (db_and_post_ids !== "")
+					$$$display_external_dbs(db_and_post_ids.split(",").map(x => x.split(":")));
 				
-				"let _vals = \"\";"
-				"const file2_values = file2_values_csv.split(\",\");"
-				"for(var i=0, len=file2_values.length;  i<len;  ++i){"
-					"if(file2_values[i] !== \"0\")"
-						"_vals += display_file2_var(f2[i], file2_values[i]);"
-				"}"
-				"document.getElementById('values').innerHTML = _vals;"
+				let _vals = "";
+				const file2_values = file2_values_csv.split(",");
+				for(var i=0, len=file2_values.length;  i<len;  ++i){
+					if(file2_values[i] !== "0")
+						_vals += $$$display_file2_var(f2[i], file2_values[i]);
+				}
+				$$$document_getElementById('values').innerHTML = _vals;
 				
-				"if(tag_ids === \"\")"
-					"file_tags = [];"
-				"else{"
-					"file_tags = tag_ids.split(\",\");"
-					"display_tags(file_tags, \"#tags\");"
-				"}"
+				if(tag_ids === "")
+					$$$file_tags = [];
+				else{
+					$$$file_tags = tag_ids.split(",");
+					$$$display_tags($$$file_tags, "#tags");
+				}
 				
-				"mimetype = mime;"
+				$$$mimetype = mime;
 				
-				"document.getElementById('dir_name').onclick = view_this_files_dir;"
-				"set_dir_name_from_id(dir_id, \"dir_name\");"
+				$$$document_getElementById('dir_name').onclick = $$$view_this_files_dir;
+				$$$set_dir_name_from_id($$$dir_id, "dir_name");
 				
-				"set_page_title(file_name);"
+				$$$set_page_title($$$file_name);
 				
-				"let _s = \"\";"
-				"if (autoplay()){"
-					"display_this_file();"
-				"} else {"
-					"undisplay_this_file();"
-					"if(backups!==\"\"){"
-						"for(const _dir_id_to_mimetype of backups.split(\",\")){"
-							"const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(\":\");"
+				let _s = "";
+				if ($$$autoplay()){
+					$$$display_this_file();
+				} else {
+					$$$undisplay_this_file();
+					if(backups!==""){
+						for(const _dir_id_to_mimetype of backups.split(",")){
+							const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(":");
 							// dir_id of backup file
-							"_s += '<button class=\"view-btn\" onclick=\"display_this_file(' + _dir_id + ',' + _mimetype + ')\">' + d[_dir_id][0] + '</button>';"
-						"}"
-					"}"
-				"}"
-				"document.getElementById(\"view-btns-backups\").innerHTML = _s;"
-			"},"
-			"error:err_alert"
-		"});"
-	"} else {"
-		"$('#profile-name').text(file_name);"
-	"}"
+							_s += '<button class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + $$$d[_dir_id][0] + '</button>';
+						}
+					}
+				}
+				$$$document_getElementById("view-btns-backups").innerHTML = _s;
+			},
+			error:$$$err_alert
+		});
+	} else {
+		$$$document_getElementById('profile-name').innerText = $$$file_name;
+	}
 	
-	"window.location.hash = 'f' + file_id;"
-"}"
+	window.location.hash = 'f' + $$$file_id;
+}
 
-"function view_files(ls){"
-	"hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);"
+function $$$view_files(ls){
+	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	
-	"file_tagger_fn = after_tagged_selected_files;"
-	"get_file_ids = get_selected_file_ids;"
+	$$$file_tagger_fn = $$$after_tagged_selected_files;
+	$$$get_file_ids = $$$get_selected_file_ids;
 	
-	"if (ls !== undefined){"
-		"if (ls.length !== 0){"
-			"populate_f_table('/a/f/id/' + ls.join(\",\"));"
-		"}"
-	"}"
+	if (ls !== undefined){
+		if (ls.length !== 0){
+			$$$populate_f_table('/a/f/id/' + ls.join(","));
+		}
+	}
 	
-	"window.location.hash = '';"
+	window.location.hash = '';
 	
-	"document.getElementById(\"profile-name\").textContent = \"Files\";"
-"}"
+	$$$document_getElementById("profile-name").textContent = "Files";
+}
 
-"function toggle_file_add_backup_dialog(){"
-	"toggle('dirselect-container');"
-	"toggle('add-f-backup');"
-"}"
-"function backup_files(){"
-	"const file_ids = get_file_ids();" // CSV string
-	"if(file_ids.length === \"\"){"
-		"alert(\"No files selected\");"
-		"return;"
-	"}"
-	"const _dir_id = document.getElementById(\"dirselect\").value;"
-	"let url = document.getElementById(\"add-f-backup-url\").value;"
-	"const is_ytdl = document.getElementById(\"add-f-backup-ytdl\").checked;"
-	"if(_dir_id===\"\"){"
-		"alert(\"No directory selected\");"
-		"return;"
-	"}"
-	"if(url !== \"\"){"
-		"if((!url.startsWith('http')) && (!url.startsWith('/'))){"
-			"alert(\"Non-empty URL does not start with http or /\");"
-			"return;"
-		"}"
-	"}"
-	"if(is_ytdl)"
-		"url = \"ytdl/\" + url;"
-	"$.post({"
-		"url: \"/f/backup/\" + file_ids + \"/\" + _dir_id + \"/\" + url,"
-		"dataType:\"text\","
-		"success:function(){"
-			"hide('dirselect-container');"
-			"hide('add-f-backup');"
-		"},"
-		"error:err_alert"
-	"});"
-"}"
+function $$$toggle_file_add_backup_dialog(){
+	$$$toggle('dirselect-container');
+	$$$toggle('add-f-backup');
+}
+function $$$backup_files(){
+	const file_ids = $$$get_file_ids(); // CSV string
+	if(file_ids.length === ""){
+		alert("No files selected");
+		return;
+	}
+	const _dir_id = $$$document_getElementById("dirselect").value;
+	let url = $$$document_getElementById("add-f-backup-url").value;
+	const is_ytdl = $$$document_getElementById("add-f-backup-ytdl").checked;
+	if(_dir_id===""){
+		alert("No directory selected");
+		return;
+	}
+	if(url !== ""){
+		if((!url.startsWith('http')) && (!url.startsWith('/'))){
+			alert("Non-empty URL does not start with http or /");
+			return;
+		}
+	}
+	if(is_ytdl)
+		url = "ytdl/" + url;
+	$.post({
+		url: "/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
+		dataType:"text",
+		success:function(){
+			$$$hide('dirselect-container');
+			$$$hide('add-f-backup');
+		},
+		error:$$$err_alert
+	});
+}
 
-"const playlist_listeners = new Array(5);"
-"const playlist_listeners_types = ['img','video','audio','iframe','object'];"
-"const playlist_listeners_eventnames = ['load','ended','ended','load','load'];"
-"const playlist_listeners_fns = [playlist_listener_delayed, playlist_listener, playlist_listener, playlist_listener_delayed, playlist_listener_delayed];"
-"var playlist_file_ids;"
-"function playlist_listener(){"
-	"if(playlist_file_ids===undefined)"
-		"return;"
-	"playlist_file_ids.push(playlist_file_ids.shift());"
-	"view_file(playlist_file_ids[0]);"
-"}"
-"async "
-"function playlist_listener_delayed(){"
-	"await sleep(2000);"
-	"playlist_listener();"
-"}"
-"function view_files_as_playlist(){"
-	"const file_ids_csv = get_file_ids();"
-	"if(file_ids_csv===\"\"){"
-		"playlist_file_ids = undefined;"
-		"return;"
-	"}"
-	"playlist_file_ids = file_ids_csv.split(\",\");"
-	"document.getElementById('autoplay').checked = true;"
-	"for(var i=0; i<5; ++i)"
-		"playlist_listeners[i] = document.getElementById('view-'+playlist_listeners_types[i]).addEventListener(playlist_listeners_eventnames[i], playlist_listeners_fns[i]);"
-	"view_file(playlist_file_ids[0]);"
-"}"
+const $$$playlist_listeners = new Array(5);
+const $$$playlist_listeners_types = ['img','video','audio','iframe','object'];
+const $$$playlist_listeners_eventnames = ['load','ended','ended','load','load'];
+const $$$playlist_listeners_fns = [$$$playlist_listener_delayed, $$$playlist_listener, $$$playlist_listener, $$$playlist_listener_delayed, $$$playlist_listener_delayed];
+var $$$playlist_file_ids;
+function $$$playlist_listener(){
+	if($$$playlist_file_ids===undefined)
+		return;
+	$$$playlist_file_ids.push($$$playlist_file_ids.shift());
+	$$$view_file($$$playlist_file_ids[0]);
+}
+async function $$$playlist_listener_delayed(){
+	await $$$sleep(2000);
+	$$$playlist_listener();
+}
+function $$$view_files_as_playlist(){
+	const file_ids_csv = $$$get_file_ids();
+	if(file_ids_csv===""){
+		$$$playlist_file_ids = undefined;
+		return;
+	}
+	$$$playlist_file_ids = file_ids_csv.split(",");
+	$$$document_getElementById('autoplay').checked = true;
+	for(var i=0; i<5; ++i)
+		$$$playlist_listeners[i] = $$$document_getElementById('view-'+$$$playlist_listeners_types[i]).addEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners_fns[i]);
+	$$$view_file($$$playlist_file_ids[0]);
+}

@@ -1,4 +1,5 @@
 auto__server-determine-response.hpp
 qry-*-tokens.hpp
+js.hpp
 __pycache__/*
 qry.wasm

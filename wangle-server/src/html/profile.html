@@ -1,4 +1,6 @@
 #include <boost/preprocessor.hpp>
+#include "../js.hpp"
+
 
 #define ADD_TOGGLE(id, name) \
 	"<div id=\"" id "-container\" class=\"toggle-container\">" \
@@ -16,152 +18,11 @@
 	#include "components/all.css.html"
 "</head>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
-"<script type=\"text/javascript\">"
-	#include "../static/utils.js"
-	
-	"var tag_id;"
-	"var file_id;"
-	"var file_name;"
-	"var dir_id;"
-	"var dir_name;"
-	"var device_id;"
-	"var mimetype;"
-	"var file_tags;"
-	"var file2post;"
-	
-	// External database vars
-	"var db_id;"
-	"var post_id;"
-	"var user_id;"
-	"var user_name;"
-	
-	"var t;"
-	"var f;"
-	"var d;"
-	"var D;"
-	"var P;"
-	"var t2p;"
-	"var x;"
-	"var mt;" // mimetypes
-	"var f2;" // CSV of file2 variable names that needs to be split into an array
-	"var yt_player;"
-	
-	// User options stored in cookies
-	"var use_regex;"
-	
-	"const tbl2selector = {"
-		"\"f2\":\"#file2-select\","
-		"\"t\":\".tagselect\","
-		"\"d\":\"#dirselect\","
-		"\"D\":\"#deviceselect\","
-		"\"P\":\"#protocolselect\""
-	"};"
-	
-	"const tbl2namecol = {"
-		"\"f2\":null,"
-		"\"t\":0,"
-		"\"d\":0,"
-		"\"D\":0,"
-		"\"P\":0"
-	"};"
-	
-	"function onYouTubeIframeAPIReady(){"
-		"yt_player = new YT.Player('yt-player', {"
-			"height: '390',"
-			"width: '640',"
-			"events:{"
-				"'onStateChange':YTPlayer_onStateChange"
-			"}"
-		"});"
-		"when_data_loaded();"
-	"}"
-	
-	"function when_data_loaded(){"
-		"if(t === undefined || d === undefined || D === undefined || P === undefined || t2p === undefined || x === undefined || mt === undefined || f2 === undefined || yt_player === undefined)"
-			"return;"
-		"const _x = window.location.hash.substr(2);"
-		"switch(window.location.hash.substr(1,1)){"
-			"case \"f\": view_file(_x); break;"
-			"case \"d\": view_dir(_x);  break;"
-			"case \"t\": view_tag(_x);  break;"
-			"case \"x\":{"
-				"const [db_name, thing] = _x.split(\"/\");"
-				"db_id = _x.indexOf(db_name);"
-				"const thing_id = thing.substr(1);"
-				"switch(thing[0]){"
-					"case \"u\": view_user(db_id, thing_id); break;"
-				"}"
-				"break;"
-			"}"
-			"case \"$\": view_files_by_value(_x); break;"
-		"}"
-	"}"
-	
-	"function refetch_all_jsons(){"
-		"refetch_json('t', '/a/t.json', when_data_loaded);"
-		"refetch_json('d', '/a/d.json', when_data_loaded);"
-		"refetch_json('D', '/a/D.json', when_data_loaded);"
-		"refetch_json('P', '/a/P.json', when_data_loaded);"
-		"refetch_json('t2p', '/a/t2p.json', when_data_loaded);"
-		"refetch_json('x', '/a/x.json', when_data_loaded);"
-		"refetch_json('mt', '/a/mt.json', when_data_loaded);"
-		"refetch_json('f2', '/a/f2.json', function(){f2=f2.split(\",\");when_data_loaded()});"
-	"}"
-	
-	"function add_key_intercepts(){"
-		"Mousetrap.bind('p', view_files_as_playlist);"
-		"Mousetrap.bind('v', e => toggle('file2-container'));"
-		"Mousetrap.bind('b', toggle_file_add_backup_dialog);"
-		"Mousetrap.bind('m', merge_files);"
-		"Mousetrap.bind('q', e => focus('qry'));"
-	"}"
-	"function del_key_intercepts(){"
-		"Mousetrap.unbind('p');"
-		"Mousetrap.unbind('v');"
-		"Mousetrap.unbind('b');"
-		"Mousetrap.unbind('m');"
-		"Mousetrap.unbind('q');"
-	"}"
-	
-	"$(document).ready(function(){" // Only execute after page has finished loading
-		"hide_all_except([]);"
-		
-		"const uname = get_cookie(\"username\");"
-		"document.getElementById('username').innerText = (uname === undefined)?\"GUEST\":uname;"
-		
-		"refetch_all_jsons();"
-		
-		// From google's documentation: This code loads the IFrame Player API code asynchronously.
-		"let node = document.createElement('script');"
-		"node.src = \"https://www.youtube.com/iframe_api\";"
-		"let firstScriptTag = document.getElementsByTagName('script')[0];"
-		"firstScriptTag.parentNode.insertBefore(node, firstScriptTag);"
-		
-		"if(use_regex === undefined){"
-			"use_regex = get_cookie(\"use_regex\");"
-			"if(use_regex !== undefined){"
-				"use_regex = (use_regex === \"1\");"
-			"}else{"
-				"use_regex = confirm(\"Use Regular Expressions?\\nSay no if you don't know what they are\");"
-				"set_cookie(\"use_regex\", (use_regex)?\"1\":\"0\", 3600);"
-			"}"
-		"}"
-		
-		"fancify_tbl(\"f\");"
-		"init_qry();"
-		
-		"for(node of document.getElementsByTagName('input')){"
-			"node.addEventListener('focusin',  del_key_intercepts);"
-			"node.addEventListener('focusout', add_key_intercepts);"
-		"}"
-		"add_key_intercepts();"
-		
-		"document.getElementById('help-text').innerText = `"
-R"=========(
-Suppose you have a screenshot of a Twitter post. You can get the link to the original post - for instance, by using 'find-tweet' from https://github.com/NotCompsky/utils. You can then go to that file, click "Update src", and change the source to the Twitter post's URL. This will keep the screenshot as a 'backup' of the post.
-)========="
-		"`;"
-	"});"
+"<script type=\"text/javascript\">" 
+	MINIMISED_JS_ALL
+	"$(document).ready("
+		MINIMISED_JS_DECL_on_document_ready
+	");"
 "</script>"
 
 "<body>"
@@ -185,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 )========="
 #define CREATE_SITEMAP_LINK(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dirs()","All Dirs")("view_tags()","All Tags")("view_tasks()","All Tasks")("unhide('help')","Help")("view_text_editor()","Text Editor")("add_tags_dialog()","+Tags")("add_files_dialog()","+Files")("add_dirs_dialog()","+Dirs")("add_devices_dialog()","+Devices")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dirs"()","All Dirs")(MINIMISED_JS_DECL_view_tags"()","All Tags")(MINIMISED_JS_DECL_view_tasks"()","All Tasks")(MINIMISED_JS_DECL_unhide"('help')","Help")(MINIMISED_JS_DECL_view_text_editor"()","Text Editor")(MINIMISED_JS_DECL_add_tags_dialog"()","+Tags")(MINIMISED_JS_DECL_add_files_dialog"()","+Files")(MINIMISED_JS_DECL_add_dirs_dialog"()","+Dirs")(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -224,14 +85,14 @@ R"=========(
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "()\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
 		"<div id=\"profile-menu\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_dir","Dir")("view_tag","Tag")("view_tags","Tags")("view_file","File")("view_files","Files")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dir,"Dir")(MINIMISED_JS_DECL_view_tag,"Tag")(MINIMISED_JS_DECL_view_tags,"Tags")(MINIMISED_JS_DECL_view_file,"File")(MINIMISED_JS_DECL_view_files,"Files")))
 		"</div>"
 	"</div>"
 
 
 "<div id=\"qry-help\" class=\"hidden help\">"
 	"<h2>How to Query</h2>"
-	"<button onclick=\"hide('qry-help')\">Hide</button>"
+	"<button onclick=\"" MINIMISED_JS_DECL_hide "('qry-help')\">Hide</button>"
 	"<p>"
 		#include "../qry-help-text.txt"
 	"</p>"
@@ -248,7 +109,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 	"<h3>Assign Value</h3>"
 	"<select id=\"file2-select\"></select>"
 	"<input id=\"file2-value\" type=\"text\" pattern=\"\\d*\" placeholder=\"12345\"/>"
-	"<button onclick=\"assign_value_to_file()\">Update DB</button>"
+	"<button onclick=\"" MINIMISED_JS_DECL_assign_value_to_file "()\">Update DB</button>"
 "</div>"
 
 "<div id=\"tagging\">"
@@ -260,12 +121,12 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("view_d
 		"<select class=\"tagselect\" id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\" multiple=\"multiple\"></select>" \
 	"</div>"
 #define TAG_FN1 \
-	"add_parent_tags_then(tag_id, '#tagselect-self-p', function(){" \
-		"display_parent_tags(tag_id, '#parents');" \
+	MINIMISED_JS_DECL_add_parent_tags_then"(tag_id, '#tagselect-self-p', function(){" \
+		MINIMISED_JS_DECL_display_parent_tags"(tag_id, '#parents');" \
 	"})"
 #define TAG_FN2 \
-	"add_child_tags_then(tag_id, '#tagselect-self-c', function(){" \
-		"display_child_tags(tag_id, '#children');" \
+	MINIMISED_JS_DECL_add_child_tags_then"(tag_id, '#tagselect-self-c', function(){" \
+		MINIMISED_JS_DECL_display_child_tags"(tag_id, '#children');" \
 	"})"
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",TAG_FN1)("tagselect-self-c","Add Child Tags",TAG_FN2)))
 
@@ -277,9 +138,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 	"<a id=\"n-followers\"></a>"
 	"<a id=\"n-following\"></a>"
 	
-	"<a onclick=\"display_posts(db_id,user_id,'u')\">Authored Posts</a>"
-	"<a onclick=\"display_posts(db_id,user_id,'l')\">Liked Posts</a>"
-	"<a onclick=\"display_posts(db_id,user_id,'c')\">Commented Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'u')\">Authored Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'l')\">Liked Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'c')\">Commented Posts</a>"
 "</div>"
 
 #define CREATE_SELECT(r, data, elem) \
@@ -293,22 +154,22 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 #define CREATE__ADD_TO_DB__DIALOG(r, data, elem) \
 	"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-dialog\">" \
 		"<input id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-input\" type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(1, elem) "\"/>" \
-		"<button class=\"inline\" onclick=\"add_to_db__append('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">+</button>" \
+		"<button class=\"inline\" onclick=\"" MINIMISED_JS_DECL_add_to_db__append "('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">+</button>" \
 		"<div id=\"add-" BOOST_PP_TUPLE_ELEM(0, elem) "-queue\" contenteditable=\"true\"></div>" \
-		"<button onclick=\"add_to_db('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">Add to database</button>" \
+		"<button onclick=\"" MINIMISED_JS_DECL_add_to_db "('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">Add to database</button>" \
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
 
 "<div id=\"add-f-backup\" class=\"hidden\">"
 	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
 	ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
-	"<a onclick=\"backup_files()\">Send backup request</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_backup_files "()\">Send backup request</a>"
 "</div>"
 
 "<div id=\"file-info\">"
 	"<a id=\"dir_name\"></a>"
 	"<br/>"
-	"<a onclick=\"toggle_file_add_backup_dialog()\">+Backups</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_toggle_file_add_backup_dialog "()\">+Backups</a>"
 	"<br/>"
 	"<div id=\"view\">"
 		"<video id=\"view-video\" controls>"
@@ -327,13 +188,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"</div>"
 	"<br/>"
 	ADD_TOGGLE("autoplay","Autoplay")
-	"<button onclick=\"show_update_orig_src_dialog()\">Update src</button>"
+	"<button onclick=\"" MINIMISED_JS_DECL_show_update_orig_src_dialog "()\">Update src</button>"
 	"<div id=\"view-btns-container\">"
 		"View"
 		"<br/>"
 		"<div id=\"view-btns\">"
 			"Warning: Remote backup files will not display."
-			"<button id=\"view-btn-main\" class=\"view-btn\" onclick=\"display_this_file()\">"
+			"<button id=\"view-btn-main\" class=\"view-btn\" onclick=\"" MINIMISED_JS_DECL_display_this_file "()\">"
 				"Original"
 			"</button>"
 			"<div id=\"view-btns-backups\"></div>"
@@ -348,23 +209,23 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 			"<div id=\"post-text\"></div>"
 			
 			"<br/>"
-			"<a onclick=\"view_likes()\">Likes</a>"
+			"<a onclick=\"" MINIMISED_JS_DECL_view_likes "()\">Likes</a>"
 			"<div id=\"likes\">"
-				"<a onclick=\"hide('likes')\">Hide</a>"
+				"<a onclick=\"" MINIMISED_JS_DECL_hide "('likes')\">Hide</a>"
 				"<div id=\"likes-ls\"></div>"
 			"</div>"
 			"<br/>"
 			
 			"<div id=\"cmnts-container\">"
 				"<br/>"
-				"<a onclick=\"toggle('cmnts')\">Show/Hide Comments</a>"
+				"<a onclick=\"" MINIMISED_JS_DECL_toggle "('cmnts')\">Show/Hide Comments</a>"
 				"<div id=\"cmnts\"></div>"
 			"</div>"
 		"</div>"
 	"</div>"
 "</div>"
 
-BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files","tag_files_then(get_file_ids(), '#tagselect-files', file_tagger_fn)")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files", MINIMISED_JS_DECL_tag_files_then "(" MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")))
 #undef FILE_TAGGER_FN
 #undef FILE_TAGGER_FILE_IDS
 
@@ -372,7 +233,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 
 "<div id=\"text-editor\">"
 	"<h2 contenteditable=\"true\">Edit file name here...</h2>"
-	"<button onclick=\"text_editor_save()\">Save</button>"
+	"<button onclick=\"" MINIMISED_JS_DECL_text_editor_save "()\">Save</button>"
 	"<div id=\"text-edit\" contenteditable=\"true\">"
 		"Write text here..."
 	"</div>"
@@ -392,7 +253,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define ACTION_BTNS ("select-all","select_rows('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all","deselect_rows('#f .tbody .tr', 1); deselect_rows('#f .tbody .tr', 2); deselect_rows('#f .tbody .tr', 3);","Deselect All")("merge-files","merge_files()","Merge Files")("backup-files","toggle_file_add_backup_dialog()","Backup")("add-file2","toggle('file2-container')","Add/Update Value")("view-as-playlist","view_files_as_playlist()","View as Playlist")
+#define ACTION_BTNS ("select-all",MINIMISED_JS_DECL_select_rows "('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all",MINIMISED_JS_DECL_deselect_rows "('#f .tbody .tr', 1);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 2);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 3);","Deselect All")("merge-files",MINIMISED_JS_DECL_merge_files"()","Merge Files")("backup-files",MINIMISED_JS_DECL_toggle_file_add_backup_dialog"()","Backup")("add-file2",MINIMISED_JS_DECL_toggle"('file2-container')","Add/Update Value")("view-as-playlist",MINIMISED_JS_DECL_view_files_as_playlist"()","View as Playlist")
 #define IS_SELECTABLE
 #define COL_NAMES ("")("Name")("In Databases")("Tags")("Size (Range)")
 #define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"12.3KB - 45.6MB")
@@ -419,7 +280,9 @@ R"=========(
       </button>
       <span class="account-user"><p id="username"></p>
         <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Google_Contacts_icon.svg" class="account-profile" alt="">
-        <button onclick="if(get_cookie('username')===undefined)login();else logout()">▼</button>
+)========="
+		"<button onclick=\"if(" MINIMISED_JS_DECL_get_cookie "('username')===undefined)" MINIMISED_JS_DECL_login "();else " MINIMISED_JS_DECL_logout "()\">▼</button>"
+R"=========(
       </span>
     </div>
 )========="
