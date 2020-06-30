@@ -36,6 +36,22 @@ def get_return_value(gen:BIterator) -> str:
 	return s[:-1]
 
 
+def unescape(line:str):
+	new_line:str = ""
+	gen = (c for c in line)
+	for c in gen:
+		if c == "\\":
+			c = next(gen)
+			if c == "0":
+				c = "\0"
+			elif c == "n":
+				c = "\n"
+			elif c == "r":
+				c = "\r"
+		new_line += c
+	return new_line
+
+
 if __name__ == '__main__':
 	import sys
 	import os
@@ -43,10 +59,13 @@ if __name__ == '__main__':
 	src:str = sys.argv[1]
 	dst:str = sys.argv[2]
 	
-	if os.path.getmtime(dst) >= os.path.getmtime(src):
-		exit(0)
+	try:
+		if os.path.getmtime(dst) >= os.path.getmtime(src):
+			exit(0)
+	except FileNotFoundError:
+		pass
 	
-	gen = BIterator([line for line in open(src).read().split("\n")])
+	gen = BIterator([unescape(line) for line in open(src).read().split("\n")])
 	ls:list = []
 	for line in gen:
 		if line == "":

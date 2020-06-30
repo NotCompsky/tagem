@@ -1,0 +1,45 @@
+THIS LINE HERE IS IMPORTANT DO NOT REMOVE
+audio >
+	attribute_name = attribute_name::AUDIO_HASH;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+dct >
+	attribute_name = attribute_name::DCT_HASH;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+dir >
+	attribute_name = attribute_name::DIR;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+duration >
+	attribute_name = attribute_name::DURATION;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+id >
+	attribute_name = attribute_name::ID;
+	attribute_kind = attribute_kind::unique;
+	return successness::ok
+md5 >
+	attribute_name = attribute_name::MD5;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+mime >
+	attribute_name = attribute_name::MIMETYPE;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+sha >
+	attribute_name = attribute_name::SHA256;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+size >
+	attribute_name = attribute_name::SIZE;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+name >
+	attribute_name = attribute_name::NAME;
+	attribute_kind = attribute_kind::one_to_one;
+	return successness::ok
+tag >
+	attribute_name = attribute_name::TAG;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='f') ? successness::ok : successness::invalid

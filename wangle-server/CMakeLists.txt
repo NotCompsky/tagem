@@ -21,8 +21,6 @@ else()
 	message(WARNING "You might want to define -Dproxygen_root_DIR=/path/to/proxygen/root for ease - defines proxygen_cmake_DIR, wangle_DIR, folly_DIR and fizz_DIR")
 endif()
 
-project(RScraperWangle C CXX)
-
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -32,6 +30,7 @@ find_package(Compsky REQUIRED)
 find_package(CURL REQUIRED)
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
 set_property(TARGET qry PROPERTY CXX_STANDARD 17)
@@ -40,7 +39,7 @@ target_compile_definitions(qry PRIVATE DEBUG)
 
 add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/FrameDecoder.cpp" "${SRC_DIR}/qry.cpp" "${SRC_DIR}/skip_to_body.cpp")
 set_property(TARGET server PROPERTY CXX_STANDARD 17)
-target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(server wangle::wangle mariadbclient curl)
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
@@ -54,4 +53,21 @@ add_custom_target(
 	COMMENT "Generating bigboi switch statement"
 )
 
+add_custom_target(
+	qry__process_arg__tokens ALL
+	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/qry-process_arg-tokens.txt" "${SRC_DIR}/qry-process_arg-tokens.hpp"
+	BYPRODUCTS qry-process_arg-tokens.hpp
+	COMMENT "Generating bigboi switch statement"
+)
+
+add_custom_target(
+	qry__get_attribute_name__tokens ALL
+	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/qry-get_attribute_name-tokens.txt" "${SRC_DIR}/qry-get_attribute_name-tokens.hpp"
+	BYPRODUCTS qry-get_attribute_name-tokens.hpp
+	COMMENT "Generating bigboi switch statement"
+)
+
 add_dependencies(server auto__server_determine_response_hpp)
+add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)

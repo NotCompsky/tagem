@@ -57,7 +57,7 @@ def generate_list(startswith:bool, strings:list, indent:int) -> str:
 			for k in range(i+1, len(r), 1):
 				output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
 				output += f"\n{INDENT*(indent+2*k+1)}case '{r[k]}':"
-			output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,k,indent)};"
+			output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,len(r)-1,indent)};"
 			for k in range(j+1, len(r), 1)[::-1]:
 				output += f"\n{INDENT*(indent+2*k+2)}break;"
 				output += f"\n{INDENT*(indent+2*k)}}}"
@@ -71,7 +71,7 @@ def generate_list(startswith:bool, strings:list, indent:int) -> str:
 	for k in range(i+1, len(r), 1):
 		output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
 		output += f"\n{INDENT*(indent+2*k+1)}case '{r[k]}':"
-	output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,k,indent)};"
+	output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,len(r)-1,indent)};"
 	for k in range(0, len(r), 1)[::-1]:
 		output += f"\n{INDENT*(indent+2*k+2)}break;"
 		output += f"\n{INDENT*(indent+2*k)}}}"

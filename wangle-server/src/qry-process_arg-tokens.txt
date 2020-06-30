@@ -1,0 +1,50 @@
+THIS LINE HERE IS IMPORTANT DO NOT REMOVE
+\0>
+	return arg::END_OF_STRING
+( >
+	return arg::bracket_open
+) >
+	return arg::bracket_close
+">
+	--str;
+	return arg::name;
+and >
+	return arg::operator_and
+attr >
+	return arg::attribute
+backups >
+	return arg::backups
+f >
+	return arg::file
+t >
+	return arg::tag_tree
+t! >
+	return arg::tag
+d >
+	return arg::dir
+d! >
+	return arg::dir_basename
+D exists >
+	return arg::device_exists
+limit >
+	return arg::limit
+not >
+	return arg::NOT | process_arg(str)
+offset >
+	return arg::offset
+or >
+	return arg::operator_or
+order a >
+	return arg::order_by_asc
+order d >
+	return arg::order_by_desc
+order-by-value a >
+	return arg::order_by_value_asc
+order-by-value d >
+	return arg::order_by_value_desc
+same >
+	return arg::same_attribute
+value >
+	return arg::value
+x >
+	return arg::external_db
