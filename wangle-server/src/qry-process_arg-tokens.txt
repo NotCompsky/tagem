@@ -29,7 +29,7 @@ D exists >
 limit >
 	return arg::limit
 not >
-	return arg::NOT | process_arg(str)
+	return arg::NOT
 offset >
 	return arg::offset
 or >

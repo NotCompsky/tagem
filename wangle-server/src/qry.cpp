@@ -56,7 +56,7 @@ namespace arg {
 		operator_or,
 		
 		END_OF_STRING,
-		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
+		NOT
 	};
 }
 
@@ -399,10 +399,29 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	successness::ReturnType rc;
 	
 	while(true){
-		const arg::ArgType arg_token = process_arg(qry);
-		const bool is_inverted = (arg_token & arg::NOT);
-		const arg::ArgType arg_token_base = arg_token & ~arg::NOT;
-		switch(arg_token_base){ // Ignore the NOT flag
+		arg::ArgType arg_token = process_arg(qry);
+		if (arg_token == arg::NOT){
+			arg_token = process_arg(qry);
+			switch(arg_token){
+				case arg::file:
+				case arg::dir:
+				case arg::dir_basename:
+				case arg::device_exists:
+				case arg::tag:
+				case arg::tag_tree:
+				case arg::backups:
+				case arg::external_db:
+				case arg::value:
+				case arg::same_attribute:
+				case arg::name:
+				case arg::attribute:
+					where += " NOT";
+					break;
+				default:
+					return successness::invalid;
+			}
+		}
+		switch(arg_token){
 			case arg::END_OF_STRING:
 				if (join.empty())
 					join = join_for_auto_ordering;
@@ -418,7 +437,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			case arg::operator_and:
 				if (n_args_since_operator != 1)
 					return successness::invalid;
-				bracket_operator_at_depth[bracket_depth] = ((arg_token_base) == arg::operator_or) ? _operator_or : _operator_and;
+				bracket_operator_at_depth[bracket_depth] = ((arg_token) == arg::operator_or) ? _operator_or : _operator_and;
 				n_args_since_operator = 0;
 				break;
 			
@@ -439,8 +458,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::unimplemented;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name";
 				rc = process_name_list(where, 'd', qry);
 				if (rc != successness::ok)
@@ -454,8 +471,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::unimplemented;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1)";
 				rc = process_name_list(where, 'd', qry);
 				if (rc != successness::ok)
@@ -469,8 +484,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::unimplemented;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				if (which_tbl == 'f')
 					where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.device IN(" + connected_local_devices_str + "))";
 				else
@@ -484,8 +497,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
 				where += " FROM ";
@@ -503,8 +514,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (SELECT x2t.";
 				where += tbl_full_name(which_tbl);
 				where += " FROM ";
@@ -527,8 +536,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN(SELECT file FROM file_backup GROUP BY file HAVING COUNT(*)>=";
 				where += std::to_string(min);
 				where += " AND COUNT(*)<=";
@@ -542,8 +549,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name";
 				rc = process_name_list(where, 'x', qry);
 				if (rc != successness::ok)
@@ -555,7 +560,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			
 			case arg::order_by_asc:
 			case arg::order_by_desc: {
-				if ((++n_calls__order_by == 2) or (not order_by.empty()) or is_inverted)
+				if ((++n_calls__order_by == 2) or (not order_by.empty()))
 					return successness::invalid;
 				
 				rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
@@ -576,7 +581,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			}
 			case arg::order_by_value_asc:
 			case arg::order_by_value_desc: {
-				if ((++n_calls__order_by == 2) or (not order_by.empty()) or is_inverted)
+				if ((++n_calls__order_by == 2) or (not order_by.empty()))
 					return successness::invalid;
 				
 				std::string order_by_end;
@@ -592,8 +597,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			case arg::value: {
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
 				where += "IN (";
 				rc = process_value_list(where, qry);
 				if (rc != successness::ok)
@@ -622,8 +625,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (attribute_kind == attribute_kind::one_to_one){
 					where = "X.";
 					where += attribute_name;
-					if (is_inverted)
-						where += " NOT";
 					where += " IN(SELECT X.";
 					where += attribute_name;
 					where += " AS x\nFROM ";
@@ -644,8 +645,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += ")";
 				} else {
 					where = "X.id";
-					if (is_inverted)
-						where += "NOT";
 					where += " IN(SELECT file\n\tFROM file2";
 					where += attribute_name;
 					where += "\n\tWHERE ";
@@ -687,7 +686,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			case arg::name:
 			case arg::attribute: {
 				char comparison_mode;
-				if (arg_token_base == arg::name){
+				if (arg_token == arg::name){
 					attribute_name = attribute_name::NAME;
 					attribute_kind = attribute_kind::unique;
 					comparison_mode = 'r';
@@ -704,8 +703,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				}
 				
 				where += bracket_operator_at_depth[bracket_depth];
-				if (is_inverted)
-					where += " NOT";
 				where += " X.";
 				where += attribute_name;
 				
