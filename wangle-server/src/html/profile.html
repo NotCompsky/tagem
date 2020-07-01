@@ -138,9 +138,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 	"<a id=\"n-followers\"></a>"
 	"<a id=\"n-following\"></a>"
 	
-	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'u')\">Authored Posts</a>"
-	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'l')\">Liked Posts</a>"
-	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(db_id,user_id,'c')\">Commented Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(" MINIMISED_JS_DECL_db_id "," MINIMISED_JS_DECL_user_id ",'u')\">Authored Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(" MINIMISED_JS_DECL_db_id "," MINIMISED_JS_DECL_user_id ",'l')\">Liked Posts</a>"
+	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(" MINIMISED_JS_DECL_db_id "," MINIMISED_JS_DECL_user_id ",'c')\">Commented Posts</a>"
 "</div>"
 
 #define CREATE_SELECT(r, data, elem) \

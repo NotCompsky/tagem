@@ -69,5 +69,12 @@ add_custom_target(
 	COMMENT "Generating bigboi switch statement"
 )
 
-add_dependencies(server auto__server_determine_response_hpp)
+add_custom_target(
+	js_hpp ALL
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
+	BYPRODUCTS js.hpp
+	COMMENT "Generating minimised JavaScript header"
+)
+
+add_dependencies(server auto__server_determine_response_hpp js_hpp)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)

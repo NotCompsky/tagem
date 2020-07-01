@@ -11,14 +11,14 @@ function $$$populate_t_id2name_table(selector, arr){
 	}
 	document.querySelector(selector).innerHTML = s;
 }
-function $$$set_tag_name_from_id(id, selector){
-	document.querySelector(selector).innerText = t[id][0];
+function $$$set_profile_name_from_this_tag(){
+	$$$set_profile_name($$$t[$$$tag_id][0]);
 }
-function $$$set_tag_thumb_from_id(id, selector){
-	document.querySelector(selector).src = t[id][1];
+function $$$set_profile_thumb_from_this_tag(){
+	$$$set_profile_thumb($$$t[$$$tag_id][1]);
 }
-function $$$set_tag_cover_from_id(id, selector){
-	document.querySelector(selector).src = t[id][2];
+function $$$set_profile_cover_from_this_tag(){
+	$$$set_profile_cover($$$t[$$$tag_id][2]);
 }
 
 function $$$display_tag(id, tpl){
@@ -41,26 +41,24 @@ function $$$display_child_tags(_tag_id){
 
 function $$$add_child_tags_then(_tag_id, selector, fn){
 	const tagselect = $(selector);
-	$.post({
-		url: "/t/c/" + _tag_id + "/" + tagselect.val().join(","),
-		success: function(){
+	$$$ajax_POST_w_text_response(
+		"/t/c/" + _tag_id + "/" + tagselect.val().join(","),
+		function(){
 			tagselect.val("").change(); // Deselect all
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 	$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), [_tag_id]), '/a/t2p.json', function(){
 		fn();
 	});
 }
 function $$$add_parent_tags_then(_tag_id, selector, fn){
 	const tagselect = $(selector);
-	$.post({
-		url: "/t/p/" + _tag_id + "/" + tagselect.val().join(","),
-		success: function(){
+	$$$ajax_POST_w_text_response(
+		"/t/p/" + _tag_id + "/" + tagselect.val().join(","),
+		function(){
 			tagselect.val("").change(); // Deselect all
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 	$$$add_to_json_then('t2p', $$$zipsplitarr([_tag_id], tagselect.val()), '/a/t2p.json', function(){
 		fn();
 	});
@@ -70,15 +68,13 @@ function $$$update_tag_thumb(){
 	const url = prompt("New Thumbnail URL", "");
 	if(url==="" || url===null)
 		return;
-	$.ajax({
-		type:"POST",
-		url:"http://localhost:1999/t/thumb/" + $$$tag_id + "/" + url,
-		success:function(){
-			alert("Success");
+	$$$ajax_POST_w_text_response(
+		"/t/thumb/" + $$$tag_id + "/" + url,
+		function(){
 			$$$t[$$$tag_id][1] = url;
-		},
-		dataType:"text"
-	});
+			$$$set_profile_thumb_from_this_tag();
+		}
+	);
 }
 
 function $$$view_tag(_tag_id){
@@ -94,9 +90,9 @@ function $$$view_tag(_tag_id){
 		$$$populate_f_table('/a/f/t/' + $$$tag_id);
 	}
 	
-	$$$set_tag_name_from_id($$$tag_id, "#profile-name");
-	$$$set_tag_thumb_from_id($$$tag_id, "#profile-img");
-	$$$set_tag_cover_from_id($$$tag_id, "#profile-cover");
+	$$$set_profile_name_from_this_tag();
+	$$$set_profile_thumb_from_this_tag();
+	$$$set_profile_cover_from_this_tag();
 	
 	$$$display_parent_tags($$$tag_id);
 	$$$display_child_tags($$$tag_id);

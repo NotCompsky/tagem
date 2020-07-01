@@ -1,11 +1,9 @@
 function $$$populate_f_table(url, post_data){
-	$.ajax({
-		type:(post_data===undefined)?"GET":"POST",
-		dataType: "json",
-		url: url,
-		data:post_data,
-		error:$$$err_alert,
-		success:function(data){
+	$$$ajax_data_w_JSON_response(
+		(post_data===undefined)?"GET":"POST",
+		url,
+		post_data,
+		function(data){
 			let s = "";
 			$$$file2post = {};
 			for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){
@@ -26,52 +24,51 @@ function $$$populate_f_table(url, post_data){
 			$$$column_id2name('x', "#f .tbody", '$$$view_db', 2);
 			$$$column_id2name('t', "#f .tbody", '$$$view_tag', 3);
 		}
-	});
+	);
 }
 
 function $$$add_files_to_db(nodes){
 	if($$$dir_id===0){
-		alert("Cannot add files to DB unless their directory ID is set");
+		$$$alert("Cannot add files to DB unless their directory ID is set");
 		return;
 	}
 	if(nodes.length===0)
 		return;
-	$.post({
-		url:"/f/record/"+$$$dir_id,
-		data:nodes.map(x => '"'+x.getElementsByClassName('fname')[0].innerText.replace('"','\\"')+'"').join('\\n'),
-		success:function(data){
+	$$$ajax_POST_data_w_JSON_response(
+		"/f/record/"+$$$dir_id,
+		nodes.map(x => '"'+x.getElementsByClassName('fname')[0].innerText.replace('"','\"')+'"').join('\n'),
+		function(data){
 			for(let node of nodes){
 				node.dataset.id = data[node.getElementsByClassName('fname')[0].innerText];
 			}
-			alert("Files newly registered.\\nPlease now repeat your command.");
+			$$$alert("Files newly registered.\nPlease now repeat your command.");
 		}
-	});
+	);
 }
 
 function $$$merge_files(){
 	const master_file_ids = $$$get_selected_file_ids().split(",");
 	const dupl_file_ids   = $$$get_selected2_file_ids().split(",");
 	if(master_file_ids.length !== 1){
-		alert("There must be exactly one master file (use left mouse button to select them)");
+		$$$alert("There must be exactly one master file (use left mouse button to select them)");
 		return;
 	}
 	if(dupl_file_ids.length === 0){
-		alert("No duplicate files selected (use middle mouse button to select them)");
+		$$$alert("No duplicate files selected (use middle mouse button to select them)");
 		return;
 	}
 	const master_f_id = master_file_ids[0];
 	if(dupl_file_ids.includes(master_f_id)){
-		alert("File cannot be selected as both master and duplicate");
+		$$$alert("File cannot be selected as both master and duplicate");
 		return;
 	}
-	$.post({
-		url:"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
-		success:function(){
+	$$$ajax_POST_data_w_text_response(
+		"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
+		function(){
 			$$$deselect_rows('#f .tbody .tr', 1);
 			$("#f .tbody .tr.selected2").remove();
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 }
 
 function $$$get_file_id(){
@@ -102,14 +99,13 @@ function $$$tag_files_then(file_ids, selector, fn){
 	const tag_ids = tagselect.val();
 	if(file_ids==="")
 		return;
-	$.post({
-		url: "/f/t/" + file_ids + "/" + tag_ids.join(","),
-		success: function(){
+	$$$ajax_POST_data_w_text_response(
+		"/f/t/" + file_ids + "/" + tag_ids.join(","),
+		function(){
 			tagselect.val("").change(); // Deselect all
 			fn(file_ids, tag_ids);
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 }
 function $$$after_tagged_this_file(file_ids, tag_ids){
 	$$$display_tags_add(tag_ids, '#tags')
@@ -210,7 +206,7 @@ function $$$autoplay(){
 	return $$$document_getElementById('autoplay').checked;
 }
 function $$$display_external_db(id, name, post_id){
-	return "<a class='db-link' onclick='$$$view_post(" + id + ",\\"" + post_id + "\\")'>View post on " + name + "</a>"; // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
+	return "<a class='db-link' onclick='$$$view_post(" + id + ",\"" + post_id + "\")'>View post on " + name + "</a>"; // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
 }
 function $$$display_external_dbs(db_and_post_ids){
 	let s = "";
@@ -225,10 +221,10 @@ function $$$view_files_by_value(var_name){
 	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	$$$get_file_ids = $$$get_selected_file_ids;
 	window.location.hash = '$' + var_name;
-	$$$set_page_title('Files assigned ' + var_name);
+	$$$set_profile_name('Files assigned ' + var_name);
 }
 function $$$display_file2_var(name, value){
-	return "<div class='value'><div class='value-name'><a onclick='$$$view_files_by_value(\\"" + name + "\\")'>" + name + "</a></div>" + value + "</div>";
+	return "<div class='value'><div class='value-name'><a onclick='$$$view_files_by_value(\"" + name + "\")'>" + name + "</a></div>" + value + "</div>";
 }
 function $$$assign_value_to_file(){
 	const select = $('#file2-select');
@@ -242,17 +238,15 @@ function $$$assign_value_to_file(){
 	const value = input.value;
 	if(value==="")
 		return;
-	$.post({
-		url: "/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[var_indx],
-		dataType:"text",
-		success:function(){
+	$$$ajax_POST_data_w_text_response(
+		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[var_indx],
+		function(){
 			select.val("").change(); // Deselect all
 			input.value = "";
 			if($$$is_visible('values'))
 				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[var_indx], value);
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 }
 
 function $$$view_file(_file_id){
@@ -264,12 +258,11 @@ function $$$view_file(_file_id){
 	
 	if (_file_id !== undefined){
 		$$$file_id = _file_id;
-		$.ajax({
-			dataType: "json",
-			url: "/a/f/i/"+$$$file_id,
-			success: function(data){
+		$$$ajax_GET_w_JSON_response(
+			"/a/f/i/"+$$$file_id,
+			function(data){
 				const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups, file2_values_csv] = data;
-				$$$document_getElementById('profile-img').src = thumb;
+				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$file_name = name;
 				const db_and_post_ids = ext_db_n_post_ids;
@@ -294,9 +287,9 @@ function $$$view_file(_file_id){
 				$$$mimetype = mime;
 				
 				$$$document_getElementById('dir_name').onclick = $$$view_this_files_dir;
-				$$$set_dir_name_from_id($$$dir_id, "dir_name");
+				$$$document_getElementById('dir_name').innerText = $$$d[$$$dir_id][0];
 				
-				$$$set_page_title($$$file_name);
+				$$$set_profile_name($$$file_name);
 				
 				let _s = "";
 				if ($$$autoplay()){
@@ -312,11 +305,10 @@ function $$$view_file(_file_id){
 					}
 				}
 				$$$document_getElementById("view-btns-backups").innerHTML = _s;
-			},
-			error:$$$err_alert
-		});
+			}
+		);
 	} else {
-		$$$document_getElementById('profile-name').innerText = $$$file_name;
+		$$$set_profile_name($$$file_name);
 	}
 	
 	window.location.hash = 'f' + $$$file_id;
@@ -336,7 +328,7 @@ function $$$view_files(ls){
 	
 	window.location.hash = '';
 	
-	$$$document_getElementById("profile-name").textContent = "Files";
+	$$$set_profile_name("Files");
 }
 
 function $$$toggle_file_add_backup_dialog(){
@@ -346,33 +338,31 @@ function $$$toggle_file_add_backup_dialog(){
 function $$$backup_files(){
 	const file_ids = $$$get_file_ids(); // CSV string
 	if(file_ids.length === ""){
-		alert("No files selected");
+		$$$alert("No files selected");
 		return;
 	}
 	const _dir_id = $$$document_getElementById("dirselect").value;
 	let url = $$$document_getElementById("add-f-backup-url").value;
 	const is_ytdl = $$$document_getElementById("add-f-backup-ytdl").checked;
 	if(_dir_id===""){
-		alert("No directory selected");
+		$$$alert("No directory selected");
 		return;
 	}
 	if(url !== ""){
 		if((!url.startsWith('http')) && (!url.startsWith('/'))){
-			alert("Non-empty URL does not start with http or /");
+			$$$alert("Non-empty URL does not start with http or /");
 			return;
 		}
 	}
 	if(is_ytdl)
 		url = "ytdl/" + url;
-	$.post({
-		url: "/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
-		dataType:"text",
-		success:function(){
+	$$$ajax_POST_w_JSON_response(
+		"/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
+		function(){
 			$$$hide('dirselect-container');
 			$$$hide('add-f-backup');
-		},
-		error:$$$err_alert
-	});
+		}
+	);
 }
 
 const $$$playlist_listeners = new Array(5);

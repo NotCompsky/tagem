@@ -1,7 +1,5 @@
-function $$$set_dir_name_from_id(_dir_id, node_id){
-	$$$dir_name = $$$d[_dir_id][0];
-	$$$device_id = $$$d[_dir_id][1];
-	$$$document_getElementById(node_id).innerText = $$$dir_name;
+function $$$set_profile_name_from_this_dir(){
+	$$$set_profile_name($$$d[$$$dir_id]);
 }
 function $$$display_child_dirs(_dir_id){
 	$$$dir_name = $$$d[_dir_id][0];
@@ -54,20 +52,15 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 	if (_dir_id_or_path !== undefined){
 		if(is_from_db===undefined){
 			$$$dir_id = _dir_id_or_path;
-			$.ajax({
-				dataType: "json",
-				url: "/a/d/i/"+$$$dir_id,
-				success: function(data){
-					var s = "";
-					$('#dir_name').text(data[0]);
-				},
-				error:$$$err_alert
+			$$$ajax_GET_w_JSON_response("/a/d/i/"+$$$dir_id, function(data){
+				var s = "";
+				$('#dir_name').text(data[0]);
 			});
 			$$$populate_f_table('/a/f/d/' + $$$dir_id);
 		}else{
 			const dir = Object.entries(d).filter(x => (x[1][0]===_dir_id_or_path))[0];
 			if(dir===undefined){
-				alert("Directory does not exist in the database");
+				$$$alert("Directory does not exist in the database");
 				return;
 			}
 			$$$dir_id = dir[0];
@@ -76,7 +69,7 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 	}
 	
 	if(is_from_db===undefined){
-		$$$set_dir_name_from_id($$$dir_id, 'profile-name');
+		$$$set_profile_name_from_this_dir();
 		$$$display_parent_dirs($$$dir_id);
 		$$$display_child_dirs($$$dir_id);
 		window.location.hash = 'd' + $$$dir_id;
@@ -85,6 +78,6 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 function $$$view_dirs(ls){
 	$$$hide_all_except(['d']);
 	$$$populate_d_id2name_table('#d .tbody', ls);
-	$$$document_getElementById("profile-name").textContent = "All Directories";
+	$$$set_profile_name("All Directories");
 	window.location.hash = '';
 }

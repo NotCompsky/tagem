@@ -49,10 +49,13 @@ def process_fn_line(line:str):
 	if line.startswith("else"):
 		line = " " + line
 	
+	# Escape escapes
+	line = line.replace("\\", "\\\\")
+	
 	# Escape quotes
 	line = line.replace('"', '\\"')
 	
-	return line
+	return line + "\\n"
 
 
 def get_next_minimised_name():

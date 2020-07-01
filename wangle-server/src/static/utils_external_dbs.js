@@ -5,14 +5,14 @@ function $$$display_cmnts(_db_id, ls){
 		const _s = '' +
 			'<div id="c' + cmnt_id + '" class="cmnt">' +
 				'<div class="head">' +
-					'<a class="user" onclick="$$$view_user(' + _db_id + ',\\'' + user_id + '\\')">' + username + '</a>' + // Encasing ID in quotes because Javascript rounds large numbers
+					'<a class="user" onclick="$$$view_user(' + _db_id + ',\'' + user_id + '\')">' + username + '</a>' + // Encasing ID in quotes because Javascript rounds large numbers
 					'<time data-t="' + timestamp + '">' + $$$timestamp2dt(timestamp) + '</time>' +
-					'<button class="del" onclick="$$$rm_cmnt(' + _db_id + ',\\'' + cmnt_id + '\\')">Del</button>' +
+					'<button class="del" onclick="$$$rm_cmnt(' + _db_id + ',\'' + cmnt_id + '\')">Del</button>' +
 				'</div>' +
 				'<p>' +
 					cmnt_content +
 				'</p>' +
-				'<div class=\\'replies\\'>'
+				'<div class=\'replies\'>'
 		;
 			// Needs a terminating '</div>'
 		tree[cmnt_id] = [parent_id, 0, _s];
@@ -54,44 +54,29 @@ function $$$display_post_meta(_db_id, tpl){
 
 function $$$display_posts(_db_id, _user_id, _type){
 	// _type is either 'l' (for liked posts) or 'u' (for posts which they authored)
-	$$$unhide('f');
-	$.ajax({
-		dataType: "json",
-		url: '/a/x/u/p/' + _type + '/' + _db_id + '/' + _user_id,
-		success: function(file_ids){
-			if(file_ids.length === 0)
-				return;
-			$$$populate_f_table('/a/f/id/' + file_ids.join(","));
-		},
-		error:err_alert
+	$$$ajax_GET_w_JSON_response('/a/x/u/p/'+_type+'/'+_db_id+'/'+_user_id, function(file_ids){
+		if(file_ids.length === 0)
+			return;
+		$$$populate_f_table('/a/f/id/' + file_ids.join(","));
+		for(let _ of ['f','files-tagging','tagselect-files-container','tagselect-files-btn'])
+			$$$unhide(_);
 	});
 }
 
 function $$$view_post(_db_id, _post_id){
-	$$$unhide('post-container');
-	$.ajax({
-		dataType: "json",
-		url: "/a/x/p/i/"+_db_id+"/"+_post_id,
-		success: function(data){
-			$$$display_post_meta(_db_id, data[0]);
-			$$$display_cmnts(_db_id, data[1]);
-			$$$db_id = _db_id;
-			$$$post_id = _post_id;
-			$$$hide('likes');
-		},
-		error:$$$err_alert
+	$$$ajax_GET_w_JSON_response("/a/x/p/i/"+_db_id+"/"+_post_id, function(data){
+		$$$display_post_meta(_db_id, data[0]);
+		$$$display_cmnts(_db_id, data[1]);
+		$$$db_id = _db_id;
+		$$$post_id = _post_id;
+		$$$hide('likes');
+		$$$unhide('post-container');
 	});
 }
 
 function $$$rm_cmnt(_db_id, cmnt_id){
-	$.ajax({
-		type:"POST",
-		dataType: "text",
-		url: "/x/c/rm/"+_db_id+"/"+cmnt_id,
-		success: function(){
-			$$$document_getElementById('c'+cmnt_id).classList.add('hidden');
-		},
-		error:$$$err_alert
+	$$$ajax_POST_w_text_response("/x/c/rm/"+_db_id+"/"+cmnt_id, function(){
+		$$$document_getElementById('c'+cmnt_id).classList.add('hidden');
 	});
 }
 
@@ -101,11 +86,10 @@ function $$$view_user(_db_id, _user_id){
 	if (_db_id !== undefined){
 		$$$user_id = _user_id;
 		$$$db_id = _db_id;
-		$.ajax({
-			dataType: "json",
-			url: "/a/x/u/i/"+$$$db_id+"/"+_user_id,
-			success: function(data){
-				$$$document_getElementById('profile-img').src = "";
+		$$$ajax_GET_w_JSON_response(
+			"/a/x/u/i/"+$$$db_id+"/"+_user_id,
+			function(data){
+				$$$set_profile_thumb($$$BLANK_IMG_SRC);
 				
 				$$$document_getElementById('user-fullname').textContent = data[1];
 				
@@ -123,31 +107,25 @@ function $$$view_user(_db_id, _user_id){
 					$$$display_tags(tags.split(","), "#tags");
 				
 				$$$user_name = data[0];
-				$('#profile-name').text($$$user_name);
-			},
-			error:$$$err_alert
-		});
+				$$$set_profile_name($$$user_name);
+			}
+		);
 	} else {
-		$('#profile-name').text($$$user_name);
+		$$$set_profile_name($$$user_name);
 	}
 	
-	window.location.hash = 'x' + $$$x[db_id] + '/u' + $$$user_id; // db_id is actually the index of the database in the server's runtime command arguments, and could therefore easily change. Hence using the database name instead.
+	window.location.hash = 'x' + $$$db_id + '/u' + $$$user_id;
 }
 
 function $$$view_likes(){
 	if ($$$file_id === undefined)
 		return;
-	$.ajax({
-		dataType: "json",
-		url: "/a/x/p/l/"+$$$db_id+"/"+$$$post_id,
-		success: function(data){
-			let _s = "";
-			for(const [id,name] of data){
-				_s += '<a class="user" onclick="$$$view_user(' + $$$db_id + ',\\'' + id + '\\')">' + name + '</a>';
-			}
-			$$$document_getElementById('likes-ls').innerHTML = _s;
-			$$$unhide('likes');
-		},
-		error:$$$err_alert
+	$$$ajax_GET_w_JSON_response("/a/x/p/l/"+$$$db_id+"/"+$$$post_id, function(data){
+		let _s = "";
+		for(const [id,name] of data){
+			_s += '<a class="user" onclick="$$$view_user(' + $$$db_id + ',\'' + id + '\')">' + name + '</a>';
+		}
+		$$$document_getElementById('likes-ls').innerHTML = _s;
+		$$$unhide('likes');
 	});
 }

@@ -80,7 +80,7 @@ function $$$rm_from_json_then(var_name, keys, url, fn){
 	if (str.length > 4000){
 		// Most browsers only support cookies of max length 4096-ish
 		// If above this limit, just get an entirely new JSON
-		$$$get_json(url + '?' + (new Date().getTime()), function(data){
+		$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 			// Cache buster url parameter
 			console.log("Cache busting", var_name);
 			window[var_name] = data;

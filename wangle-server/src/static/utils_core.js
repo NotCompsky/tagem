@@ -56,20 +56,9 @@ function $$$is_visible(id){
 function $$$toggle(id){
 	$$$document_getElementById(id).classList.toggle("hidden");
 }
-function $$$set_page_title(str){
-	$$$document_getElementById('profile-name').innerText = str;
-}
 
 function $$$timestamp2dt(t){
 	return new Date(t*1000).toISOString().slice(-24, -5)
-}
-function $$$get_json(url, fn){
-	$.ajax({
-		dataType: "json",
-		url: url,
-		success: fn,
-		error:$$$err_alert
-	});
 }
 function $$$set_var_to_json_then(var_name, url, fn){
 	// All global variable are set in the window object
@@ -77,7 +66,7 @@ function $$$set_var_to_json_then(var_name, url, fn){
 		fn();
 		return;
 	}
-	$$$get_json(url, function(data){
+	$$$ajax_GET_w_JSON_response(url, function(data){
 		const additions = $$$get_cookie(var_name + '_adds');
 		if (additions !== undefined){
 			$$$merge_into(data, JSON.parse(additions));
@@ -121,12 +110,4 @@ function $$$zipsplitarr(keys, vals){
 		}
 	}
 	return arr;
-}
-
-function $$$error_alert(title, text){
-	alert(title + "\\n" + text);
-}
-
-function $$$err_alert(r,title,text){
-	$$$error_alert(r.statusText, text + "\\nfor url: " + this.url);
 }

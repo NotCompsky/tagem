@@ -20,8 +20,8 @@ function $$$when_data_loaded(){
 		case "d": $$$view_dir(_x);  break;
 		case "t": $$$view_tag(_x);  break;
 		case "x":{
-			const [db_name, thing] = _x.split("/");
-			$$$db_id = $$$get_external_db_id_from_name(db_name);
+			const [_db_id, thing] = _x.split("/");
+			$$$db_id = _db_id;
 			_x = thing.substr(1);
 			switch(thing[0]){
 				case "u": $$$view_user($$$db_id, _x); break;

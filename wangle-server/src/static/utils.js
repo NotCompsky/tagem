@@ -36,7 +36,7 @@ function $$$init_selects(var_name){
 }
 
 function $$$refetch_json(var_name, url, fn){
-	$$$get_json(url + '?' + (new Date().getTime()), function(data){
+	$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 		// Cache buster url parameter
 		console.log("Cache busting", var_name);
 		window[var_name] = data;

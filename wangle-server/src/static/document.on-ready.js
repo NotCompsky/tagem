@@ -17,7 +17,7 @@ function $$$on_document_ready(){
 		if($$$use_regex !== undefined){
 			$$$use_regex = ($$$use_regex === "1");
 		}else{
-			$$$use_regex = confirm("Use Regular Expressions?\\nSay no if you don't know what they are");
+			$$$use_regex = confirm("Use Regular Expressions?\nSay no if you don't know what they are");
 			$$$set_cookie("use_regex", ($$$use_regex)?"1":"0", 3600);
 		}
 	}
