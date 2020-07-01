@@ -38,11 +38,11 @@ function $$$populate_d_id2name_table(selector, arr){
 
 
 function $$$view_dir(_dir_id_or_path, is_from_db){
-	let ls = ['f','parents-container','children-container','files-tagging','tagselect-files-container','tagselect-files-btn'];
+	let ls = ['f',$$$parents-container,$$$children-container,'files-tagging','tagselect-files-container','tagselect-files-btn'];
 	if(is_from_db === undefined){
-		ls.push('merge-files-btn');
-		ls.push('backup-files-btn');
-		ls.push('view-as-playlist-btn');
+		ls.push($$$merge-files-btn);
+		ls.push($$$backup-files-btn);
+		ls.push($$$view-as-playlist-btn);
 	}
 	$$$hide_all_except(ls);
 	

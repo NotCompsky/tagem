@@ -218,7 +218,7 @@ function $$$display_external_dbs(db_and_post_ids){
 
 function $$$view_files_by_value(var_name){
 	$$$populate_f_table('/a/f/f2/'+var_name);
-	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
+	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn',$$$merge-files-btn,$$$backup-files-btn,$$$view-as-playlist-btn]);
 	$$$get_file_ids = $$$get_selected_file_ids;
 	window.location.hash = '$' + var_name;
 	$$$set_profile_name('Files assigned ' + var_name);
@@ -250,8 +250,8 @@ function $$$assign_value_to_file(){
 }
 
 function $$$view_file(_file_id){
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);
-	$$$hide('add-f-backup');
+	$$$hide_all_except([$$$file2-container,$$$values-container,$$$tags-container,$$$file-info,'tagselect-files-container','tagselect-files-btn']);
+	$$$hide($$$add-f-backup);
 	
 	$$$file_tagger_fn = $$$after_tagged_this_file;
 	$$$get_file_ids = $$$get_file_id;
@@ -315,7 +315,7 @@ function $$$view_file(_file_id){
 }
 
 function $$$view_files(ls){
-	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
+	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn',$$$merge-files-btn,$$$backup-files-btn,$$$view-as-playlist-btn]);
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$get_file_ids = $$$get_selected_file_ids;
@@ -332,8 +332,8 @@ function $$$view_files(ls){
 }
 
 function $$$toggle_file_add_backup_dialog(){
-	$$$toggle('dirselect-container');
-	$$$toggle('add-f-backup');
+	$$$toggle($$$dirselect-container);
+	$$$toggle($$$add-f-backup);
 }
 function $$$backup_files(){
 	const file_ids = $$$get_file_ids(); // CSV string
@@ -342,8 +342,8 @@ function $$$backup_files(){
 		return;
 	}
 	const _dir_id = $$$document_getElementById("dirselect").value;
-	let url = $$$document_getElementById("add-f-backup-url").value;
-	const is_ytdl = $$$document_getElementById("add-f-backup-ytdl").checked;
+	let url = $$$document_getElementById("$$$add-f-backup-url").value;
+	const is_ytdl = $$$document_getElementById("$$$add-f-backup-ytdl").checked;
 	if(_dir_id===""){
 		$$$alert("No directory selected");
 		return;
@@ -359,8 +359,8 @@ function $$$backup_files(){
 	$$$ajax_POST_w_JSON_response(
 		"/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
 		function(){
-			$$$hide('dirselect-container');
-			$$$hide('add-f-backup');
+			$$$hide($$$dirselect-container);
+			$$$hide($$$add-f-backup);
 		}
 	);
 }

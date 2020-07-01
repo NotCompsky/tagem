@@ -70,7 +70,7 @@ function $$$view_post(_db_id, _post_id){
 		$$$db_id = _db_id;
 		$$$post_id = _post_id;
 		$$$hide('likes');
-		$$$unhide('post-container');
+		$$$unhide($$$post-container);
 	});
 }
 
@@ -81,7 +81,7 @@ function $$$rm_cmnt(_db_id, cmnt_id){
 }
 
 function $$$view_user(_db_id, _user_id){
-	$$$hide_all_except(['tags-container','user-info']);
+	$$$hide_all_except([$$$tags-container,$$$user-info]);
 	
 	if (_db_id !== undefined){
 		$$$user_id = _user_id;

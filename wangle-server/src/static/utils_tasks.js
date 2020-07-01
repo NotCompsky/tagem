@@ -1,5 +1,5 @@
 function $$$view_tasks(){
-	$$$hide_all_except(['tasks-container']);
+	$$$hide_all_except([$$$tasks-container]);
 	$.get({
 		url:"/a/exec.json",
 		success:function(data){

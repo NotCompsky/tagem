@@ -1,9 +1,9 @@
 function $$$show_update_orig_src_dialog(){
-	$$$unhide('dirselect-container');
+	$$$unhide($$$dirselect-container);
 	$$$unhide('orig-src-dialog');
 }
 function $$$hide_update_orig_src_dialog(){
-	$$$unhide('dirselect-container');
+	$$$unhide($$$dirselect-container);
 	$$$unhide('orig-src-dialog');
 }
 
