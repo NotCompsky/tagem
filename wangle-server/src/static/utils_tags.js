@@ -78,7 +78,7 @@ function $$$update_tag_thumb(){
 }
 
 function $$$view_tag(_tag_id){
-	$$$hide_all_except([$$$parents-container,$$$children-container,'f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn',$$$merge-files-btn,$$$backup-files-btn,$$$view-as-playlist-btn]);
+	$$$hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	$$$document_getElementById('profile-img').onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;

@@ -45,7 +45,7 @@ function $$$refetch_all_jsons(){
 
 function $$$add_key_intercepts(){
 	$$$Mousetrap_bind('p', $$$view_files_as_playlist);
-	$$$Mousetrap_bind('v', e => $$$toggle($$$file2-container));
+	$$$Mousetrap_bind('v', e => $$$toggle('file2-container'));
 	$$$Mousetrap_bind('b', $$$toggle_file_add_backup_dialog);
 	$$$Mousetrap_bind('m', $$$merge_files);
 	$$$Mousetrap_bind('q', e => $$$focus('qry'));

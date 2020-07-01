@@ -1,11 +1,11 @@
 var $$$is_editing_existing_file = false; // Either we are creating a new file, or editing the file given by file_id
 
 function $$$view_text_editor(){
-	$$$hide_all_except([$$$text-editor,$$$dirselect-container,'tagselect-files-container']);
+	$$$hide_all_except(['text-editor','dirselect-container','tagselect-files-container']);
 }
 
 function $$$text_editor_save(){
-	const title = $$$document_getElementById($$$text-editor).getElementsByTagName('h2')[0].innerText.replace(/\n$/,'');
+	const title = $$$document_getElementById('text-editor').getElementsByTagName('h2')[0].innerText.replace(/\n$/,'');
 	if(title===""){
 		$$$alert("Must name file");
 		return;
