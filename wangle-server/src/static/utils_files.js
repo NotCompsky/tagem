@@ -36,7 +36,7 @@ function $$$add_files_to_db(nodes){
 		return;
 	$$$ajax_POST_data_w_JSON_response(
 		"/f/record/"+$$$dir_id,
-		nodes.map(x => '"'+x.getElementsByClassName('fname')[0].innerText.replace('"','\"')+'"').join('\n'),
+		nodes.map(x => '"'+x.getElementsByClassName('fname')[0].innerText.replace('"','\"')+'"').join(','),
 		function(data){
 			for(let node of nodes){
 				node.dataset.id = data[node.getElementsByClassName('fname')[0].innerText];
@@ -62,7 +62,7 @@ function $$$merge_files(){
 		$$$alert("File cannot be selected as both master and duplicate");
 		return;
 	}
-	$$$ajax_POST_data_w_text_response(
+	$$$ajax_POST_w_text_response(
 		"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
 		function(){
 			$$$deselect_rows('#f .tbody .tr', 1);
@@ -99,7 +99,7 @@ function $$$tag_files_then(file_ids, selector, fn){
 	const tag_ids = tagselect.val();
 	if(file_ids==="")
 		return;
-	$$$ajax_POST_data_w_text_response(
+	$$$ajax_POST_w_text_response(
 		"/f/t/" + file_ids + "/" + tag_ids.join(","),
 		function(){
 			tagselect.val("").change(); // Deselect all
@@ -111,7 +111,18 @@ function $$$after_tagged_this_file(file_ids, tag_ids){
 	$$$display_tags_add(tag_ids, '#tags')
 }
 function $$$after_tagged_selected_files(file_ids, tag_ids){
-	// TODO
+	for(let node of $$$document_getElementById('f').getElementsByClassName('tr')){
+		if(!file_ids.includes(node.dataset.id))
+			continue;
+		if(node.dataset.id==="0"){
+			$$$debug__err_alert("after_tagged_selected_files ($$$after_tagged_selected_files) attempting to tag file of ID 0");
+			continue;
+		}
+		let _s = "";
+		for(id of tag_ids)
+			_s += $$$link_to_named_fn_w_param_id_w_human_name("view_tag",id,$$$t[id]);
+		node.getElementsByClassName('td')[3].innerHTML += _s;
+	}
 }
 
 
@@ -238,7 +249,7 @@ function $$$assign_value_to_file(){
 	const value = input.value;
 	if(value==="")
 		return;
-	$$$ajax_POST_data_w_text_response(
+	$$$ajax_POST_w_text_response(
 		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[var_indx],
 		function(){
 			select.val("").change(); // Deselect all
@@ -250,6 +261,10 @@ function $$$assign_value_to_file(){
 }
 
 function $$$view_file(_file_id){
+	if(_file_id==0){
+		$$$alert("Cannot view file of ID 0");
+		return;
+	}
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);
 	$$$hide('add-f-backup');
 	
@@ -356,7 +371,7 @@ function $$$backup_files(){
 	}
 	if(is_ytdl)
 		url = "ytdl/" + url;
-	$$$ajax_POST_w_JSON_response(
+	$$$ajax_POST_w_text_response(
 		"/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
 		function(){
 			$$$hide('dirselect-container');

@@ -33,7 +33,7 @@
 # undef IS_SELECTABLE
 #endif
 
-	"<div class=\"action-btns\">"
+	"<div id=\"" TBL_ID "-action-btns\" class=\"action-btns\">"
 		"<button onclick=\"" MINIMISED_JS_DECL_filter_tbl "('" TBL_ID "'," TBL_NAME_COLS "," TBL_TAGS_COLS ");\">Filter</button>"
 #ifdef ACTION_BTNS
 BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_BTNS))

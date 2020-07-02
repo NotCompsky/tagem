@@ -38,7 +38,7 @@ function $$$populate_d_id2name_table(selector, arr){
 
 
 function $$$view_dir(_dir_id_or_path, is_from_db){
-	let ls = ['f','parents-container','children-container','files-tagging','tagselect-files-container','tagselect-files-btn'];
+	let ls = ['f','f-action-btns','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];
 	if(is_from_db === undefined){
 		ls.push('merge-files-btn');
 		ls.push('backup-files-btn');

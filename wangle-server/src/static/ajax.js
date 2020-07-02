@@ -13,7 +13,7 @@ function $$$ajax_w_JSON_response(mthd,url,fn){
 
 function $$$ajax_data_w_JSON_response(mthd,url,data,fn){
 	$.ajax({
-		type:"POST",
+		type:mthd,
 		data:data,
 		dataType:"json",
 		url:url,

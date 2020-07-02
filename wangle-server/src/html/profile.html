@@ -46,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 )========="
 #define CREATE_SITEMAP_LINK(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dirs"()","All Dirs")(MINIMISED_JS_DECL_view_tags"()","All Tags")(MINIMISED_JS_DECL_view_tasks"()","All Tasks")(MINIMISED_JS_DECL_unhide"('help')","Help")(MINIMISED_JS_DECL_view_text_editor"()","Text Editor")(MINIMISED_JS_DECL_add_tags_dialog"()","+Tags")(MINIMISED_JS_DECL_add_files_dialog"()","+Files")(MINIMISED_JS_DECL_add_dirs_dialog"()","+Dirs")(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dirs"()","All Dirs")(MINIMISED_JS_DECL_view_tags"()","All Tags")(MINIMISED_JS_DECL_view_tasks"()","All Tasks")(MINIMISED_JS_DECL_view_dir"(prompt('/directory/path/'),false)","Filesystem Dir")(MINIMISED_JS_DECL_unhide"('help')","Help")(MINIMISED_JS_DECL_view_text_editor"()","Text Editor")(MINIMISED_JS_DECL_add_tags_dialog"()","+Tags")(MINIMISED_JS_DECL_add_files_dialog"()","+Files")(MINIMISED_JS_DECL_add_dirs_dialog"()","+Dirs")(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -121,12 +121,12 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		"<select class=\"tagselect\" id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\" multiple=\"multiple\"></select>" \
 	"</div>"
 #define TAG_FN1 \
-	MINIMISED_JS_DECL_add_parent_tags_then"(tag_id, '#tagselect-self-p', function(){" \
-		MINIMISED_JS_DECL_display_parent_tags"(tag_id, '#parents');" \
+	MINIMISED_JS_DECL_add_parent_tags_then"("MINIMISED_JS_DECL_tag_id",'#tagselect-self-p', function(){" \
+		MINIMISED_JS_DECL_display_parent_tags"("MINIMISED_JS_DECL_tag_id",'#parents');" \
 	"})"
 #define TAG_FN2 \
-	MINIMISED_JS_DECL_add_child_tags_then"(tag_id, '#tagselect-self-c', function(){" \
-		MINIMISED_JS_DECL_display_child_tags"(tag_id, '#children');" \
+	MINIMISED_JS_DECL_add_child_tags_then"("MINIMISED_JS_DECL_tag_id",'#tagselect-self-c', function(){" \
+		MINIMISED_JS_DECL_display_child_tags"("MINIMISED_JS_DECL_tag_id",'#children');" \
 	"})"
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",TAG_FN1)("tagselect-self-c","Add Child Tags",TAG_FN2)))
 

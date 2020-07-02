@@ -100,7 +100,7 @@ function $$$view_tag(_tag_id){
 	window.location.hash = 't' + $$$tag_id;
 }
 function $$$view_tags(ls){
-	$$$hide_all_except(['t','files-tagging']);
+	$$$hide_all_except(['t','f-action-btns']);
 	if(ls !== undefined)
 		$$$populate_t_id2name_table('#t .tbody', ls);
 	window.location.hash = '';

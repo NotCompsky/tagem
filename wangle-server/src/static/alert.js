@@ -17,3 +17,7 @@ function $$$error_alert(title, text){
 function $$$err_alert(r,title,text){
 	$$$error_alert(r.statusText, text + "\nfor url: " + this.url);
 }
+
+function $$$debug__err_alert(s){
+	console.log("WARNING", s);
+}

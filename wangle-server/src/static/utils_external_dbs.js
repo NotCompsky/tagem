@@ -58,8 +58,9 @@ function $$$display_posts(_db_id, _user_id, _type){
 		if(file_ids.length === 0)
 			return;
 		$$$populate_f_table('/a/f/id/' + file_ids.join(","));
-		for(let _ of ['f','files-tagging','tagselect-files-container','tagselect-files-btn'])
+		for(let _ of ['f','f-action-btns','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn'])
 			$$$unhide(_);
+		$$$get_file_ids = $$$get_selected_file_ids;
 	});
 }
 
