@@ -33,7 +33,9 @@ const char* THUMBNAIL_DIR = nullptr;
 
 
 namespace _f {
-	constexpr static const compsky::asciify::flag::Escape esc;
+	using namespace compsky::asciify::flag;
+	constexpr static const Escape esc;
+	constexpr static const esc::SpacesAndNonAscii esc_spaces_and_non_ascii;
 }
 
 
@@ -419,7 +421,7 @@ void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name, 
 	MD5_CTX md5_ctx;
 	MD5_Init(&md5_ctx);
 	static char buf[7 + 4096];
-	compsky::asciify::asciify(buf, "file://", fp, '\0');
+	compsky::asciify::asciify(buf, "file://", _f::esc_spaces_and_non_ascii, fp, '\0');
 	MD5_Update(&md5_ctx, buf, strlen(buf));
 	MD5_Final(hash, &md5_ctx);
 	
