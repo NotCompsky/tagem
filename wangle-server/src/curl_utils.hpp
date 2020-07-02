@@ -55,8 +55,8 @@ FunctionSuccessness dl_file__curl(const char* user_headers,  const char* const u
 		rc = FunctionSuccessness::server_error;
 	} else {
 		char* _mimetype = nullptr;
-		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, _mimetype);
-		if (not curl_rc2  and  _mimetype)
+		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, &_mimetype);
+		if (_mimetype and not curl_rc2)
 			memccpy(mimetype, _mimetype, 0, MAX_MIMETYPE_SZ);
 		rc = FunctionSuccessness::ok;
 	}
