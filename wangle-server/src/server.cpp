@@ -918,12 +918,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"(user,dir,name)"
 			"VALUES"
 		);
-		while(*s != 0){
+		while(true){
 			const char* const file_name_begin = s;
 			if(unlikely(not compsky::utils::is_str_dblqt_escaped(s, ',', '\0')))
 				return _r::not_found;
 			const size_t file_name_len = (uintptr_t)s - (uintptr_t)file_name_begin;
 			this->asciify('(', user_id, ',', dir_id, ',', _f::strlen, file_name_begin, file_name_len, ')', ',');
+			if (*s == 0)
+				break;
+			++s; // Skip comma
 		}
 		if (unlikely(this->last_char_in_buf() != ','))
 			// No file names were provided
@@ -1116,6 +1119,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f2p.post IN (", post_ids, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			"LIMIT 100"
 		);
 		mysql_free_result(_post_ids_res);
 		
