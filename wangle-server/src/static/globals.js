@@ -1,3 +1,5 @@
+const $$$MAX_RESULTS_PER_PAGE = 100;
+
 var $$$tag_id;
 var $$$file_id;
 var $$$file_name;

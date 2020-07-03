@@ -66,6 +66,20 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define TRUE 1
 #define FALSE 0
 
+#define GET_PAGE_N \
+	printf("  s == %.10s...\n", s); \
+	const unsigned page_n = a2n<unsigned>(&s); \
+	printf("  s == %.10s...\n", s); \
+	fflush(stdout); \
+	if(*s != '/') \
+		return _r::not_found; \
+	++s;
+
+#define CHECK_FOR_EXPECT_100_CONTINUE_HEADER \
+	printf("CHECK_FOR_EXPECT_100_CONTINUE_HEADER %s\n", s); \
+	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
+		return _r::expect_100_continue;
+
 #define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
 	BOOST_PP_IF(var_decl, const char* const,) var  = get_comma_separated_ints(&str_name, terminating_char); \
 	if (var == nullptr) \
@@ -674,6 +688,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir__filesystem(const char* s){
+		GET_PAGE_N
 #ifndef NO_VIEW_DIR_FS
 		GET_USER_ID
 		GREYLIST_GUEST
@@ -701,7 +716,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
-			"LIMIT 100"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		this->asciify_file_info__no_end();
 		
@@ -904,6 +920,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		uint64_t dir_id = a2n<uint64_t>(&s);
 		if ((*s != ' ') or (dir_id == 0))
 			return _r::not_found;
+		
+		CHECK_FOR_EXPECT_100_CONTINUE_HEADER
 		
 		GET_USER_ID
 		GREYLIST_GUEST
@@ -1339,6 +1357,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_tag(const char* s){
+		GET_PAGE_N
 		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
@@ -1362,7 +1381,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
-			"LIMIT 100"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		
 		this->asciify_file_info();
@@ -1375,6 +1395,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_ids(const char* s){
+		GET_PAGE_N
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
 		GET_USER_ID
 		
@@ -1389,7 +1410,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
 			"ORDER BY FIELD(f.id,", _f::strlen, file_ids, file_ids_len, ")"
-			"LIMIT 100"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		
 		this->asciify_file_info();
@@ -1398,6 +1420,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir(const char* s){
+		GET_PAGE_N
 		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
@@ -1417,7 +1440,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE f.dir=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
-			"LIMIT 100"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		
 		this->asciify_file_info();
@@ -1430,6 +1454,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_value(const char* s){
+		GET_PAGE_N
 		GET_FILE2_VAR_NAME(s)
 		
 		this->mysql_query(
@@ -1443,7 +1468,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"WHERE TRUE "
 			  FILE_TBL_USER_PERMISSION_FILTER(user->id)
 			"GROUP BY f.id "
-			"LIMIT 100"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 			// No need to impose a limit - this is very quick
 		);
 		
@@ -2221,10 +2247,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"FROM _file f "
 			"JOIN _dir d "
 			"LEFT JOIN ",
-				(is_mimetype_set)?"mimetype mt ON mt.name=\"":"ext2mimetype mt ON mt.name=SUBSTRING_INDEX(\"",
+				(is_mimetype_set)?"mimetype":"ext2mimetype",
+				" mt ON mt.name=SUBSTRING_INDEX(\"",
 				_f::esc, '"',
 				(is_mimetype_set)?mimetype:this->file_path, // TODO: Escape mimetype properly
-				(is_mimetype_set)?"\"":"\",'.',-1)", " "
+				(is_mimetype_set)?"\",';'1":"\",'.',-1", ") "
 			"WHERE f.id=", file_id_str, " "
 			  "AND d.id=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
@@ -2298,9 +2325,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 							'"', _f::esc, '"', file_name, '"', ',',
 							dir_id, ',',
 							user_id, ',',
-							(is_mimetype_set)?"(SELECT id FROM mimetype WHERE name=\"":"",
+							(is_mimetype_set)?"(SELECT id FROM mimetype WHERE name=SUBSTRING_INDEX(\"":"",
 							(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
-							(is_mimetype_set)?"\")":"0",
+							(is_mimetype_set)?"\",';',1))":"0",
 						")"
 						"ON DUPLICATE KEY UPDATE dir=dir"
 					);

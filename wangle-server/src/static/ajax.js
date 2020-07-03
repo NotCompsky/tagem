@@ -4,6 +4,9 @@ function $$$ajax(mthd,resp_type,url,fn){
 		dataType:resp_type,
 		url:url,
 		success:fn,
+		//headers:{
+		//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
+		//},
 		error:$$$err_alert
 	});
 }

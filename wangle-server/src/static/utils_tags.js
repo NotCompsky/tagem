@@ -87,7 +87,7 @@ function $$$view_tag(_tag_id){
 	if (_tag_id !== undefined){
 		// It is undefined if we are just unhiding the tag view
 		$$$tag_id = _tag_id;
-		$$$populate_f_table('/a/f/t/' + $$$tag_id);
+		$$$populate_f_table('/a/f/t/', $$$tag_id);
 	}
 	
 	$$$set_profile_name_from_this_tag();

@@ -1,8 +1,30 @@
-function $$$populate_f_table(url, post_data){
+var $$$file_qry_url;
+var $$$file_qry_url_paramsythings;
+var $$$file_qry_post_data;
+var $$$file_qry_page_n;
+
+function $$$next_page(tbl_id,direction){
+	switch(tbl_id){
+		case 'f':
+			$$$populate_f_table(null,null,null,direction);
+			break;
+	}
+}
+
+function $$$populate_f_table(url,params,post_data,direction){
+	if(url===null)
+		// We are navigating to the next or previous page
+		$$$file_qry_page_n+=direction;
+	else{
+		$$$file_qry_url=url;
+		$$$file_qry_url_paramsythings=params;
+		$$$file_qry_post_data=post_data;
+		$$$file_qry_page_n=0;
+	}
 	$$$ajax_data_w_JSON_response(
-		(post_data===undefined)?"GET":"POST",
-		url,
-		post_data,
+		($$$file_qry_post_data===undefined)?"GET":"POST",
+		$$$file_qry_url+$$$file_qry_page_n+'/'+$$$file_qry_url_paramsythings,
+		$$$file_qry_post_data,
 		function(data){
 			let s = "";
 			$$$file2post = {};
@@ -20,6 +42,8 @@ function $$$populate_f_table(url, post_data){
 					
 				s += "</div>";
 			}
+			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
+			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
 			document.querySelector("#f .tbody").innerHTML = s;
 			$$$column_id2name('x', "#f .tbody", '$$$view_db', 2);
 			$$$column_id2name('t', "#f .tbody", '$$$view_tag', 3);
@@ -120,7 +144,7 @@ function $$$after_tagged_selected_files(file_ids, tag_ids){
 		}
 		let _s = "";
 		for(id of tag_ids)
-			_s += $$$link_to_named_fn_w_param_id_w_human_name("view_tag",id,$$$t[id]);
+			_s += $$$link_to_named_fn_w_param_id_w_human_name("$$$view_tag",id,$$$t[id]);
 		node.getElementsByClassName('td')[3].innerHTML += _s;
 	}
 }
@@ -228,7 +252,7 @@ function $$$display_external_dbs(db_and_post_ids){
 }
 
 function $$$view_files_by_value(var_name){
-	$$$populate_f_table('/a/f/f2/'+var_name);
+	$$$populate_f_table('/a/f/f2/',var_name);
 	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	$$$get_file_ids = $$$get_selected_file_ids;
 	window.location.hash = '$' + var_name;
@@ -337,7 +361,7 @@ function $$$view_files(ls){
 	
 	if (ls !== undefined){
 		if (ls.length !== 0){
-			$$$populate_f_table('/a/f/id/' + ls.join(","));
+			$$$populate_f_table('/a/f/id/',ls.join(","));
 		}
 	}
 	

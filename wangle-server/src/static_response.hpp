@@ -46,6 +46,12 @@ namespace _r {
 		"Invalid syntax"
 	;
 	
+	constexpr static const std::string_view expect_100_continue =
+		#include "headers/return_code/CONTINUE.c"
+		"\n"
+		"why even bother asking"
+	;
+	
 	/*
 	constexpr static const std::string_view bad_request =
 		#include "headers/return_code/BAD_REQUEST.c"

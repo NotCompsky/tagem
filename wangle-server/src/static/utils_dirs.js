@@ -56,7 +56,7 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 				var s = "";
 				$('#dir_name').text(data[0]);
 			});
-			$$$populate_f_table('/a/f/d/' + $$$dir_id);
+			$$$populate_f_table('/a/f/d/', $$$dir_id);
 		}else{
 			const dir = Object.entries(d).filter(x => (x[1][0]===_dir_id_or_path))[0];
 			if(dir===undefined){
@@ -64,7 +64,7 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 				return;
 			}
 			$$$dir_id = dir[0];
-			$$$populate_f_table('/a/f/d-/', _dir_id_or_path);
+			$$$populate_f_table('/a/f/d-/', '', _dir_id_or_path);
 		}
 	}
 	
