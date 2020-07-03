@@ -42,7 +42,7 @@ bool FrameDecoder::decode(Context* ctx,
 	*(const_cast<folly::IOBuf*>(buf.front())->writableTail()) = 0;
 	// Just to tell everyone where it terminates
 	// TODO: Look into read-only methods to transfer knowledge of length of data
-      std::unique_ptr<folly::IOBuf> frame = buf.splitAtMost(1024 * 1024); // Arbitrary limit
+	std::unique_ptr<folly::IOBuf> frame = buf.splitAtMost(std::numeric_limits<size_t>::max());
       result = std::move(frame);
       return true;
 }
