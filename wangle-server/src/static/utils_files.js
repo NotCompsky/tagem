@@ -328,6 +328,9 @@ function $$$view_file(_file_id){
 				$$$document_getElementById('dir_name').onclick = $$$view_this_files_dir;
 				$$$document_getElementById('dir_name').innerText = $$$d[$$$dir_id][0];
 				
+				$$$document_getElementById('file_name').innerText = name;
+				$$$document_getElementById('file_name').href = $$$d[$$$dir_id][0] + name;
+				
 				$$$set_profile_name($$$file_name);
 				
 				let _s = "";
