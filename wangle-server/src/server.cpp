@@ -715,15 +715,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			"GROUP BY f.id "
-			"LIMIT 100 "
-			"OFFSET ", 100*page_n
+			"GROUP BY f.id"
+			// WARNING: No limits. Directories should aim to avoid having too many files in each (low thousands) to mitigate malicious requests
 		);
-		this->asciify_file_info__no_end();
+		
+		this->begin_json_response();
+		this->asciify('[');
 		
 		struct dirent* e;
 		struct stat st;
-		while ((e=readdir(dir)) != 0){
+		unsigned min = 100 * page_n;
+		unsigned indx = 0;
+		unsigned count = 100;
+		while (((e=readdir(dir)) != 0) and (count != 0)){
 			const char* const ename = e->d_name;
 			
 			if (ename == nullptr)
@@ -743,6 +747,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			if (compsky::mysql::in_results<2>(ename, this->res))
 				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
 				continue;
+			
+			if (++indx <= min)
+				continue;
+			
+			--count;
 			
 			MD5_CTX md5_ctx;
 			MD5_Init(&md5_ctx);
@@ -2501,8 +2510,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				this->asciify(*msg_itr);
 			}
 			*this->itr = 0;
-			const std::string client_addr = ctx->getPipeline()->getTransportInfo()->remoteAddr->getHostStr();
-			std::cout << client_addr << '\t' << this->buf << std::endl;
+			const std::string client_addr = "foo"; //ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
+			//std::cout << client_addr << '\t' << this->buf << std::endl;
 			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg) : _r::banned_client;
 			if (unlikely(v == _r::not_found))
 				banned_client_addrs.push_back(client_addr);

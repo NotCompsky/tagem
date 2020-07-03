@@ -31,14 +31,25 @@ namespace wangle {
 /**
  * A decoder that passes the entire received IOBufQueue.
  */
-class FrameDecoder : public ByteToByteDecoder {
+class FrameDecoder : public InboundHandler<folly::IOBufQueue&, std::unique_ptr<folly::IOBuf>> {
  public:
-  explicit FrameDecoder();
+	explicit FrameDecoder();
+	
+	void transportActive(Context* ctx) override {
+		transportActive_ = true;
+		ctx->fireTransportActive();
+	}
 
-  bool decode(Context* ctx,
-              folly::IOBufQueue& buf,
-              std::unique_ptr<folly::IOBuf>& result,
-              size_t&) override;
+	void transportInactive(Context* ctx) override {
+		transportActive_ = false;
+		ctx->fireTransportInactive();
+	}
+	
+	void read(Context* ctx, folly::IOBufQueue& q) override;
+  
+ private:
+	bool transportActive_ = true;
+	std::unique_ptr<folly::IOBuf> result;
 };
 
 } // namespace wangle

@@ -26,25 +26,29 @@
 
 namespace wangle {
 
-using folly::IOBuf;
-using folly::IOBufQueue;
-
 FrameDecoder::FrameDecoder(){}
 
-bool FrameDecoder::decode(Context* ctx,
-                                   IOBufQueue& buf,
-                                   std::unique_ptr<IOBuf>& result,
-                                   size_t&) {
-	// NOTE: The last parameter == 0
-	// WARNING
-	// buf.front()->isShared() always returns false, and I'm going to do an engineer's proof and say therefore it is always false
-	// If it were shared, should unshare() it first.
-	*(const_cast<folly::IOBuf*>(buf.front())->writableTail()) = 0;
+void FrameDecoder::read(Context* ctx, folly::IOBufQueue& buf){
+	constexpr size_t max_chainlength_length_set_by_lib = 2048;
+	size_t buf_chain_len;
+	
+	printf("buf.chainLength == %lu\n", buf.chainLength());
+	buf_chain_len = buf.chainLength();
 	// Just to tell everyone where it terminates
 	// TODO: Look into read-only methods to transfer knowledge of length of data
 	std::unique_ptr<folly::IOBuf> frame = buf.splitAtMost(std::numeric_limits<size_t>::max());
-      result = std::move(frame);
-      return true;
+	
+	if (this->result){
+		this->result->appendChain(std::move(frame));
+	} else {
+		this->result = std::move(frame);
+	}
+	
+	if (buf_chain_len != max_chainlength_length_set_by_lib){
+		this->result->coalesceWithHeadroomTailroom(0, 1);
+		*this->result->writableTail() = 0;
+		ctx->fireRead(std::move(this->result));
+	}
 }
 
 } // namespace wangle

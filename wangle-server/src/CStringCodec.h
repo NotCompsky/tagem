@@ -49,7 +49,7 @@ class CStringCodec : public Handler<std::unique_ptr<folly::IOBuf>, const char*,
 
   folly::Future<folly::Unit> write(Context* ctx,  const std::string_view msg) override {
 		constexpr size_t min_chunk_sz = 100;
-		size_t chunk_sz = 100 * 1024;
+		size_t chunk_sz = 10 * 1024;
 		/*
 		 * The chunk size needs to become smaller for larger files.
 		 * Sending files in one go seems to be fine for files below a megabyte.
