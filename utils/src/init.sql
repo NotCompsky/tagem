@@ -41,8 +41,9 @@ INSERT INTO _device (name, protocol) VALUES
 ("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://github.com/", (SELECT id FROM protocol WHERE name="https://"));
 INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
-("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>'),
-("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), '<iframe width="1280" height="720" src="https://www.youtube.com/embed/', '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>');
+("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
+("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>');
+-- WARNING: The device IDs are assumed in the scripts, so these must be inserted even if they are unused.
 
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -50,7 +51,8 @@ CREATE TABLE _dir (
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (device) REFERENCES _device (id)
+	FOREIGN KEY (device) REFERENCES _device (id),
+	UNIQUE KEY (device,name)
 );
 CREATE TABLE user2blacklist_dir (
 	user INT UNSIGNED NOT NULL,
