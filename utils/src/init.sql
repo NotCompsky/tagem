@@ -47,19 +47,30 @@ INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
 
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	parent BIGINT UNSIGNED,
 	device BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	name VARBINARY(1024) NOT NULL UNIQUE KEY,
+	name VARBINARY(255) NOT NULL,
+	FOREIGN KEY (parent) REFERENCES _dir (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id),
-	UNIQUE KEY (device,name)
+	UNIQUE KEY (parent,name)
 );
-CREATE TABLE user2blacklist_dir (
-	user INT UNSIGNED NOT NULL,
+CREATE TABLE dir_tree (
 	dir BIGINT UNSIGNED NOT NULL,
-	FOREIGN KEY (user) REFERENCES user (id),
+	parent BIGINT UNSIGNED NOT NULL,
+	depth INT UNSIGNED NOT NULL,
 	FOREIGN KEY (dir) REFERENCES _dir (id),
-	PRIMARY KEY (user,dir)
+	FOREIGN KEY (parent) REFERENCES _dir (id),
+	UNIQUE KEY (dir,parent)
+);
+
+CREATE TABLE user2blacklist_file (
+	user INT UNSIGNED NOT NULL,
+	file BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (file) REFERENCES _file (id),
+	PRIMARY KEY (user,file)
 );
 
 CREATE TABLE mimetype (
@@ -127,7 +138,7 @@ CREATE TABLE _file (
 	mimetype INT UNSIGNED NOT NULL DEFAULT 0,
 	user INT UNSIGNED NOT NULL,
     UNIQUE KEY (dir, name),
-	FOREIGN KEY (dir) REFERENCES _dir (id),
+	FOREIGN KEY (dir) REFERENCES _file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
 	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
@@ -145,7 +156,7 @@ CREATE TABLE file_backup (
 	mimetype INT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	PRIMARY KEY (dir, name),
-	FOREIGN KEY (dir) REFERENCES _dir (id),
+	FOREIGN KEY (dir) REFERENCES _file (id),
 	FOREIGN KEY (file) REFERENCES _file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
 	FOREIGN KEY (user) REFERENCES user (id)
