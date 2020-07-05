@@ -42,9 +42,21 @@ function $$$unlink_tag_from_this_tag(node,relation){
 	$$$ajax_POST_w_text_response(
 		"/t/"+relation+"-/"+$$$tag_id+"/"+node.parentNode.dataset.id,
 		function(){
-			node.parentNode.classList.add("hidden");
+			const x = node.parentNode;
+			const id = x.dataset.id;
+			x.classList.add("hidden");
+			$$$del_from_t2p( ((relation==="c")?id:$$$tag_id), ((relation==="c")?$$$tag_id:id) );
 		}
 	);
+}
+function $$$del_from_t2p(t,p){
+	for(let i=0, n=$$$t2p.length;  i < n;  ++i){
+		const tpl = t2p[i];
+		if(!((tpl[0]==t)&&(tpl[1]==p)))
+			continue;
+		break;
+	}
+	$$$t2p[i] = [0,0];
 }
 function $$$unlink_this_parent_tag_from_this_tag(node){
 	$$$unlink_tag_from_this_tag(node,'p');
