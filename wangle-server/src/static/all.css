@@ -14,6 +14,14 @@
 ".hidden{"
 	"display:none!important;"
 "}"
+".invisible{"
+	// Hidden, but still occupying the element.
+	// For instance, display:none of a column in a table would shift columns to replace the 'hidden' column.
+	// An invisible column would not cause such a shift.
+	"visibility:hidden;"
+	"max-width:0px;"
+	"max-height:0px;"
+"}"
 
 "#main-container{"
 	"min-width:50pc;"

@@ -19,6 +19,8 @@
 		"<div class=\"td sort\"><a>Sort</a></div>", \
 		"<div class=\"td\"></div>" \
 	)
+#define CREATE_HIDE(r, data, _) \
+	"<div class=\"td hide\"><a>Hide</a></div>"
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
@@ -49,7 +51,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_
 	"<div class=\"tr\">"
 BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, COL_NAMES)
 #undef CREATE_HEADER
-#undef COL_NAMES
 	"</div>"
 
 	// Filter row
@@ -61,9 +62,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_FILTER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS
 	// Sort row
 	"<div class=\"tr\">"
 BOOST_PP_SEQ_FOR_EACH(CREATE_SORT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
+	"</div>"
 #undef CREATE_SORT
 #undef COL_FILTERS
+	"<div class=\"tr\">"
+BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, COL_NAMES)
 	"</div>"
+#undef COL_NAMES
+#undef CREATE_HIDE
 "</div>"
 "<div class=\"tbody\"></div>"
 "</div>"

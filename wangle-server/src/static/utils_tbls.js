@@ -106,8 +106,15 @@ function $$$comparer(idx, asc){
 function $$$init_tbls(){
 	$(".thead .sort").each(function(i,el){el.addEventListener("click", function(){
 		const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
-		Array.from(tbl.querySelectorAll('.tr:nth-child(n+1)'))
+		Array.from(tbl.querySelectorAll('.tr'))
 			.sort($$$comparer(Array.from(el.parentNode.children).indexOf(el), this.asc = !this.asc))
 			.forEach(tr => tbl.appendChild(tr) );
-	})})
+	})});
+	$(".thead .hide").each(function(i,el){
+		el.addEventListener("click", function(){
+			const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
+			Array.from(tbl.querySelectorAll('.tr'))
+				.forEach(tr => tr.childNodes[Array.from(el.parentNode.children).indexOf(el)].classList.toggle('invisible'));
+		});
+	});
 }
