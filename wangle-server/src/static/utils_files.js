@@ -235,7 +235,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 }
 
 function $$$view_this_files_dir(){
-	$$$view_dir($$$dir_id);
+	$$$view_dir($$$dir_id,0);
 }
 function $$$display_this_file(_dir_id, _mimetype){
 	$$$set_embed_html(_dir_id, _mimetype, $$$file_name);

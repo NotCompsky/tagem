@@ -15,9 +15,9 @@ function $$$when_data_loaded(){
 		return;
 	$$$init_tbls();
 	let _x = window.location.hash.substr(2);
-	switch(window.location.hash.substr(1,1)){
+	const c = window.location.hash.substr(1,1);
+	switch(c){
 		case "f": $$$view_file(_x); break;
-		case "d": $$$view_dir(_x);  break;
 		case "t": $$$view_tag(_x);  break;
 		case "x":{
 			const [_db_id, thing] = _x.split("/");
@@ -29,7 +29,10 @@ function $$$when_data_loaded(){
 			break;
 		}
 		case "$": $$$view_files_by_value(_x); break;
-		case ":": $$$view_dir(_x,1); break;
+		case "d":
+		case ":":
+			$$$view_dir(_x, (c===":"));
+			break;
 	}
 }
 
