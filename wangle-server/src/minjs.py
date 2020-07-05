@@ -14,6 +14,7 @@ human2minimised:dict = {} # Maps human names of functions/vars to [type, minimis
 valid_var_names:str = "[$A-Za-z_][$A-Za-z0-9_]*"
 cmnt_noncapture:str = "(?:[\s]+//[^\"']+)?"
 mangle_name:str = "(\$\$\$)?"
+MANGLE_NAMES:bool = False
 
 
 def set_human2minimised(human_name:str, val:list,  fp:str,  line:str):
@@ -58,7 +59,9 @@ def process_fn_line(line:str):
 	return line + "\\n"
 
 
-def get_next_minimised_name():
+def get_next_minimised_name(orig_name:str):
+	if not MANGLE_NAMES:
+		return "$$$" + orig_name
 	i = get_next_minimised_name.i
 	name:str = get_next_minimised_name.alphabet_1[i % len(get_next_minimised_name.alphabet_1)]
 	i //= len(get_next_minimised_name.alphabet_1)
@@ -67,7 +70,7 @@ def get_next_minimised_name():
 		i //= len(get_next_minimised_name.alphabet_2)
 	get_next_minimised_name.i += 1
 	if name in get_next_minimised_name.reserved_names:
-		return get_next_minimised_name()
+		return get_next_minimised_name(orig_name)
 	return name
 get_next_minimised_name.i = 0
 get_next_minimised_name.alphabet_1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_"
@@ -100,7 +103,7 @@ def run(fps:list, is_populating_reserved_names:bool):
 					if dont_mangle_name:
 						get_next_minimised_name.reserved_names.append(m.group(2))
 					continue
-				set_human2minimised(m.group(2),  ["const", m.group(2) if dont_mangle_name else get_next_minimised_name(), None, m.group(3)],  fp,  line)
+				set_human2minimised(m.group(2),  ["const", m.group(2) if dont_mangle_name else get_next_minimised_name(m.group(2)), None, m.group(3)],  fp,  line)
 				continue
 			if line.startswith("var "):
 				m = re.search(f"^var {mangle_name}({valid_var_names})(?: *= *([^;]+))?;{cmnt_noncapture}$", line)
@@ -111,7 +114,7 @@ def run(fps:list, is_populating_reserved_names:bool):
 					if dont_mangle_name:
 						get_next_minimised_name.reserved_names.append(m.group(2))
 					continue
-				set_human2minimised(m.group(2),  ["var", m.group(2) if dont_mangle_name else get_next_minimised_name(), None, m.group(3)],  fp,  line)
+				set_human2minimised(m.group(2),  ["var", m.group(2) if dont_mangle_name else get_next_minimised_name(m.group(2)), None, m.group(3)],  fp,  line)
 				continue
 			if line.startswith("function ") or line.startswith("async function "):
 				m = re.search(f"^(async |)function {mangle_name}({valid_var_names})\(([^)]*)\)\{{", line)
@@ -129,7 +132,7 @@ def run(fps:list, is_populating_reserved_names:bool):
 				if is_populating_reserved_names:
 					continue
 				dont_mangle_name:bool = (m.group(2) is None)
-				set_human2minimised(m.group(3),  [m.group(1)+"function", m.group(3) if dont_mangle_name else get_next_minimised_name(), m.group(4), fn_contents],  fp,  line)
+				set_human2minimised(m.group(3),  [m.group(1)+"function", m.group(3) if dont_mangle_name else get_next_minimised_name(m.group(3)), m.group(4), fn_contents],  fp,  line)
 				continue
 			raise MySyntaxError(fp, 0, line, "Not a blank line, comment, var, const or function definition")
 
@@ -142,7 +145,10 @@ if __name__ == "__main__":
 	parser.add_argument("macro_name", help="Name of the C++ macro containing the minimised JS")
 	parser.add_argument("dst", help="C++ header file destination path for minimised JS")
 	parser.add_argument("srcs", nargs="+", help="JavaScript source files to minimise and merge")
+	parser.add_argument("--mangle", type=bool)
 	args = parser.parse_args()
+	
+	MANGLE_NAMES = args.mangle
 	
 	fps:list = []
 	for path in args.srcs:

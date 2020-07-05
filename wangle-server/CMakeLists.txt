@@ -21,6 +21,10 @@ else()
 	message(WARNING "You might want to define -Dproxygen_root_DIR=/path/to/proxygen/root for ease - defines proxygen_cmake_DIR, wangle_DIR, folly_DIR and fizz_DIR")
 endif()
 
+if(NOT MANGLE_JS_NAMES)
+	message(STATUS "Not mangling JavaScript names. Set -DMANGLE_JS_NAMES=1 to mangle names")
+endif()
+
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -71,7 +75,7 @@ add_custom_target(
 
 add_custom_target(
 	js_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" --mangle "${MANGLE_JS_NAMES}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
 	BYPRODUCTS js.hpp
 	COMMENT "Generating minimised JavaScript header"
 )
