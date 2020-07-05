@@ -147,7 +147,7 @@ function $$$view_tag(_tag_id,page){
 }
 function $$$view_tags(ls){
 	$$$hide_all_except(['t','f-action-btns']);
+	$$$unset_window_location_hash();
 	if(ls !== undefined)
 		$$$populate_t_id2name_table('#t .tbody', ls);
-	$$$unset_window_location_hash();
 }

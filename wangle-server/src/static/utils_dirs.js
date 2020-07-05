@@ -1,5 +1,5 @@
 function $$$set_profile_name_from_this_dir(){
-	$$$set_profile_name($$$d[$$$dir_id]);
+	$$$set_profile_name($$$d[$$$dir_id][0]);
 }
 function $$$display_child_dirs(_dir_id){
 	$$$dir_name = $$$d[_dir_id][0];
@@ -83,6 +83,6 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 function $$$view_dirs(ls){
 	$$$hide_all_except(['d']);
 	$$$populate_d_id2name_table('#d .tbody', ls);
-	$$$set_profile_name("All Directories");
 	$$$unset_window_location_hash();
+	$$$set_profile_name("All Directories");
 }

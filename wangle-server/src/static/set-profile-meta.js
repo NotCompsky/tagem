@@ -1,4 +1,5 @@
 function $$$set_profile_name(s){
+	$$$document.title=s;
 	$$$document_getElementById('profile-name').innerText = s;
 }
 function $$$set_profile_thumb(url){

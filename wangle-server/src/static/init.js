@@ -10,12 +10,9 @@ function onYouTubeIframeAPIReady(){
 	$$$when_data_loaded();
 }
 
-function $$$when_data_loaded(){
-	if($$$t === undefined || $$$d === undefined || $$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
-		return;
-	$$$init_tbls();
-	let _x = $$$window_location_hash.substr(2);
-	const c = $$$window_location_hash.substr(1,1);
+function $$$load_page_from_a_hash_string(s){
+	let _x = s.substr(2);
+	const c = s.substr(1,1);
 	const _xs = /([^\/]+)\/(.*)$/.exec(_x);
 	switch(c){
 		case "f": $$$view_file(_x); break;
@@ -33,6 +30,13 @@ function $$$when_data_loaded(){
 			$$$view_dir(_xs[2], (c===":"), _xs[1]);
 			break;
 	}
+}
+
+function $$$when_data_loaded(){
+	if($$$t === undefined || $$$d === undefined || $$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
+		return;
+	$$$init_tbls();
+	$$$load_page_from_a_hash_string($$$window_location.hash);
 }
 
 function $$$refetch_all_jsons(){

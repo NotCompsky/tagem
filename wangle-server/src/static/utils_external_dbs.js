@@ -83,7 +83,7 @@ function $$$rm_cmnt(_db_id, cmnt_id){
 
 function $$$view_user(_db_id, _user_id){
 	$$$hide_all_except(['tags-container','user-info']);
-	
+	$$$set_window_location_hash('x' + $$$db_id + '/u' + $$$user_id);
 	if (_db_id !== undefined){
 		$$$user_id = _user_id;
 		$$$db_id = _db_id;
@@ -114,8 +114,6 @@ function $$$view_user(_db_id, _user_id){
 	} else {
 		$$$set_profile_name($$$user_name);
 	}
-	
-	$$$set_window_location_hash('x' + $$$db_id + '/u' + $$$user_id);
 }
 
 function $$$view_likes(){

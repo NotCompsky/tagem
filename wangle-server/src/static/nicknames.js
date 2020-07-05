@@ -1,12 +1,21 @@
 const $$$Mousetrap_bind   = Mousetrap.bind;
 const $$$Mousetrap_unbind = Mousetrap.unbind;
-const $$$document_getElementById = document.getElementById.bind(document);
-const $$$document_getElementsByClassName = document.getElementsByClassName.bind(document);
+const $$$document = document;
+const $$$document_getElementById = $$$document.getElementById.bind($$$document);
+const $$$document_getElementsByClassName = $$$document.getElementsByClassName.bind($$$document);
 const $$$confirm = confirm;
 const $$$prompt = prompt;
 const $$$window_location = window.location;
-const $$$window_location_hash = $$$window_location.hash;
+function $$$add_window_location_hash_to_history(){
+	if(($$$window_location.hash==="")||($$$document.title===""))
+		return;
+	const x = $$$document_getElementById('recent-pages');
+	if(x.childNodes.length===10)
+		x.removeChild(x.childNodes[0]);
+	x.innerHTML += "<a onclick='$$$load_page_from_a_hash_string(\""+$$$window_location.hash+"\")'>" + $$$document.title + "</a>";
+}
 function $$$set_window_location_hash(s){
+	$$$add_window_location_hash_to_history();
 	$$$window_location.hash = s;
 }
 function $$$unset_window_location_hash(){
