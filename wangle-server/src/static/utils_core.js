@@ -18,6 +18,7 @@ function $$$hide_all_except(ls){
 		'user-info',
 		'post-container',
 		'file2-container',
+		'file2',
 		'values-container',
 		'tags-container',
 		'parents-container',
