@@ -203,6 +203,10 @@ function $$$view_yt_video(idstr){
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	const [_dir_name, _device_id] = d[(_dir_id === undefined) ? $$$dir_id : _dir_id];
+	if((_dir_id!==undefined)&&(_dir_name[0]!=="/")){
+		$$$alert("BUG: Cannot play remote backup files");
+		return;
+	}
 	if(_device_id === $$$YOUTUBE_DEVICE_ID)
 		return $$$view_yt_video(_file_name);
 	const embed_pre = $$$D[_device_id][2];
@@ -242,11 +246,9 @@ function $$$view_this_files_dir(){
 }
 function $$$display_this_file(_dir_id, _mimetype){
 	$$$set_embed_html(_dir_id, _mimetype, $$$file_name);
-	$$$hide("view-btns-container");
 }
 function $$$undisplay_this_file(){
 	$$$hide_all_views_except(null);
-	$$$unhide("view-btns-container");
 }
 function $$$autoplay(){
 	return $$$document_getElementById('autoplay').checked;
@@ -351,7 +353,7 @@ function $$$view_file(_file_id){
 						for(const _dir_id_to_mimetype of backups.split(",")){
 							const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(":");
 							// dir_id of backup file
-							_s += '<button class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + $$$d[_dir_id][0] + '</button>';
+							_s += '<a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + $$$d[_dir_id][0] + '</a>';
 						}
 					}
 				}
