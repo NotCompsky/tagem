@@ -2479,10 +2479,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"DELETE f2t "
 			"FROM file2tag f2t "
 			"JOIN _tag t ON t.id=f2t.tag "
-			"JOIN _file f ON f.id=f2t.file "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND f.id IN (", file_ids_args..., ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND f2t.file IN (", file_ids_args..., ")"
 			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
 		);
 	}
@@ -2494,6 +2492,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		GET_USER_ID
 		
 		BLACKLIST_GUEST
+		
+		this->mysql_query(
+			"SELECT id "
+			"FROM file "
+			"WHERE id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			  "AND id IN" USER_DISALLOWED_FILES(user_id)
+		);
+		bool unauthorised = false;
+		while(this->mysql_assign_next_row(&unauthorised));
+		if(unauthorised)
+			return _r::not_found;
 		
 		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
 		
