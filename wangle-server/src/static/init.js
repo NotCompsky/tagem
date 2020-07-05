@@ -29,6 +29,7 @@ function $$$when_data_loaded(){
 			break;
 		}
 		case "$": $$$view_files_by_value(_x); break;
+		case ":": $$$view_dir(_x,1); break;
 	}
 }
 

@@ -25,9 +25,17 @@ function $$$populate_f_table(url,params,post_data,direction){
 		($$$file_qry_post_data===undefined)?"GET":"POST",
 		$$$file_qry_url+$$$file_qry_page_n+'/'+$$$file_qry_url_paramsythings,
 		$$$file_qry_post_data,
-		function(data){
+		function(datas){
 			let s = "";
 			$$$file2post = {};
+			const [a,data] = datas;
+			if(a==="0"){
+				if($$$dir_id==="0"){
+					$$$alert("ERROR: Directory ID has not been set.");
+				}
+			}else{
+				$$$dir_id=a;
+			}
 			for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" src="' + thumb + '"></img></div>';

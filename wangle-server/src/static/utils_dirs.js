@@ -61,18 +61,23 @@ function $$$view_dir(_dir_id_or_path, is_from_db){
 			const dir = Object.entries(d).filter(x => (x[1][0]===_dir_id_or_path))[0];
 			if(dir===undefined){
 				$$$alert("Directory does not exist in the database");
-				return;
+				$$$dir_id = "0";
+			}else{
+				$$$dir_id = dir[0];
 			}
-			$$$dir_id = dir[0];
 			$$$populate_f_table('/a/f/d-/', '', _dir_id_or_path);
 		}
 	}
 	
+	$$$display_parent_dirs($$$dir_id);
+	$$$display_child_dirs($$$dir_id);
+	
 	if(is_from_db===undefined){
 		$$$set_profile_name_from_this_dir();
-		$$$display_parent_dirs($$$dir_id);
-		$$$display_child_dirs($$$dir_id);
 		window.location.hash = 'd' + $$$dir_id;
+	}else{
+		$$$set_profile_name(_dir_id_or_path);
+		window.location.hash = ':' + _dir_id_or_path;
 	}
 }
 function $$$view_dirs(ls){
