@@ -22,8 +22,10 @@ else()
 endif()
 
 if(NOT MANGLE_JS_NAMES)
-	set(MANGLE_JS_NAMES 0)
+	set(MANGLE_JS_NAMES_ARGS "")
 	message(STATUS "Not mangling JavaScript names. Set -DMANGLE_JS_NAMES=1 to mangle names")
+else()
+	set(MANGLE_JS_NAMES_ARGS "--mangle")
 endif()
 
 find_package(fizz REQUIRED)
@@ -76,7 +78,7 @@ add_custom_target(
 
 add_custom_target(
 	js_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" --mangle "${MANGLE_JS_NAMES}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
 	BYPRODUCTS js.hpp
 	COMMENT "Generating minimised JavaScript header"
 )
