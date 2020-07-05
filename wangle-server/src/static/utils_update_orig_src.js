@@ -3,8 +3,8 @@ function $$$show_update_orig_src_dialog(){
 	$$$unhide('orig-src-dialog');
 }
 function $$$hide_update_orig_src_dialog(){
-	$$$unhide('dirselect-container');
-	$$$unhide('orig-src-dialog');
+	$$$hide('dirselect-container');
+	$$$hide('orig-src-dialog');
 }
 
 function $$$update_orig_src(){
