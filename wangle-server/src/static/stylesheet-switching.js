@@ -1,5 +1,5 @@
 function $$$switch_stylesheet(s){
-	for(let e of document.getElementsByClassName('table')){
+	for(let e of $$$document_getElementsByClassName('table')){
 		for(let c of $$$stylesheet_opts)
 			e.classList.remove('tbl-'+c);
 		e.classList.add('tbl-'+s);

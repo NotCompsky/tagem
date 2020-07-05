@@ -1,5 +1,5 @@
 function $$$set_thumbnail_width(n){
-	for(let e of document.getElementsByClassName('thumb')){
+	for(let e of $$$document_getElementsByClassName('thumb')){
 		e.style.width = n+"px";
 		e.style.maxHeight = n+"px";
 	}
