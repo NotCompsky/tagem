@@ -22,6 +22,7 @@ else()
 endif()
 
 if(NOT MANGLE_JS_NAMES)
+	set(MANGLE_JS_NAMES 0)
 	message(STATUS "Not mangling JavaScript names. Set -DMANGLE_JS_NAMES=1 to mangle names")
 endif()
 
