@@ -12,6 +12,11 @@ function $$$on_document_ready(){
 	let firstScriptTag = document.getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(node, firstScriptTag);
 	
+	let css = $$$get_cookie("css");
+	if(css===undefined)
+		css = $$$stylesheet_opts[0];
+	$$$switch_stylesheet(css);
+	
 	if($$$use_regex === undefined){
 		$$$use_regex = $$$get_cookie("use_regex");
 		if($$$use_regex !== undefined){
@@ -21,6 +26,11 @@ function $$$on_document_ready(){
 			$$$set_cookie("use_regex", ($$$use_regex)?"1":"0", 3600);
 		}
 	}
+	
+	let w = $$$get_cookie("w");
+	if(w===undefined)
+		w=256;
+	$$$set_thumbnail_width(w);
 	
 	$$$fancify_tbl("f");
 	$$$init_qry();

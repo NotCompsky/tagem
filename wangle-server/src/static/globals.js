@@ -31,6 +31,8 @@ var $$$yt_player;
 // User options stored in cookies
 var $$$use_regex;
 
+const $$$stylesheet_opts = ["blocks","table"];
+
 const $$$tbl2selector = {"f2":"#file2-select","t":".tagselect","d":"#dirselect","D":"#deviceselect","P":"#protocolselect"};
 
 const $$$tbl2namecol = {"f2":null,"t":0,"d":0,"D":0,"P":0};
