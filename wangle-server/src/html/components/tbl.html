@@ -16,7 +16,7 @@
 #define CREATE_SORT(r, data, is_sortable) \
 	BOOST_PP_IF( \
 		BOOST_PP_TUPLE_ELEM(0, is_sortable), \
-		"<div class=\"td sort\">Sort</div>", \
+		"<div class=\"td sort\"><a>Sort</a></div>", \
 		"<div class=\"td\"></div>" \
 	)
 
