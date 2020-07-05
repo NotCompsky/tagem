@@ -61,11 +61,11 @@ function $$$display_tag(id, tpl, fn_name){
 }
 function $$$display_tags(tag_ids, selector, fn_name){
 	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
-	document.querySelector(selector).innerHTML = arr.join("<br/>");
+	document.querySelector(selector).innerHTML = arr.join("");
 }
 function $$$display_tags_add(tag_ids, selector, fn_name){
 	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
-	document.querySelector(selector).innerHTML += arr.join("<br/>");
+	document.querySelector(selector).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
 	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents', "$$$unlink_this_parent_tag_from_this_tag");
