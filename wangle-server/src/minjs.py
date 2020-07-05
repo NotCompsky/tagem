@@ -145,7 +145,7 @@ if __name__ == "__main__":
 	parser.add_argument("macro_name", help="Name of the C++ macro containing the minimised JS")
 	parser.add_argument("dst", help="C++ header file destination path for minimised JS")
 	parser.add_argument("srcs", nargs="+", help="JavaScript source files to minimise and merge")
-	parser.add_argument("--mangle", type=bool)
+	parser.add_argument("--mangle", default=False, action="store_true")
 	args = parser.parse_args()
 	
 	MANGLE_NAMES = args.mangle

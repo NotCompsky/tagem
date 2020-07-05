@@ -1,6 +1,7 @@
 const $$$Mousetrap_bind   = Mousetrap.bind;
 const $$$Mousetrap_unbind = Mousetrap.unbind;
 const $$$document_getElementById = document.getElementById.bind(document);
+const $$$document_getElementsByClassName = document.getElementsByClassName.bind(document);
 const $$$confirm = confirm;
 const $$$prompt = prompt;
 const $$$window_location = window.location;
@@ -10,4 +11,8 @@ function $$$set_window_location_hash(s){
 }
 function $$$unset_window_location_hash(){
 	$$$set_window_location_hash("");
+}
+function $$$for_node_in_document_getElementsByClassName(s, fn){
+	for(let e of $$$document_getElementsByClassName(s))
+		fn(e);
 }

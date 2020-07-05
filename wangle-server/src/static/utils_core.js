@@ -1,17 +1,10 @@
-function $$$hide(id){
-	$$$document_getElementById(id).classList.add("hidden");
-}
-function $$$unhide(id){
-	$$$document_getElementById(id).classList.remove("hidden");
-}
 function $$$hide_all_except(ls){
 	// More like 'page switch' event now
 	if(!ls.includes('file-info'))
 		$$$playlist_file_ids = undefined; // Destroy playlist
 	$$$document_getElementById('profile-img').removeAttribute('onclick');
+	$$$hide_class('help');
 	for(const id of [
-		'help',
-		'qry-help',
 		'text-editor',
 		'add-f-backup',
 		'f',
