@@ -2473,11 +2473,40 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 	}
 	
+	template<typename... Args>
+	void rm_tags_from_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... file_ids_args){
+		this->mysql_exec(
+			"DELETE f2t "
+			"FROM file2tag f2t "
+			"JOIN _tag t ON t.id=f2t.tag "
+			"JOIN _file f ON f.id=f2t.file "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  "AND f.id IN (", file_ids_args..., ")"
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
+		);
+	}
+	
+	std::string_view post__rm_tags_from_files(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		++s; // Skip trailing slash
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_USER_ID
+		
+		BLACKLIST_GUEST
+		
+		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__add_tag_to_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
+		
+		BLACKLIST_GUEST
 		
 		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
 		

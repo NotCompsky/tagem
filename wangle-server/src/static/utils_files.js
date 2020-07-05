@@ -132,6 +132,8 @@ function $$$tag_files_then(file_ids, selector, fn){
 	const tag_ids = tagselect.val();
 	if(file_ids==="")
 		return;
+	if(!$$$logged_in())
+		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
 		"/f/t/" + file_ids + "/" + tag_ids.join(","),
 		function(){

@@ -135,6 +135,8 @@ POST /f/f2/>
 	return this->post__add_var_to_file(++str)
 POST /f/t/>
 	return this->post__add_tag_to_file(++str)
+POST /f/t-/>
+	return this->post__rm_tags_from_files(++str)
 POST /q/ >
 	return this->parse_qry(++str)
 POST /login >
