@@ -56,6 +56,8 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			document.querySelector("#f .tbody").innerHTML = s;
 			$$$column_id2name('x', "#f .tbody", '$$$view_db', 2);
 			$$$column_id2name('t', "#f .tbody", '$$$view_tag', 3);
+			
+			$$$apply_thumbnail_width();
 		}
 	);
 }

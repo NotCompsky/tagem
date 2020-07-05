@@ -15,6 +15,7 @@ function $$$populate_t_id2name_table(selector, arr){
 		;
 	}
 	document.querySelector(selector).innerHTML = s;
+	$$$apply_thumbnail_width();
 }
 function $$$set_profile_name_from_this_tag(){
 	$$$set_profile_name($$$t[$$$tag_id][0]);
