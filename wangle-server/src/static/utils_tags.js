@@ -26,18 +26,22 @@ function $$$set_profile_cover_from_this_tag(){
 	$$$set_profile_cover($$$t[$$$tag_id][2]);
 }
 
-function $$$unlink_this_tag_from_this_file(){
+function $$$unlink_this_tag_from_this_file(node){
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
-		"/f/t-/"+$$$file_id+"/"+this.parentNode.dataset.id,
+		"/f/t-/"+$$$file_id+"/"+node.parentNode.dataset.id,
 		function(){
-			this.parentNode.classList.add("hidden");
+			node.parentNode.classList.add("hidden");
 		}
 	);
 }
 function $$$display_tag(id, tpl){
-	return "<div class='tag' data-id=\"" + id + "\"><img src='" + tpl[1] + "' class='icon'/><div class='username'><a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a></div><button tag=\"del\" onclick=\"$$$unlink_this_tag_from_this_file()\">-</button></div>";
+	return "<div class='tag' data-id=\"" + id + "\">"
+			+ "<img src='" + tpl[1] + "' class='icon'/>"
+			+ "<a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a>"
+			+ "<button class=\"del\" onclick=\"$$$unlink_this_tag_from_this_file(this)\">-</button>"
+		+ "</div>";
 }
 function $$$display_tags(tag_ids, selector){
 	const arr = tag_ids.map(x => $$$display_tag(x, t[x]));
