@@ -2395,6 +2395,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return (n_errors) ? _r::server_error : _r::post_ok;
 	}
 	
+	void tag_antiparentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
+		this->mysql_exec(
+			"DELETE t2p "
+			"FROM tag2parent t2p "
+			"JOIN _tag t ON t.id=t2p.tag "
+			"JOIN _tag p ON p.id=t2p.parent "
+			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
+			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
+			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+		);
+		
+		// TODO: Descendant tags etc
+		
+		regenerate_tag_json = true;
+		regenerate_tag2parent_json = true;
+	}
+	
 	void tag_parentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
 		this->mysql_exec(
 			"INSERT INTO tag2parent (tag, parent, user) "
@@ -2447,6 +2465,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view post__rm_parents_from_tags(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		++s; // Skip trailing slash
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
+		GET_USER_ID
+		
+		this->tag_antiparentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__add_children_to_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip trailing slash
@@ -2454,6 +2483,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		GET_USER_ID
 		
 		this->tag_parentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__rm_children_from_tags(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		++s; // Skip trailing slash
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
+		GET_USER_ID
+		
+		this->tag_antiparentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
 		
 		return _r::post_ok;
 	}

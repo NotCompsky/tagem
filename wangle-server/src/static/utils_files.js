@@ -331,7 +331,7 @@ function $$$view_file(_file_id){
 					$$$file_tags = [];
 				else{
 					$$$file_tags = tag_ids.split(",");
-					$$$display_tags($$$file_tags, "#tags");
+					$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this_file");
 				}
 				
 				$$$mimetype = mime;

@@ -36,26 +36,42 @@ function $$$unlink_this_tag_from_this_file(node){
 		}
 	);
 }
-function $$$display_tag(id, tpl){
+function $$$unlink_tag_from_this_tag(node,relation){
+	if(!$$$logged_in())
+		return $$$alert_requires_login();
+	$$$ajax_POST_w_text_response(
+		"/t/"+relation+"-/"+$$$tag_id+"/"+node.parentNode.dataset.id,
+		function(){
+			node.parentNode.classList.add("hidden");
+		}
+	);
+}
+function $$$unlink_this_parent_tag_from_this_tag(node){
+	$$$unlink_tag_from_this_tag(node,'p');
+}
+function $$$unlink_this_child_tag_from_this_tag(node){
+	$$$unlink_tag_from_this_tag(node,'c');
+}
+function $$$display_tag(id, tpl, fn_name){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ "<img src='" + tpl[1] + "' class='icon'/>"
 			+ "<a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a>"
-			+ "<button class=\"del\" onclick=\"$$$unlink_this_tag_from_this_file(this)\">-</button>"
+			+ "<button class=\"del\" onclick=\"" + fn_name + "(this)\">-</button>"
 		+ "</div>";
 }
-function $$$display_tags(tag_ids, selector){
-	const arr = tag_ids.map(x => $$$display_tag(x, t[x]));
+function $$$display_tags(tag_ids, selector, fn_name){
+	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
 	document.querySelector(selector).innerHTML = arr.join("<br/>");
 }
-function $$$display_tags_add(tag_ids, selector){
-	const arr = tag_ids.map(x => $$$display_tag(x, t[x]));
+function $$$display_tags_add(tag_ids, selector, fn_name){
+	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
 	document.querySelector(selector).innerHTML += arr.join("<br/>");
 }
 function $$$display_parent_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents');
+	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents', "$$$unlink_this_parent_tag_from_this_tag");
 }
 function $$$display_child_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), '#children');
+	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), '#children', "$$$unlink_this_child_tag_from_this_tag");
 }
 
 function $$$add_child_tags_then(_tag_id, selector, fn){

@@ -121,8 +121,12 @@ POST /dl/>
 	return this->post__dl(++str)
 POST /t/c/>
 	return this->post__add_children_to_tags(++str)
+POST /t/c-/>
+	return this->post__rm_children_from_tags(++str)
 POST /t/p/>
 	return this->post__add_parents_to_tags(++str)
+POST /t/p-/>
+	return this->post__rm_parents_from_tags(++str)
 POST /exec/>
 	return this->exec_task(++str)
 POST /f/record/>
