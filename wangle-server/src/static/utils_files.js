@@ -6,26 +6,27 @@ var $$$file_qry_page_n;
 function $$$next_page(tbl_id,direction){
 	switch(tbl_id){
 		case 'f':
-			$$$populate_f_table(null,null,null,direction);
+			$$$populate_f_table(null,null,null,$$$file_qry_page_n+direction);
 			break;
 	}
 }
 
-function $$$populate_f_table(url,params,post_data,direction){
-	if(url===null)
-		// We are navigating to the next or previous page
-		$$$file_qry_page_n+=direction;
-	else{
-		$$$file_qry_url=url;
+function $$$populate_f_table(path,params,post_data,page_n){
+	$$$file_qry_page_n=parseInt(page_n);
+	if((params!==null)&&(post_data!==null))
+		return $$$alert("ERROR: At most one of (params, post_data) can be non-null");
+	if(path!==null){
+		$$$file_qry_url=path;
 		$$$file_qry_url_paramsythings=params;
 		$$$file_qry_post_data=post_data;
-		$$$file_qry_page_n=0;
 	}
+	$$$set_window_location_hash($$$file_qry_url+page_n+"/"+(($$$file_qry_post_data===null)?$$$file_qry_url_paramsythings:$$$file_qry_post_data));
 	$$$ajax_data_w_JSON_response(
-		($$$file_qry_post_data===undefined)?"GET":"POST",
-		$$$file_qry_url+$$$file_qry_page_n+'/'+$$$file_qry_url_paramsythings,
+		($$$file_qry_post_data===null)?"GET":"POST",
+		"/a/f/"+$$$file_qry_url+'/'+$$$file_qry_page_n+(($$$file_qry_url_paramsythings===null)?"":("/"+$$$file_qry_url_paramsythings)),
 		$$$file_qry_post_data,
 		function(datas){
+			$$$get_file_ids = $$$get_selected_file_ids;
 			let s = "";
 			$$$file2post = {};
 			const [a,data] = datas;
@@ -260,10 +261,8 @@ function $$$display_external_dbs(db_and_post_ids){
 }
 
 function $$$view_files_by_value(var_name){
-	$$$populate_f_table('/a/f/f2/',var_name);
+	$$$populate_f_table('$',var_name,null,0);
 	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
-	$$$get_file_ids = $$$get_selected_file_ids;
-	window.location.hash = '$' + var_name;
 	$$$set_profile_name('Files assigned ' + var_name);
 }
 function $$$display_file2_var(name, value){
@@ -361,7 +360,7 @@ function $$$view_file(_file_id){
 		$$$set_profile_name($$$file_name);
 	}
 	
-	window.location.hash = 'f' + $$$file_id;
+	$$$set_window_location_hash('f' + $$$file_id);
 }
 
 function $$$view_files(ls){
@@ -372,11 +371,11 @@ function $$$view_files(ls){
 	
 	if (ls !== undefined){
 		if (ls.length !== 0){
-			$$$populate_f_table('/a/f/id/',ls.join(","));
+			$$$populate_f_table('id',ls.join(","),null,0);
 		}
 	}
 	
-	window.location.hash = '';
+	$$$unset_window_location_hash();
 	
 	$$$set_profile_name("Files");
 }

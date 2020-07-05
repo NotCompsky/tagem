@@ -57,7 +57,7 @@ function $$$display_posts(_db_id, _user_id, _type){
 	$$$ajax_GET_w_JSON_response('/a/x/u/p/'+_type+'/'+_db_id+'/'+_user_id, function(file_ids){
 		if(file_ids.length === 0)
 			return;
-		$$$populate_f_table('/a/f/id/', file_ids.join(","));
+		$$$populate_f_table('id', file_ids.join(","), null, 0);
 		for(let _ of ['f','f-action-btns','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn'])
 			$$$unhide(_);
 		$$$get_file_ids = $$$get_selected_file_ids;
@@ -115,7 +115,7 @@ function $$$view_user(_db_id, _user_id){
 		$$$set_profile_name($$$user_name);
 	}
 	
-	window.location.hash = 'x' + $$$db_id + '/u' + $$$user_id;
+	$$$set_window_location_hash('x' + $$$db_id + '/u' + $$$user_id);
 }
 
 function $$$view_likes(){

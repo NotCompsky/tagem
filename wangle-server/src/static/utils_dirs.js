@@ -37,7 +37,9 @@ function $$$populate_d_id2name_table(selector, arr){
 }
 
 
-function $$$view_dir(_dir_id_or_path, is_not_in_db){
+function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
+	if(page===undefined)
+		page = 0;
 	let ls = ['f','f-action-btns','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];
 	if(!is_not_in_db){
 		ls.push('merge-files-btn');
@@ -58,14 +60,14 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db){
 			}else{
 				$$$dir_id = dir[0];
 			}
-			$$$populate_f_table('/a/f/d-/', '', _dir_id_or_path);
+			$$$populate_f_table(':', null, _dir_id_or_path,page);
 		}else{
 			$$$dir_id = _dir_id_or_path;
 			$$$ajax_GET_w_JSON_response("/a/d/i/"+$$$dir_id, function(data){
 				var s = "";
 				$('#dir_name').text(data[0]);
 			});
-			$$$populate_f_table('/a/f/d/', $$$dir_id);
+			$$$populate_f_table('d', $$$dir_id, null, page);
 		}
 	}
 	
@@ -74,15 +76,13 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db){
 	
 	if(is_not_in_db){
 		$$$set_profile_name(_dir_id_or_path);
-		window.location.hash = ':' + _dir_id_or_path;
 	}else{
 		$$$set_profile_name_from_this_dir();
-		window.location.hash = 'd' + $$$dir_id;
 	}
 }
 function $$$view_dirs(ls){
 	$$$hide_all_except(['d']);
 	$$$populate_d_id2name_table('#d .tbody', ls);
 	$$$set_profile_name("All Directories");
-	window.location.hash = '';
+	$$$unset_window_location_hash();
 }

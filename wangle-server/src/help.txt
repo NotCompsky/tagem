@@ -15,6 +15,11 @@ OPTIONS
 			The default value restricts downloads to [height<=720] and prioritises the most compressed formats.
 		EXAMPLES
 			See https://github.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
+	d [PATH]
+		Path to a script that takes an URL argument and prints (to stdout) a JSON array of elements, where each element is an array with the same format as those returned by the server in directory views.
+		At the time of writing, the format of each element would be:
+			[THUMBNAIL_SRC, DIRECTORY_ID, FILE_NAME, FILE_SIZE, "", "", "", ""]
+		This is meant for viewing remote directories.
 
 EXTERNAL DATABASES
 	Optional
@@ -36,4 +41,10 @@ EXTERNAL DATABASES
 		"hashtag"
 		"post2hashtag" linking posts to hashtags
 		"follow_hashtag" linking users to hashtags
+
+VIEW_REMOTE_DIR_SHELL_COMMANDS
+	Optional
+	List of executables, each preceded by :, that clients are allowed to execute, with clients supplying one argument to that executable.
+	EXAMPLES
+		: ../remote-dir-viewers/imgur-gallery.py : /usr/bin/view-tumblr-gallery
 )========="

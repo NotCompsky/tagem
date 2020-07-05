@@ -77,7 +77,7 @@ function $$$update_tag_thumb(){
 	);
 }
 
-function $$$view_tag(_tag_id){
+function $$$view_tag(_tag_id,page){
 	$$$hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	$$$document_getElementById('profile-img').onclick = $$$update_tag_thumb;
 	
@@ -87,7 +87,7 @@ function $$$view_tag(_tag_id){
 	if (_tag_id !== undefined){
 		// It is undefined if we are just unhiding the tag view
 		$$$tag_id = _tag_id;
-		$$$populate_f_table('/a/f/t/', $$$tag_id);
+		$$$populate_f_table('t', $$$tag_id, null, (page===undefined)?0:page);
 	}
 	
 	$$$set_profile_name_from_this_tag();
@@ -96,12 +96,10 @@ function $$$view_tag(_tag_id){
 	
 	$$$display_parent_tags($$$tag_id);
 	$$$display_child_tags($$$tag_id);
-	
-	window.location.hash = 't' + $$$tag_id;
 }
 function $$$view_tags(ls){
 	$$$hide_all_except(['t','f-action-btns']);
 	if(ls !== undefined)
 		$$$populate_t_id2name_table('#t .tbody', ls);
-	window.location.hash = '';
+	$$$unset_window_location_hash();
 }

@@ -14,24 +14,23 @@ function $$$when_data_loaded(){
 	if($$$t === undefined || $$$d === undefined || $$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
 	$$$init_tbls();
-	let _x = window.location.hash.substr(2);
-	const c = window.location.hash.substr(1,1);
+	let _x = $$$window_location_hash.substr(2);
+	const c = $$$window_location_hash.substr(1,1);
+	const _xs = /([^\/]+)\/(.*)$/.exec(_x);
 	switch(c){
 		case "f": $$$view_file(_x); break;
-		case "t": $$$view_tag(_x);  break;
-		case "x":{
-			const [_db_id, thing] = _x.split("/");
-			$$$db_id = _db_id;
-			_x = thing.substr(1);
-			switch(thing[0]){
+		case "t": $$$view_tag(_xs[2],_xs[1]);  break;
+		case "x":
+			$$$db_id = _xs[1];
+			_x = _x2.substr(1);
+			switch(_xs[2][0]){
 				case "u": $$$view_user($$$db_id, _x); break;
 			}
 			break;
-		}
 		case "$": $$$view_files_by_value(_x); break;
 		case "d":
 		case ":":
-			$$$view_dir(_x, (c===":"));
+			$$$view_dir(_xs[2], (c===":"), _xs[1]);
 			break;
 	}
 }

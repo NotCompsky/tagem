@@ -4,7 +4,7 @@ GET / >
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/html.c"
 		#include "headers/Cache-Control/1day.c"
-		"\n"
+		"\\n"
 		#include "html/profile.html"
 
 GET /a/f2.json?>
@@ -35,11 +35,11 @@ GET /a/f/i/>
 	return this->file_info(++str)
 GET /a/f/d/>
 	return this->files_given_dir(++str)
-POST /a/f/d-/>
+POST /a/f/:/>
 	return this->files_given_dir__filesystem(++str)
 GET /a/f/t/>
 	return this->files_given_tag(++str)
-GET /a/f/f2/>
+GET /a/f/$/>
 	return this->files_given_value(++str)
 
 GET /a/t/f/>
@@ -67,15 +67,15 @@ GET /favicon.ico >
 			#include "headers/return_code/OK.c"
 			#include "headers/Content-Type/ico.c"
 			#include "headers/Cache-Control/1day.c"
-			"Content-Length: 318\n"
-			"\n"
+			"Content-Length: 318\\n"
+			"\\n"
 			#include "favicon.txt"
 			, std::char_traits<char>::length(
 				#include "headers/return_code/OK.c"
 				#include "headers/Content-Type/ico.c"
 				#include "headers/Cache-Control/1day.c"
-				"Content-Length: 318\n"
-				"\n"
+				"Content-Length: 318\\n"
+				"\\n"
 			) + 318
 		)
 
@@ -84,21 +84,21 @@ GET /s/a.css >
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/css.c"
 		#include "headers/Cache-Control/1day.c"
-		"\n"
+		"\\n"
 		#include "static/all.css"
 GET /s/tbl1.css >
 	return
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/css.c"
 		#include "headers/Cache-Control/1day.c"
-		"\n"
+		"\\n"
 		#include "static/table_as_blocks.css"
 GET /s/tbl2.css >
 	return
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/css.c"
 		#include "headers/Cache-Control/1day.c"
-		"\n"
+		"\\n"
 		#include "static/table_as_table.css"
 
 GET /S/f/>

@@ -66,12 +66,12 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define TRUE 1
 #define FALSE 0
 
-#define GET_PAGE_N \
+#define GET_PAGE_N(terminator) \
 	printf("  s == %.10s...\n", s); \
 	const unsigned page_n = a2n<unsigned>(&s); \
 	printf("  s == %.10s...\n", s); \
 	fflush(stdout); \
-	if(*s != '/') \
+	if(*s != terminator) \
 		return _r::not_found; \
 	++s;
 
@@ -168,6 +168,8 @@ std::string connected_local_devices_str = "";
 
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
+
+const char* FILES_GIVEN_REMOTE_DIR = nullptr;
 
 static bool regenerate_mimetype_json = true;
 static bool regenerate_dir_json = true;
@@ -354,6 +356,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	inline
 	char last_char_in_buf(){
 		return *(this->itr - 1);
+	}
+	
+	constexpr
+	void move_itr_to_trailing_null(){
+		while(*this->itr != 0)
+			++this->itr;
 	}
 	
 	template<typename... Args>
@@ -688,7 +696,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir__filesystem(const char* s){
-		GET_PAGE_N
+		GET_PAGE_N(' ')
 #ifndef NO_VIEW_DIR_FS
 		GET_USER_ID
 		GREYLIST_GUEST
@@ -700,9 +708,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		std::array<uint8_t, 16> hash;
 		
-		DIR* const dir = opendir(dir_path);
-		if (unlikely(dir == nullptr))
-			return _r::server_error;
+		const bool is_local = is_local_file_or_dir(dir_path);
+		
+		DIR* dir;
+		
+		if (is_local){
+			dir = opendir(dir_path);
+			if (unlikely(dir == nullptr))
+				return _r::server_error;
+		}
 		
 		// Determine if files exist in the database - if so, supply all the usual data
 		this->mysql_query(
@@ -720,8 +734,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		);
 		
 		this->begin_json_response();
-		this->asciify('[');
+		this->asciify("[");
 		
+		if (not is_local){
+			if (FILES_GIVEN_REMOTE_DIR != nullptr){
+				char* const _buf = this->itr;
+				char* _itr = _buf;
+				compsky::asciify::asciify(_itr, page_n, '\0');
+				const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
+				if (proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  RTaggerHandler::buf_sz - this->buf_indx())){
+					return _r::server_error;
+				}
+				this->move_itr_to_trailing_null();
+			}
+		} else {
+		
+		this->asciify("\"0\",[");
 		struct dirent* e;
 		struct stat st;
 		unsigned min = 100 * page_n;
@@ -778,9 +806,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		closedir(dir);
 		this->mysql_free_res();
 		
+		}
+		
 		if (this->last_char_in_buf() == ',')
 			--this->itr;
-		this->asciify(']');
+		this->asciify("]]");
 		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
@@ -897,7 +927,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		this->begin_json_response();
-		this->asciify('[');
+		this->asciify("[\"0\",[");
 		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_sz, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
@@ -921,7 +951,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		if (this->last_char_in_buf() == ',')
 			// If there was at least one iteration of the loop...
 			--this->itr; // ...wherein a trailing comma was left
-		this->asciify(']');
+		this->asciify("]]");
 		*this->itr = 0;
 	}
 	
@@ -1366,7 +1396,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_tag(const char* s){
-		GET_PAGE_N
+		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
@@ -1404,7 +1434,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_ids(const char* s){
-		GET_PAGE_N
+		GET_PAGE_N('/')
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
 		GET_USER_ID
 		
@@ -1429,7 +1459,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_dir(const char* s){
-		GET_PAGE_N
+		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
 		
 #ifdef n_cached
@@ -1463,7 +1493,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	std::string_view files_given_value(const char* s){
-		GET_PAGE_N
+		GET_PAGE_N('/')
 		GET_FILE2_VAR_NAME(s)
 		
 		this->mysql_query(
@@ -2260,7 +2290,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				" mt ON mt.name=SUBSTRING_INDEX(\"",
 				_f::esc, '"',
 				(is_mimetype_set)?mimetype:this->file_path, // TODO: Escape mimetype properly
-				(is_mimetype_set)?"\",';'1":"\",'.',-1", ") "
+				(is_mimetype_set)?"\",';',1":"\",'.',-1", ") "
 			"WHERE f.id=", file_id_str, " "
 			  "AND d.id=", dir_id, " "
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
@@ -2510,8 +2540,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				this->asciify(*msg_itr);
 			}
 			*this->itr = 0;
-			const std::string client_addr = "foo"; //ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
-			//std::cout << client_addr << '\t' << this->buf << std::endl;
+			const std::string client_addr = ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
+			std::cout << client_addr << '\t' << this->buf << std::endl;
 			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg) : _r::banned_client;
 			if (unlikely(v == _r::not_found))
 				banned_client_addrs.push_back(client_addr);
@@ -2558,6 +2588,9 @@ int main(int argc,  char** argv){
 			case 'c':
 				CACHE_DIR = *(++argv);
 				CACHE_DIR_STRLEN = strlen(CACHE_DIR);
+				break;
+			case 'd':
+				FILES_GIVEN_REMOTE_DIR = *(++argv);
 				break;
 			case 'x':
 				external_db_env_vars.push_back(*(++argv));
