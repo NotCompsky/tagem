@@ -9,9 +9,9 @@
 
 namespace proc {
 
-template<size_t output_buf_sz>
-bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  char(&output_buf)[output_buf_sz]){
-	int status;
+inline
+bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  char* const output_buf,  const size_t output_buf_sz){
+	int status = 0;
 	const char* which_err;
 	int pipefd[2];
 	
@@ -52,11 +52,17 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 	return false;
 	
 	print_args_and_return:
-	fprintf(stderr, "%s\nwhile executing: %s\n", which_err, argv[0]);
+	fprintf(stderr, "[%d] %s\nwhile executing: %s\n", status, which_err, argv[0]);
 	fprintf(stderr, "with args\n");
 	while(*(++argv) != nullptr){
 		fprintf(stderr, "\t%s\n", *argv);
 	}
 	return true;
 }
+
+template<size_t output_buf_sz>
+bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  char(&output_buf)[output_buf_sz]){
+	return exec(timeout, argv, which_std_to_pipe, output_buf, output_buf_sz);
+}
+
 } // namespace proc
