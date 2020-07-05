@@ -4,9 +4,14 @@ function $$$populate_t_id2name_table(selector, arr){
 		if ((arr !== null)  &&  (!arr.includes(id)))
 			continue;
 		s +=
-				"<div class='tr'><div class='td'>"
-			+ $$$display_tag(id, tpl)
-			+ "</div></div>"
+			"<div class='tr'>"
+				+ "<div class='td'>"
+					+ "<img src='" + tpl[1] + "' class='icon'/>"
+				+ "</div>"
+				+ "<div class='td'>"
+					+ "<a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a>"
+				+ "</div>"
+			+ "</div>"
 		;
 	}
 	document.querySelector(selector).innerHTML = s;
@@ -22,7 +27,7 @@ function $$$set_profile_cover_from_this_tag(){
 }
 
 function $$$display_tag(id, tpl){
-	return "<div class='user'><img src='" + tpl[1] + "' class='icon'/><div class='username'><a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a></div></div>";
+	return "<div class='tag'><img src='" + tpl[1] + "' class='icon'/><div class='username'><a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a></div></div>";
 }
 function $$$display_tags(tag_ids, selector){
 	const arr = tag_ids.map(x => $$$display_tag(x, t[x]));
