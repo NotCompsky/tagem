@@ -308,7 +308,7 @@ function $$$view_file(_file_id){
 	$$$file_tagger_fn = $$$after_tagged_this_file;
 	$$$get_file_ids = $$$get_file_id;
 	
-	$$$set_window_location_hash('f' + $$$file_id);
+	$$$set_window_location_hash('f' + ((_file_id===undefined)?$$$file_id:_file_id));
 	
 	if (_file_id !== undefined){
 		$$$file_id = _file_id;
