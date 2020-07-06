@@ -127,7 +127,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		"</div>"
 	"</div>"
 	
-	"<a id=\"dir_name\" onclick=\"" MINIMISED_JS_DECL_view_this_files_dir "()\"></a>" "<a id=\"file_name\"></a>"
 	"<br/>"
 	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
 	ADD_TOGGLE("autoplay","Autoplay")
@@ -136,12 +135,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	
 	"<div id=\"view-btns-container\">"
 		"<b>View</b>"
-		"<div id=\"view-btns\">"
-			"<a id=\"view-btn-main\" class=\"view-btn\" onclick=\"" MINIMISED_JS_DECL_display_this_file "()\">"
-				"Original"
-			"</a>"
-			"<div id=\"view-btns-backups\"></div>"
-		"</div>"
+		"<div id=\"view-btns\"></div>"
 	"</div>"
 	
 	"<button onclick=\"" MINIMISED_JS_DECL_show_update_orig_src_dialog "()\">Update src</button>"

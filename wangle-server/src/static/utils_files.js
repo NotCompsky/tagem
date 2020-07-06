@@ -208,11 +208,7 @@ function $$$view_yt_video(idstr){
 }
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
-	const [_dir_name, _device_id] = d[(_dir_id === undefined) ? $$$dir_id : _dir_id];
-	if((_dir_id!==undefined)&&(_dir_name[0]!=="/")){
-		$$$alert("BUG: Cannot play remote backup files");
-		return;
-	}
+	const [_dir_name, _device_id] = $$$d[(_dir_id === "") ? $$$dir_id : _dir_id];
 	if(_device_id === $$$YOUTUBE_DEVICE_ID){
 		$$$active_media = $$$yt_player;
 		return $$$view_yt_video(_file_name);
@@ -220,10 +216,10 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	$$$yt_player.pauseVideo();
 	const embed_pre = $$$D[_device_id][2];
 	if (embed_pre === ""){
-		const _src_end = (_dir_id === undefined) ? "" : "/" + _dir_id;
+		const _src_end = (_dir_id === "") ? "" : "/" + _dir_id;
 		const src = (_dir_name.startsWith("http")) ? (_dir_name + _file_name) : ("/S/f/" + $$$file_id + _src_end);
 		
-		const _mimetype_str = $$$mt[(_mimetype===undefined)?$$$mimetype:_mimetype];
+		const _mimetype_str = $$$mt[_mimetype];
 		switch(_mimetype_str.substring(0, _mimetype_str.indexOf('/'))){
 			case 'image':
 				$$$set_file_view_src('img', src, null);
@@ -325,7 +321,7 @@ function $$$view_file(_file_id){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, backups, file2_values_csv] = data;
+				const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$file_name = name;
@@ -350,27 +346,18 @@ function $$$view_file(_file_id){
 				
 				$$$mimetype = mime;
 				
-				$$$document_getElementById('dir_name').innerText = $$$d[$$$dir_id][0];
-				
-				$$$document_getElementById('file_name').innerText = name;
-				$$$document_getElementById('file_name').href = $$$d[$$$dir_id][0] + name;
-				
 				$$$set_profile_name($$$file_name);
 				
-				let _s = $$$create__view_dir_and_filename_w_filename_playable($$$dir_id,$$$mimetype,name);
+				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
 				if ($$$autoplay()){
 					$$$display_this_file();
 				} else {
 					$$$undisplay_this_file();
-					if(backups!==""){
-						for(const _dir_id_to_mimetype of backups.split(",")){
-							const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(":");
-							// dir_id of backup file
-							_s += $$$create__view_dir_and_filename_w_filename_playable(_dir_id,_mimetype,"BACKUP_FILE");
-						}
+					for(const [dir,fname,mime] of backups){
+						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
 					}
 				}
-				$$$document_getElementById("view-btns-backups").innerHTML = _s;
+				$$$document_getElementById("view-btns").innerHTML = _s;
 			}
 		);
 	} else {
@@ -379,7 +366,7 @@ function $$$view_file(_file_id){
 }
 
 function $$$create__view_dir_and_filename_w_filename_playable(id,mime,fname){
-	return '<a onclick="$$$view_dir(\'' + _dir_id + '\',0)">' + $$$d[_dir_id][0] + '</a><a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + name + '</a>';
+	return '<a onclick="$$$view_dir(\'' + id + '\',0)">' + $$$d[(id==="")?$$$dir_id:id][0] + '</a><a class="view-btn" onclick="$$$display_this_file(\'' + id + '\',\'' + mime + '\')">' + fname + '</a></br>';
 }
 
 function $$$view_files(ls){

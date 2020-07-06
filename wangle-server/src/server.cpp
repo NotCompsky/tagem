@@ -341,6 +341,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	
 	static std::mutex mysql_mutex;
 	MYSQL_RES* res;
+	MYSQL_RES* res2;
 	MYSQL_ROW row;
 	
 	constexpr
@@ -372,6 +373,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
 		compsky::mysql::query_buffer(db_info.mysql_obj, this->res, _buf, _buf_sz);
+		this->mysql_mutex.unlock();
+	}
+	
+	void mysql_query_buf_db_by_id2(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
+		this->mysql_mutex.lock();
+		compsky::mysql::query_buffer(db_info.mysql_obj, this->res2, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	
@@ -423,6 +430,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	}
 	
 	template<typename... Args>
+	void mysql_query_db_by_id2(DatabaseInfo& db_info,  Args... args){
+		this->reset_buf_index();
+		this->asciify(args...);
+		this->mysql_query_buf_db_by_id2(db_info, this->buf, this->buf_indx());
+	}
+	
+	template<typename... Args>
 	void mysql_exec_db_by_id(DatabaseInfo& db_info,  Args... args){
 		this->reset_buf_index();
 		this->asciify(args...);
@@ -432,6 +446,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	template<typename... Args>
 	void mysql_query(Args... args){
 		this->mysql_query_db_by_id(db_infos.at(0), args...);
+	}
+	
+	template<typename... Args>
+	void mysql_query2(Args... args){
+		this->mysql_query_db_by_id2(db_infos.at(0), args...);
 	}
 	
 	template<typename... Args>
@@ -445,6 +464,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	template<typename... Args>
 	bool mysql_assign_next_row(Args... args){
 		return compsky::mysql::assign_next_row(this->res, &this->row, args...);
+	}
+	
+	template<typename... Args>
+	bool mysql_assign_next_row2(Args... args){
+		// WARNING: Shares row.
+		return compsky::mysql::assign_next_row(this->res2, &this->row, args...);
 	}
 	
 	template<typename... Args>
@@ -834,20 +859,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir") ","
 				"f.mimetype,"
-				"IFNULL(GROUP_CONCAT(DISTINCT CONCAT(d2.id, ':', f2.mimetype)),\"\"),"
 				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file_backup f2 ON f2.file=f.id "
-			"LEFT JOIN _dir d2 ON d2.id=f2.dir ",
+			JOIN_FILE_THUMBNAIL,
 			_f::zip3, n, "LEFT JOIN file2", user->allowed_file2_vars, left_join_unique_name_for_each_file2_var,
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
-			  "AND (d2.id IS NULL OR d2.id NOT IN" USER_DISALLOWED_DIRS(user_id) ")"
 			"GROUP BY f.id"
+		);
+		
+		this->mysql_query2(
+			"SELECT dir, name, mimetype "
+			"FROM file_backup "
+			"WHERE file=", id, " "
+			  "AND dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+			// No need to check if user has permission to view the file itself - data is conditional on the previous query having results
 		);
 		
 		const char* md5_hash;
@@ -857,7 +886,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
-		const char* backup_dir_ids;
 		const char* file2_values;
 		this->reset_buf_index();
 		this->asciify(
@@ -866,7 +894,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &backup_dir_ids, &file2_values)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
@@ -875,9 +903,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				mimetype, ',',
-				'"', backup_dir_ids, '"', ',',
-				'"', file2_values, '"'
+				'"', file2_values, '"', ',',
+				'['
 			);
+			const char* backup_dir_id;
+			const char* backup_file_name;
+			const char* backup_mimetype;
+			while(this->mysql_assign_next_row2(&backup_dir_id, &backup_file_name, &backup_mimetype)){
+				this->asciify(
+					'[',
+						'"', backup_dir_id, '"', ',',
+						'"', _f::esc, '"', backup_file_name, '"', ',',
+						'"', backup_mimetype, '"',
+					']', ','
+				);
+			}
+			if(this->last_char_in_buf() == ',')
+				--this->itr;
+			this->asciify(']');
 		}
 		this->asciify(']');
 		*this->itr = 0;
