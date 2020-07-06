@@ -720,16 +720,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		
 		// Determine if files exist in the database - if so, supply all the usual data
 		this->mysql_query(
-			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.id")
+			"SELECT f.name "
 			"FROM _file f "
 			"JOIN _dir d ON d.id=f.dir "
-			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			"GROUP BY f.id"
+			"UNION "
+			"SELECT f.name "
+			"FROM file_backup f "
+			"JOIN _dir d ON d.id=f.dir "
+			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
 			// WARNING: No limits. Directories should aim to avoid having too many files in each (low thousands) to mitigate malicious requests
 		);
 		
@@ -772,7 +771,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 				continue;
 			}
 			
-			if (compsky::mysql::in_results<2>(ename, this->res))
+			if (compsky::mysql::in_results<0>(ename, this->res))
 				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
 				continue;
 			
