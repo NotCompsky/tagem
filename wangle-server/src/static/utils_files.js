@@ -189,8 +189,8 @@ function $$$set_file_view_src(type, src, _mimetype){
 }
 function $$$play(type, src, _mimetype){
 	$$$hide_all_views_except(type);
-	const player = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
-	$$$active_media = player;
+	$$$active_media = $$$document_getElementById('view-'+type);
+	const player = $$$active_media.getElementsByTagName('source')[0];
 	player.type = _mimetype;
 	player.src = src;
 	player.parentNode.load();

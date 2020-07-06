@@ -44,7 +44,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -->
 <div id="content">
-  <div class="left-side">
+  <div id="left-side">
     <div class="logo">TAGEM</div>
     <div class="side-wrapper">
       <div class="side-title">SITEMAP</div>
@@ -88,7 +88,7 @@ R"=========(
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "()\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
 		"<div id=\"profile-menu\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dir,"Dir")(MINIMISED_JS_DECL_view_tag,"Tag")(MINIMISED_JS_DECL_view_tags,"Tags")(MINIMISED_JS_DECL_view_file,"File")(MINIMISED_JS_DECL_view_files,"Files")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')","&#9666;")(MINIMISED_JS_DECL_view_dir,"Dir")(MINIMISED_JS_DECL_view_tag,"Tag")(MINIMISED_JS_DECL_view_tags,"Tags")(MINIMISED_JS_DECL_view_file,"File")(MINIMISED_JS_DECL_view_files,"Files")(MINIMISED_JS_DECL_toggle"('right-side')","&#9656;")))
 		"</div>"
 	"</div>"
 
@@ -127,15 +127,12 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		"</div>"
 	"</div>"
 	
-	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
-	
 	"<a id=\"dir_name\"></a>" "<a id=\"file_name\"></a>"
 	"<br/>"
+	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
 	ADD_TOGGLE("autoplay","Autoplay")
 	"<button id=\"next-f-in-playlist\" onclick=\"" MINIMISED_JS_DECL_playlist_listener "()\">Next</button>"
-	"<br/>"
 	"<button onclick=\"" MINIMISED_JS_DECL_toggle_file_add_backup_dialog "()\">+Backups</button>"
-	"<br/>"
 	
 	"<div id=\"view-btns-container\">"
 		"<b>View</b>"
@@ -275,7 +272,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 R"=========(
     </div>
   </div>
-  <div class="right-side">
+  <div id="right-side">
     <div class="account">
       <span class="account-user"><p id="username"></p>
         <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Google_Contacts_icon.svg" class="account-profile" alt="">
