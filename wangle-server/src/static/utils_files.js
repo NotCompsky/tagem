@@ -217,6 +217,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 		$$$active_media = $$$yt_player;
 		return $$$view_yt_video(_file_name);
 	}
+	$$$yt_player.pauseVideo();
 	const embed_pre = $$$D[_device_id][2];
 	if (embed_pre === ""){
 		const _src_end = (_dir_id === undefined) ? "" : "/" + _dir_id;
