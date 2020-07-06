@@ -39,7 +39,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}else{
 				$$$dir_id=a;
 			}
-			for (const [thumb, id, name, sz, ext_db_n_post_ids, tag_ids] of data){
+			for (const [thumb, id, name, sz, t_added_to_db, ext_db_n_post_ids, tag_ids] of data){
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
@@ -47,6 +47,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					s += "<div class='td'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
+					s += "<div class='td' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
 					
 					// Populate file2post dictionary
 					$$$file2post[id] = ext_db_n_post_ids.split(":"); // database_ids, post_ids
@@ -321,7 +322,7 @@ function $$$view_file(_file_id){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [thumb, _dir_id, name, sz, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
+				const [thumb, _dir_id, name, sz, t_added_to_db, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$file_name = name;
@@ -337,16 +338,13 @@ function $$$view_file(_file_id){
 				}
 				$$$document_getElementById('values').innerHTML = _vals;
 				
-				if(tag_ids === "")
-					$$$file_tags = [];
-				else{
-					$$$file_tags = tag_ids.split(",");
-					$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this_file");
-				}
+				$$$file_tags = (tag_ids==="") ? [] : tag_ids.split(",");
+				$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this_file");
 				
 				$$$mimetype = mime;
 				
 				$$$set_profile_name($$$file_name);
+				$$$set_t_added(t_added_to_db);
 				
 				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
 				if ($$$autoplay()){

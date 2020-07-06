@@ -52,9 +52,6 @@ function $$$toggle(id){
 	$$$document_getElementById(id).classList.toggle("hidden");
 }
 
-function $$$timestamp2dt(t){
-	return new Date(t*1000).toISOString().slice(-24, -5)
-}
 function $$$set_var_to_json_then(var_name, url, fn){
 	// All global variable are set in the window object
 	if (window[var_name] !== undefined){

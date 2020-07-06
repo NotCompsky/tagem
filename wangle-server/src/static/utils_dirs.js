@@ -38,6 +38,8 @@ function $$$populate_d_id2name_table(selector, arr){
 
 
 function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
+	if(_dir_id_or_path==="")
+		_dir_id_or_path=$$$dir_id;
 	if(page===undefined)
 		page = 0;
 	let ls = ['f','f-action-btns','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];

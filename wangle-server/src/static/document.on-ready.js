@@ -42,6 +42,21 @@ function $$$on_document_ready(){
 	$$$add_key_intercepts();
 	
 	$$$document_getElementById('help-text').innerText = `
+Date Query
+	USAGE
+		[DATE]
+		[DATE] - [DATE]
+			Second date should be the largest
+	DATE
+		yyyy
+		yyyy/mm
+		yyyy/mm/dd
+	EXAMPLES
+		2020
+		2020/03
+		2018-2020
+		2016/05-2020/06
+
 Suppose you have a screenshot of a Twitter post. You can get the link to the original post - for instance, by using 'find-tweet' from https://github.com/NotCompsky/utils. You can then go to that file, click "Update src", and change the source to the Twitter post's URL. This will keep the screenshot as a 'backup' of the post.
 	`;
 }

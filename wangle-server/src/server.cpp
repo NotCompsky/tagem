@@ -60,6 +60,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	file_or_dir_id "," \
 	"f.name," \
 	"IFNULL(f.size,\"\")," \
+	"UNIX_TIMESTAMP(f.added_on)," \
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
 	DISTINCT_F2T_TAG_IDS
 
@@ -821,6 +822,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					0, ',',
 					'"', _f::esc, '"', ename,   '"', ',',
 					'"', st.st_size, '"', ',',
+					'"', st.st_ctime, '"', ',',
 					'"', '"', ',',
 					'"', '"',
 				']',
@@ -883,6 +885,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* dir_id;
 		const char* file_name;
 		const char* file_sz;
+		const char* file_added_timestamp;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
@@ -894,12 +897,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &file_sz, &file_added_timestamp, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', file_sz, '"', ',', // Javascript cannot handle big numbers
+				'"', file_added_timestamp, '"', ',',
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				mimetype, ',',
@@ -966,11 +970,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* f_id;
 		const char* f_name;
 		const char* f_sz;
+		const char* file_added_timestamp;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		this->begin_json_response();
 		this->asciify("[\"0\",[");
-		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_sz, &external_db_and_post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_sz, &file_added_timestamp, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -979,6 +984,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					f_id, ',',
 					'"', _f::esc, '"', f_name,   '"', ',',
 					'"', f_sz, '"', ',', // Integer as string because Javascript can't handle big integers
+					'"', file_added_timestamp, '"', ',',
 					'"', external_db_and_post_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',
