@@ -254,14 +254,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 "</div>"
 
 #define COL_NAMES ("Thumb")("Name")
-#define COL_FILTERS (0,"")(1,"regexp")
+#define COL_FILTERS (0,"")(2,"regexp")
 #define TBL_ID "t"
 #define TBL_NAME_COLS "[1]"
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
 #define COL_NAMES ("Name")("Device")
-#define COL_FILTERS (1,"regexp")(1,"regexp")
+#define COL_FILTERS (2,"regexp")(2,"regexp")
 #define TBL_ID "d"
 #define TBL_NAME_COLS "[0,1]"
 #define TBL_TAGS_COLS "[]"
@@ -269,8 +269,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 
 #define ACTION_BTNS ("",MINIMISED_JS_DECL_prompt_thumb_w"()","Thumb Size")("select-all",MINIMISED_JS_DECL_select_rows "('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all",MINIMISED_JS_DECL_deselect_rows "('#f .tbody .tr', 1);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 2);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 3);","Deselect All")("merge-files",MINIMISED_JS_DECL_merge_files"()","Merge Files")("backup-files",MINIMISED_JS_DECL_toggle_file_add_backup_dialog"()","Backup")("add-file2",MINIMISED_JS_DECL_toggle"('file2-container')","Add/Update Value")("view-as-playlist",MINIMISED_JS_DECL_view_files_as_playlist"()","View as Playlist")
 #define IS_SELECTABLE
-#define COL_NAMES ("Thumb")("Name")("Title")("In Databases")("Tags")("Size (Range)")("Date Added")("Origin Date")
-#define COL_FILTERS (0,"")(1,"regexp")(1,"regexp")(1,"regexp")(1,"regexp")(1,"12.3KB - 45.6MB")(1,"Date Query")(1,"Date Query")
+#define COL_NAMES ("Thumb")("Name")("Title")("In Databases")("Tags")("Size (Range)")("Date Added")("Origin Date")("Duration")("Width")("Height")("Views")("Likes")("Dislikes")("FPS")
+#define COL_FILTERS (0,"")(2,"regexp")(2,"regexp")(2,"regexp")(2,"regexp")(1,"12.3KB - 45.6MB")(1,"Date Query")(1,"Date Query")(1,"Time Query")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"12.3-45.6")
 #define TBL_ID "f"
 #define TBL_NAME_COLS "[1,2]"
 #define TBL_TAGS_COLS "[4]"

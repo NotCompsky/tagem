@@ -55,14 +55,23 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
 #define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag),\"\")"
+#define BLANK_IF_NULL(column) "IFNULL(" column ",\"\"),"
+#define NULL_IF_NULL(column) "IFNULL(" column ",\"null\"),"
 #define FILE_OVERVIEW_FIELDS(file_or_dir_id) \
 	FILE_THUMBNAIL \
 	file_or_dir_id "," \
 	"f.name," \
-	"IFNULL(f.title,\"\")," \
-	"IFNULL(f.size,\"\")," \
+	BLANK_IF_NULL("f.title") \
+	NULL_IF_NULL("f.size") \
 	"UNIX_TIMESTAMP(f.added_on)," \
 	"f.t_origin," \
+	NULL_IF_NULL("f.duration") \
+	NULL_IF_NULL("f.w") \
+	NULL_IF_NULL("f.h") \
+	NULL_IF_NULL("f.views") \
+	NULL_IF_NULL("f.likes") \
+	NULL_IF_NULL("f.dislikes") \
+	NULL_IF_NULL("f.fps") \
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
 	DISTINCT_F2T_TAG_IDS
 
@@ -827,6 +836,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					'"', st.st_size, '"', ',',
 					'"', st.st_ctime, '"', ',',
 					'0', ',',
+					'0', ',',
+					'0', ',',
+					'0', ',',
+					'0', ',',
+					'0', ',',
+					'0', ',',
+					'0', ',',
 					'"', '"', ',',
 					'"', '"',
 				']',
@@ -892,6 +908,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* file_sz;
 		const char* file_added_timestamp;
 		const char* file_origin_timestamp;
+		const char* duration;
+		const char* w;
+		const char* h;
+		const char* views;
+		const char* likes;
+		const char* dislikes;
+		const char* fps;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		const char* mimetype;
@@ -903,15 +926,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 			"\n"
 		);
 		this->asciify('[');
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &f_title, &file_sz, &file_added_timestamp, &file_origin_timestamp, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
+		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &f_title, &file_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
 				dir_id, ',',
 				'"', _f::esc, '"', file_name, '"', ',',
 				'"', _f::esc, '"', f_title,   '"', ',',
-				'"', file_sz, '"', ',', // Javascript cannot handle big numbers
-				'"', file_added_timestamp, '"', ',',
-				'"', file_origin_timestamp, '"', ',',
+				'"', file_sz, '"', ',',
+				file_added_timestamp, ',',
+				file_origin_timestamp, ',',
+				duration, ',',
+				w, ',',
+				h, ',',
+				views, ',',
+				likes, ',',
+				dislikes, ',',
+				fps, ',',
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				mimetype, ',',
@@ -981,11 +1011,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		const char* f_sz;
 		const char* file_added_timestamp;
 		const char* file_origin_timestamp;
+		const char* duration;
+		const char* w;
+		const char* h;
+		const char* views;
+		const char* likes;
+		const char* dislikes;
+		const char* fps;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
 		this->begin_json_response();
 		this->asciify("[\"0\",[");
-		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_title, &f_sz, &file_added_timestamp, &file_origin_timestamp, &external_db_and_post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_title, &f_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -995,8 +1032,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 					'"', _f::esc, '"', f_name,   '"', ',',
 					'"', _f::esc, '"', f_title,  '"', ',',
 					'"', f_sz, '"', ',', // Integer as string because Javascript can't handle big integers
-					'"', file_added_timestamp, '"', ',',
-					'"', file_origin_timestamp, '"', ',',
+					file_added_timestamp, ',',
+					file_origin_timestamp, ',',
+					duration, ',',
+					w, ',',
+					h, ',',
+					views, ',',
+					likes, ',',
+					dislikes, ',',
+					fps, ',',
 					'"', external_db_and_post_ids, '"', ',',
 					'"', tag_ids, '"',
 				']',

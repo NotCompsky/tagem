@@ -41,7 +41,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}else{
 				$$$dir_id=a;
 			}
-			for (const [thumb, id, name, title, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids] of data){
+			for (const [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids] of data){
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
@@ -52,6 +52,13 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
 					s += "<div class='td' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
 					s += "<div class='td' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
+					s += "<div class='td' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
+					s += "<div class='td w' data-n=" + w + ">" + w + "</div>";
+					s += "<div class='td h' data-n=" + h + ">" + h + "</div>";
+					s += "<div class='td views' data-n=" + views + ">" + $$$n2human(views) + "</div>";
+					s += "<div class='td likes' data-n=" + likes + ">" + $$$n2human(likes) + "</div>";
+					s += "<div class='td dislikes' data-n=" + dislikes + ">" + $$$n2human(dislikes) + "</div>";
+					s += "<div class='td fps' data-n=" + fps + ">" + fps + "</div>";
 					
 					// Populate file2post dictionary
 					$$$file2post[id] = ext_db_n_post_ids.split(":"); // database_ids, post_ids
@@ -326,7 +333,7 @@ function $$$view_file(_file_id){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
+				const [thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$file_name = name;

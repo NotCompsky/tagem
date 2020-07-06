@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+
+source tagem-auth
+
+regexp="$1"
+if [ "$regexp" = "" ]; then
+	regexp="www[.]youtube[.]com/watch[?]v="
+fi
+
+
+mysql_exec(){
+	mysql "${tagem_auth[@]}" -e "$1" tagem && echo "Success: $1" || echo "Failure: $1"
+}
+
+
+while read -r id url; do
+	echo "$url"
+	while read -r w; do
+		read -r h
+		read -r fps
+		read -r duration
+		read -r views
+		read -r likes
+		read -r dislikes
+		read -r thumbnail
+		read -r title
+		read -r descr
+		read -r t_origin
+		mysql_exec "UPDATE _file SET w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IFNULL(_file.t_origin,$t_origin) WHERE id=$id"
+		mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
+	done < <(youtube-dl --quiet --dump-json "$url" | jq '.width, .height, .fps, .duration, .view_count, .like_count, .dislike_count, .thumbnail, .title, .description, .timestamp')
+	sleep 2
+done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT f.id, CONCAT(d.name,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name REGEXP '^https://' AND d.name REGEXP '$regexp'" tagem)

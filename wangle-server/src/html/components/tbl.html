@@ -7,7 +7,7 @@
 	"</div>"
 #define CREATE_FILTER(r, data, placeholder) \
 	BOOST_PP_IF( \
-		BOOST_PP_TUPLE_ELEM(0, placeholder), \
+		BOOST_PP_SUB(BOOST_PP_TUPLE_ELEM(0, placeholder), 1), /* 0 for 0 and 1; 1 for 2 */ \
 		"<div class=\"td\">" \
 			"<input type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(1, placeholder) "\"/>" \
 		"</div>", \
