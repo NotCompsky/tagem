@@ -10,7 +10,8 @@ function onYouTubeIframeAPIReady(){
 	$$$when_data_loaded();
 }
 
-function $$$load_page_from_a_hash_string(s){
+function $$$load_page_from_a_hash_string(S){
+	const s = decodeURI(S);
 	let _x = s.substr(2);
 	const c = s.substr(1,1);
 	const _xs = /([^\/]+)\/(.*)$/.exec(_x);
@@ -28,6 +29,9 @@ function $$$load_page_from_a_hash_string(s){
 		case "d":
 		case ":":
 			$$$view_dir(_xs[2], (c===":"), _xs[1]);
+			break;
+		case '?':
+			$$$view_qry(_x);
 			break;
 	}
 }
