@@ -1,6 +1,8 @@
 const $$$BYTES_UNITS=['','K','M','G','T','P'];
 
 function $$$bytes2human(n){
+	if(n===null)
+		return "N/A";
 	let i = 0;
 	while(n > 1024){
 		++i;
@@ -22,6 +24,8 @@ function $$$human2bytes(s){
 const $$$NUMBER_UNITS=['','K','M','B','T'];
 
 function $$$n2human(n){
+	if(n===null)
+		return "N/A";
 	let i = 0;
 	while(n > 1024){
 		++i;

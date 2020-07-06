@@ -150,3 +150,14 @@
 	"color:red;"
 	"display:inline;"
 "}"
+
+
+".thumb:hover{"
+	"cursor:pointer;"
+	"outline:1px dashed red;"
+	"outline-offset:-1px;"
+"}"
+".tbody .tr:hover{"
+	"outline:1px dashed #a0f;"
+	"outline-offset:-1px;"
+"}"
