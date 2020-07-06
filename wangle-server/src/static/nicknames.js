@@ -11,8 +11,8 @@ function $$$add_window_location_hash_to_history(){
 		return;
 	const x = $$$document_getElementById('recent-pages');
 	if(x.childNodes.length===10)
-		x.removeChild(x.childNodes[0]);
-	x.innerHTML += "<a onclick='$$$load_page_from_a_hash_string(\""+$$$window_location.hash+"\")'>" + $$$document.title + "</a>";
+		x.removeChild(x.childNodes[9]);
+	x.innerHTML = "<a onclick='$$$load_page_from_a_hash_string(\""+$$$window_location.hash+"\")'>" + $$$document.title + "</a>" + x.innerHTML;
 }
 function $$$set_window_location_hash(s){
 	$$$add_window_location_hash_to_history();
