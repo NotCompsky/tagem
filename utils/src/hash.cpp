@@ -17,6 +17,13 @@ extern "C" {
 #include <signal.h>
 
 
+#define HASH_TYPE_STRUCT(struct_name, hash_name, is_available_to_backup_files_too) \
+	struct struct_name { \
+		constexpr static const char* const name = hash_name; \
+		constexpr static bool is_available_to_backup_files_too = is_available_to_backup_files_too; \
+	};
+
+
 #define MAX_HASH_NAME_LENGTH 10
 
 
@@ -121,69 +128,15 @@ uint64_t duration_of(const char* fp){
 
 
 /* For function overloading */
-struct Image{
-	constexpr static
-	const char* const name = "image";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct Video{
-	constexpr static
-	const char* const name = "video";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct Audio{
-	constexpr static
-	const char* const name = "audio";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct SHA256_FLAG{
-	constexpr static
-	const char* const name = "sha256";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct MD5_FLAG{
-	constexpr static
-	const char* const name = "md5";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct MimeType {
-	constexpr static
-	const char* const name = "mimetype";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = true;
-};
-struct QT5_MD5_FLAG{
-	constexpr static
-	const char* const name = "qt5md5";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-}; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
-struct Size{
-	constexpr static
-	const char* const name = "size";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
-struct Duration{
-	constexpr static
-	const char* const name = "duration";
-	
-	constexpr static
-	bool is_available_to_backup_files_too = false;
-};
+HASH_TYPE_STRUCT(Image, "image", false)
+HASH_TYPE_STRUCT(Video, "video", false)
+HASH_TYPE_STRUCT(Audio, "audio", false)
+HASH_TYPE_STRUCT(SHA256_FLAG, "sha256", false)
+HASH_TYPE_STRUCT(MD5_FLAG, "md5", false)
+HASH_TYPE_STRUCT(MimeType, "mimetype", true)
+HASH_TYPE_STRUCT(QT5_MD5_FLAG, "qt5md5", false) // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
+HASH_TYPE_STRUCT(Size, "size", false)
+HASH_TYPE_STRUCT(Duration, "duration", false)
 
 
 struct ManyToMany {
