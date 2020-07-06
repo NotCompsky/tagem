@@ -30,6 +30,7 @@ namespace _mysql {
 MYSQL_RES* RES1;
 MYSQL_ROW  ROW1;
 const char* THUMBNAIL_DIR = nullptr;
+AVFormatContext* FFMPEG_INPUT_FMT_CTX;
 
 
 namespace _f {
@@ -140,6 +141,10 @@ struct MD5_FLAG{
 	constexpr static
 	const char* const name = "md5";
 };
+struct MimeType {
+	constexpr static
+	const char* const name = "mimetype";
+};
 struct QT5_MD5_FLAG{
 	constexpr static
 	const char* const name = "qt5md5";
@@ -199,10 +204,10 @@ struct OneToOne {
 	
 	constexpr
 	static
-	const char* const filter_previously_completed_pre  = "f.";
+	const char* const filter_previously_completed_pre  = "IFNULL(f.";
 	constexpr
 	static
-	const char* const filter_previously_completed_post = " IS NULL";
+	const char* const filter_previously_completed_post = ",0)=0";
 	constexpr
 	static
 	const char* const delete_pre = "UPDATE _file SET ";
@@ -248,6 +253,13 @@ void asciify_hash(const SHA256_FLAG file_type_flag,  char*& itr,  const unsigned
 		'"'
 	);
 };
+
+template<size_t sz>
+void asciify_hash(const MimeType,  char*& itr,  const unsigned char* const hash){
+	static_assert(sz == 0);
+	compsky::asciify::asciify(itr, '"', hash, '"');
+};
+
 
 template<size_t sz>
 void asciify_hash(const MD5_FLAG file_type_flag,  char*& itr,  const unsigned char* const hash){
@@ -386,6 +398,40 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	SHA256_Final(hash, &sha256);
 	
 	insert_hashes_into_db<32>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+}
+
+template<typename RelationType>
+void save_hash(const MimeType file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+	const char* const* hashes;
+	const AVCodecDescriptor* av_codec_descr;
+	
+	if (avformat_open_input(&FFMPEG_INPUT_FMT_CTX, fp, nullptr, nullptr)){
+		fprintf(logfile,  "FFMPEG cannt open file: %s\n",  fp);
+		goto cleanup1;
+	}
+	if (avformat_find_stream_info(FFMPEG_INPUT_FMT_CTX, nullptr)){
+		fprintf(logfile,  "FFMPEG cannt find stream info in file: %s\n",  fp);
+		goto cleanup2;
+	}
+	
+	av_codec_descr = avcodec_descriptor_get(FFMPEG_INPUT_FMT_CTX->video_codec_id);
+	if(av_codec_descr==nullptr){
+		fprintf(logfile,  "File has no video codec descriptor: %s\n",  fp);
+		goto cleanup2;
+	}
+	hashes = av_codec_descr->mime_types;
+	if(hashes==nullptr){
+		fprintf(logfile,  "File's codec has no associated mimetype: %s\n",  fp);
+		goto cleanup2;
+	}
+	fprintf(logfile,  "    File has mimetype: %s: %s\n",  hashes[0],  fp);
+	insert_hashes_into_db<0>(file_type_flag, file_id, hashes, hash_name, 1, which_relation);
+	
+	cleanup2:
+	avformat_close_input(&FFMPEG_INPUT_FMT_CTX);
+	
+	cleanup1:
+	avformat_free_context(FFMPEG_INPUT_FMT_CTX);
 }
 
 template<typename RelationType>
@@ -698,7 +744,8 @@ int main(const int argc,  char* const* argv){
 				"		v	Video DCT\n"
 				"		s	SHA256\n"
 				"		m	MD5\n"
-				"		M	Qt5 MD5 (for thumbnails)\n"
+				"		M	Mime Type\n"
+				"		p	Qt5 MD5 (for thumbnails)\n"
 				"		S	Size\n"
 			);
 			return 1;
@@ -745,6 +792,7 @@ int main(const int argc,  char* const* argv){
 	constexpr static const Audio  audio_flag;
 	constexpr static const SHA256_FLAG sha256_flag;
 	constexpr static const MD5_FLAG    md5_flag;
+	constexpr static const MimeType    mimetype_flag;
 	constexpr static const QT5_MD5_FLAG qt5_md5_flag;
 	constexpr static const Size   size_flag;
 	constexpr static const Duration duration_flag;
@@ -757,31 +805,37 @@ int main(const int argc,  char* const* argv){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
+				hash_all_from(opts,  audio_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'd':
-				hash_all_from(opts, duration_flag,  nullptr,  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
+				hash_all_from(opts, duration_flag,  "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  image_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
 				// many_to_many_flag because they use the same hash as video files.
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,    nullptr,  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  video_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
 				break;
 			case 's':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  sha256_flag,   nullptr,  nullptr, "sha256", one_to_one_flag);
+				hash_all_from(opts,  sha256_flag,   "^/",  nullptr, "sha256", one_to_one_flag);
 				break;
 			case 'm':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  md5_flag,      nullptr,  nullptr, "md5", one_to_one_flag);
+				hash_all_from(opts,  md5_flag,      "^/",  nullptr, "md5", one_to_one_flag);
 				break;
 			case 'M':
+				FFMPEG_INPUT_FMT_CTX = avformat_alloc_context();
+				if(unlikely(FFMPEG_INPUT_FMT_CTX==nullptr))
+					abort();
+				hash_all_from(opts,  mimetype_flag,   "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "mimetype", one_to_one_flag);
+				break;
+			case 'p':
 				if(custom_regex!=nullptr)
 					abort();
 				hash_all_from(opts,  qt5_md5_flag,  "^/",     nullptr, "md5_of_path", one_to_one_flag);
@@ -789,7 +843,7 @@ int main(const int argc,  char* const* argv){
 			case 'S':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  size_flag,     nullptr,  nullptr, "size", one_to_one_flag);
+				hash_all_from(opts,  size_flag,     "^/",  nullptr, "size", one_to_one_flag);
 				break;
 		}
 	}
