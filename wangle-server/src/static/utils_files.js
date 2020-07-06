@@ -5,6 +5,8 @@ var $$$file_qry_page_n;
 
 var $$$active_media = null;
 
+var $$$file_title;
+
 function $$$next_page(tbl_id,direction){
 	switch(tbl_id){
 		case 'f':
@@ -39,11 +41,12 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}else{
 				$$$dir_id=a;
 			}
-			for (const [thumb, id, name, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids] of data){
+			for (const [thumb, id, name, title, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids] of data){
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
 					s += "<div class='td fname'>" + name + "</div>"; // File ID and name
+					s += "<div class='td fname'>" + title + "</div>";
 					s += "<div class='td'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
@@ -323,10 +326,11 @@ function $$$view_file(_file_id){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [thumb, _dir_id, name, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
+				const [thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$file_name = name;
+				$$$file_title = (title==="")?$$$file_name:title;
 				const db_and_post_ids = ext_db_n_post_ids;
 				if (db_and_post_ids !== "")
 					$$$display_external_dbs(db_and_post_ids.split(",").map(x => x.split(":")));
@@ -344,7 +348,7 @@ function $$$view_file(_file_id){
 				
 				$$$mimetype = mime;
 				
-				$$$set_profile_name($$$file_name);
+				$$$set_profile_name($$$file_title);
 				$$$set_t_added(t_added_to_db);
 				$$$set_t_origin(t_origin);
 				
@@ -361,7 +365,7 @@ function $$$view_file(_file_id){
 			}
 		);
 	} else {
-		$$$set_profile_name($$$file_name);
+		$$$set_profile_name($$$file_title);
 	}
 }
 
