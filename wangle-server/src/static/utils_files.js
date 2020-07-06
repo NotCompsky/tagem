@@ -357,7 +357,7 @@ function $$$view_file(_file_id){
 				
 				$$$set_profile_name($$$file_name);
 				
-				let _s = "";
+				let _s = $$$create__view_dir_and_filename_w_filename_playable($$$dir_id,$$$mimetype,name);
 				if ($$$autoplay()){
 					$$$display_this_file();
 				} else {
@@ -366,7 +366,7 @@ function $$$view_file(_file_id){
 						for(const _dir_id_to_mimetype of backups.split(",")){
 							const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(":");
 							// dir_id of backup file
-							_s += '<a onclick="$$$view_dir(\'' + _dir_id + '\',0)">' + $$$d[_dir_id][0] + '</a><a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + name + '</a>';
+							_s += $$$create__view_dir_and_filename_w_filename_playable(_dir_id,_mimetype,"BACKUP_FILE");
 						}
 					}
 				}
@@ -376,6 +376,10 @@ function $$$view_file(_file_id){
 	} else {
 		$$$set_profile_name($$$file_name);
 	}
+}
+
+function $$$create__view_dir_and_filename_w_filename_playable(id,mime,fname){
+	return '<a onclick="$$$view_dir(\'' + _dir_id + '\',0)">' + $$$d[_dir_id][0] + '</a><a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + name + '</a>';
 }
 
 function $$$view_files(ls){
