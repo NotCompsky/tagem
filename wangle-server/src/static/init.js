@@ -40,7 +40,7 @@ function $$$when_data_loaded(){
 	if($$$t === undefined || $$$d === undefined || $$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
 	$$$init_tbls();
-	$$$load_page_from_a_hash_string($$$window_location.hash);
+	$$$load_page_from_a_hash_string(window.location.hash);
 }
 
 function $$$refetch_all_jsons(){
@@ -55,6 +55,7 @@ function $$$refetch_all_jsons(){
 }
 
 function $$$add_key_intercepts(){
+	$$$Mousetrap_bind('e', $$$set_era_vertex);
 	$$$Mousetrap_bind('p', $$$view_files_as_playlist);
 	$$$Mousetrap_bind('v', e => $$$toggle('file2-container'));
 	$$$Mousetrap_bind('b', $$$toggle_file_add_backup_dialog);
@@ -62,6 +63,7 @@ function $$$add_key_intercepts(){
 	$$$Mousetrap_bind('q', e => $$$focus('qry'));
 }
 function $$$del_key_intercepts(){
+	$$$Mousetrap_unbind('e');
 	$$$Mousetrap_unbind('p');
 	$$$Mousetrap_unbind('v');
 	$$$Mousetrap_unbind('b');

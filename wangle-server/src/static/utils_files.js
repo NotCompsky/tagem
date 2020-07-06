@@ -3,6 +3,8 @@ var $$$file_qry_url_paramsythings;
 var $$$file_qry_post_data;
 var $$$file_qry_page_n;
 
+var $$$active_media = null;
+
 function $$$next_page(tbl_id,direction){
 	switch(tbl_id){
 		case 'f':
@@ -182,11 +184,13 @@ function $$$hide_all_views_except(except){
 function $$$set_file_view_src(type, src, _mimetype){
 	$$$hide_all_views_except(type);
 	const x = $$$document_getElementById('view-'+type);
+	$$$active_media = x;
 	x.src = src;
 }
 function $$$play(type, src, _mimetype){
 	$$$hide_all_views_except(type);
 	const player = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
+	$$$active_media = player;
 	player.type = _mimetype;
 	player.src = src;
 	player.parentNode.load();
@@ -209,8 +213,10 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 		$$$alert("BUG: Cannot play remote backup files");
 		return;
 	}
-	if(_device_id === $$$YOUTUBE_DEVICE_ID)
+	if(_device_id === $$$YOUTUBE_DEVICE_ID){
+		$$$active_media = $$$yt_player;
 		return $$$view_yt_video(_file_name);
+	}
 	const embed_pre = $$$D[_device_id][2];
 	if (embed_pre === ""){
 		const _src_end = (_dir_id === undefined) ? "" : "/" + _dir_id;

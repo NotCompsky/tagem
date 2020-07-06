@@ -22,6 +22,10 @@
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 "<script type=\"text/javascript\">" 
 	MINIMISED_JS_ALL
+	
+	"window.addEventListener('popstate',  e => " MINIMISED_JS_DECL_load_page_from_a_hash_string "(e.state));"
+	// Although we could store the page's data, thereby reducing requests to the server, it wouldn't be easy to check whether the data is out of date or not.
+	
 	"$(document).ready("
 		MINIMISED_JS_DECL_on_document_ready
 	");"
@@ -122,6 +126,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 			// This div is *replaced* by the Youtube IFrame API, so causes issues when told to hide while it is loading
 		"</div>"
 	"</div>"
+	
+	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
 	
 	"<a id=\"dir_name\"></a>" "<a id=\"file_name\"></a>"
 	"<br/>"
