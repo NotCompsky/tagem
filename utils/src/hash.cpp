@@ -17,12 +17,19 @@ extern "C" {
 #include <signal.h>
 
 
-#define HASH_TYPE_STRUCT(struct_name, hash_name, is_available_to_backup_files_too) \
+#define HASH_TYPE_STRUCT(struct_name, hash_name, _is_available_to_backup_files_too) \
 	struct struct_name { \
 		constexpr static const char* const name = hash_name; \
-		constexpr static bool is_available_to_backup_files_too = is_available_to_backup_files_too; \
+		constexpr static bool is_available_to_backup_files_too = _is_available_to_backup_files_too; \
 	};
-
+#define GET_AV_STREAM_OF_TYPE(type) \
+	for (int i = 0;  i < FFMPEG_INPUT_FMT_CTX->nb_streams;  i++){ \
+		av_stream = FFMPEG_INPUT_FMT_CTX->streams[i]; \
+		/* if output context has audio codec support and current input stream is audio*/ \
+		if (av_stream == nullptr  ||  av_stream->codecpar->codec_type != type) \
+			continue; \
+		break; \
+	}
 
 #define MAX_HASH_NAME_LENGTH 10
 
@@ -401,6 +408,7 @@ template<typename RelationType>
 void save_hash(const MimeType file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	const char* const* hashes;
 	const AVCodecDescriptor* av_codec_descr;
+	AVStream* av_stream;
 	
 	if (avformat_open_input(&FFMPEG_INPUT_FMT_CTX, fp, nullptr, nullptr)){
 		fprintf(logfile,  "FFMPEG cannt open file: %s\n",  fp);
@@ -411,7 +419,15 @@ void save_hash(const MimeType file_type_flag,  const char* const hash_name,  con
 		goto cleanup2;
 	}
 	
-	av_codec_descr = avcodec_descriptor_get(FFMPEG_INPUT_FMT_CTX->video_codec_id);
+	GET_AV_STREAM_OF_TYPE(AVMEDIA_TYPE_VIDEO)
+	if (av_stream == nullptr)
+		GET_AV_STREAM_OF_TYPE(AVMEDIA_TYPE_AUDIO)
+	if (av_stream == nullptr){
+		fprintf(logfile,  "Cannot find audio or video stream: %s\n",  fp);
+		goto cleanup2;
+	}
+	
+	av_codec_descr = avcodec_descriptor_get(av_stream->codecpar->codec_id);
 	if(av_codec_descr==nullptr){
 		fprintf(logfile,  "File has no video codec descriptor: %s\n",  fp);
 		goto cleanup2;
