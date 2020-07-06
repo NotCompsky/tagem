@@ -235,9 +235,12 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 				$$$set_file_view_src('object', src, _mimetype_str);
 		}
 		
-		if($$$playlist_file_ids === undefined)
+		if($$$playlist_file_ids === undefined){
 			for(var i=0; i<5; ++i)
 				$$$document_getElementById('view-'+$$$playlist_listeners_types[i]).removeEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
+		}else{
+			$$$unhide('next-f-in-playlist');
+		}
 	} else {
 		$$$set_file_view_src('iframe', embed_pre+_file_name+$$$D[_device_id][3], null);
 	}
