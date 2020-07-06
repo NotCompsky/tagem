@@ -127,7 +127,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		"</div>"
 	"</div>"
 	
-	"<a id=\"dir_name\"></a>" "<a id=\"file_name\"></a>"
+	"<a id=\"dir_name\" onclick=\"" MINIMISED_JS_DECL_view_this_files_dir "()\"></a>" "<a id=\"file_name\"></a>"
 	"<br/>"
 	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
 	ADD_TOGGLE("autoplay","Autoplay")

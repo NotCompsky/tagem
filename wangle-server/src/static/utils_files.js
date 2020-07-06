@@ -349,7 +349,6 @@ function $$$view_file(_file_id){
 				
 				$$$mimetype = mime;
 				
-				$$$document_getElementById('dir_name').onclick = $$$view_this_files_dir;
 				$$$document_getElementById('dir_name').innerText = $$$d[$$$dir_id][0];
 				
 				$$$document_getElementById('file_name').innerText = name;
@@ -366,7 +365,7 @@ function $$$view_file(_file_id){
 						for(const _dir_id_to_mimetype of backups.split(",")){
 							const [_dir_id, _mimetype] = _dir_id_to_mimetype.split(":");
 							// dir_id of backup file
-							_s += '<a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + $$$d[_dir_id][0] + '</a>';
+							_s += '<a onclick="$$$view_dir(\'' + _dir_id + '\',0)">' + $$$d[_dir_id][0] + '</a><a class="view-btn" onclick="$$$display_this_file(' + _dir_id + ',' + _mimetype + ')">' + name + '</a>';
 						}
 					}
 				}
