@@ -124,38 +124,65 @@ uint64_t duration_of(const char* fp){
 struct Image{
 	constexpr static
 	const char* const name = "image";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct Video{
 	constexpr static
 	const char* const name = "video";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct Audio{
 	constexpr static
 	const char* const name = "audio";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct SHA256_FLAG{
 	constexpr static
 	const char* const name = "sha256";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct MD5_FLAG{
 	constexpr static
 	const char* const name = "md5";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct MimeType {
 	constexpr static
 	const char* const name = "mimetype";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = true;
 };
 struct QT5_MD5_FLAG{
 	constexpr static
 	const char* const name = "qt5md5";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 }; // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
 struct Size{
 	constexpr static
 	const char* const name = "size";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 struct Duration{
 	constexpr static
 	const char* const name = "duration";
+	
+	constexpr static
+	bool is_available_to_backup_files_too = false;
 };
 
 
@@ -166,6 +193,9 @@ struct ManyToMany {
 	constexpr
 	static
 	const char* const insert_post_hash_name = "(x,file) VALUES (";
+	constexpr
+	static
+	const char* const backup_insert_pre_hash_name = "INSERT IGNORE INTO file_backup2";
 	constexpr
 	static
 	const char* const insert_pre_file_id = ",";
@@ -196,7 +226,13 @@ struct OneToOne {
 	const char* const insert_post_hash_name = "=";
 	constexpr
 	static
+	const char* const backup_insert_pre_hash_name = "UPDATE file_backup SET ";
+	constexpr
+	static
 	const char* const insert_pre_file_id = " WHERE id=";
+	constexpr
+	static
+	const char* const backup_insert_pre_file_id = " WHERE file=";
 	
 	constexpr
 	static
@@ -275,14 +311,21 @@ void asciify_hash(const QT5_MD5_FLAG file_type_flag,  char*& itr,  const unsigne
 
 
 template<size_t hash_sz,  typename FileType,  typename Int,  typename RelationType>
-void insert_hashes_into_db(const FileType file_type_flag,  const char* const file_id,  const Int* hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
+void insert_hashes_into_db(const FileType file_type_flag,  const char* const file_id,  const uint64_t dir_id,  const Int* hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	while(length_to_go != 0) {
 		char* itr = BUF;
 		
-		compsky::asciify::asciify(
-			itr,
-			which_relation.insert_pre_hash_name, hash_name, which_relation.insert_post_hash_name
-		);
+		if (dir_id == 0){
+			compsky::asciify::asciify(
+				itr,
+				which_relation.insert_pre_hash_name, hash_name, which_relation.insert_post_hash_name
+			);
+		} else {
+			compsky::asciify::asciify(
+				itr,
+				which_relation.backup_insert_pre_hash_name, hash_name, which_relation.insert_post_hash_name
+			);
+		}
 		
 		do {
 			--length_to_go;
@@ -292,6 +335,7 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 			compsky::asciify::asciify(
 				itr,
 				which_relation.insert_pre_file_id,
+				" AND ", (dir_id==0)?"0=":"dir=", dir_id,
 				file_id
 			);
 			
@@ -336,7 +380,7 @@ bool is_nullptr(Int* const ptr){
 	return ptr == nullptr;
 }
 template<size_t hash_sz,  typename FileType,  typename IntOrIntPtr,  typename RelationType>
-void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_type_flag,  const char* const file_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
+void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_type_flag,  const char* const file_id,  const uint64_t dir_id,  const IntOrIntPtr hashes,  const char* const hash_name,  int length_to_go,  const RelationType which_relation){
 	if (is_nullptr(hashes))
 		goto no_hashes_found__230jf0jfe;
 	
@@ -347,7 +391,7 @@ void insert_hashes_into_db_then_free(const char* const fp,  const FileType file_
 		return;
 	}
 	
-	insert_hashes_into_db<hash_sz>(file_type_flag, file_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
+	insert_hashes_into_db<hash_sz>(file_type_flag, file_id, dir_id, get_ptr_to_if_not_already(hashes), hash_name, length_to_go, which_relation);
 	freemajig(hashes); // Just a quirk of the C standard
 };
 
@@ -359,7 +403,7 @@ uint64_t get_hash_of_image(const char* const fp){
 }
 
 template<typename RelationType>
-void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	FILE* f = fopen(fp, "rb");
 	if (f == nullptr){
 		fprintf(logfile,  "Cannot read file: %s\n",  fp);
@@ -371,11 +415,11 @@ void save_hash(const Size file_type_flag,  const char* const hash_name,  const c
 	
 	fclose(f);
 	
-	insert_hashes_into_db<0>(file_type_flag, file_id, &sz, hash_name, 1, which_relation);
+	insert_hashes_into_db<0>(file_type_flag, file_id, dir_id, &sz, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[32] = {};
 	
 	static SHA256_CTX sha256;
@@ -397,11 +441,11 @@ void save_hash(const SHA256_FLAG file_type_flag,  const char* const hash_name,  
 	
 	SHA256_Final(hash, &sha256);
 	
-	insert_hashes_into_db<32>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<32>(file_type_flag, file_id, dir_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const MimeType file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const MimeType file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	const char* const* hashes;
 	const AVCodecDescriptor* av_codec_descr;
 	
@@ -425,7 +469,7 @@ void save_hash(const MimeType file_type_flag,  const char* const hash_name,  con
 		goto cleanup2;
 	}
 	fprintf(logfile,  "    File has mimetype: %s: %s\n",  hashes[0],  fp);
-	insert_hashes_into_db<0>(file_type_flag, file_id, hashes, hash_name, 1, which_relation);
+	insert_hashes_into_db<0>(file_type_flag, file_id, dir_id, hashes, hash_name, 1, which_relation);
 	
 	cleanup2:
 	avformat_close_input(&FFMPEG_INPUT_FMT_CTX);
@@ -435,7 +479,7 @@ void save_hash(const MimeType file_type_flag,  const char* const hash_name,  con
 }
 
 template<typename RelationType>
-void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[MD5_DIGEST_LENGTH] = {};
 	
 	MD5_CTX md5_ctx;
@@ -457,11 +501,11 @@ void save_hash(const MD5_FLAG file_type_flag,  const char* const hash_name,  con
 	
 	MD5_Final(hash, &md5_ctx);
 	
-	insert_hashes_into_db<MD5_DIGEST_LENGTH>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<MD5_DIGEST_LENGTH>(file_type_flag, file_id, dir_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	static unsigned char hash[16] = {};
 	
 	MD5_CTX md5_ctx;
@@ -471,11 +515,11 @@ void save_hash(const QT5_MD5_FLAG file_type_flag,  const char* const hash_name, 
 	MD5_Update(&md5_ctx, buf, strlen(buf));
 	MD5_Final(hash, &md5_ctx);
 	
-	insert_hashes_into_db<16>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<16>(file_type_flag, file_id, dir_id, &hash, hash_name, 1, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const Image file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	const uint64_t hash = get_hash_of_image(fp);
 	
 	if (unlikely(hash == 0)){
@@ -483,12 +527,12 @@ void save_hash(const Image file_type_flag,  const char* const hash_name,  const 
 		return;
 	}
 	
-	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hash, hash_name, 1, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, dir_id, hash, hash_name, 1, which_relation);
 }
 
 
 template<typename RelationType>
-void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const Video file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	// Set global variables for catching aborts
 	CURRENT_FILE_PATH = fp;
 	CURRENT_HASHING_METHOD = "dct_hash";
@@ -496,11 +540,11 @@ void save_hash(const Video file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint64_t* const hashes = ph_dct_videohash(fp, length);
 	
-	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, dir_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const Audio file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const Audio file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	constexpr static const int sample_rate = 8000;
 	constexpr static const int channels = 1;
 	int audiobuf_len;
@@ -514,13 +558,13 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 	int length;
 	const uint32_t* const hashes = ph_audiohash(audiobuf, audiobuf_len, sample_rate, length);
 	
-	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, hashes, hash_name, length, which_relation);
+	insert_hashes_into_db_then_free<0>(fp, file_type_flag, file_id, dir_id, hashes, hash_name, length, which_relation);
 }
 
 template<typename RelationType>
-void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const char* const fp,  const RelationType which_relation){
+void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const char* const fp,  const RelationType which_relation){
 	const uint64_t hash = duration_of(fp);
-	insert_hashes_into_db<0>(file_type_flag, file_id, &hash, hash_name, 1, which_relation);
+	insert_hashes_into_db<0>(file_type_flag, file_id, dir_id, &hash, hash_name, 1, which_relation);
 }
 
 
@@ -631,7 +675,7 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 		const char* file_id;
 		while(compsky::mysql::assign_next_row(RES1, &ROW1, &file_id)){
 			// This can only have 0 or 1 iterations
-			save_hash(file_type_flag, hash_name, file_id, file_path, which_relation);
+			save_hash(file_type_flag, hash_name, file_id, 0, file_path, which_relation);
 		}
 	}
 	closedir(dir);
@@ -661,14 +705,20 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	
 	const char* _id;
 	const char* _fp;
+	uint64_t _dir_id;
 	
 	static char buf[100 + MAX_HASH_NAME_LENGTH + ADD_DIR_REGEXP_SZ + ADD_NAME_REGEXP_SZ];
 	char* itr = buf;
 	
+	unsigned is_available_to_backup_files_too = file_type_flag.is_available_to_backup_files_too;
+	do {
 	compsky::asciify::asciify(
 		// TODO: Compile-time string concatenation would be nice here, to use query_buffer instead.
 		itr,
-		"SELECT f.id, CONCAT(d.name, f.name) "
+		"SELECT "
+			"f.id,",
+			(is_available_to_backup_files_too)?"d.id":"0", ","
+			"CONCAT(d.name, f.name) "
 		"FROM _file f "
 		"JOIN _dir d ON d.id=f.dir "
 		"JOIN _device D ON D.id=d.device "
@@ -686,9 +736,9 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		(uintptr_t)itr - (uintptr_t)buf
 	);
 	
-	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_id, &_fp)){
+	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_id, &_dir_id, &_fp)){
 		try {
-			save_hash(file_type_flag, hash_name, _id, _fp, which_relation);
+			save_hash(file_type_flag, hash_name, _id, _dir_id, _fp, which_relation);
 		} catch (...){
 			compsky::mysql::exec(
 				// Remove existing hashes so that file appears in the above result next time
@@ -698,6 +748,7 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 			);
 		}
 	}
+	} while(--is_available_to_backup_files_too);
 };
 
 
