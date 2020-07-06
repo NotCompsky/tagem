@@ -41,9 +41,9 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}
 			for (const [thumb, id, name, sz, t_added_to_db, t_origin, ext_db_n_post_ids, tag_ids] of data){
 				s += "<div class='tr' data-id='" + id + "'>";
-					s += '<div class="td"><img class="thumb" src="' + thumb + '"></img></div>';
+					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
-					s += "<div class='td fname'><a onclick='$$$view_file(this.parentNode.parentNode.dataset.id)'>" + name + "</a></div>"; // File ID and name
+					s += "<div class='td fname'>" + name + "</div>"; // File ID and name
 					s += "<div class='td'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
