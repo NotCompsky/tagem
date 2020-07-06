@@ -145,6 +145,8 @@ POST /q/ >
 	return this->parse_qry(++str)
 POST /login >
 	break
+POST /f/title/>
+	return this->post__set_file_title(++str);
 POST /f/merge/>
 	return this->post__merge_files(++str)
 POST /f/backup/>

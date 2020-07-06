@@ -1,5 +1,7 @@
 const $$$MAX_RESULTS_PER_PAGE = 100;
 
+var $$$currently_viewing_object_type;
+
 var $$$tag_id;
 var $$$file_id;
 var $$$file_name;

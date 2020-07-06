@@ -13,6 +13,7 @@ function $$$add_window_location_hash_to_history(s){
 function $$$set_window_location_hash(s){
 	const S = "#" + s;
 	$$$add_window_location_hash_to_history(S);
+	$$$currently_viewing_object_type = s[0];
 	if(S!=history.state)
 		history.pushState(S, "", S);
 }

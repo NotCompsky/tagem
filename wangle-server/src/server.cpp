@@ -2275,6 +2275,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 		return _r::post_ok;
 	}
 	
+	std::string_view post__set_file_title(const char* s){
+		const uint64_t f_id = a2n<uint64_t>(&s);
+		GET_USER_ID
+		GREYLIST_GUEST
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		this->mysql_exec(
+			"UPDATE _file "
+			"SET title=\"", _f::esc, '"', s, "\" "
+			"WHERE id=", f_id, " "
+			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__merge_files(const char* s){
 		const uint64_t orig_f_id = a2n<uint64_t>(&s);
 		++s; // Skip slash
