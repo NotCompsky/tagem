@@ -43,3 +43,35 @@ tag >
 	attribute_name = attribute_name::TAG;
 	attribute_kind = attribute_kind::many_to_many;
 	return (which_tbl=='f') ? successness::ok : successness::invalid
+time_origin >
+	attribute_name = attribute_name::T_ORIGIN;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+time_recorded >
+	attribute_name = attribute_name::T_RECORDED;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+width >
+	attribute_name = attribute_name::WIDTH;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+height >
+	attribute_name = attribute_name::HEIGHT;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+fps >
+	attribute_name = attribute_name::FPS;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+views >
+	attribute_name = attribute_name::VIEWS;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+likes >
+	attribute_name = attribute_name::LIKES;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
+dislikes >
+	attribute_name = attribute_name::DISLIKES;
+	attribute_kind = attribute_kind::one_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid

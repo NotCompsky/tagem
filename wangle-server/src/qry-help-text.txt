@@ -86,6 +86,14 @@ Each must be separated by a logical operator - thus far the only implemented one
 				duration
 				md5
 				sha
+				time_origin
+				time_recorded
+				width
+				height
+				fps
+				views
+				likes
+				dislikes
 			many-to-many options:
 				dct (perceptual DCT hash)
 				audio (perceptual audio hash)

@@ -72,6 +72,14 @@ namespace attribute_name {
 	constexpr static const char* const MIMETYPE = "mimetype";
 	constexpr static const char* const SHA256 = "sha256";
 	constexpr static const char* const SIZE = "size";
+	constexpr static const char* const VIEWS    = "views";
+	constexpr static const char* const LIKES    = "likes";
+	constexpr static const char* const DISLIKES = "dislikes";
+	constexpr static const char* const WIDTH  = "w";
+	constexpr static const char* const HEIGHT = "w";
+	constexpr static const char* const T_ORIGIN   = "t_origin";
+	constexpr static const char* const T_RECORDED = "added_on";
+	constexpr static const char* const FPS = "fps";
 }
 
 namespace _f {
@@ -132,7 +140,7 @@ const char* attribute_field_name(const char* const attribute_name){
 
 static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
-	if ((attribute_name == attribute_name::DIR) or (attribute_name == attribute_name::DURATION) or (attribute_name == attribute_name::ID) or (attribute_name == attribute_name::SIZE))
+	if ((attribute_name == attribute_name::DIR) or (attribute_name == attribute_name::DURATION) or (attribute_name == attribute_name::ID) or (attribute_name == attribute_name::SIZE) or (attribute_name == attribute_name::T_ORIGIN) or (attribute_name == attribute_name::T_RECORDED) or (attribute_name == attribute_name::WIDTH) or (attribute_name == attribute_name::HEIGHT) or (attribute_name == attribute_name::FPS) or (attribute_name == attribute_name::VIEWS) or (attribute_name == attribute_name::LIKES) or (attribute_name == attribute_name::DISLIKES))
 		return attribute_value_kind::integer;
 	else // attribute_name::NAME
 		return attribute_value_kind::string;
