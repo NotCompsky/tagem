@@ -48,12 +48,14 @@ INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	parent BIGINT UNSIGNED,
+	parent_not_null BIGINT AS (IFNULL(parent,0)), # Allows foreign key checks to work
 	device BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(255) NOT NULL,
 	FOREIGN KEY (parent) REFERENCES _dir (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id),
+	UNIQUE KEY (parent_not_null,name), # Only one name if parent is NULL
 	UNIQUE KEY (parent,name)
 );
 CREATE TABLE dir_tree (
