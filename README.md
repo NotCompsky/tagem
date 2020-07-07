@@ -13,6 +13,7 @@ In active development. Documentation almost non-existent as yet, though plenty o
 ![Lightweight](https://user-images.githubusercontent.com/30552567/85212398-2bae0c80-b34a-11ea-8d46-fe9d2aa3bf96.png)
 ![Query1](https://user-images.githubusercontent.com/30552567/85212569-04f0d580-b34c-11ea-968d-78a63d2cdc11.png)
 ![Query2](https://user-images.githubusercontent.com/30552567/85212400-2c46a300-b34a-11ea-8ca9-021054e75ae5.png)
+![Query3](https://user-images.githubusercontent.com/30552567/86843555-a000e380-c09e-11ea-9a0d-5a5e4ae38261.png)
 ![Deduplication](https://user-images.githubusercontent.com/30552567/85212395-2a7cdf80-b34a-11ea-8a1f-4e6e05a19c0f.png)
 ![Post](https://user-images.githubusercontent.com/30552567/85212518-86943380-b34b-11ea-9cce-465968d32963.png)
 
