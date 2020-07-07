@@ -2,6 +2,7 @@
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/utils/streq.hpp>
+#include <compsky/mysql/except.hpp>
 
 
 struct DatabaseInfo {
@@ -30,6 +31,8 @@ struct DatabaseInfo {
 		has_cmnt2like_tbl,
 		has_user2tag_tbl,
 		
+		is_accessible_from_master_connection,
+		
 		COUNT
 	};
 	bool bools[COUNT];
@@ -41,9 +44,22 @@ struct DatabaseInfo {
 	const char* name() const {
 		return auth[4];
 	}
+	MYSQL* connection() const {
+		return this->mysql_obj;
+	}
 	void close(){
 		mysql_close(mysql_obj);
 		compsky::mysql::wipe_auth(buf, buf_sz);
+	}
+	void test_is_accessible_from_master_connection(MYSQL* const master_connection,  char* buf){
+		try {
+			MYSQL_RES* res;
+			compsky::mysql::query(master_connection, res, buf, "SELECT 1 FROM ", this->name(), ".post LIMIT 1", '\0');
+			mysql_free_result(res);
+			this->bools[is_accessible_from_master_connection] = true;
+		} catch(const compsky::mysql::except::SQLExec&){
+			fprintf(stderr,  "Warning: Master is unable to access: %s\n",  this->name());
+		}
 	}
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools)
 	: bools{}

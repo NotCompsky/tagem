@@ -2838,7 +2838,7 @@ int main(int argc,  char** argv){
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
 		char* const db_env_name = external_db_env_vars.at(i);
 		
-		const DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
+		DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
 		
 		if (i == 0)
 			continue;
@@ -2853,6 +2853,8 @@ int main(int argc,  char** argv){
 			return 1;
 		}
 		db_indx2id[i] = id;
+		
+		db_info.test_is_accessible_from_master_connection(db_infos.at(0).connection(),  buf);
 	}
 	db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
