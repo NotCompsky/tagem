@@ -170,8 +170,7 @@ void add_many2many_join_tbl_name(std::string& join,  const char* const attribute
 			join += attribute_name;
 			return;
 		case 't':
-			join += "tag2";
-			join += attribute_name;
+			join += "tag2parent";
 			if ((attribute_name == attribute_name::PARENTY) or (attribute_name == attribute_name::CHILDY))
 				join += "_tree";
 			return;
