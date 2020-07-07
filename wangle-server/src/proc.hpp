@@ -30,6 +30,8 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 			fprintf(stderr, "Cannot execute: %s\n", argv[0]);
 			exit(1);
 		}
+		
+		exit(0);
 	}
 	close(pipefd[1]);
 	fcntl(pipefd[0], F_SETFL, fcntl(pipefd[0], F_GETFL) | O_NONBLOCK);
