@@ -158,6 +158,21 @@ const char* get_tbl_name_of_join_in_ersatz_many_to_one(const char* const attribu
 	//}
 }
 
+static
+void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_name,  const char which_tbl,  const unsigned ersatz_count){
+	join += "JOIN(SELECT ";
+	join += tbl_full_name(which_tbl);
+	join += " AS id, COUNT(*) AS x FROM ";
+	join += get_tbl_name_of_join_in_ersatz_many_to_one(attribute_name, which_tbl);
+	join += " GROUP BY ";
+	join += tbl_full_name(which_tbl);
+	join += ")ersatz";
+	join += std::to_string(ersatz_count);
+	join += " ON ersatz";
+	join += std::to_string(ersatz_count);
+	join += ".id=X.id\n";
+}
+
 #define X(_,n,data) or (attribute_name == attribute_name::data)
 static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
@@ -590,16 +605,24 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (rc != successness::ok)
 					return rc;
 				
-				if(attribute_kind == attribute_kind::many_to_many){
-					join += "JOIN file2";
-					join += attribute_name;
-					join += " f2_join ON f2_join.file=X.id\n";
-					order_by = "f2_join.";
-					order_by += attribute_field_name(attribute_name);
-					order_by += (arg_token==arg::order_by_asc)?" ASC":" DESC";
-				} else {
-					order_by = std::string(attribute_name) + ((arg_token==arg::order_by_asc)?" ASC":" DESC");
+				switch(attribute_kind){
+					case attribute_kind::many_to_many:
+						join += "JOIN file2";
+						join += attribute_name;
+						join += " f2_join ON f2_join.file=X.id\n";
+						order_by = "f2_join.";
+						order_by += attribute_field_name(attribute_name);
+						break;
+					case attribute_kind::many_to_one:
+						order_by = std::string(attribute_name);
+						break;
+					case attribute_kind::ersatz_many_to_one:
+						++ersatz_count;
+						order_by = "ersatz" + std::to_string(ersatz_count) + ".x ";
+						add_join_for_ersatz_attr(join, attribute_name, which_tbl, ersatz_count);
+						break;
 				}
+				order_by += (arg_token==arg::order_by_asc)?" ASC":" DESC";
 				break;
 			}
 			case arg::order_by_value_asc:
@@ -747,17 +770,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += std::to_string(ersatz_count);
 					where += ".x";
 					
-					join += "JOIN(SELECT ";
-					join += tbl_full_name(which_tbl);
-					join += " AS id, COUNT(*) AS x FROM ";
-					join += get_tbl_name_of_join_in_ersatz_many_to_one(attribute_name, which_tbl);
-					join += " GROUP BY ";
-					join += tbl_full_name(which_tbl);
-					join += ")ersatz";
-					join += std::to_string(ersatz_count);
-					join += " ON ersatz";
-					join += std::to_string(ersatz_count);
-					join += ".id=X.id\n";
+					add_join_for_ersatz_attr(join, attribute_name, which_tbl, ersatz_count);
 				}
 					
 				switch(get_attribute_value_kind(attribute_name)){
