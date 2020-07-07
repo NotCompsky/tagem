@@ -38,7 +38,7 @@ class CStringCodec : public Handler<std::unique_ptr<folly::IOBuf>, const char*,
  public:
   typedef typename Handler<
    std::unique_ptr<folly::IOBuf>, const char*,
-   const std::string_view*, std::unique_ptr<folly::IOBuf>>::Context Context;
+   const std::string_view, std::unique_ptr<folly::IOBuf>>::Context Context;
 
   void read(Context* ctx, std::unique_ptr<folly::IOBuf> buf) override {
     if (buf) {
