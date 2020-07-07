@@ -75,3 +75,19 @@ dislikes >
 	attribute_name = attribute_name::DISLIKES;
 	attribute_kind = attribute_kind::many_to_one;
 	return (which_tbl=='f') ? successness::ok : successness::invalid
+parent >
+	attribute_name = attribute_name::PARENT;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='t') ? successness::ok : successness::invalid
+parenty >
+	attribute_name = attribute_name::PARENTY;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='t') ? successness::ok : successness::invalid
+child >
+	attribute_name = attribute_name::CHILD;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='t') ? successness::ok : successness::invalid
+childy >
+	attribute_name = attribute_name::CHILDY;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='t') ? successness::ok : successness::invalid

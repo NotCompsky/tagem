@@ -25,19 +25,54 @@ INPUT DATA TYPES
 				A list of two strings that is interpreted as an array of literal strings
 			"[^ ]+ \(Language\)$"
 				A list of one string that is interpreted as a regexp
+	
+	TABLE_ALIAS
+		file        f
+		dir         d
+		dir         d! (matching only against the basename)
+		device      D
+			Only available for one sub-filter - "D exists".
+		tag         t  (matching against child tags too)
+		tag         t!
+		external_db x
+			Only available as a sub-filter, for files.
+	
+	ATTRIBUTE
+		Different tables may have different valid attributes.
+		Each attribute has a "kind" of relation too - either one-to-many, or many-to-many
+		VALID ATTRIBUTES
+			[ATTRIBUTE_KIND] attributes
+				[ATTRIBUTE_NAME]            [VALID_TABLES]
+			many-to-one attributes
+				name                          all except D
+				dir                           f
+				mime                          f
+				size                          all except x and D
+				duration                      f
+				md5                           f
+				sha                           f
+				time_origin                   f
+				time_recorded                 f
+				width                         f
+				height                        f
+				fps                           f
+				views                         f
+				likes                         f
+				dislikes                      f
+			many-to-many options:
+				dct (perceptual hash)         f
+				audio (perceptual hash)       f
+				tag                           f
+				parent (direct ancestor)      t
+				parenty (any ancestory)       t
+				child                         t
+				childy                        t
 
 FILTERS
 Each may be preceded by "not" (without the quotation marks) to invert the filter
 Each must be separated by a logical operator - thus far the only implemented ones are "and" and "or" (use without the quotation marks)
 	[TABLE_ALIAS] [NAME_LIST]
 		Entries have relations to entries of one of these names in this table
-		TABLE_ALIAS must be one of:
-			t (tag - matching against child tags too)
-			t! (tag)
-			f (file)
-			d (dir)
-			d! (dir - matching against only the basename)
-			x (for file only - file appears in the named external database)
 	D exists
 		Only available for file and directory tables.
 		Filters for files/dirs that reside on a device that the server can access with an fopen call (i.e. files that are both local and readable)
@@ -65,6 +100,10 @@ Each must be separated by a logical operator - thus far the only implemented one
 				Shorthand for
 					f attr name r "^A"
 				Lists all files beginning with "A"
+			t parent = "Country"
+				Filter for tags where one immediate ancestor is the tag "Country"
+			t parenty = "Continent"
+				Filter for tags where any ancestor is the tag "Continent"
 	backups [RANGE]
 		Filter for files with a number of backups in this range
 	same [ATTRIBUTE] [RANGE]
@@ -77,27 +116,8 @@ Each must be separated by a logical operator - thus far the only implemented one
 				All other filters declared after this filter apply AFTER this filter
 			For many-to-many attributes (such as dct)
 				It is a bit different
-		ATTRIBUTE must be one of
-			many-to-one options:
-				name (WARNING: Might take a VERY long time without other filters)
-				dir
-				mime
-				size
-				duration
-				md5
-				sha
-				time_origin
-				time_recorded
-				width
-				height
-				fps
-				views
-				likes
-				dislikes
-			many-to-many options:
-				dct (perceptual DCT hash)
-				audio (perceptual audio hash)
-				tag
+		WARNING
+			 Using the name attribute might take a VERY long time to execute without other filters
 		EXAMPLES
 			many-to-one
 				f "foo" same dir 2-?
@@ -168,4 +188,12 @@ EXAMPLES
 		List the directories with the most files (non-recursive)
 	t "." order d size
 		List the tags associated with the most files (not counting descendant tags)
+	f attr tag r "Foobar"
+		Equivalent to
+			f t "Foobar"
+	f attr tag = "Foobar"
+		Equivalent to
+			f t "^Foobar$"
+	t attr parent = "Country" order d size
+		List the Country tags in order of decreasing numbers of files they are associated with
 )========="

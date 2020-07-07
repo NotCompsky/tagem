@@ -85,6 +85,10 @@ namespace attribute_name {
 	constexpr static const char* const T_ORIGIN   = "t_origin";
 	constexpr static const char* const T_RECORDED = "added_on";
 	constexpr static const char* const FPS = "fps";
+	constexpr static const char* const PARENT = "parent";
+	constexpr static const char PARENTY[] = "parent"; // Array style to guarantee different address
+	constexpr static const char* const CHILD = "tag";
+	constexpr static const char CHILDY[] = "tag";
 }
 
 namespace _f {
@@ -139,8 +143,8 @@ const char* attribute_field_name(const char* const attribute_name){
 	// Compiler refuses to allow the switch operator
 	if ((attribute_name == attribute_name::DCT_HASH) or (attribute_name == attribute_name::AUDIO_HASH))
 		return "x";
-	else // attribute_name::TAG
-		return "tag";
+	else
+		return attribute_name;
 }
 
 static
@@ -159,6 +163,39 @@ const char* get_tbl_name_of_join_in_ersatz_many_to_one(const char* const attribu
 }
 
 static
+void add_many2many_join_tbl_name(std::string& join,  const char* const attribute_name,  const char which_tbl){
+	switch(which_tbl){
+		case 'f':
+			join += "file2";
+			join += attribute_name;
+			return;
+		case 't':
+			join += "tag2";
+			join += attribute_name;
+			if ((attribute_name == attribute_name::PARENTY) or (attribute_name == attribute_name::CHILDY))
+				join += "_tree";
+			return;
+	}
+}
+
+static
+void add_many2many_field_name(std::string& cxxstring,  const char* const attribute_name,  const char which_tbl){
+	switch(which_tbl){
+		case 'f':
+			if (attribute_name == attribute_name::TAG)
+				cxxstring += "tag";
+			else
+				cxxstring += "x";
+			return;
+		case 't':
+			cxxstring += attribute_name;
+			return;
+		default:
+			abort();
+	}
+}
+
+static
 void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_name,  const char which_tbl,  const unsigned ersatz_count){
 	join += "JOIN(SELECT ";
 	join += tbl_full_name(which_tbl);
@@ -171,6 +208,13 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 	join += " ON ersatz";
 	join += std::to_string(ersatz_count);
 	join += ".id=X.id\n";
+}
+
+static
+const char* get_tbl_name_from_attr_name(const char* const attribute_name){
+	if ((attribute_name == attribute_name::PARENT) or (attribute_name == attribute_name::PARENTY))
+		return "tag";
+	return attribute_name;
 }
 
 #define X(_,n,data) or (attribute_name == attribute_name::data)
@@ -607,8 +651,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				
 				switch(attribute_kind){
 					case attribute_kind::many_to_many:
-						join += "JOIN file2";
-						join += attribute_name;
+						join += "JOIN ";
+						add_many2many_join_tbl_name(join, attribute_name, which_tbl);
 						join += " f2_join ON f2_join.file=X.id\n";
 						order_by = "f2_join.";
 						order_by += attribute_field_name(attribute_name);
@@ -748,8 +792,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 					if (rc != successness::ok)
 						return rc;
-					if (attribute_kind == attribute_kind::many_to_many)
-						return successness::invalid;
 					
 					comparison_mode = *(++qry);
 					if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=') or (comparison_mode == 'r')) or (*(++qry) != ' '))
@@ -760,7 +802,21 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (is_inverted)
 					where += " NOT";
 				
-				if (attribute_kind == attribute_kind::many_to_one){
+				const auto value_kind = get_attribute_value_kind(attribute_name);
+				
+				if (attribute_kind == attribute_kind::many_to_many){
+					where += " X.id IN(SELECT ";
+					where += tbl_full_name(which_tbl);
+					where += " FROM ";
+					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
+					where += " WHERE ";
+					add_many2many_field_name(where, attribute_name, which_tbl);
+					if (value_kind == attribute_value_kind::string){
+						where += " IN(SELECT id FROM ";
+						where += get_tbl_name_from_attr_name(attribute_name);
+						where += " WHERE name";
+					}
+				} else if ((attribute_kind == attribute_kind::many_to_one) or (attribute_kind == attribute_kind::unique)){
 					where += " X.";
 					where += attribute_name;
 				} else /* if (attribute_kind == attribute_kind::ersatz_many_to_one) */ {
@@ -773,7 +829,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					add_join_for_ersatz_attr(join, attribute_name, which_tbl, ersatz_count);
 				}
 					
-				switch(get_attribute_value_kind(attribute_name)){
+				switch(value_kind){
 					case attribute_value_kind::integer: {
 						if (comparison_mode == 'r')
 							return successness::invalid;
@@ -798,6 +854,12 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						rc = append_escaped_str(where, qry);
 						if (rc != successness::ok)
 							return rc;
+				}
+				
+				if (attribute_kind == attribute_kind::many_to_many){
+					if (value_kind == attribute_value_kind::string)
+						where += ")";
+					where += ")";
 				}
 				
 				++n_args_since_operator;
