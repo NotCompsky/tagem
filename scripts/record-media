@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+
+DIR_ROOT="$1"
+DEVICE="$2"
+if [ "$DEVICE" = "" ]; then
+	echo "USAGE: $0 [DIR_ROOT] [DEVICE_NAME]" >&2
+	exit
+fi
+
+source tagem-auth
+
+
+mysql_exec(){
+	mysql "${tagem_auth[@]}" -e "$1" tagem
+	if [ $? = 0 ]; then
+		return 1
+	fi
+	printf "%s\n" "Failure"
+	echo "$1"
+	return 0
+}
+
+
+while read -r media_path; do
+	read -r info_json_path
+	
+	file_name_on_disk="$(basename "$media_path")"
+	dir_name_on_disk="$(dirname "$media_path")"
+	
+	if [ -f "$info_json_path" ]; then
+		while read -r url; do
+			read -r thumbnail
+			read -r w
+			read -r h
+			read -r duration
+			read -r fps
+			read -r views
+			read -r views2
+			read -r likes
+			read -r likes2
+			read -r dislikes
+			read -r dislikes2
+			read -r date
+			read -r uploader
+			read -r title
+			read -r descr
+			
+			if [ "$views" = null ]; then
+				views="$views2"
+			fi
+			if [ "$likes" = null ]; then
+				likes="$likes2"
+			fi
+			if [ "$dislikes" = null ]; then
+				dislikes="$dislikes2"
+			fi
+			
+			t_origin="$(date -d "${upload_date:1:-1}" +%s)"
+			if [ "$t_origin" = "" ]; then
+				t_origin=0
+			fi
+			
+			echo "$url"
+			IFS=' ' read -r dname fname < <(echo "$url" | sed -E 's_/([^/]+)/?$_/" "\1_g')
+			
+			if [ "$dname" = "\"https://www.youtube.com/\"" ]; then
+				dname="\"https://www.youtube.com/watch?v=\""
+				fname="\"${fname:9}"
+			else
+				mysql_exec "INSERT INTO _dir (name,device,user) VALUES ($dname,(SELECT id FROM _device WHERE name='https://'),4) ON DUPLICATE KEY UPDATE user=user"
+			fi
+			
+			echo "$fname"
+			echo "$dname"
+			echo ""
+			
+			dir_identifier="(SELECT id FROM _dir WHERE name=$dname)"
+			
+			mysql_exec "INSERT INTO _file (user,dir,name,title,description,w,h,duration,fps,views,likes,dislikes,t_origin) VALUES(
+4,
+$dir_identifier,
+$fname,LEFT($title,100),LEFT($descr,1000),$w,$h,$duration,$fps,$views,$likes,$dislikes,$t_origin
+			) ON DUPLICATE KEY UPDATE
+			w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin)"
+			
+			file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=(SELECT id FROM _dir WHERE name=$dname))"
+			
+			if [ "$thumbnail" = null ]; then
+				dummy=1
+			else
+				mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($file_identifier,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
+			fi
+			
+			if [ "$uploader" = null ]; then
+				dummy=1
+			else
+				uploader="\"Uploader: ${uploader:1}"
+				mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
+				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
+					echo "Tag \"Uploader\" does not exist" >&2
+					exit
+				fi
+				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $file_identifier, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
+			fi
+			
+			mysql_exec "INSERT INTO _dir (name,device,user) VALUES (\"$dir_name_on_disk\",(SELECT id FROM _device WHERE name=\"$DEVICE\"),4) ON DUPLICATE KEY UPDATE user=user"
+			mysql_exec "INSERT INTO file_backup (user,file,dir,name,mimetype) VALUES (
+			4,
+			$file_identifier,(SELECT id FROM _dir WHERE name=\"$dir_name_on_disk\"),\"$file_name_on_disk\",(SELECT id FROM ext2mimetype WHERE name=\"${file_name_on_disk##*.}\")
+			) ON DUPLICATE KEY UPDATE file=file"
+		done < <(jq '.webpage_url, .thumbnail, .width, .height, .duration, .fps, .view_count, .views, .like_count, .likes, .dislike_count, .dislikes, .date, .uploader, .title, .description' "$info_json_path")
+	fi
+done < <(find "$DIR_ROOT" -type f -regextype sed -iregex ".*[.]\(mp3\|webm\|opus\|ogg\|jpe\?g\|png\|mp4\|mkv\|gif\|avi\|mov\)$" | sed -E 's/^(.*[.])([^.]+)$/\1\2\n\1info.json/g')
