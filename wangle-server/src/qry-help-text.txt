@@ -164,4 +164,8 @@ EXAMPLES
 		Find files that are probably duplicates, based only on their file sizes.
 	f d "^https://www.youtube.com/watch\?v=" same dct 2-? same size 2-? limit 100
 		Find files which have the same DCT hash and same size as a file from youtube.
+	d "." order d size
+		List the directories with the most files (non-recursive)
+	t "." order d size
+		List the tags associated with the most files (not counting descendant tags)
 )========="
