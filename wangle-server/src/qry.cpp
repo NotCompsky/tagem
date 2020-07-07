@@ -1,6 +1,9 @@
 #include "qry.hpp"
 #include <compsky/asciify/asciify.hpp>
+#include <compsky/macros/char_in_arr.hpp>
 #include <cstddef> // for size_t
+
+#include <boost/preprocessor/seq/for_each.hpp>
 
 #ifndef NOTTDEBUG
 # include <cstdio>
@@ -15,7 +18,8 @@ namespace sql_factory{
 namespace attribute_kind {
 	enum AttributeKind {
 		unique,
-		one_to_one,
+		many_to_one,
+		ersatz_many_to_one,
 		many_to_many
 	};
 }
@@ -72,6 +76,7 @@ namespace attribute_name {
 	constexpr static const char* const MIMETYPE = "mimetype";
 	constexpr static const char* const SHA256 = "sha256";
 	constexpr static const char* const SIZE = "size";
+	constexpr static const char* const ERSATZ_SIZE = "n";
 	constexpr static const char* const VIEWS    = "views";
 	constexpr static const char* const LIKES    = "likes";
 	constexpr static const char* const DISLIKES = "dislikes";
@@ -139,11 +144,24 @@ const char* attribute_field_name(const char* const attribute_name){
 }
 
 static
+const char* get_tbl_name_of_join_in_ersatz_many_to_one(const char* const attribute_name,  const char which_tbl){
+	//if (attribute_name == attribute_name::ERSATZ_SIZE){
+		// Unnecessary atm
+		switch(which_tbl){
+			case 't':
+				return "file2tag";
+			case 'd':
+				return "_file";
+			case 'D':
+				return "_dir";
+		}
+	//}
+}
+
+#define X(_,n,data) or (attribute_name == attribute_name::data)
+static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
-	if ((attribute_name == attribute_name::DIR) or (attribute_name == attribute_name::DURATION) or (attribute_name == attribute_name::ID) or (attribute_name == attribute_name::SIZE) or (attribute_name == attribute_name::T_ORIGIN) or (attribute_name == attribute_name::T_RECORDED) or (attribute_name == attribute_name::WIDTH) or (attribute_name == attribute_name::HEIGHT) or (attribute_name == attribute_name::FPS) or (attribute_name == attribute_name::VIEWS) or (attribute_name == attribute_name::LIKES) or (attribute_name == attribute_name::DISLIKES))
-		return attribute_value_kind::integer;
-	else // attribute_name::NAME
-		return attribute_value_kind::string;
+	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(T_ORIGIN)(T_RECORDED)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
 }
 
 static
@@ -400,6 +418,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
 	unsigned n_calls__backups = 0;
 	
+	unsigned ersatz_count = 0;
+	
 	const char* attribute_name;
 	attribute_kind::AttributeKind attribute_kind;
 	unsigned min;
@@ -627,7 +647,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				const std::string old_where = where;
 				if (attribute_kind == attribute_kind::unique)
 					return successness::invalid;
-				if (attribute_kind == attribute_kind::one_to_one){
+				if (attribute_kind == attribute_kind::many_to_one){
 					where = "X.";
 					where += attribute_name;
 					if (is_inverted)
@@ -650,6 +670,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += " AND COUNT(*)<=";
 					where += std::to_string(max);
 					where += ")";
+				} else if (attribute_kind == attribute_kind::ersatz_many_to_one){
+					return successness::unimplemented;
 				} else {
 					where = "X.id";
 					if (is_inverted)
@@ -714,9 +736,30 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				where += bracket_operator_at_depth[bracket_depth];
 				if (is_inverted)
 					where += " NOT";
-				where += " X.";
-				where += attribute_name;
 				
+				if (attribute_kind == attribute_kind::many_to_one){
+					where += " X.";
+					where += attribute_name;
+				} else /* if (attribute_kind == attribute_kind::ersatz_many_to_one) */ {
+					++ersatz_count;
+					
+					where += " ersatz";
+					where += std::to_string(ersatz_count);
+					where += ".x";
+					
+					join += "JOIN(SELECT ";
+					join += tbl_full_name(which_tbl);
+					join += " AS id, COUNT(*) AS x FROM ";
+					join += get_tbl_name_of_join_in_ersatz_many_to_one(attribute_name, which_tbl);
+					join += " GROUP BY ";
+					join += tbl_full_name(which_tbl);
+					join += ")ersatz";
+					join += std::to_string(ersatz_count);
+					join += " ON ersatz";
+					join += std::to_string(ersatz_count);
+					join += ".id=X.id\n";
+				}
+					
 				switch(get_attribute_value_kind(attribute_name)){
 					case attribute_value_kind::integer: {
 						if (comparison_mode == 'r')

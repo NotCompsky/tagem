@@ -124,6 +124,7 @@ OPTIONS
 				name
 			one-to-one options:
 				id
+				size (for tags/dirs, it is the number of files associated with it)
 			file table additional options: Any of the attributes listed under the "same" filter
 	order-by-value [MODE] [[NAMES]]
 		MODE must be one of a (ascending) or d (descending)
