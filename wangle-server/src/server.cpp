@@ -345,7 +345,7 @@ namespace _r {
 	}
 }
 
-class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::string_view> {
+class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  const std::string_view> {
   private:
 	constexpr static const size_t buf_sz = 100 * 1024 * 1024; // 100 MiB
 	char* buf;
@@ -2734,15 +2734,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const char*,  const std::st
 	~RTaggerHandler(){
 	}
 	
-		void read(Context* ctx,  const char* const msg) override {
+		void read(Context* ctx,  const std::string_view msg) override {
 			this->reset_buf_index();
-			for(const char* msg_itr = msg;  *msg_itr != 0  &&  *msg_itr != '\n';  ++msg_itr){
-				this->asciify(*msg_itr);
+			for(size_t i = 0;  i < msg.size()  &&  msg.data()[i] != '\n'; ++i){
+				this->asciify(msg.data()[i]);
 			}
 			*this->itr = 0;
 			const std::string client_addr = ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
 			std::cout << client_addr << '\t' << this->buf << std::endl;
-			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg) : _r::banned_client;
+			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg.data()) : _r::banned_client;
 			if (unlikely(v == _r::not_found))
 				banned_client_addrs.push_back(client_addr);
 			write(ctx, v);

@@ -33,17 +33,17 @@ namespace wangle {
 /*
  * CStringCodec converts a pipeline from IOBufs to const std::string_view*.
  */
-class CStringCodec : public Handler<std::unique_ptr<folly::IOBuf>, const char*,
+class CStringCodec : public Handler<std::unique_ptr<folly::IOBuf>, const std::string_view,
                                    const std::string_view, std::unique_ptr<folly::IOBuf>> {
  public:
   typedef typename Handler<
-   std::unique_ptr<folly::IOBuf>, const char*,
+   std::unique_ptr<folly::IOBuf>, const std::string_view,
    const std::string_view, std::unique_ptr<folly::IOBuf>>::Context Context;
 
-  void read(Context* ctx, std::unique_ptr<folly::IOBuf> buf) override {
+  void read(Context* ctx, const std::unique_ptr<folly::IOBuf> buf) override {
     if (buf) {
       buf->coalesce();
-      ctx->fireRead((const char*)buf->data());
+      ctx->fireRead(std::string_view(reinterpret_cast<const char*>(buf->data()), buf->length()));
     }
   }
 
