@@ -91,7 +91,7 @@ function $$$display_tags(tag_ids, selector, fn_name){
 	);
 }
 function $$$display_tags_add(tags, selector, fn_name){
-	$$$display_tags(tag_ids, selector, fn_name);
+	$$$display_tags(tags.map(x => x.id), selector, fn_name);
 	// NOTE: Could save a request to the server, but at the cost of not displaying the tag thumbnails
 	//const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name));
 	//document.querySelector(selector).innerHTML += arr.join("");
