@@ -156,6 +156,6 @@ POST /x/dl/reddit/p/>
 	return this->archive_reddit_post(++str)
 
 GET /a/select2/regex/d?q=>
-	return this->select2_regex("_dir", ++str)
+	return this->select2_regex('d', ++str)
 GET /a/select2/regex/t?q=>
-	return this->select2_regex("_tag", ++str)
+	return this->select2_regex('t', ++str)

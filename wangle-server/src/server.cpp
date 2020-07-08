@@ -1924,16 +1924,26 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
-	std::string_view select2(const char* const tbl_name,  const UserIDIntType user_id,  Args... name_args){
+	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  Args... name_args){
+		this->reset_buf_index();
+		this->asciify(
+			"SELECT id, name "
+			"FROM ", (tbl_alias=='d')?"_dir":"_tag", " "
+			"WHERE name ", name_args..., "\" "
+			"AND id NOT IN"
+		);
+		switch(tbl_alias){
+			case 'd':
+				this->asciify(USER_DISALLOWED_DIRS(user_id));
+				break;
+			default: /*case 't'*/
+				this->asciify(USER_DISALLOWED_TAGS(user_id));
+				break;
+		}
+		this->asciify("LIMIT 50"); // TODO: Tell client if results have been truncated
+		
 		try{
-			this->mysql_query(
-				"SELECT id, name "
-				"FROM ", tbl_name, " "
-				"WHERE name ", name_args..., "\" "
-				"AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
-				"LIMIT 50"
-				// TODO: Tell client if results have been truncated
-			);
+			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
 			std::cerr << e.what() << std::endl;
 			return _r::EMPTY_JSON_LIST;
@@ -1946,12 +1956,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view select2_regex(const char* const tbl_name,  const char* s){
+	std::string_view select2_regex(const char tbl_alias,  const char* s){
 		const char* const qry = s;
 		
 		GET_USER_ID
 		
-		return this->select2(tbl_name, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
+		return this->select2(tbl_alias, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
 		// NOTE: AFAIK, in URLs, one should have spaces as %20 before the ? and + after.
 		// However, select2 encodes spaces as %20, not +, even though they are passed as URL parameters.
 	}
