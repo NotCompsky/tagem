@@ -15,7 +15,7 @@ function $$$populate_t_id2name_table(arr){
 						s += "<img src='" + thumb + "'/>";
 					s += "</div>";
 					s += "<div class='td'>";
-						s += "<a onclick='$$$view_dir(" + id + ",0)'>" + name + "</a>";
+						s += "<a onclick='$$$view_tag(" + id + ",0)'>" + name + "</a>";
 					s += "</div>";
 					s += "<div class='td dir-size'>" + size + "</div>";
 				s += "</div>";
