@@ -132,6 +132,43 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found;
 
 
+#define SELECT_TAGS_INFOS_FROM_STUFF(...) \
+	"SELECT " \
+		"t.id," \
+		"t.name," \
+		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
+		"GROUP_CONCAT(p.cover ORDER BY (1/(1+t2pt.depth))*(p.cover!=\"\") DESC LIMIT 1)," \
+		"A.n " \
+	"FROM _tag t " \
+	"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id " \
+	"JOIN _tag p ON p.id=t2pt.parent " \
+	"JOIN(" \
+		"SELECT tag, COUNT(*) AS n " \
+		"FROM file2tag " \
+		/* NOTE: MySQL doesn't seem to optimise this often - usually faster if duplicate the limitations within this subquery */ \
+		"WHERE tag IN(" \
+			__VA_ARGS__ \
+		")" \
+		"AND file NOT IN" USER_DISALLOWED_FILES(user_id) \
+		"GROUP BY tag" \
+	")A ON A.tag=t.id "
+#define WHERE_TAGS_INFOS(...) \
+	"WHERE t.id IN(" __VA_ARGS__ ")" \
+	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL OR p.cover != \"\")" \
+	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id) \
+	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
+#define TAGS_INFOS(...) \
+	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
+	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	"GROUP BY t.id "
+#define TAGS_INFOS__WTH_DUMMY_WHERE_THING(...) \
+	/* See NOTE #dkgja */ \
+	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
+	"AND t.id>0 " \
+	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	"GROUP BY t.id "
+
+
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
 namespace _f {
@@ -190,7 +227,6 @@ static bool regenerate_mimetype_json = true;
 static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
-static bool regenerate_tag_json = true;
 static bool regenerate_tag2parent_json = true;
 
 std::vector<std::string> banned_client_addrs;
@@ -203,7 +239,6 @@ bool is_local_file_or_dir(const char* const url){
 
 namespace _r {
 	static const char* mimetype_json;
-	static const char* tags_json;
 	static const char* tag2parent_json;
 	static const char* external_db_json;
 	static const char* protocols_json;
@@ -211,7 +246,6 @@ namespace _r {
 	static const char* protocol_json;
 	
 	std::mutex mimetype_json_mutex;
-	std::mutex tags_json_mutex;
 	std::mutex tag2parent_json_mutex;
 	std::mutex external_db_json_mutex;
 	std::mutex protocols_json_mutex;
@@ -626,6 +660,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			']', ','
 		);
 	}
+	void asciify_json_list_response(const QuoteAndEscape,  const char** str1,  const QuoteAndEscape,  const char** str2,  const QuoteAndEscape,  const char** str3){
+		this->asciify(
+			'[',
+				'"',  _f::esc, '"', *str1, '"', ',',
+				'"',  _f::esc, '"', *str2, '"', ',',
+				'"',  _f::esc, '"', *str3, '"',
+			']', ','
+		);
+	}
 	void asciify_json_list_response(const NoQuote,  const char** str){
 		this->asciify(
 			*str, ','
@@ -638,6 +681,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	template<typename Flag1,  typename Flag2>
 	bool mysql_assign_next_row_for_json_list_response(const Flag1 flag1,  const char** str1,  const Flag2 flag2,  const char** str2){
 		return this->mysql_assign_next_row(str1, str2);
+	}
+	template<typename Flag1,  typename Flag2,  typename Flag3>
+	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3){
+		return this->mysql_assign_next_row(str1, str2, str3);
 	}
 	template<typename... Args>
 	void write_json_list_response_into_buf(Args... args){
@@ -921,6 +968,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		if (this->last_char_in_buf() == ',')
 			--this->itr;
+		this->asciify("],["); // Empty tags dictionary
+		
+		if (this->last_char_in_buf() == ',')
+			--this->itr;
 		this->asciify("]]");
 		*this->itr = 0;
 		
@@ -1102,6 +1153,54 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
+	void asciify_tags_arr(){
+		const char* id;
+		const char* name;
+		const char* thumb;
+		const char* cover;
+		const char* count;
+		this->reset_buf_index();
+		this->begin_json_response();
+		this->asciify('[');
+		while(this->mysql_assign_next_row(&id, &name, &thumb, &cover, &count)){
+			this->asciify(
+				'[',
+					'"', id, '"', ',',
+					'"', _f::esc, '"', name, '"', ',',
+					'"', _f::esc, '"', thumb, '"', ',',
+					'"', _f::esc, '"', cover, '"', ',',
+					count,
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+	}
+	
+	void asciify_tags_dict(){
+		const char* id;
+		const char* name;
+		const char* thumb;
+		const char* cover;
+		const char* count;
+		this->asciify('{');
+		while(this->mysql_assign_next_row2(&id, &name, &thumb, &cover, &count)){
+			this->asciify(
+				'"', id, '"', ':',
+				'[',
+					'"', _f::esc, '"', name, '"', ',',
+					'"', _f::esc, '"', thumb, '"', ',',
+					'"', _f::esc, '"', cover, '"', ',',
+					count,
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify('}');
+	}
+	
 	void asciify_file_info__no_end(){
 		//const char* protocol_id;
 		const char* md5_hex;
@@ -1157,7 +1256,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (this->last_char_in_buf() == ',')
 			// If there was at least one iteration of the loop...
 			--this->itr; // ...wherein a trailing comma was left
-		this->asciify("]]");
+		this->asciify("],");
+		this->asciify_tags_dict();
+		this->asciify("]");
 		*this->itr = 0;
 	}
 	
@@ -1612,7 +1713,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		
-		this->mysql_query(
+		this->mysql_query2(
+			TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2tag WHERE tag=", id, ")")
+			// NOTE: #dkgja No idea why this is necessary. But otherwise MySQL returns only a single row. Alternatively, a temporary table could be used, as it is only subqueries acting weird.
+		);
+		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
@@ -1644,7 +1749,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
 		GET_USER_ID
 		
-		this->mysql_query(
+		this->mysql_query2(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(", _f::strlen, file_ids, file_ids_len, ")")
+		);
+		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
@@ -1660,6 +1768,20 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		
 		this->asciify_file_info();
+		
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view tags_given_ids(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_USER_ID
+		
+		this->mysql_query(
+			TAGS_INFOS("", _f::strlen, tag_ids, tag_ids_len, "")
+			"ORDER BY FIELD(t.id,", _f::strlen, tag_ids, tag_ids_len, ")"
+			// WARNING: No limit
+		);
+		this->asciify_tags_arr();
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1718,7 +1840,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		
-		this->mysql_query(
+		this->mysql_query2(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT id FROM _file WHERE dir=", id, ")")
+		);
+		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
@@ -1744,8 +1869,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view files_given_value(const char* s){
 		GET_PAGE_N('/')
 		GET_FILE2_VAR_NAME(s)
+		const auto user_id = user->id;
 		
-		this->mysql_query(
+		this->mysql_query2(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", _f::strlen, file2_var_name, file2_var_name_len, ")")
+		);
+		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 			"FROM _file f "
@@ -1796,29 +1925,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	std::string_view select2(const char* const tbl_name,  const UserIDIntType user_id,  Args... name_args){
-		this->mysql_query(
-			"SELECT id, name "
-			"FROM ", tbl_name, " "
-			"WHERE name ", name_args..., "\" "
-			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
-			"LIMIT 50"
-			// TODO: Tell client if results have been truncated
-		);
+		try{
+			this->mysql_query(
+				"SELECT id, name "
+				"FROM ", tbl_name, " "
+				"WHERE name ", name_args..., "\" "
+				"AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
+				"LIMIT 50"
+				// TODO: Tell client if results have been truncated
+			);
+		}catch(const compsky::mysql::except::SQLExec& e){
+			std::cerr << e.what() << std::endl;
+			return _r::EMPTY_JSON_LIST;
+		}
 		uint64_t id;
 		const char* name;
 		constexpr _r::flag::Dict dict;
+		this->reset_buf_index();
 		this->init_json(&this->itr, dict, nullptr, &id, &name);
 		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view select2_regex(const char* const tbl_name,  const char* s){
+		const char* const qry = s;
+		
 		GET_USER_ID
 		
-		skip_to_body(&s);
-		
-		const char* const regexp = s;
-		
-		return this->select2(tbl_name, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, s);
+		return this->select2(tbl_name, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
+		// NOTE: AFAIK, in URLs, one should have spaces as %20 before the ? and + after.
+		// However, select2 encodes spaces as %20, not +, even though they are passed as URL parameters.
 	}
 	
 	std::string_view get_device_json(const char* s){
@@ -1927,60 +2062,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			this->init_json(nullptr, dict, &_r::protocol_json, &id, &name, &empty);
 		}
 		return _r::protocol_json;
-	}
-	
-	std::string_view get_tag_json(const char* s){
-		#define get_tag_json_qry_prefix \
-			"SELECT "\
-				"t.id,"\
-				"t.name,"\
-				"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1),"\
-				"GROUP_CONCAT(p.cover     ORDER BY (1/(1+t2pt.depth))*(p.cover    !=\"\") DESC LIMIT 1) "\
-			"FROM _tag t "\
-			"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id "\
-			"JOIN _tag p ON p.id=t2pt.parent "\
-			"WHERE (t2pt.depth=0 OR p.thumbnail IS NOT NULL OR p.cover != \"\")"\
-			  "AND t.id NOT IN"
-		#define get_tag_json_qry_postfix \
-			  "AND p.id NOT IN"  
-		
-		GET_USER_ID
-		if (user_id != user_auth::SpecialUserID::guest){
-			uint64_t id;
-			const char* name;
-			const char* str1;
-			const char* str2;
-			constexpr _r::flag::Dict dict;
-			this->mysql_query(
-				get_tag_json_qry_prefix
-				USER_DISALLOWED_TAGS(user_id)
-				get_tag_json_qry_postfix
-				USER_DISALLOWED_TAGS(user_id)
-				"GROUP BY t.id"
-			);
-			this->itr = this->buf;
-			this->init_json(&this->itr, dict, nullptr, &id, &name, &str1, &str2);
-			return this->get_buf_as_string_view();
-		}
-		
-		std::unique_lock lock(_r::tags_json_mutex);
-		if (unlikely(regenerate_tag_json)){
-			regenerate_tag_json = false;
-			uint64_t id;
-			const char* name;
-			const char* str1;
-			const char* str2;
-			constexpr _r::flag::Dict dict;
-			this->mysql_query_buf(
-				get_tag_json_qry_prefix
-				USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				get_tag_json_qry_postfix
-				USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				"GROUP BY t.id"
-			);
-			this->init_json(nullptr, dict, &_r::tags_json, &id, &name, &str1, &str2);
-		}
-		return _r::tags_json;
 	}
 	
 	std::string_view get_tag2parent_json(const char* s){
@@ -2291,7 +2372,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			")A "
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
 		);
-		regenerate_tag_json = true;
 	}
 	
 	bool add_D_to_db(const UserIDIntType user_id,  const char* const id_and_url,  const size_t id_and_url_len){
@@ -2437,8 +2517,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
 			"WHERE id=", tag_id
 		);
-		
-		regenerate_tag_json = true;
 		
 		return _r::post_ok;
 	}
@@ -2662,12 +2740,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+			  // "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id) // Unnecessary
 		);
 		
 		// TODO: Descendant tags etc
 		
-		regenerate_tag_json = true;
 		regenerate_tag2parent_json = true;
 	}
 	
@@ -2708,7 +2785,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
 		
-		regenerate_tag_json = true;
 		regenerate_tag2parent_json = true;
 	}
 	

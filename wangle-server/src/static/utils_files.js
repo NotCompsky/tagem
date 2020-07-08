@@ -33,7 +33,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			$$$get_file_ids = $$$get_selected_file_ids;
 			let s = "";
 			$$$file2post = {};
-			const [a,data] = datas;
+			const [a,data,tags] = datas;
 			if(a==="0"){
 				if($$$dir_id==="0"){
 					$$$alert("ERROR: Directory ID has not been set.");
@@ -69,7 +69,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
 			document.querySelector("#f .tbody").innerHTML = s;
 			$$$column_id2name('x', "#f .tbody", '$$$view_db', 3);
-			$$$column_id2name('t', "#f .tbody", '$$$view_tag', 4);
+			$$$column_id2name(tags,"#f .tbody", '$$$view_tag', 4);
 			
 			$$$apply_thumbnail_width();
 		}
@@ -145,23 +145,23 @@ function $$$get_selected_file_ids(){
 
 function $$$tag_files_then(file_ids, selector, fn){
 	const tagselect = $(selector);
-	const tag_ids = tagselect.val();
+	const tags = tagselect.select2('data');
 	if(file_ids==="")
 		return;
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
-		"/f/t/" + file_ids + "/" + tag_ids.join(","),
+		"/f/t/" + file_ids + "/" + tags.map(x => x.id).join(","),
 		function(){
 			tagselect.val("").change(); // Deselect all
-			fn(file_ids, tag_ids);
+			fn(file_ids, tags);
 		}
 	);
 }
-function $$$after_tagged_this_file(file_ids, tag_ids){
-	$$$display_tags_add(tag_ids, '#tags')
+function $$$after_tagged_this_file(file_ids, tags){
+	$$$display_tags_add(tags, '#tags')
 }
-function $$$after_tagged_selected_files(file_ids, tag_ids){
+function $$$after_tagged_selected_files(file_ids, tags){
 	for(let node of $$$document_getElementById('f').getElementsByClassName('tr')){
 		if(!file_ids.includes(node.dataset.id))
 			continue;
@@ -170,8 +170,8 @@ function $$$after_tagged_selected_files(file_ids, tag_ids){
 			continue;
 		}
 		let _s = "";
-		for(id of tag_ids)
-			_s += $$$link_to_named_fn_w_param_id_w_human_name("$$$view_tag",id,$$$t[id]);
+		for(tag of tags)
+			_s += $$$link_to_named_fn_w_param_id_w_human_name("$$$view_tag",tag.id,tag.text);
 		node.getElementsByClassName('td')[3].innerHTML += _s;
 	}
 }

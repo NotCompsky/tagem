@@ -1,30 +1,30 @@
-function $$$populate_t_id2name_table(selector, arr){
-	let s = "";
-	for (const [id, tpl] of Object.entries($$$t)){
-		if ((arr !== null)  &&  (!arr.includes(id)))
-			continue;
-		s +=
-			"<div class='tr'>"
-				+ "<div class='td'>"
-					+ "<img src='" + tpl[1] + "' class='icon'/>"
-				+ "</div>"
-				+ "<div class='td'>"
-					+ "<a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a>"
-				+ "</div>"
-			+ "</div>"
-		;
+function $$$populate_t_id2name_table(arr){
+	const tbl = $$$document_getElementById('t').getElementsByClassName('tbody')[0];
+	if (arr.length===0){
+		tbl.innerHTML = "";
+		return;
 	}
-	document.querySelector(selector).innerHTML = s;
-	$$$apply_thumbnail_width();
-}
-function $$$set_profile_name_from_this_tag(){
-	$$$set_profile_name($$$t[$$$tag_id][0]);
-}
-function $$$set_profile_thumb_from_this_tag(){
-	$$$set_profile_thumb($$$t[$$$tag_id][1]);
-}
-function $$$set_profile_cover_from_this_tag(){
-	$$$set_profile_cover($$$t[$$$tag_id][2]);
+	$$$ajax_data_w_JSON_response(
+		"GET",
+		"/a/t/id/"+arr.join(","),
+		null,
+		function(data){
+			let s = "";
+			for (const [id, name, thumb, cover, size] of data){
+				s += "<div class='tr'>";
+					s += "<div class='td thumb'>";
+						s += "<img src='" + thumb + "'/>";
+					s += "</div>";
+					s += "<div class='td'>";
+						s += "<a onclick='$$$view_dir(" + id + ",0)'>" + name + "</a>";
+					s += "</div>";
+					s += "<div class='td dir-size'>" + size + "</div>";
+				s += "</div>";
+			}
+			tbl.innerHTML = s;
+			$$$apply_thumbnail_width();
+		}
+	);
 }
 
 function $$$unlink_this_tag_from_this_file(node){
@@ -65,20 +65,36 @@ function $$$unlink_this_parent_tag_from_this_tag(node){
 function $$$unlink_this_child_tag_from_this_tag(node){
 	$$$unlink_tag_from_this_tag(node,'c');
 }
-function $$$display_tag(id, tpl, fn_name){
+function $$$display_tag(id, name, thumb, fn_name){
 	return "<div class='tag' data-id=\"" + id + "\">"
-			+ "<img src='" + tpl[1] + "' class='icon'/>"
-			+ "<a onclick='$$$view_tag(" + id + ")'>" + tpl[0] + "</a>"
+			+ "<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>"
+			+ "<a onclick='$$$view_tag(" + id + ")'>" + name + "</a>"
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this)\">-</button>"
 		+ "</div>";
 }
 function $$$display_tags(tag_ids, selector, fn_name){
-	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
-	document.querySelector(selector).innerHTML = arr.join("");
+	if(tag_ids.length===0){
+		document.querySelector(selector).innerHTML = "";
+		return;
+	}
+	$$$ajax_data_w_JSON_response(
+		"GET",
+		"/a/t/id/"+tag_ids.join(","),
+		null,
+		function(data){
+			let s = "";
+			for (const [id, name, thumb, cover, size] of data){
+				s += $$$display_tag(id, name, thumb, fn_name);
+			}
+			document.querySelector(selector).innerHTML = s;
+		}
+	);
 }
-function $$$display_tags_add(tag_ids, selector, fn_name){
-	const arr = tag_ids.map(x => $$$display_tag(x, t[x], fn_name));
-	document.querySelector(selector).innerHTML += arr.join("");
+function $$$display_tags_add(tags, selector, fn_name){
+	$$$display_tags(tag_ids, selector, fn_name);
+	// NOTE: Could save a request to the server, but at the cost of not displaying the tag thumbnails
+	//const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name));
+	//document.querySelector(selector).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
 	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents', "$$$unlink_this_parent_tag_from_this_tag");
@@ -87,6 +103,7 @@ function $$$display_child_tags(_tag_id){
 	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), '#children', "$$$unlink_this_child_tag_from_this_tag");
 }
 
+// Functions used in HTML
 function $$$add_child_tags_then(_tag_id, selector, fn){
 	const tagselect = $(selector);
 	$$$ajax_POST_w_text_response(
@@ -119,8 +136,7 @@ function $$$update_tag_thumb(){
 	$$$ajax_POST_w_text_response(
 		"/t/thumb/" + $$$tag_id + "/" + url,
 		function(){
-			$$$t[$$$tag_id][1] = url;
-			$$$set_profile_thumb_from_this_tag();
+			$$$set_profile_thumb(url);
 		}
 	);
 }
@@ -138,9 +154,15 @@ function $$$view_tag(_tag_id,page){
 		$$$populate_f_table('t', $$$tag_id, null, (page===undefined)?0:page);
 	}
 	
-	$$$set_profile_name_from_this_tag();
-	$$$set_profile_thumb_from_this_tag();
-	$$$set_profile_cover_from_this_tag();
+	$$$ajax_GET_w_JSON_response(
+		"/a/t/id/"+_tag_id,
+		function(data){
+			const [id, name,thumb,cover,size] = data[0];
+			$$$set_profile_name(name);
+			$$$set_profile_thumb(thumb);
+			$$$set_profile_cover(cover);
+		}
+	);
 	
 	$$$display_parent_tags($$$tag_id);
 	$$$display_child_tags($$$tag_id);
@@ -149,5 +171,5 @@ function $$$view_tags(ls){
 	$$$hide_all_except(['t','f-action-btns']);
 	$$$unset_window_location_hash();
 	if(ls !== undefined)
-		$$$populate_t_id2name_table('#t .tbody', ls);
+		$$$populate_t_id2name_table(ls);
 }

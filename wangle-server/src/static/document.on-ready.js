@@ -5,6 +5,8 @@ function $$$on_document_ready(){
 	$$$document_getElementById('username').innerText = (uname === undefined)?"GUEST":uname;
 	
 	$$$refetch_all_jsons();
+	$$$init_selects__ajax('d');
+	$$$init_selects__ajax('t');
 	
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
 	let node = document.createElement('script');

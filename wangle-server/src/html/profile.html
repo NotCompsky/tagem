@@ -52,7 +52,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 )========="
 #define CREATE_SITEMAP_LINK(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_dirs"()","All Dirs")(MINIMISED_JS_DECL_view_tags"()","All Tags")(MINIMISED_JS_DECL_view_tasks"()","All Tasks")(MINIMISED_JS_DECL_view_dir"(prompt('/directory/path/'),1)","Filesystem Dir")(MINIMISED_JS_DECL_unhide"('help')","Help")(MINIMISED_JS_DECL_rotate_stylesheet"()",">Table Style")(MINIMISED_JS_DECL_view_text_editor"()","Text Editor")(MINIMISED_JS_DECL_add_tags_dialog"()","+Tags")(MINIMISED_JS_DECL_add_files_dialog"()","+Files")(MINIMISED_JS_DECL_add_dirs_dialog"()","+Dirs")(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_tasks"()","All Tasks")(MINIMISED_JS_DECL_view_dir"(prompt('/directory/path/'),1)","Filesystem Dir")(MINIMISED_JS_DECL_unhide"('help')","Help")(MINIMISED_JS_DECL_rotate_stylesheet"()",">Table Style")(MINIMISED_JS_DECL_view_text_editor"()","Text Editor")(MINIMISED_JS_DECL_add_tags_dialog"()","+Tags")(MINIMISED_JS_DECL_add_files_dialog"()","+Files")(MINIMISED_JS_DECL_add_dirs_dialog"()","+Dirs")(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -253,8 +253,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 	"</div>"
 "</div>"
 
-#define COL_NAMES ("Thumb")("Name")
-#define COL_FILTERS (0,"")(2,"regexp")
+#define COL_NAMES ("Thumb")("Name")("#Files")
+#define COL_FILTERS (0,"")(2,"regexp")(1,"12 - 34")
 #define TBL_ID "t"
 #define TBL_NAME_COLS "[1]"
 #define TBL_TAGS_COLS "[]"

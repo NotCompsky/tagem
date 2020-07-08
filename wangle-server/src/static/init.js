@@ -37,14 +37,13 @@ function $$$load_page_from_a_hash_string(S){
 }
 
 function $$$when_data_loaded(){
-	if($$$t === undefined || $$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
+	if($$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
 	$$$init_tbls();
 	$$$load_page_from_a_hash_string(window.location.hash);
 }
 
 function $$$refetch_all_jsons(){
-	$$$refetch_json('t', '/a/t.json', $$$when_data_loaded);
 	$$$refetch_json('D', '/a/D.json', $$$when_data_loaded);
 	$$$refetch_json('P', '/a/P.json', $$$when_data_loaded);
 	$$$refetch_json('t2p', '/a/t2p.json', $$$when_data_loaded);

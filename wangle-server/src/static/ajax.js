@@ -57,6 +57,10 @@ function $$$ajax_POST_w_text_response(url,fn){
 	$$$ajax("POST","text",url,fn);
 }
 
+function $$$ajax_POST_w_json_response(url,fn){
+	$$$ajax("POST","json",url,fn);
+}
+
 function $$$ajax_POST_w_text_response_generic_success(url){
 	$$$ajax_POST_w_text_response(url,$$$alert_success);
 }

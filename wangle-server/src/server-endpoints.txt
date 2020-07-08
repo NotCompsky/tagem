@@ -13,8 +13,6 @@ GET /a/D.json?>
 	return this->get_device_json(str)
 GET /a/P.json?>
 	return this->get_protocol_json(str)
-GET /a/t.json?>
-	return this->get_tag_json(str)
 GET /a/t2p.json?>
 	return this->get_tag2parent_json(str)
 GET /a/mt.json?>
@@ -43,6 +41,8 @@ GET /a/f/$/>
 GET /a/d/id/>
 	return this->dirs_given_ids(++str)
 
+GET /a/t/id/>
+	return this->tags_given_ids(++str)
 GET /a/t/f/>
 	return this->tags_given_file(++str)
 
@@ -155,7 +155,7 @@ POST /f/backup/>
 POST /x/dl/reddit/p/>
 	return this->archive_reddit_post(++str)
 
-GET /a/select2/regex/d?q=
+GET /a/select2/regex/d?q=>
 	return this->select2_regex("_dir", ++str)
-GET /a/select2/regex/t?q=
+GET /a/select2/regex/t?q=>
 	return this->select2_regex("_tag", ++str)
