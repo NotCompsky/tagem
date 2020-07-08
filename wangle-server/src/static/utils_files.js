@@ -187,7 +187,7 @@ function $$$hide_all_views_except(except){
 			continue;
 		}
 		$$$hide('view-'+type);
-		if(type === 'yt-player')
+		if ((type === 'yt-player')&&($$$yt_player.pauseVideo!==undefined))
 			$$$yt_player.pauseVideo(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 	}
 	if(except !== null)
