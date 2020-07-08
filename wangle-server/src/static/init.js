@@ -40,7 +40,7 @@ function $$$when_data_loaded(){
 	if($$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
 	$$$init_tbls();
-	$$$load_page_from_a_hash_string(window.location.hash);
+	$$$load_page_from_a_hash_string($$$window.location.hash);
 }
 
 function $$$refetch_all_jsons(){

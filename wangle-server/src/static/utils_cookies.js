@@ -29,9 +29,9 @@ function $$$add_to_json_then(var_name, dict, url, fn){
 	// dict is the dictionary of additions to the main dictionary
 	// The main dictionary is referred to by window[var_name]
 	if (dict instanceof Array){
-		window[var_name] = Array.prototype.concat(window[var_name], dict);
+		$$$window[var_name] = Array.prototype.concat($$$window[var_name], dict);
 	} else {
-		$$$merge_into(window[var_name], dict);
+		$$$merge_into($$$window[var_name], dict);
 	}
 	
 	const cookie_name = var_name + '_adds';
@@ -62,10 +62,10 @@ function $$$add_to_json_then(var_name, dict, url, fn){
 function $$$rm_from_json_then(var_name, keys, url, fn){
 	// keys is the list of deletions from the main dictionary
 	// The main dictionary is referred to by window[var_name]
-	if (window[var_name] instanceof Array){
-		window[var_name] = window[var_name].filter(x => !keys.includes(x));
+	if ($$$window[var_name] instanceof Array){
+		$$$window[var_name] = $$$window[var_name].filter(x => !keys.includes(x));
 	} else {
-		$$$del_keys(window[var_name], keys);
+		$$$del_keys($$$window[var_name], keys);
 	}
 	
 	const cookie_name = var_name + '_dels';
@@ -83,7 +83,7 @@ function $$$rm_from_json_then(var_name, keys, url, fn){
 		$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 			// Cache buster url parameter
 			console.log("Cache busting", var_name);
-			window[var_name] = data;
+			$$$window[var_name] = data;
 			fn();
 		});
 		$$$unset_cookie(cookie_name);

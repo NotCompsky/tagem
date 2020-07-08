@@ -11,7 +11,7 @@ function $$$on_document_ready(){
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
 	let node = document.createElement('script');
 	node.src = "https://www.youtube.com/iframe_api";
-	let firstScriptTag = document.getElementsByTagName('script')[0];
+	let firstScriptTag = $$$document_getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(node, firstScriptTag);
 	
 	let css = $$$get_cookie("css");
@@ -37,7 +37,7 @@ function $$$on_document_ready(){
 	$$$fancify_tbl("f");
 	$$$init_qry();
 	
-	for(node of document.getElementsByTagName('input')){
+	for(node of $$$document_getElementsByTagName('input')){
 		node.addEventListener('focusin',  $$$del_key_intercepts);
 		node.addEventListener('focusout', $$$add_key_intercepts);
 	}

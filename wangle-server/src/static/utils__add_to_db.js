@@ -61,7 +61,7 @@ function $$$add_to_db(obj_type){
 	
 	const urls = [];
 	queue.innerText.replace(/(?:^|\n)URL:[\s]*([^\n]+)\nParent:[\s]*([^\n]+)/g, function(group0, url, parent){
-		const parent_id = Object.entries(window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];
+		const parent_id = Object.entries($$$window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];
 		urls.push([parent_id, url]);
 	});
 	if(urls.length===0){
@@ -82,7 +82,7 @@ function $$$add_to_db(obj_type){
 	}
 	
 	for(const [_parent_id, url] of urls){
-		const parent_name = window[parent_type][parseInt(_parent_id)][0];
+		const parent_name = $$$window[parent_type][parseInt(_parent_id)][0];
 		if(!url.startsWith(parent_name)){
 			const parent_type_name = $$$nickname2fullname(parent_type);
 			const err_txt = $$$nickname2fullname(obj_type) + " URL does not begin with assigned " + parent_type_name + "\nURL: " + url + "\n" + parent_type_name + ": " + parent_name;
@@ -122,7 +122,7 @@ function $$$add_to_db__append(obj_type){
 	}else{
 		const parent_type = $$$obj_type2parent_type(obj_type);
 		const parent_select_id = $$$nickname2name(parent_type) + "select";
-		const parent = window[parent_type][$$$document_getElementById(parent_select_id).value];
+		const parent = $$$window[parent_type][$$$document_getElementById(parent_select_id).value];
 		let parent_name;
 		if(parent === undefined){
 			// Guess the directory

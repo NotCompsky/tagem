@@ -8,7 +8,7 @@ function $$$column_from_timestamp(selector, timestamp_indx){
 }
 function $$$column_id2name(x, selector, fn_name, col){
 	// x might be a dictionary itself (such as dirs/tags) or a string name of such a dictionary
-	const data=(typeof x === "string")?window[x]:x;
+	const data=(typeof x === "string")?$$$window[x]:x;
 	if (col === undefined){
 		$$$sub_into(data, document.querySelector(selector), fn_name);
 	} else {

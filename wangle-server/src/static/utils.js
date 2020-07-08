@@ -15,7 +15,7 @@ function $$$init_selects(var_name){
 		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
 		ajax:{
 			transport: function (params, success, failure){
-				let arr = Object.entries(window[var_name]); // WARNING: I don't see why there aren't scope issues
+				let arr = Object.entries($$$window[var_name]); // WARNING: I don't see why there aren't scope issues
 				if(params.data.q !== undefined){
 					const pattern = ($$$use_regex) ? new RegExp(params.data.q) : params.data.q;
 					arr = arr.filter(x => x[1][0].search(pattern)>=0);
@@ -60,7 +60,7 @@ function $$$refetch_json(var_name, url, fn){
 	$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 		// Cache buster url parameter
 		console.log("Cache busting", var_name);
-		window[var_name] = data;
+		$$$window[var_name] = data;
 		if(fn !== undefined)
 			fn();
 		$$$init_selects(var_name);

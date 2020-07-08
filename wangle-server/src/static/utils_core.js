@@ -54,7 +54,7 @@ function $$$toggle(id){
 
 function $$$set_var_to_json_then(var_name, url, fn){
 	// All global variable are set in the window object
-	if (window[var_name] !== undefined){
+	if ($$$window[var_name] !== undefined){
 		fn();
 		return;
 	}
@@ -69,7 +69,7 @@ function $$$set_var_to_json_then(var_name, url, fn){
 			$$$del_keys(data, JSON.parse(dels));
 		}
 		
-		window[var_name] = data;
+		$$$window[var_name] = data;
 		
 		fn();
 	});
