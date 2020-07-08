@@ -6,7 +6,7 @@ function $$$display_related_dirs(dir_id,rel,arr){
 }
 
 function $$$populate_d_id2name_table(arr){
-	const tbl = $$$document_getElementById('d');
+	const tbl = $$$document_getElementById('d').getElementsByClassName('tbody')[0];
 	if (arr.length===0){
 		tbl.innerHTML = "";
 		return;
