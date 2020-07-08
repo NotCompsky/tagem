@@ -5,7 +5,7 @@
 
 
 #define USER_DISALLOWED_FILES_INNER_PRE \
-		"SELECT f2t.file " \
+		"SELECT f2t.file AS id " \
 		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"JOIN file2tag f2t ON f2t.tag=t2pt.tag " \
@@ -24,7 +24,7 @@
 #define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 #define USER_DISALLOWED_TAGS_INNER_PRE \
-		"SELECT t2pt.tag " \
+		"SELECT t2pt.tag AS id " \
 		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"WHERE u2ht.user="
@@ -39,7 +39,7 @@
 #define TAG_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
-		"SELECT device " \
+		"SELECT device AS id " \
 		"FROM user2blacklist_device " \
 		"WHERE user="
 #define USER_DISALLOWED_DEVICES(user_id) \
@@ -51,7 +51,7 @@
 		USER_DISALLOWED_DEVICES_INNER_PRE user_id \
 	")"
 #define USER_DISALLOWED_DIRS_INNER_PRE \
-		"SELECT dir " \
+		"SELECT dir AS id " \
 		"FROM user2blacklist_dir " \
 		"WHERE user="
 #define USER_DISALLOWED_DIRS(user_id) \
