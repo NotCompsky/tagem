@@ -10,3 +10,7 @@ function $$$for_node_in_document_getElementsByClassName(s, fn){
 	for(let e of $$$document_getElementsByClassName(s))
 		fn(e);
 }
+
+function $$$get_tbl_body(id){
+	return $$$document_getElementById(id).getElementsByClassName('tbody')[0];
+}

@@ -1,7 +1,6 @@
 function $$$populate_t_id2name_table(arr){
-	const tbl = $$$document_getElementById('t').getElementsByClassName('tbody')[0];
 	if (arr.length===0){
-		tbl.innerHTML = "";
+		$$$get_tbl_body('t').innerHTML = "";
 		return;
 	}
 	$$$ajax_data_w_JSON_response(
@@ -21,7 +20,7 @@ function $$$populate_t_id2name_table(arr){
 					s += "<div class='td dir-size'>" + size + "</div>";
 				s += "</div>";
 			}
-			tbl.innerHTML = s;
+			$$$get_tbl_body('t').innerHTML = s;
 			$$$apply_thumbnail_width();
 		}
 	);

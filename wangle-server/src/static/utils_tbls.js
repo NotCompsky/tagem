@@ -78,7 +78,7 @@ function $$$deselect_rows(selector, which){
 	$(selector).removeClass("selected" + which);
 }
 function $$$fancify_tbl(id){
-	$$$document_getElementById(id).getElementsByClassName("tbody")[0].addEventListener("mouseup", function(e){
+	$$$get_tbl_body(id).addEventListener("mouseup", function(e){
 		var tgt = e.target;
 		
 		// Climb the node tree until reach a row (success) - or the body itself (failure)

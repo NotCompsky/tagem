@@ -67,7 +67,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
-			document.querySelector("#f .tbody").innerHTML = s;
+			$$$get_tbl_body("f").innerHTML = s;
 			$$$column_id2name('x', "#f .tbody", '$$$view_db', 3);
 			$$$column_id2name(tags,"#f .tbody", '$$$view_tag', 4);
 			
@@ -129,7 +129,7 @@ function $$$get_selected2_file_ids(){
 function $$$get_selected_file_ids(){
 	let file_ids = "";
 	let files_wo_ids = [];
-	for(let node of $$$document_getElementById('f').getElementsByClassName('tbody')[0].getElementsByClassName('selected1')){
+	for(let node of $$$get_tbl_body('t')('f').getElementsByClassName('selected1')){
 		if(node.dataset.id==="0")
 			files_wo_ids.push(node);
 		else 
