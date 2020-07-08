@@ -363,7 +363,7 @@ function $$$view_file(_file_id){
 				
 				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
 				if ($$$autoplay()){
-					$$$display_this_file();
+					$$$display_this_file('',$$$mimetype);
 				} else {
 					for(const [dir,fname,mime] of backups){
 						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
