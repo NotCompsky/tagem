@@ -129,7 +129,7 @@ function $$$get_selected2_file_ids(){
 function $$$get_selected_file_ids(){
 	let file_ids = "";
 	let files_wo_ids = [];
-	for(let node of $$$get_tbl_body('t')('f').getElementsByClassName('selected1')){
+	for(let node of $$$get_tbl_body('f').getElementsByClassName('selected1')){
 		if(node.dataset.id==="0")
 			files_wo_ids.push(node);
 		else 
