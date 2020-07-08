@@ -200,6 +200,7 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 	join += tbl_full_name(which_tbl);
 	join += " AS id, COUNT(*) AS x FROM ";
 	join += get_tbl_name_of_join_in_ersatz_many_to_one(attribute_name, which_tbl);
+	// TODO: Add security filter, e.g. join += " WHERE id NOT IN ..."
 	join += " GROUP BY ";
 	join += tbl_full_name(which_tbl);
 	join += ")ersatz";
