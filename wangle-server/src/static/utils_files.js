@@ -184,11 +184,11 @@ function $$$hide_all_views_except(except){
 			const node = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
 			if(node !== undefined)
 				node.removeAttribute('src');
-			if(type === 'yt-player')
-				$$$yt_player.pauseVideo(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 			continue;
 		}
 		$$$hide('view-'+type);
+		if(type === 'yt-player')
+			$$$yt_player.pauseVideo(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 	}
 	if(except !== null)
 		$$$unhide('view-'+except);
