@@ -947,7 +947,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 		join.c_str(),
 		"WHERE ", where.c_str(), "\n"
 		  "AND X.id NOT IN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")",
-		  (user_disallowed_X_tbl_filter_inner_pre2) ? "AND X.id NOT IN(" : "", (user_disallowed_X_tbl_filter_inner_pre2) ? user_disallowed_X_tbl_filter_inner_pre2 : "AND ", user_id, ")"
+		  (user_disallowed_X_tbl_filter_inner_pre2) ? "AND X.id NOT IN(" : "", (user_disallowed_X_tbl_filter_inner_pre2) ? user_disallowed_X_tbl_filter_inner_pre2 : "AND (", user_id, ")"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, " "
 		"OFFSET ", offset,
