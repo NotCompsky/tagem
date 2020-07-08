@@ -25,6 +25,7 @@
 
 "#main-container{"
 	"min-width:50pc;"
+	"max-width:100vw;"
 "}"
 
 ".select2-search__field{"
@@ -166,4 +167,9 @@
 ".tbody .tr:hover{"
 	"outline:1px dashed #a0f;"
 	"outline-offset:-1px;"
+"}"
+
+
+".media-view{"
+	"max-width:100vw;"
 "}"
