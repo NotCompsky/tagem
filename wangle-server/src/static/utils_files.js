@@ -320,6 +320,7 @@ function $$$view_file(_file_id){
 		$$$alert("Cannot view file of ID 0");
 		return;
 	}
+	$$$undisplay_this_file();
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);
 	$$$hide('add-f-backup');
 	
@@ -364,7 +365,6 @@ function $$$view_file(_file_id){
 				if ($$$autoplay()){
 					$$$display_this_file();
 				} else {
-					$$$undisplay_this_file();
 					for(const [dir,fname,mime] of backups){
 						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
 					}
