@@ -35,10 +35,8 @@ body {
   border-right: 1px solid #272a3a;
   display: flex;
   flex-direction: column;
-  transition: 0.3s;
   background-color: #151728;
   overflow: auto;
-  flex-shrink: 0;
 }
 @media screen and (max-width: 930px) {
   #left-side.active {
@@ -74,9 +72,6 @@ body {
 
 #right-side {
   width: 280px;
-  flex-shrink: 0;
-  margin-left: auto;
-  overflow: auto;
   background-color: #151728;
   display: flex;
   flex-direction: column;
