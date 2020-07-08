@@ -260,8 +260,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 #define TBL_TAGS_COLS "[]"
 #include "components/tbl.html"
 
-#define COL_NAMES ("Name")("Device")
-#define COL_FILTERS (2,"regexp")(2,"regexp")
+#define COL_NAMES ("Name")("Device")("#Files")
+#define COL_FILTERS (2,"regexp")(2,"regexp")(1,"12 - 34")
 #define TBL_ID "d"
 #define TBL_NAME_COLS "[0,1]"
 #define TBL_TAGS_COLS "[]"

@@ -10,7 +10,8 @@ function $$$hide_update_orig_src_dialog(){
 function $$$update_orig_src(){
 	const inp = $$$document_getElementById("orig-src-input");
 	const url = inp.value;
-	let dir = $$$document_getElementById("dirselect").value;
+	const dir_inp = $$$document_getElementById("dirselect");
+	let dir = dir_inp.value;
 	if(dir === ""){
 		dir = $$$guess_parenty_thing_from_name('d', url);
 		if(tpl === undefined){
@@ -18,7 +19,7 @@ function $$$update_orig_src(){
 			return;
 		}
 	}
-	const _dir_name = $$$d[dir][0];
+	const _dir_name = dir_inp.textContent;
 	if(!url.startsWith(_dir_name)){
 		$$$alert("The directory '" + _dir_name + "' is not a prefix of the URL");
 		return;

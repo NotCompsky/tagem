@@ -9,8 +9,6 @@ GET / >
 
 GET /a/f2.json?>
 	return this->get_allowed_file2_vars_json(str)
-GET /a/d.json?>
-	return this->get_dir_json(str)
 GET /a/D.json?>
 	return this->get_device_json(str)
 GET /a/P.json?>
@@ -41,6 +39,9 @@ GET /a/f/t/>
 	return this->files_given_tag(++str)
 GET /a/f/$/>
 	return this->files_given_value(++str)
+
+GET /a/d/id/>
+	return this->dirs_given_ids(++str)
 
 GET /a/t/f/>
 	return this->tags_given_file(++str)
@@ -153,3 +154,8 @@ POST /f/backup/>
 	return this->post__backup_file(++str)
 POST /x/dl/reddit/p/>
 	return this->archive_reddit_post(++str)
+
+GET /a/select2/regex/d?q=
+	return this->select2_regex("_dir", ++str)
+GET /a/select2/regex/t?q=
+	return this->select2_regex("_tag", ++str)

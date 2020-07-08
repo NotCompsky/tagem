@@ -124,6 +124,7 @@
 "}"
 
 
+/* Use CSS to display field names without affecting the HTML (which would make sorting the table more complicated) */
 ".w{"
 	"display:inline;"
 "}"
@@ -149,6 +150,11 @@
 ".dislikes{"
 	"color:red;"
 	"display:inline;"
+"}"
+
+
+".dir-size:after{"
+	"content:' files';"
 "}"
 
 

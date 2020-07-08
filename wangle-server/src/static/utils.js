@@ -12,7 +12,7 @@ function $$$init_selects(var_name){
 	let s = "";
 	const col = $$$tbl2namecol[var_name];
 	$($$$tbl2selector[var_name]).select2({
-		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" pattern":"",
+		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
 		ajax:{
 			transport: function (params, success, failure){
 				let arr = Object.entries(window[var_name]); // WARNING: I don't see why there aren't scope issues
@@ -35,6 +35,26 @@ function $$$init_selects(var_name){
 	}); // Initialise
 }
 
+function $$$init_selects__ajax(var_name){
+	let s = "";
+	const col = $$$tbl2namecol[var_name];
+	$($$$tbl2selector[var_name]).select2({
+		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
+		ajax:{
+			url: "/a/select2/regex/" + var_name,
+			dataType:"json",
+			data:function(params){
+				return ($$$use_regex) ? {'q': params.term} : {'q': RegExp.escape(params.term)}
+			},
+			processResults:function(data){
+				return{
+					results:Object.entries(data).map(([id,name]) => ({id:id, text:name}))
+				};
+			}
+		}
+	});
+}
+
 function $$$refetch_json(var_name, url, fn){
 	$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 		// Cache buster url parameter
@@ -42,7 +62,10 @@ function $$$refetch_json(var_name, url, fn){
 		window[var_name] = data;
 		if(fn !== undefined)
 			fn();
-		$$$init_selects(var_name);
+		if((var_name==='d')||(var_name==='t'))
+			$$$init_selects__ajax(var_name);
+		else
+			$$$init_selects(var_name);
 	});
 }
 

@@ -333,9 +333,10 @@ function $$$view_file(_file_id){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv, backups] = data;
+				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], backups, _d] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
+				$$$d = _d;
 				$$$file_name = name;
 				$$$file_title = (title==="")?$$$file_name:title;
 				const db_and_post_ids = ext_db_n_post_ids;

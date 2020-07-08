@@ -137,6 +137,7 @@ typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 namespace _f {
 	using namespace compsky::asciify::flag;
 	constexpr static const Escape esc;
+	constexpr static const esc::DoubleQuote esc_dblqt;
 	constexpr static const AlphaNumeric alphanum;
 	constexpr static const StrLen strlen;
 	constexpr static const JSONEscape json_esc;
@@ -145,7 +146,9 @@ namespace _f {
 	constexpr static const NElements n_elements;
 	constexpr static const Hex hex;
 	constexpr static const grammatical_case::Lower lower_case;
+	constexpr static const grammatical_case::Upper upper_case;
 	constexpr static const esc::SpacesAndNonAscii esc_spaces_and_non_ascii;
+	constexpr static const esc::URI_until_space::Unescape unescape_URI_until_space;
 }
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
@@ -203,7 +206,6 @@ namespace _r {
 	static const char* tags_json;
 	static const char* tag2parent_json;
 	static const char* external_db_json;
-	static const char* dirs_json;
 	static const char* protocols_json;
 	static const char* devices_json;
 	static const char* protocol_json;
@@ -212,7 +214,6 @@ namespace _r {
 	std::mutex tags_json_mutex;
 	std::mutex tag2parent_json_mutex;
 	std::mutex external_db_json_mutex;
-	std::mutex dirs_json_mutex;
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
 	std::mutex protocol_json_mutex;
@@ -466,6 +467,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
+	void mysql_query_after_itr(Args... args){
+		char* const itr_init = this->itr;
+		this->asciify(args...);
+		this->mysql_query_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->itr = itr_init;
+	}
+	
+	template<typename... Args>
 	void mysql_exec(Args... args){
 		this->reset_buf_index();
 		this->asciify(args...);
@@ -491,6 +500,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	void mysql_free_res(){
 		mysql_free_result(this->res);
+	}
+	
+	void mysql_free_res2(){
+		mysql_free_result(this->res2);
 	}
 	
 	void mysql_seek(const int i){
@@ -605,6 +618,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			']', ','
 		);
 	}
+	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteAndEscape,  const char** str2){
+		this->asciify(
+			'[',
+				'"',  *str1, '"', ',',
+				'"',  _f::esc, '"', *str2, '"',
+			']', ','
+		);
+	}
 	void asciify_json_list_response(const NoQuote,  const char** str){
 		this->asciify(
 			*str, ','
@@ -715,15 +736,59 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		
-		this->mysql_query(
+		this->begin_json_response();
+		this->asciify('[');
+		
+		const char* id_str;
+		const char* name;
+		
+		this->asciify('[');
+		this->mysql_query_after_itr(
 			"SELECT name "
 			"FROM _dir "
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
+		while(this->mysql_assign_next_row(&name))
+			this->asciify_json_list_response(this->quote_and_escape, &name);
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		this->asciify(',');
 		
-		const char* name;
-		this->write_json_list_response_into_buf(this->quote_and_escape, &name);
+		this->asciify('[');
+		this->mysql_query_after_itr(
+			"SELECT d.id, d.name "
+			"FROM _dir d "
+			"JOIN dir2parent_tree dt ON dt.parent=d.id "
+			"WHERE dt.dir=", id, " "
+			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			"ORDER BY depth DESC"
+		);
+		while(this->mysql_assign_next_row(&id_str, &name))
+			this->asciify_json_list_response(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		this->asciify(',');
+		
+		this->asciify('[');
+		this->mysql_query_after_itr(
+			"SELECT d.id, d.name "
+			"FROM _dir d "
+			"JOIN dir2parent_tree dt ON dt.dir=d.id "
+			"WHERE dt.parent=", id, " "
+			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			"ORDER BY depth DESC"
+		);
+		while(this->mysql_assign_next_row(&id_str, &name))
+			this->asciify_json_list_response(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		
+		this->asciify(']');
+		*this->itr = 0;
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::dir_info, id);
@@ -877,7 +942,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const UserIDIntType user_id = user->id;
 		
 		const size_t n = user->allowed_file2_vars.size();
-		this->mysql_query(
+		
+		
+		this->reset_buf_index();
+		this->begin_json_response();
+		this->asciify('[');
+		
+		
+		this->asciify('[');
+		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir") ","
 				"f.mimetype,"
@@ -892,15 +965,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"GROUP BY f.id"
 		);
-		
-		this->mysql_query2(
-			"SELECT dir, name, mimetype "
-			"FROM file_backup "
-			"WHERE file=", id, " "
-			  "AND dir NOT IN" USER_DISALLOWED_DIRS(user_id)
-			// No need to check if user has permission to view the file itself - data is conditional on the previous query having results
-		);
-		
 		const char* md5_hash;
 		const char* dir_id;
 		const char* file_name;
@@ -919,13 +983,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* tag_ids;
 		const char* mimetype;
 		const char* file2_values;
-		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
-		this->asciify('[');
 		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &f_title, &file_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
 			this->asciify(
 				'"', md5_hash, '"', ',',
@@ -945,25 +1002,70 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				'"', external_db_and_post_ids, '"', ',',
 				'"', tag_ids, '"', ',',
 				mimetype, ',',
-				'"', file2_values, '"', ',',
-				'['
+				'"', file2_values, '"'
 			);
-			const char* backup_dir_id;
-			const char* backup_file_name;
-			const char* backup_mimetype;
-			while(this->mysql_assign_next_row2(&backup_dir_id, &backup_file_name, &backup_mimetype)){
-				this->asciify(
-					'[',
-						'"', backup_dir_id, '"', ',',
-						'"', _f::esc, '"', backup_file_name, '"', ',',
-						'"', backup_mimetype, '"',
-					']', ','
-				);
-			}
-			if(this->last_char_in_buf() == ',')
-				--this->itr;
-			this->asciify(']');
 		}
+		if(this->last_char_in_buf() != '"')
+			// No results - probably because the user hasn't the permission to view the file
+			return _r::not_found;
+		this->asciify(']');
+		this->asciify(',');
+		
+		
+		this->asciify('[');
+		this->mysql_query_after_itr(
+			"SELECT dir, name, mimetype "
+			"FROM file_backup "
+			"WHERE file=", id, " "
+			  "AND dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+		);
+		const char* backup_dir_id;
+		const char* backup_file_name;
+		const char* backup_mimetype;
+		while(this->mysql_assign_next_row(&backup_dir_id, &backup_file_name, &backup_mimetype)){
+			this->asciify(
+				'[',
+					'"', backup_dir_id, '"', ',',
+					'"', _f::esc, '"', backup_file_name, '"', ',',
+					'"', backup_mimetype, '"',
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		this->asciify(',');
+		
+		
+		this->asciify('{');
+		this->mysql_query_after_itr(
+			"SELECT d.id, d.name, d.device "
+			"FROM _dir d "
+			"WHERE d.id IN("
+				"SELECT dir "
+				"FROM _file "
+				"WHERE id=", id, " "
+				"UNION "
+				"SELECT dir "
+				"FROM file_backup "
+				"WHERE file=", id,
+			")"
+			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+		);
+		while(this->mysql_assign_next_row(&backup_dir_id, &backup_file_name, &backup_mimetype)){
+			this->asciify(
+				'"', backup_dir_id, '"', ':',
+				'[',
+					'"', _f::esc, '"', backup_file_name, '"', ',',
+					'"', backup_mimetype, '"',
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify('}');
+		
+		
 		this->asciify(']');
 		*this->itr = 0;
 		
@@ -1562,6 +1664,49 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view dirs_given_ids(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, ' ')
+		GET_USER_ID
+		
+		this->mysql_query(
+			"SELECT "
+				"d.id,"
+				"d.name,"
+				"d.device,"
+				"COUNT(*)"
+			"FROM _dir d "
+			"JOIN _file f ON f.dir=d.id "
+			"WHERE d.id IN (", _f::strlen, dir_ids, dir_ids_len, ")"
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
+			"GROUP BY d.id "
+			"ORDER BY FIELD(d.id,", _f::strlen, dir_ids, dir_ids_len, ")"
+			// WARNING: No limit
+		);
+		const char* id;
+		const char* name;
+		const char* device;
+		const char* count;
+		this->reset_buf_index();
+		this->begin_json_response();
+		this->asciify('[');
+		while(this->mysql_assign_next_row(&id, &name, &device, &count)){
+			this->asciify(
+				'[',
+					'"', id, '"', ',',
+					'"', _f::esc, '"', name, '"', ',',
+					'"', device, '"', ',',
+					count,
+				']', ','
+			);
+		}
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view files_given_dir(const char* s){
 		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
@@ -1649,40 +1794,31 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::mimetype_json;
 	}
 	
-	std::string_view get_dir_json(const char* s){
+	template<typename... Args>
+	std::string_view select2(const char* const tbl_name,  const UserIDIntType user_id,  Args... name_args){
+		this->mysql_query(
+			"SELECT id, name "
+			"FROM ", tbl_name, " "
+			"WHERE name ", name_args..., "\" "
+			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			"LIMIT 50"
+			// TODO: Tell client if results have been truncated
+		);
+		uint64_t id;
+		const char* name;
+		constexpr _r::flag::Dict dict;
+		this->init_json(&this->itr, dict, nullptr, &id, &name);
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view select2_regex(const char* const tbl_name,  const char* s){
 		GET_USER_ID
-		if (user_id != user_auth::SpecialUserID::guest){
-			uint64_t id;
-			const char* str1;
-			const char* str2;
-			constexpr _r::flag::Dict dict;
-			this->mysql_query(
-				"SELECT id, name, device "
-				"FROM _dir "
-				"WHERE id NOT IN" USER_DISALLOWED_DIRS(user_id)
-			);
-			this->itr = this->buf;
-			this->init_json(&this->itr, dict, nullptr, &id, &str1, &str2);
-			return this->get_buf_as_string_view();
-		}
 		
-		std::unique_lock lock(_r::dirs_json_mutex);
-		if (unlikely(regenerate_dir_json)){
-			// WARNING: Race condition since init_json uses global mysql objects
-			// TODO: Eliminate race with mutex
-			regenerate_dir_json = false;
-			uint64_t id;
-			const char* str1;
-			const char* str2;
-			constexpr _r::flag::Dict dict;
-			this->mysql_query_buf(
-				"SELECT id, name, device "
-				"FROM _dir "
-				"WHERE id NOT IN" USER_DISALLOWED_DIRS__COMPILE_TIME(GUEST_ID_STR)
-			);
-			this->init_json(nullptr, dict, &_r::dirs_json, &id, &str1, &str2);
-		}
-		return _r::dirs_json;
+		skip_to_body(&s);
+		
+		const char* const regexp = s;
+		
+		return this->select2(tbl_name, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, s);
 	}
 	
 	std::string_view get_device_json(const char* s){

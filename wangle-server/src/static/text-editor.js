@@ -22,12 +22,13 @@ function $$$text_editor_save(){
 		$$$alert("Must tag file");
 		return;
 	}
-	const _dir_id = $$$document_getElementById("dirselect").value;
+	const dir_inp = $$$document_getElementById("dirselect");
+	const _dir_id = dir_inp.value;
 	if(_dir_id === null){
 		$$$alert("Must assign file to directory");
 		return;
 	}
-	const _dir_name = $$$d[_dir_id][0];
+	const _dir_name = dir_inp.textContent;
 	if(!_dir_name.startsWith("/")){
 		$$$alert("Directory must be local");
 		return;
