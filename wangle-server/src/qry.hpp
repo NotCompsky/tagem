@@ -8,7 +8,7 @@
 		"SELECT f2t.file " \
 		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
-		"LEFT JOIN file2tag f2t ON f2t.tag=t2pt.tag " \
+		"JOIN file2tag f2t ON f2t.tag=t2pt.tag " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_FILES_INNER_PRE2 \
 		"SELECT f.id " \
