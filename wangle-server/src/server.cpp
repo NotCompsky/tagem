@@ -186,6 +186,7 @@ namespace _f {
 	constexpr static const grammatical_case::Upper upper_case;
 	constexpr static const esc::SpacesAndNonAscii esc_spaces_and_non_ascii;
 	constexpr static const esc::URI_until_space::Unescape unescape_URI_until_space;
+	constexpr static const UntilNullOr until;
 }
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
@@ -1849,6 +1850,27 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
 		this->asciify(']');
+		
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view guess_dir_given_file(const char* s){
+		// Given a file URL, this should return the ID and name of the directory most suited to being its parent.
+		const char* const file_url = s;
+		
+		GET_USER_ID
+		
+		this->mysql_query(
+			"SELECT id, name "
+			"FROM _dir "
+			"WHERE LEFT(\"", _f::esc, '"', _f::until, ' ', file_url, "\",LENGTH(name))=name "
+			"ORDER BY LENGTH(name) DESC "
+			"LIMIT 1"
+		);
+		
+		const char* id;
+		const char* name;
+		this->write_json_list_response_into_buf(this->quote_no_escape, &id, this->quote_and_escape, &name);
 		
 		return this->get_buf_as_string_view();
 	}
