@@ -1964,7 +1964,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->asciify(USER_DISALLOWED_TAGS(user_id));
 				break;
 		}
-		this->asciify("LIMIT 50"); // TODO: Tell client if results have been truncated
+		this->asciify("LIMIT 20"); // TODO: Tell client if results have been truncated
 		
 		try{
 			this->mysql_query_using_buf();
