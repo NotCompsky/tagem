@@ -187,8 +187,8 @@ function $$$hide_all_views_except(except){
 			continue;
 		}
 		$$$hide('view-'+type);
-		if ((type === 'yt-player')&&($$$yt_player.pauseVideo!==undefined))
-			$$$yt_player.pauseVideo(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
+		if (type === 'yt-player')
+			$$$try_to_pause_yt_video(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 	}
 	if(except !== null)
 		$$$unhide('view-'+except);
@@ -218,6 +218,10 @@ function $$$view_yt_video(idstr){
 	$$$yt_player.loadVideoById(idstr);
 	$$$hide_all_views_except('yt-player');
 }
+function $$$try_to_pause_yt_video(){
+	if($$$yt_player.pauseVideo!==undefined)
+		$$$yt_player.pauseVideo();
+}
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	const [_dir_name, _device_id] = $$$d[(_dir_id === "") ? $$$dir_id : _dir_id];
@@ -225,7 +229,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 		$$$active_media = $$$yt_player;
 		return $$$view_yt_video(_file_name);
 	}
-	$$$yt_player.pauseVideo();
+	$$$try_to_pause_yt_video();
 	const embed_pre = $$$D[_device_id][2];
 	if (embed_pre === ""){
 		const _src_end = (_dir_id === "") ? "" : "/" + _dir_id;
