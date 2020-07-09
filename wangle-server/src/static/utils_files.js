@@ -329,7 +329,6 @@ function $$$view_file(_file_id){
 		$$$alert("Cannot view file of ID 0");
 		return;
 	}
-	$$$undisplay_this_file();
 	$$$hide('add-f-backup');
 	
 	$$$file_tagger_fn = $$$after_tagged_this_file;
@@ -342,6 +341,7 @@ function $$$view_file(_file_id){
 	);
 	
 	if (_file_id !== undefined){
+		$$$undisplay_this_file();
 		$$$file_id = _file_id;
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
