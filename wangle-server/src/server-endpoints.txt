@@ -24,6 +24,8 @@ GET /a/exec.json >
 
 GET /a/d/i/>
 	return this->dir_info(++str)
+GET /a/d/all-file-names/>
+	return this->get_all_file_names_given_dir_id(++str)
 
 GET /a/f/id/>
 	return this->files_given_ids(++str)

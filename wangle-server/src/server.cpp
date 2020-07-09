@@ -773,6 +773,29 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
 	}
 	
+	std::string_view get_all_file_names_given_dir_id(const char* s){
+		const uint64_t id = a2n<uint64_t>(s);
+		
+		this->mysql_query(
+			"SELECT name "
+			"FROM _file "
+			"WHERE dir=", id
+			// WARNING: No security filter
+		);
+		
+		this->begin_json_response();
+		this->asciify('[');
+		const char* name;
+		while(this->mysql_assign_next_row(&name))
+			this->asciify('"', _f::esc, '"', name, '"', ',');
+		if(this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		*this->itr = 0;
+		
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view dir_info(const char* s){
 		const uint64_t id = a2n<uint64_t>(s);
 		
