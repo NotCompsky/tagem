@@ -388,7 +388,9 @@ function $$$view_files(ls){
 	$$$get_file_ids = $$$get_selected_file_ids;
 	
 	if (ls !== undefined){
-		if (ls.length !== 0){
+		if (ls.length === 0){
+			$$$get_tbl_body("f").innerHTML = "";
+		}else{
 			$$$populate_f_table('id',ls.join(","),null,0);
 		}
 	}
