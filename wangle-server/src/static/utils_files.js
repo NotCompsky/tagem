@@ -211,12 +211,12 @@ function $$$play(type, src, _mimetype){
 
 var $$$yt_player_timeout;
 function $$$YTPlayer_onStateChange(e){
+	clearTimeout($$$yt_player_timeout);
 	if (e.data == YT.PlayerState.PLAYING){
 		if($$$yt_player.jump_to_t!==undefined){
 			$$$yt_player.seekTo($$$yt_player.jump_to_t);
 			$$$yt_player.jump_to_t = undefined;
 		}
-		clearTimeout($$$yt_player_timeout);
 		const T = $$$yt_player.next_video_when_reach_t;
 		const t = $$$yt_player.getCurrentTime();
 		if ((T!==undefined) && (t < T)){
@@ -375,8 +375,12 @@ function $$$skip_to_era(e){
 	const [a,b] = e.split("-");
 	if ($$$active_media.currentTime!==undefined)
 		$$$active_media.currentTime = a;
-	else
-		$$$active_media.jump_to_t = a; // seekTo(a) seems to fire before video is finished loading, therefore ignored
+	else{
+		// If we have loaded a new video, seekTo(a) will seemingly fire before that video is finished loading, and is therefore ignored. Otherwise, there is no event fired, so jump_to_t will be ignored (until the user moves the video or something), so we must seekTo anyway.
+		$$$active_media.jump_to_t = a;
+		if($$$active_media.seekTo!==undefined)
+			$$$active_media.seekTo(a);
+	}
 	$$$next_video_when_reach_time(b);
 }
 function $$$play_active_media(){
