@@ -28,7 +28,7 @@ function $$$ajax_data_w_JSON_response(mthd,url,data,fn){
 function $$$ajax_POST_w_JSON_response(url,fn){
 	$$$ajax_w_JSON_response("POST",url,fn);
 }
-function $$$ajax_POST_data(url,resp_type,data,fn){
+function $$$ajax_POST_data_w_JSON_response_and_err(url,resp_type,data,succ,err){
 	$.ajax({
 		type:"POST",
 		data:data,
@@ -37,6 +37,9 @@ function $$$ajax_POST_data(url,resp_type,data,fn){
 		success:fn,
 		error:$$$err_alert
 	});
+}
+function $$$ajax_POST_data(url,resp_type,data,fn){
+	$$$ajax_POST_data_w_JSON_response_and_err(url,resp_type,data,fn,$$$err_alert);
 }
 function $$$ajax_POST_data_w_text_response(url,data,fn){
 	$$$ajax_POST_data(url,"text",data,fn);
