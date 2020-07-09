@@ -138,11 +138,11 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"t.name," \
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
 		"GROUP_CONCAT(p.cover ORDER BY (1/(1+t2pt.depth))*(p.cover!=\"\") DESC LIMIT 1)," \
-		"A.n " \
+		"IFNULL(A.n,0) " \
 	"FROM _tag t " \
 	"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id " \
 	"JOIN _tag p ON p.id=t2pt.parent " \
-	"JOIN(" \
+	"LEFT JOIN(" \
 		"SELECT tag, COUNT(*) AS n " \
 		"FROM file2tag " \
 		/* NOTE: MySQL doesn't seem to optimise this often - usually faster if duplicate the limitations within this subquery */ \
