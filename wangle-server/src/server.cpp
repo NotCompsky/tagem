@@ -2161,7 +2161,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
+			  BACKUP_DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			  ,(dir_id==0)?" OR ":" AND d.id=", dir_id
 		);
 		const char* mimetype = nullptr;
@@ -2571,7 +2571,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// TODO: Check user against user2whitelisted_action
 		
 		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND tag IN (SELECT tag FROM file2tag WHERE file=", orig_f_id, ")");
-		this->mysql_exec("UPDATE file2tag SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		this->mysql_exec("INSERT INTO file2tag (file,tag,user) SELECT ", orig_f_id, ", tag, user FROM file2tag f2t WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY update file2tag.file=file2tag.file");
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
 		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
