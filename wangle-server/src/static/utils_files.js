@@ -324,7 +324,18 @@ function $$$view_file__hides(){
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','file-meta','tagselect-files-container','tagselect-files-btn']);
 }
 
-function $$$view_file(_file_id){
+function $$$skip_to_time(t){
+	if(t===undefined)
+		return;
+	if ($$$active_media.seekTo!==undefined)
+		$$$active_media.seekTo(t);
+	else
+		$$$active_media.currentTime = t;
+}
+
+function $$$view_file(_file_id_and_t){
+	const [_file_id, _t] = _file_id_and_t.split("@");
+	// WARNING: _t is only respected if autoplay is on // TODO: Fix this
 	if(_file_id==0){
 		$$$alert("Cannot view file of ID 0");
 		return;
@@ -376,6 +387,7 @@ function $$$view_file(_file_id){
 				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
 				if ($$$autoplay()){
 					$$$display_this_file('',$$$mimetype);
+					$$$skip_to_time(_t);
 				} else {
 					for(const [dir,fname,mime] of backups){
 						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
