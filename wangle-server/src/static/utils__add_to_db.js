@@ -54,7 +54,6 @@ function $$$add_to_db(obj_type){
 			tagselect.val("").change();
 			queue.innerHTML = ""; // Remove URLs
 			$$$alert("Success");
-			$$$refetch_json('t', '/a/t.json');
 		});
 		return;
 	}
@@ -103,7 +102,7 @@ function $$$add_to_db(obj_type){
 				tagselect.val("").change();
 			queue.innerHTML = ""; // Remove URLs
 			$$$alert("Success");
-			if(obj_type!=='f')
+			if((obj_type!=='f')&&(obj_type!=='d'))
 				$$$refetch_json(obj_type, '/a/'+obj_type+'.json');
 		}
 	);
