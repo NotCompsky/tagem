@@ -331,7 +331,11 @@ function $$$view_file(_file_id){
 	$$$file_tagger_fn = $$$after_tagged_this_file;
 	$$$get_file_ids = $$$get_file_id;
 	
-	$$$set_window_location_hash('f' + ((_file_id===undefined)?$$$file_id:_file_id));
+	$$$set_window_location_hash(
+		($$$playlist_file_ids!==undefined)
+		? ('F' + $$$playlist_file_ids.join(","))
+		: ('f' + ((_file_id===undefined)?$$$file_id:_file_id))
+	);
 	
 	if (_file_id !== undefined){
 		$$$file_id = _file_id;
@@ -455,8 +459,9 @@ async function $$$playlist_listener_delayed(){
 	await $$$sleep(2000);
 	$$$playlist_listener();
 }
-function $$$view_files_as_playlist(){
-	const file_ids_csv = $$$get_file_ids();
+function $$$view_files_as_playlist(file_ids_csv){
+	if(file_ids_csv===undefined)
+		file_ids_csv = $$$get_file_ids();
 	if(file_ids_csv===""){
 		$$$playlist_file_ids = undefined;
 		return;

@@ -17,6 +17,7 @@ function $$$load_page_from_a_hash_string(S){
 	const _xs = /([^\/]+)\/(.*)$/.exec(_x);
 	switch(c){
 		case "f": $$$view_file(_x); break;
+		case "F": $$$view_files_as_playlist(_x); break;
 		case "t": $$$view_tag(_xs[2],_xs[1]);  break;
 		case "x":
 			$$$db_id = _xs[1];
