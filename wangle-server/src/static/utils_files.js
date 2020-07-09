@@ -324,13 +324,28 @@ function $$$view_file__hides(){
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','file-meta','tagselect-files-container','tagselect-files-btn']);
 }
 
-function $$$skip_to_time(t){
-	if(t===undefined)
+function $$$next_video_when_it_reaches(){
+	if(this.currentTime >= this.pause_at_t){
+		if($$$playlist_file_ids === undefined)
+			this.pause();
+		else
+			$$$playlist_listener(); // Go to next file in playlist
+		this.removeEventListener("timeupdate", $$$next_video_when_it_reaches);
+	}
+}
+function $$$next_video_when_reach_time(t){
+	$$$active_media.pause_at_t = t;
+	$$$active_media.addEventListener("timeupdate", $$$next_video_when_it_reaches);
+}
+function $$$skip_to_era(e){
+	if(e===undefined)
 		return;
+	const [a,b] = e.split("-");
 	if ($$$active_media.seekTo!==undefined)
-		$$$active_media.seekTo(t);
+		$$$active_media.seekTo(a);
 	else
-		$$$active_media.currentTime = t;
+		$$$active_media.currentTime = a;
+	$$$next_video_when_reach_time(b);
 }
 
 function $$$view_file(_file_id_and_t){
@@ -355,7 +370,7 @@ function $$$view_file(_file_id_and_t){
 	if (_file_id !== null){
 		if(_file_id === $$$file_id){
 			// We haven't left the current file - perhaps we are skipping to a different era
-			$$$skip_to_time(_t);
+			$$$skip_to_era(_t);
 			$$$view_file__hides();
 			$$$active_media.play()
 		}else{
@@ -394,7 +409,7 @@ function $$$view_file(_file_id_and_t){
 				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
 				if ($$$autoplay()){
 					$$$display_this_file('',$$$mimetype);
-					$$$skip_to_time(_t);
+					$$$skip_to_era(_t);
 				} else {
 					for(const [dir,fname,mime] of backups){
 						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
