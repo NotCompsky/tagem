@@ -87,10 +87,10 @@ R"=========(
         <img id="profile-cover"/>
 )========="
 #define CREATE_MENU_ITEM(r, data, elem) \
-	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "()\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
+	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
 		"<div id=\"profile-menu\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')","&#9666;")(MINIMISED_JS_DECL_view_dir,"Dir")(MINIMISED_JS_DECL_view_tag,"Tag")(MINIMISED_JS_DECL_view_tags,"Tags")(MINIMISED_JS_DECL_view_file,"File")(MINIMISED_JS_DECL_view_files,"Files")(MINIMISED_JS_DECL_toggle"('right-side')","&#9656;")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')","&#9666;")(MINIMISED_JS_DECL_view_dir"()","Dir")(MINIMISED_JS_DECL_view_tag"()","Tag")(MINIMISED_JS_DECL_view_tags"()","Tags")(MINIMISED_JS_DECL_view_file"()","File")(MINIMISED_JS_DECL_view_files"()","Files")(MINIMISED_JS_DECL_toggle"('right-side')","&#9656;")))
 		"</div>"
 	"</div>"
 
