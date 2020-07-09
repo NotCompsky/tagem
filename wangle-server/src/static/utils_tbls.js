@@ -77,7 +77,7 @@ function $$$select_rows(selector){
 function $$$deselect_rows(selector, which){
 	$(selector).removeClass("selected" + which);
 }
-function $$$fancify_tbl(id){
+function $$$make_tbl_selectable(id){
 	$$$get_tbl_body(id).addEventListener("mouseup", function(e){
 		var tgt = e.target;
 		

@@ -42,4 +42,5 @@ const $$$tbl2namecol = {"f2":null,"t":0,"d":0,"D":0,"P":0};
 const $$$BLANK_IMG_SRC = "data:,";
 
 var $$$get_file_ids;
+var $$$get_tag_ids;
 var $$$file_tagger_fn; // Allows for updating file tag lists when they have tags manually added

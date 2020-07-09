@@ -75,7 +75,7 @@ function $$$set_var_to_json_then(var_name, url, fn){
 	});
 }
 function $$$link_to_named_fn_w_param_id_w_human_name(fn,id,x){
-	return "<a onclick='"+fn+"("+id+")'>"+((x instanceof Array)?x[0]:x)+"</a> ";
+	return "<a onclick='"+fn+"(\""+id+"\")'>"+((x instanceof Array)?x[0]:x)+"</a> ";
 }
 function $$$sub_into(data, node, fn_name){
 	let s = "";

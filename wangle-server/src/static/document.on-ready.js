@@ -34,7 +34,8 @@ function $$$on_document_ready(){
 		w=256;
 	$$$set_thumbnail_width(w);
 	
-	$$$fancify_tbl("f");
+	$$$make_tbl_selectable("f");
+	$$$make_tbl_selectable("t");
 	$$$init_qry();
 	
 	for(node of $$$document_getElementsByTagName('input')){

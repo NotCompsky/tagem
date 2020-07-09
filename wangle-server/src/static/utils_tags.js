@@ -8,14 +8,15 @@ function $$$populate_t_id2name_table(arr){
 		"/a/t/id/"+arr.join(","),
 		null,
 		function(data){
+			$$$unhide('tagselect-self-p');
 			let s = "";
 			for (const [id, name, thumb, cover, size] of data){
-				s += "<div class='tr'>";
+				s += "<div class='tr' data-id=\"" + id + "\">";
 					s += "<div class='td thumb'>";
-						s += "<img src='" + thumb + "'/>";
+						s += "<img onclick='$$$view_tag(\"" + id + "\",0)' src='" + thumb + "'/>";
 					s += "</div>";
 					s += "<div class='td'>";
-						s += "<a onclick='$$$view_tag(" + id + ",0)'>" + name + "</a>";
+						s += name;
 					s += "</div>";
 					s += "<div class='td dir-size'>" + size + "</div>";
 				s += "</div>";
@@ -50,7 +51,8 @@ function $$$unlink_tag_from_this_tag(node,relation){
 	);
 }
 function $$$del_from_t2p(t,p){
-	for(let i=0, n=$$$t2p.length;  i < n;  ++i){
+	let i;
+	for(i=0, n=$$$t2p.length;  i < n;  ++i){
 		const tpl = t2p[i];
 		if(!((tpl[0]==t)&&(tpl[1]==p)))
 			continue;
@@ -67,7 +69,7 @@ function $$$unlink_this_child_tag_from_this_tag(node){
 function $$$display_tag(id, name, thumb, fn_name){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ "<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>"
-			+ "<a onclick='$$$view_tag(" + id + ")'>" + name + "</a>"
+			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + name + "</a>"
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this)\">-</button>"
 		+ "</div>";
 }
@@ -102,29 +104,37 @@ function $$$display_child_tags(_tag_id){
 }
 
 // Functions used in HTML
-function $$$add_child_tags_then(_tag_id, selector, fn){
-	const tagselect = $(selector);
+function $$$add_child_tags(fn){
+	const tagselect = $('#tagselect-self-c');
 	$$$ajax_POST_w_text_response(
-		"/t/c/" + _tag_id + "/" + tagselect.val().join(","),
+		"/t/c/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
+			const ls = $$$get_tag_ids().split(",");
+			$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), ls), '/a/t2p.json', function(){
+				if($$$get_tag_ids!==$$$get_this_tag_id)
+					// if not currently displaying the tag page
+					return;
+				$$$display_child_tags(ls);
+			});
 			tagselect.val("").change(); // Deselect all
 		}
 	);
-	$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), [_tag_id]), '/a/t2p.json', function(){
-		fn();
-	});
 }
-function $$$add_parent_tags_then(_tag_id, selector, fn){
-	const tagselect = $(selector);
+function $$$add_parent_tags(fn){
+	const tagselect = $('#tagselect-self-p');
 	$$$ajax_POST_w_text_response(
-		"/t/p/" + _tag_id + "/" + tagselect.val().join(","),
+		"/t/p/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
+			const ls = $$$get_tag_ids().split(",");
+			$$$add_to_json_then('t2p', $$$zipsplitarr(ls, tagselect.val()), '/a/t2p.json', function(){
+				if($$$get_tag_ids!==$$$get_this_tag_id)
+					// if not currently displaying the tag page
+					return;
+				$$$display_parent_tags(ls);
+			});
 			tagselect.val("").change(); // Deselect all
 		}
 	);
-	$$$add_to_json_then('t2p', $$$zipsplitarr([_tag_id], tagselect.val()), '/a/t2p.json', function(){
-		fn();
-	});
 }
 
 function $$$update_tag_thumb(){
@@ -139,12 +149,25 @@ function $$$update_tag_thumb(){
 	);
 }
 
+function $$$get_this_tag_id(){
+	return $$$tag_id;
+}
+function $$$get_selected_tag_ids(){
+	// Identical to $$$get_selected_file_ids, save for a different table ID, and not checking for IDs of 0
+	let file_ids = "";
+	for(let node of $$$get_tbl_body('t').getElementsByClassName('selected1')){
+		file_ids += "," + node.dataset.id
+	}
+	return file_ids.substr(1);
+}
+
 function $$$view_tag(_tag_id,page){
 	$$$hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	$$$document_getElementById('profile-img').onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$get_file_ids = $$$get_selected_file_ids;
+	$$$get_tag_ids = $$$get_this_tag_id;
 	
 	if (_tag_id !== undefined){
 		// It is undefined if we are just unhiding the tag view
@@ -166,8 +189,9 @@ function $$$view_tag(_tag_id,page){
 	$$$display_child_tags($$$tag_id);
 }
 function $$$view_tags(ls){
-	$$$hide_all_except(['t','f-action-btns']);
+	$$$hide_all_except(['t','f-action-btns','tagselect-self-p-container','tagselect-self-p-btn']);
 	$$$unset_window_location_hash();
+	$$$get_tag_ids = $$$get_selected_tag_ids;
 	if(ls !== undefined)
 		$$$populate_t_id2name_table(ls);
 }
