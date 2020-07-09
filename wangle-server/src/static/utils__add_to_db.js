@@ -59,9 +59,15 @@ function $$$add_to_db(obj_type){
 	}
 	
 	const urls = [];
-	queue.innerText.replace(/(?:^|\n)URL:[\s]*([^\n]+)\nParent:[\s]*([^\n]+)/g, function(group0, url, parent){
-		const parent_id = Object.entries($$$window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];
-		urls.push([parent_id, url]);
+	queue.innerText.replace(/(?:^|\n)URL:[\s]*([^\n]+)\nParent:[\s]*\[([\d]+)\][\s]*([^\s][^\n]+)/g, function(group0, url, parent_id, parent_name){
+		if(parent_type!=='d'){
+			const _parent_id = Object.entries($$$window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];
+			if(_parent_id != parent_id){
+				$$$alert("Mismatching IDs detected");
+				return;
+			}
+		}
+		urls.push([parent_id, parent_name, url]);
 	});
 	if(urls.length===0){
 		$$$alert("No URLs");
@@ -80,8 +86,7 @@ function $$$add_to_db(obj_type){
 		}
 	}
 	
-	for(const [_parent_id, url] of urls){
-		const parent_name = $$$window[parent_type][parseInt(_parent_id)][0];
+	for(const [_parent_id, parent_name, url] of urls){
 		if(!url.startsWith(parent_name)){
 			const parent_type_name = $$$nickname2fullname(parent_type);
 			const err_txt = $$$nickname2fullname(obj_type) + " URL does not begin with assigned " + parent_type_name + "\nURL: " + url + "\n" + parent_type_name + ": " + parent_name;
@@ -121,21 +126,25 @@ function $$$add_to_db__append(obj_type){
 	}else{
 		const parent_type = $$$obj_type2parent_type(obj_type);
 		const parent_select_id = $$$nickname2name(parent_type) + "select";
-		const parent = $$$window[parent_type][$$$document_getElementById(parent_select_id).value];
+		const parent = $('#'+parent_select_id).select2('data')[0];
 		let parent_name;
+		let parent_id;
 		if(parent === undefined){
-			// Guess the directory
+			// Guess the parent
+			// TODO: Implement server-side directory guessing
 			const tpl = $$$guess_parenty_thing_from_name(parent_type, x);
 			if(tpl === undefined){
 				const parent_type_name = $$$nickname2fullname(parent_type);
 				$$$alert("Cannot find suitable " + parent_type_name + "\nPlease create a " + parent_type_name + " object that is a prefix of the " + $$$nickname2fullname(obj_type) + " URL");
 				return;
 			}
+			parent_id = tpl[0];
 			parent_name = tpl[1];
 		} else {
-			parent_name = parent[0];
+			parent_id = parent.id;
+			parent_name = parent.text;
 		}
-		$$$document_getElementById('add-' + obj_type + '-queue').innerText += "\nURL:    " + inp.value + "\nParent: " + parent_name + "\n";
+		$$$document_getElementById('add-' + obj_type + '-queue').innerText += "\nURL:    " + inp.value + "\nParent: [" + parent_id + "] " + parent_name + "\n";
 	}
 	inp.value = "";
 }
