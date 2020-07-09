@@ -1,9 +1,15 @@
+const $$$dummy = function(){};
+var $$$YTPlayer_onReady_fn = $$$dummy;
+function $$$YTPlayer_onReady(){
+	$$$YTPlayer_onReady_fn();
+}
 function onYouTubeIframeAPIReady(){
 	// NOTE: Must not be name-mangled - used by YouTube IFrame API
 	$$$yt_player = new YT.Player('yt-player', {
 		height: '390',
 		width: '640',
 		events:{
+			'onReady': $$$YTPlayer_onReady,
 			'onStateChange':$$$YTPlayer_onStateChange
 		}
 	});

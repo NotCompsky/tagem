@@ -209,18 +209,43 @@ function $$$play(type, src, _mimetype){
 	player.parentNode.play();
 }
 
+var $$$yt_player_timeout;
 function $$$YTPlayer_onStateChange(e){
-	if ((e.data != YT.PlayerState.ENDED) || ($$$playlist_file_ids===undefined))
+	if (e.data == YT.PlayerState.PLAYING){
+		clearTimeout($$$yt_player_timeout);
+		const T = $$$yt_player.next_video_when_reach_t;
+		const t = $$$yt_player.getCurrentTime();
+		if ((T!==undefined) && (t < T)){
+			const t_remaining = (T - t) / $$$yt_player.getPlaybackRate();
+			$$$yt_player_timeout = setTimeout($$$next_video_from_yt_video,  t_remaining * 1000);
+		}
 		return;
-	$$$playlist_listener();
+	}
+	if ((e.data == YT.PlayerState.ENDED) && ($$$playlist_file_ids===undefined))
+		$$$playlist_listener();
+}
+function $$$view_yt_video__from_onReady(){
+	$$$yt_player.loadVideoById($$$YTPlayer_onReady.my_idstr);
+	$$$YTPlayer_onReady = $$$dummy;
 }
 function $$$view_yt_video(idstr){
-	$$$yt_player.loadVideoById(idstr);
+	if($$$yt_player.loadVideoById!==undefined)
+		$$$yt_player.loadVideoById(idstr);
+	else{
+		$$$YTPlayer_onReady.my_idstr = idstr;
+		$$$YTPlayer_onReady_fn = $$$view_yt_video__from_onReady;
+	}
 	$$$hide_all_views_except('yt-player');
 }
 function $$$try_to_pause_yt_video(){
 	if($$$yt_player.pauseVideo!==undefined)
 		$$$yt_player.pauseVideo();
+}
+function $$$next_video_from_yt_video(){
+	if($$$playlist_file_ids === undefined)
+		$$$try_to_pause_yt_video();
+	else
+		$$$playlist_listener(); // Go to next file in playlist
 }
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
@@ -273,6 +298,7 @@ function $$$display_this_file(_dir_id, _mimetype){
 }
 function $$$undisplay_this_file(){
 	$$$hide_all_views_except(null);
+	$$$active_media = null;
 }
 function $$$autoplay(){
 	return $$$document_getElementById('autoplay').checked;
@@ -325,7 +351,7 @@ function $$$view_file__hides(){
 }
 
 function $$$next_video_when_it_reaches(){
-	if(this.currentTime >= this.pause_at_t){
+	if(this.currentTime >= this.next_video_when_reach_t){
 		if($$$playlist_file_ids === undefined)
 			this.pause();
 		else
@@ -334,7 +360,9 @@ function $$$next_video_when_it_reaches(){
 	}
 }
 function $$$next_video_when_reach_time(t){
-	$$$active_media.pause_at_t = t;
+	$$$active_media.next_video_when_reach_t = t;
+	if($$$active_media===$$$yt_player)
+		return;
 	$$$active_media.addEventListener("timeupdate", $$$next_video_when_it_reaches);
 }
 function $$$skip_to_era(e){
@@ -346,6 +374,16 @@ function $$$skip_to_era(e){
 	else
 		$$$active_media.currentTime = a;
 	$$$next_video_when_reach_time(b);
+}
+function $$$play_active_media(){
+	if($$$active_media.play!==undefined)
+		$$$active_media.play()
+	else
+		$$$active_media.playVideo();
+}
+
+function $$$active_media_is_video(){
+	return ($$$active_media!==null)&&(($$$active_media===$$$yt_player)||($$$active_media.play!==undefined))
 }
 
 function $$$view_file(_file_id_and_t){
@@ -368,11 +406,11 @@ function $$$view_file(_file_id_and_t){
 	);
 	
 	if (_file_id !== null){
-		if(_file_id === $$$file_id){
+		if((_file_id === $$$file_id)&&($$$active_media_is_video())){
 			// We haven't left the current file - perhaps we are skipping to a different era
 			$$$skip_to_era(_t);
 			$$$view_file__hides();
-			$$$active_media.play()
+			$$$play_active_media();
 		}else{
 		$$$undisplay_this_file();
 		$$$file_id = _file_id;
