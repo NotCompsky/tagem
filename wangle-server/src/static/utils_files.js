@@ -212,6 +212,10 @@ function $$$play(type, src, _mimetype){
 var $$$yt_player_timeout;
 function $$$YTPlayer_onStateChange(e){
 	if (e.data == YT.PlayerState.PLAYING){
+		if($$$yt_player.jump_to_t!==undefined){
+			$$$yt_player.seekTo($$$yt_player.jump_to_t);
+			$$$yt_player.jump_to_t = undefined;
+		}
 		clearTimeout($$$yt_player_timeout);
 		const T = $$$yt_player.next_video_when_reach_t;
 		const t = $$$yt_player.getCurrentTime();
@@ -369,10 +373,10 @@ function $$$skip_to_era(e){
 	if(e===undefined)
 		return;
 	const [a,b] = e.split("-");
-	if ($$$active_media.seekTo!==undefined)
-		$$$active_media.seekTo(a);
-	else
+	if ($$$active_media.currentTime!==undefined)
 		$$$active_media.currentTime = a;
+	else
+		$$$active_media.jump_to_t = a; // seekTo(a) seems to fire before video is finished loading, therefore ignored
 	$$$next_video_when_reach_time(b);
 }
 function $$$play_active_media(){
