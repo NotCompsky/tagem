@@ -61,7 +61,7 @@ function $$$add_to_db(obj_type){
 	const urls = [];
 	queue.innerText.replace(/(?:^|\n)URL:[\s]*([^\n]+)\nParent:[\s]*\[([\d]+)\][\s]*([^\s][^\n]+)/g, function(group0, url, parent_id, parent_name){
 		if(parent_type!=='d'){
-			const _parent_id = Object.entries($$$window[parent_type]).filter(([key,[name,_]]) => name==parent)[0][0];
+			const _parent_id = Object.entries($$$window[parent_type]).filter(([key,[name,_]]) => name==parent_name)[0][0];
 			if(_parent_id != parent_id){
 				$$$alert("Mismatching IDs detected");
 				return;
