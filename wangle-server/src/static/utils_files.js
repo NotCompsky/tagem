@@ -315,13 +315,17 @@ function $$$assign_value_to_file(){
 	);
 }
 
+function $$$view_file__hides(){
+	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','file-meta','tagselect-files-container','tagselect-files-btn']);
+}
+
 function $$$view_file(_file_id){
 	if(_file_id==0){
 		$$$alert("Cannot view file of ID 0");
 		return;
 	}
 	$$$undisplay_this_file();
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn']);
 	$$$hide('add-f-backup');
 	
 	$$$file_tagger_fn = $$$after_tagged_this_file;
@@ -370,9 +374,11 @@ function $$$view_file(_file_id){
 					}
 				}
 				$$$document_getElementById("view-btns").innerHTML = _s;
+				$$$view_file__hides();
 			}
 		);
 	} else {
+		$$$view_file__hides();
 		$$$set_profile_name($$$file_title);
 	}
 }

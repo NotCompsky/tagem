@@ -15,6 +15,7 @@ function $$$hide_all_except(ls){
 		'view-as-playlist-btn',
 		'tasks-container',
 		'file-info',
+		'file-meta',
 		'next-f-in-playlist',
 		'user-info',
 		'post-container',
