@@ -90,10 +90,9 @@ function $$$display_tags(tag_ids, selector, fn_name){
 	);
 }
 function $$$display_tags_add(tags, selector, fn_name){
-	$$$display_tags(tags.map(x => x.id), selector, fn_name);
-	// NOTE: Could save a request to the server, but at the cost of not displaying the tag thumbnails
-	//const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name));
-	//document.querySelector(selector).innerHTML += arr.join("");
+	// TODO: Have server return tag dictionary in response to tagging a file
+	const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name));
+	document.querySelector(selector).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
 	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents', "$$$unlink_this_parent_tag_from_this_tag");
