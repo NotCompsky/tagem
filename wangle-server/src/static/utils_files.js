@@ -334,8 +334,9 @@ function $$$skip_to_time(t){
 }
 
 function $$$view_file(_file_id_and_t){
-	const [_file_id, _t] = _file_id_and_t.split("@");
+	const [_file_id, _t] = (_file_id_and_t===undefined)?[null,null]:_file_id_and_t.split("@");
 	// WARNING: _t is only respected if autoplay is on // TODO: Fix this
+	
 	if(_file_id==0){
 		$$$alert("Cannot view file of ID 0");
 		return;
@@ -351,7 +352,13 @@ function $$$view_file(_file_id_and_t){
 		: ('f' + ((_file_id===undefined)?$$$file_id:_file_id))
 	);
 	
-	if (_file_id !== undefined){
+	if (_file_id !== null){
+		if(_file_id === $$$file_id){
+			// We haven't left the current file - perhaps we are skipping to a different era
+			$$$skip_to_time(_t);
+			$$$view_file__hides();
+			$$$active_media.play()
+		}else{
 		$$$undisplay_this_file();
 		$$$file_id = _file_id;
 		$$$ajax_GET_w_JSON_response(
@@ -397,6 +404,7 @@ function $$$view_file(_file_id_and_t){
 				$$$view_file__hides();
 			}
 		);
+		}
 	} else {
 		$$$view_file__hides();
 		$$$set_profile_name($$$file_title);
