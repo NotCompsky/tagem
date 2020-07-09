@@ -8,6 +8,12 @@ namespace _r {
 		"Not Found"
 	;
 	
+	constexpr static const std::string_view unauthorised =
+		#include "headers/return_code/UNAUTHORISED.c"
+		"\n"
+		"Not Authorised"
+	;
+	
 	constexpr static const std::string_view requires_login =
 		#include "headers/return_code/UNAUTHORISED.c"
 		"\n"

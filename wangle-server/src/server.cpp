@@ -798,8 +798,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		while(this->mysql_assign_next_row(&name))
 			this->asciify_json_list_response(this->quote_and_escape, &name);
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
+		if(this->last_char_in_buf() != ',')
+			return _r::unauthorised;
+		--this->itr;
 		this->asciify(']');
 		this->asciify(',');
 		
@@ -1068,7 +1069,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT dir, name, mimetype "
 			"FROM file_backup "
 			"WHERE file=", id, " "
-			  "AND dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND dir NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 		);
 		const char* backup_dir_id;
 		const char* backup_file_name;
@@ -1101,7 +1102,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM file_backup "
 				"WHERE file=", id,
 			")"
-			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND d.id NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 		);
 		while(this->mysql_assign_next_row(&backup_dir_id, &backup_file_name, &backup_mimetype)){
 			this->asciify(
@@ -2124,7 +2125,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view stream_file(const char* s){
 		constexpr static const size_t block_sz = 1024 * 1024 * 10;
-		constexpr static const size_t stream_block_sz = 1024 * 500; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
+		constexpr static const size_t stream_block_sz = 1024 * 1024; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
 		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		

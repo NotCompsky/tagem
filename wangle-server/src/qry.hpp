@@ -54,15 +54,15 @@
 		"SELECT dir AS id " \
 		"FROM user2blacklist_dir " \
 		"WHERE user="
+#define USER_DISALLOWED_BACKUP_DIRS(user_id) \
+	"(" \
+		USER_DISALLOWED_DIRS_INNER_PRE, user_id, \
+	")"
 #define USER_DISALLOWED_DIRS(user_id) \
 	"(" \
 		USER_DISALLOWED_DIRS_INNER_PRE, user_id, \
 		" UNION " \
 		"SELECT id FROM _dir WHERE id NOT IN(SELECT dir FROM _file WHERE id NOT IN" USER_DISALLOWED_FILES(user_id) ")" \
-	")"
-#define USER_DISALLOWED_DIRS__COMPILE_TIME(user_id) \
-	"(" \
-		USER_DISALLOWED_DIRS_INNER_PRE user_id \
 	")"
 #define DIR_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
