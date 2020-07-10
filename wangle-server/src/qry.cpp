@@ -217,7 +217,7 @@ static
 bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
 	const bool b = (
 		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir)(arg::tag)(arg::tag_tree))))
-		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file))))
+		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file)(arg::tag)(arg::tag_tree))))
 		//or ((which_tbl=='d') and (ARGTYPE_IN(arg_token, (arg::device)))) // arg::device is not implemented yet
 	);
 	

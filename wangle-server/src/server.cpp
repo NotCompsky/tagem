@@ -73,7 +73,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	NULL_IF_NULL("f.dislikes") \
 	NULL_IF_NULL("f.fps") \
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
-	DISTINCT_F2T_TAG_IDS
+	DISTINCT_F2T_TAG_IDS ","
 
 #define TRUE 1
 #define FALSE 0
@@ -635,45 +635,40 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	constexpr static QuoteAndEscape quote_and_escape{};
 	constexpr static QuoteNoEscape quote_no_escape{};
 	constexpr static NoQuote no_quote{};
-	void asciify_json_list_response(const QuoteAndEscape,  const char** str){
-		this->asciify(
-			'"', _f::esc, '"',  *str, '"', ','
-		);
+	
+	constexpr
+	void asciify_json_list_response_entry(){
+		--this->itr; // Remove trailing comma
 	}
-	void asciify_json_list_response(const QuoteNoEscape,  const char** str){
-		this->asciify(
-			'"', *str, '"', ','
-		);
+	
+	template<typename... Args>
+	void asciify_json_list_response_entry(const NoQuote,  const char** str1,  Args... args){
+		this->asciify(*str1, ',');
+		this->asciify_json_list_response_entry(args...);
 	}
-	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteNoEscape,  const char** str2){
-		this->asciify(
-			'[',
-				'"',  *str1, '"', ',',
-				'"',  *str2, '"',
-			']', ','
-		);
+	template<typename... Args>
+	void asciify_json_list_response_entry(const QuoteNoEscape,  const char** str1,  Args... args){
+		this->asciify('"',  *str1, '"', ',');
+		this->asciify_json_list_response_entry(args...);
 	}
-	void asciify_json_list_response(const QuoteNoEscape,  const char** str1,  const QuoteAndEscape,  const char** str2){
-		this->asciify(
-			'[',
-				'"',  *str1, '"', ',',
-				'"',  _f::esc, '"', *str2, '"',
-			']', ','
-		);
+	template<typename... Args>
+	void asciify_json_list_response_entry(const QuoteAndEscape,  const char** str1,  Args... args){
+		this->asciify('"',  _f::esc, '"', *str1, '"', ',');
+		this->asciify_json_list_response_entry(args...);
 	}
-	void asciify_json_list_response(const QuoteAndEscape,  const char** str1,  const QuoteAndEscape,  const char** str2,  const QuoteAndEscape,  const char** str3){
-		this->asciify(
-			'[',
-				'"',  _f::esc, '"', *str1, '"', ',',
-				'"',  _f::esc, '"', *str2, '"', ',',
-				'"',  _f::esc, '"', *str3, '"',
-			']', ','
-		);
+	
+	
+	template<typename... Args>
+	void asciify_json_list_response(Args... args){
+		this->asciify('[');
+		this->asciify_json_list_response_entry(args...);
+		this->asciify(']');
+		this->asciify(',');
 	}
-	void asciify_json_list_response(const NoQuote,  const char** str){
-		this->asciify(
-			*str, ','
-		);
+	template<typename Flag>
+	void asciify_json_list_response(const Flag f,  const char** str){
+		this->asciify_json_list_response_entry(f, str);
+		this->asciify(',');
 	}
 	template<typename Flag>
 	bool mysql_assign_next_row_for_json_list_response(const Flag flag,  const char** str){
@@ -686,6 +681,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	template<typename Flag1,  typename Flag2,  typename Flag3>
 	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3){
 		return this->mysql_assign_next_row(str1, str2, str3);
+	}
+	template<typename Flag1,  typename Flag2,  typename Flag3,  typename Flag4>
+	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3,  const Flag4,  const char** str4){
+		return this->mysql_assign_next_row(str1, str2, str3, str4);
+	}
+	template<typename Flag1,  typename Flag2,  typename Flag3,  typename Flag4,  typename Flag5>
+	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3,  const Flag4,  const char** str4,  const Flag5,  const char** str5){
+		return this->mysql_assign_next_row(str1, str2, str3, str4, str5);
 	}
 	template<typename... Args>
 	void write_json_list_response_into_buf(Args... args){
@@ -981,7 +984,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					'0', ',',
 					'0', ',',
 					'"', '"', ',',
-					'"', '"',
+					'"', '"', ',',
+					'0', ',',
+					'0',
 				']',
 				','
 			);
@@ -1028,7 +1033,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.dir") ","
+				FILE_OVERVIEW_FIELDS("f.dir")
 				"f.mimetype,"
 				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
 			"FROM _file f "
@@ -1246,9 +1251,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* fps;
 		const char* external_db_and_post_ids;
 		const char* tag_ids;
+		const char* era_start;
+		const char* era_end;
 		this->begin_json_response();
 		this->asciify("[\"0\",[");
-		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_title, &f_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids)){
+		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_title, &f_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids, &era_start, &era_end)){
 			this->asciify(
 				'[',
 					'"', md5_hex, '"', ',',
@@ -1268,7 +1275,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					dislikes, ',',
 					fps, ',',
 					'"', external_db_and_post_ids, '"', ',',
-					'"', tag_ids, '"',
+					'"', tag_ids, '"', ',',
+					era_start, ',',
+					era_end,
 				']',
 				','
 			);
@@ -1745,6 +1754,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
+				"0,"
+				"0 "
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1769,6 +1780,44 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view eras_w_file_infos_given_ids(const char* s){
+		GET_PAGE_N('/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, ' ')
+		GET_USER_ID
+		
+		this->mysql_query2(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM era WHERE id IN(", _f::strlen, ids, ids_len, "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", _f::strlen, ids, ids_len, ")")
+		);
+		this->mysql_query_after_itr(
+			"SELECT "
+				FILE_OVERVIEW_FIELDS("f.id")
+				"e.start,"
+				"e.end "
+			"FROM era e "
+			"JOIN _file f ON f.id=e.file "
+			"LEFT JOIN("
+				"SELECT era, tag "
+				"FROM era2tag "
+				"WHERE era IN(", _f::strlen, ids, ids_len, ")"
+				"UNION "
+				"SELECT e.id, f2t.tag "
+				"FROM file2tag f2t "
+				"JOIN era e ON e.file=f2t.file"
+			")f2t ON f2t.era=e.id "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2post f2p ON f2p.file=f.id "
+			"WHERE e.id IN (", _f::strlen, ids, ids_len, ")"
+			  "AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
+			"GROUP BY e.id "
+			"ORDER BY FIELD(e.id,", _f::strlen, ids, ids_len, ")"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
+		);
+		
+		this->asciify_file_info();
+		return this->get_buf_as_string_view();
+	}
+	
 	std::string_view files_given_ids(const char* s){
 		GET_PAGE_N('/')
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
@@ -1780,6 +1829,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
+				"0,"
+				"0 "
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1892,6 +1943,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
+				"0,"
+				"0 "
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1923,6 +1976,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
+				"0,"
+				"0 "
 			"FROM _file f "
 			"JOIN file2", _f::strlen, file2_var_name, file2_var_name_len, " f2v ON f2v.file=f.id "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "

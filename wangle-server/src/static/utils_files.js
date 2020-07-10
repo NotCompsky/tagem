@@ -24,7 +24,6 @@ function $$$populate_f_table(path,params,post_data,page_n){
 		$$$file_qry_url_paramsythings=params;
 		$$$file_qry_post_data=post_data;
 	}
-	$$$set_window_location_hash($$$file_qry_url+page_n+"/"+(($$$file_qry_post_data===null)?$$$file_qry_url_paramsythings:$$$file_qry_post_data));
 	$$$ajax_data_w_JSON_response(
 		($$$file_qry_post_data===null)?"GET":"POST",
 		"/a/f/"+$$$file_qry_url+'/'+$$$file_qry_page_n+(($$$file_qry_url_paramsythings===null)?"":("/"+$$$file_qry_url_paramsythings)),
@@ -41,7 +40,12 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			}else{
 				$$$dir_id=a;
 			}
-			for (const [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids] of data){
+			for (let [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, era_start, era_end] of data){
+				if(era_end!==0){
+					// era_end should be >= era_start, so era_end===0 implies era_start===0 too
+					duration = era_end - era_start;
+					id += "@" + era_start + "-" + era_end;
+				}
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
@@ -485,15 +489,15 @@ function $$$view_files(ls){
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$get_file_ids = $$$get_selected_file_ids;
 	
-	if (ls !== undefined){
+	if (ls === undefined)
+		$$$unset_window_location_hash();
+	else{
 		if (ls.length === 0){
 			$$$get_tbl_body("f").innerHTML = "";
 		}else{
 			$$$populate_f_table('id',ls.join(","),null,0);
 		}
 	}
-	
-	$$$unset_window_location_hash();
 	
 	$$$set_profile_name("Files");
 }
