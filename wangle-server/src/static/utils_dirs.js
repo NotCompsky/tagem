@@ -2,7 +2,7 @@ function $$$set_profile_name_from_this_dir(){
 	$$$set_profile_name($$$dir_name);
 }
 function $$$display_related_dirs(dir_id,rel,arr){
-	$$$document_getElementById(rel).innerHTML = arr.filter(x => x[0]!==dir_id).map(([id,name]) => "<a onclick=\"$$$view_dir('" + id + "',0)\">" + name + "</a>").join("<br/>");
+	$$$document_getElementById(rel).innerHTML = arr.filter(x => x[0]!==dir_id).map(([id,name]) => "<a onclick=\"$$$view_dir('" + id + "',0)\">" + $$$escape_html_text(name) + "</a>").join("<br/>");
 }
 
 function $$$populate_d_id2name_table(arr){
@@ -21,7 +21,7 @@ function $$$populate_d_id2name_table(arr){
 			for (const [id, name, device, size] of data){
 				s += "<div class='tr'>";
 					s += "<div class='td'>";
-						s += "<a onclick='$$$view_dir(" + id + ",0)'>" + name + "</a>";
+						s += "<a onclick='$$$view_dir(" + id + ",0)'>" + $$$escape_html_text(name) + "</a>";
 					s += "</div>";
 					s += "<div class='td'>";
 						s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";

@@ -16,7 +16,7 @@ function $$$populate_t_id2name_table(arr){
 						s += "<img onclick='$$$view_tag(\"" + id + "\",0)' src='" + thumb + "'/>";
 					s += "</div>";
 					s += "<div class='td'>";
-						s += name;
+						s += $$$escape_html_text(name);
 					s += "</div>";
 					s += "<div class='td dir-size'>" + size + "</div>";
 				s += "</div>";
@@ -69,7 +69,7 @@ function $$$unlink_this_child_tag_from_this_tag(node){
 function $$$display_tag(id, name, thumb, fn_name){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ "<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>"
-			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + name + "</a>"
+			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + $$$escape_html_text(name) + "</a>"
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this)\">-</button>"
 		+ "</div>";
 }

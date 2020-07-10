@@ -49,8 +49,8 @@ function $$$populate_f_table(path,params,post_data,page_n){
 				s += "<div class='tr' data-id='" + id + "'>";
 					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
-					s += "<div class='td fname'>" + name + "</div>"; // File ID and name
-					s += "<div class='td fname'>" + title + "</div>";
+					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
+					s += "<div class='td fname'>" + $$$escape_html_text(title) + "</div>";
 					s += "<div class='td'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
@@ -312,6 +312,7 @@ function $$$autoplay(){
 }
 function $$$display_external_db(id, name, post_id){
 	return "<a class='db-link' onclick='$$$view_post(" + id + ",\"" + post_id + "\")'>View post on " + name + "</a>"; // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
+	// NOTE: No need to $$$escape_html_text(name), as name is already restricted due to SQL table name restrictions
 }
 function $$$display_external_dbs(db_and_post_ids){
 	let s = "";
@@ -328,6 +329,7 @@ function $$$view_files_by_value(var_name){
 }
 function $$$display_file2_var(name, value){
 	return "<div class='value'><div class='value-name'><a onclick='$$$view_files_by_value(\"" + name + "\")'>" + name + "</a></div>" + value + "</div>";
+	// NOTE: No need to $$$escape_html_text(name), as name is already restricted due to SQL table name restrictions
 }
 function $$$assign_value_to_file(){
 	const select = $('#file2-select');

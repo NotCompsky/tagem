@@ -61,7 +61,7 @@ function $$$populate_e_table(path,params,page_n){
 				s += "<div class='tr' data-id='" + id + "@" + t_start + "-" + t_end + "'>";
 					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id)" src="' + f_thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
-					s += "<div class='td fname'>" + f_title + "</div>"; // File ID and name
+					s += "<div class='td fname'>" + $$$escape_html_text(f_title) + "</div>"; // File ID and name
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + t_start + ">" + $$$t2human(t_start) + "</div>";
 					s += "<div class='td' data-n=" + t_end   + ">" + $$$t2human(t_end)   + "</div>";
