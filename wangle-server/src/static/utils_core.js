@@ -1,6 +1,6 @@
-function $$$hide_all_except(ls){
+function $$$hide_all_except(ids,classes){
 	// More like 'page switch' event now
-	if(!ls.includes('file-info'))
+	if(!ids.includes('file-info'))
 		$$$playlist_file_ids = undefined; // Destroy playlist
 	$$$document_getElementById('profile-img').removeAttribute('onclick');
 	$$$hide_class('help');
@@ -15,7 +15,6 @@ function $$$hide_all_except(ls){
 		'view-as-playlist-btn',
 		'tasks-container',
 		'file-info',
-		'file-meta',
 		'next-f-in-playlist',
 		'user-info',
 		'post-container',
@@ -40,10 +39,20 @@ function $$$hide_all_except(ls){
 		'add-D-dialog',
 		'orig-src-dialog'
 	]){
-		if(ls.includes(id))
+		if(ids.includes(id))
 			$$$unhide(id);
 		else 
 			$$$hide(id);
+	}
+	if(classes!==undefined){
+		for(const c of [
+			'file-meta'
+		]){
+			if(classes.includes(c))
+				$$$unhide_class(c);
+			else
+				$$$hide_class(c);
+		}
 	}
 }
 function $$$is_visible(id){

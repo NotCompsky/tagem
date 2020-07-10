@@ -584,6 +584,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	void set_buf_to_itr(const char** buf,  char* itr){
 		*buf = const_cast<const char*>(itr);
 	}
+	
+	template<typename FlagType,  typename... Args>
+	void init_json_rows(char*& itr,  const FlagType& _flag,  Args... args){
+		compsky::asciify::asciify(itr, _r::opener(_flag));
+		while(this->mysql_assign_next_row(args...)){
+			_r::asciifiis(_flag, itr, args...);
+		}
+		if (unlikely(*(itr - 1) == ','))
+			// If there was at least one iteration of the loop...
+			--itr; // ...wherein a trailing comma was left
+		*(itr++) = _r::closer(_flag);
+	}
+	
 	template<typename StackdBuf,  typename MallocdBuf,  typename FlagType,  typename... Args>
 	void init_json(const StackdBuf stacked_itr,  const FlagType& _flag,  MallocdBuf mallocd_dst,  Args... args){
 		/*
@@ -605,15 +618,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		char* itr = itr_init;
 		
 		compsky::asciify::asciify(itr, _headers);
-		compsky::asciify::asciify(itr, opener(_flag));
 		this->mysql_seek(0); // Reset to first result
-		while(this->mysql_assign_next_row(args...)){
-			asciifiis(_flag, itr, args...);
-		}
-		if (unlikely(*(itr - 1) == ','))
-			// If there was at least one iteration of the loop...
-			--itr; // ...wherein a trailing comma was left
-		*(itr++) = closer(_flag);
+		this->init_json_rows(itr, _flag, args...);
 		*itr = 0;
 		
 		set_buf_to_itr(mallocd_dst, itr_init);
@@ -659,14 +665,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	
 	template<typename... Args>
-	void asciify_json_list_response(Args... args){
+	void asciify_json_list_response_row(Args... args){
 		this->asciify('[');
 		this->asciify_json_list_response_entry(args...);
 		this->asciify(']');
 		this->asciify(',');
 	}
 	template<typename Flag>
-	void asciify_json_list_response(const Flag f,  const char** str){
+	void asciify_json_list_response_row(const Flag f,  const char** str){
 		this->asciify_json_list_response_entry(f, str);
 		this->asciify(',');
 	}
@@ -691,15 +697,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->mysql_assign_next_row(str1, str2, str3, str4, str5);
 	}
 	template<typename... Args>
-	void write_json_list_response_into_buf(Args... args){
-		this->begin_json_response();
+	void asciify_json_list_response_into_buf(Args... args){
 		this->asciify('[');
 		while(this->mysql_assign_next_row_for_json_list_response(args...)){
-			this->asciify_json_list_response(args...);
+			this->asciify_json_list_response_row(args...);
 		}
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
 		this->asciify(']');
+	}
+	template<typename... Args>
+	void write_json_list_response_into_buf(Args... args){
+		this->begin_json_response();
+		this->asciify_json_list_response_into_buf(args...);
 		*this->itr = 0;
 	}
 	
@@ -824,7 +834,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
 		while(this->mysql_assign_next_row(&name))
-			this->asciify_json_list_response(this->quote_and_escape, &name);
+			this->asciify_json_list_response_row(this->quote_and_escape, &name);
 		if(this->last_char_in_buf() != ',')
 			return _r::unauthorised;
 		--this->itr;
@@ -841,7 +851,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY depth DESC"
 		);
 		while(this->mysql_assign_next_row(&id_str, &name))
-			this->asciify_json_list_response(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
+			this->asciify_json_list_response_row(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
 		this->asciify(']');
@@ -857,7 +867,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY depth DESC"
 		);
 		while(this->mysql_assign_next_row(&id_str, &name))
-			this->asciify_json_list_response(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
+			this->asciify_json_list_response_row(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
 		this->asciify(']');
@@ -1093,6 +1103,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(',');
 		
 		
+		this->mysql_query_after_itr(
+			"SELECT "
+				"e.start,"
+				"e.end,"
+				"GROUP_CONCAT(e2t.tag)"
+			"FROM era e "
+			"JOIN era2tag e2t ON e2t.era=e.id "
+			// NOTE: Each era should be associated with at least one tag.
+			"WHERE e.file=", id, " "
+			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+		);
+		const char* era_start;
+		const char* era_end;
+		const char* era_tag_ids;
+		this->asciify_json_list_response_into_buf(this->no_quote, &era_start, this->no_quote, &era_end, this->quote_no_escape, &era_tag_ids);
+		this->asciify(',');
+		
+		
 		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT dir, name, mimetype "
@@ -1145,9 +1173,26 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if(this->last_char_in_buf() == ',')
 			--this->itr;
 		this->asciify('}');
+		this->asciify(',');
 		
 		
+		this->mysql_query_after_itr(
+			"SELECT "
+				"t.id,"
+				"t.name "
+			"FROM _tag t "
+			"JOIN era2tag e2t ON e2t.tag=t.id "
+			"JOIN era e ON e.id=e2t.era "
+			"WHERE e.file=", id, " "
+			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+		);
+		const char* tag_id;
+		const char* tag_name;
+		constexpr _r::flag::Dict dict;
+		this->init_json_rows(this->itr, dict, &tag_id, &tag_name);
 		this->asciify(']');
+		
+		
 		*this->itr = 0;
 		
 #ifdef n_cached

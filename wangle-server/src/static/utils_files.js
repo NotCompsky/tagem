@@ -354,7 +354,7 @@ function $$$assign_value_to_file(){
 
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','file-meta','tagselect-files-container','tagselect-files-btn']);
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn'],['file-meta']);
 	if($$$playlist_file_ids!==undefined)
 		$$$unhide('next-f-in-playlist');
 }
@@ -432,7 +432,7 @@ function $$$view_file(_file_id_and_t){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], backups, _d] = data;
+				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], eras, backups, _d, _t] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$d = _d;
@@ -470,6 +470,17 @@ function $$$view_file(_file_id_and_t){
 				}
 				$$$document_getElementById("view-btns").innerHTML = _s;
 				$$$view_file__hides();
+				
+				_s = "";
+				for(const [start,end,era_tag_ids] of eras){
+					_s += "<tr>";
+						_s += "<td>" + start + "</td>";
+						_s += "<td>" + end   + "</td>";
+						_s += "<td>" + era_tag_ids + "</td>";
+					_s += "</tr>";
+				}
+				$$$document_getElementById('eras-info-tbody').innerHTML = _s;
+				$$$column_id2name(_t,"#eras-info-tbody", '$$$view_tag', 2);
 			}
 		);
 		}
