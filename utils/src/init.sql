@@ -58,7 +58,7 @@ CREATE TABLE _dir (
 	UNIQUE KEY (parent_not_null,name), # Only one name if parent is NULL
 	UNIQUE KEY (parent,name)
 );
-CREATE TABLE dir_tree (
+CREATE TABLE dir2parent_tree (
 	dir BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	depth INT UNSIGNED NOT NULL,
@@ -308,22 +308,17 @@ INSERT IGNORE INTO method (name) VALUES
 ("python_script");
 
 CREATE TABLE era (
-	# Defined by two 'framestamps' - analogous to timestamps
-	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	file_id BIGINT UNSIGNED NOT NULL,
-	start BIGINT UNSIGNED NOT NULL,
-	end BIGINT UNSIGNED NOT NULL,
-	start_method_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-	end_method_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-	s VARCHAR(20000),
-	UNIQUE KEY (file_id, start, end),
-	PRIMARY KEY (id)
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	file BIGINT UNSIGNED NOT NULL,
+	start DOUBLE NOT NULL,
+	end DOUBLE NOT NULL,
+	UNIQUE KEY (file, start, end)
 );
 
 CREATE TABLE era2tag (
-	era_id BIGINT UNSIGNED NOT NULL,
-	tag_id BIGINT UNSIGNED NOT NULL,
-	PRIMARY KEY (era_id, tag_id)
+	era BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (era, tag)
 );
 
 
