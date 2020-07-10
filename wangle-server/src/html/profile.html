@@ -181,7 +181,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	"<div id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-container\" class=\"tagselect-container\">" \
 		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
 		"<select class=\"tagselect\" id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\" multiple=\"multiple\"></select>" \
-		"<button class=\"unmake-popup\" onclick=\"" MINIMISED_JS_DECL_onClick_unmake_parent_popup "(this)\">Close</button>" \
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",MINIMISED_JS_DECL_add_parent_tags"()")("tagselect-self-c","Add Child Tags",MINIMISED_JS_DECL_add_child_tags"()")))
 
@@ -232,7 +231,12 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"</tr>"
 "</table>"
 
-BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files/Eras", MINIMISED_JS_DECL_tag_files_then "(" MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")))
+"<div id=\"tagselect-era-container\" class=\"popup hidden\">"
+	CREATE_TAG_SELECT(_, _, ("tagselect-era", "Add Tags to Era", MINIMISED_JS_DECL_tag_era "()"))
+	"<button onclick=\"" MINIMISED_JS_DECL_hide_tagselect_era "()\">Close</button>"
+"</div>"
+
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files", MINIMISED_JS_DECL_tag_files_then "(" MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")))
 #undef FILE_TAGGER_FN
 #undef FILE_TAGGER_FILE_IDS
 

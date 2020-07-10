@@ -2552,6 +2552,55 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		} while(true);
 	}
 	
+	std::string_view add_era(const char* s){
+		const uint64_t file_id = a2n<uint64_t>(&s);
+		if (file_id == 0)
+			return _r::not_found;
+		
+		++s; // Skip slash
+		
+		const float era_start = a2f<float>(&s);
+		if(*s != '-')
+			return _r::not_found;
+		++s; // Skip dash
+		const float era_end   = a2f<float>(&s);
+		if(*s != '/')
+			return _r::not_found;
+		++s; // Skip slash
+		
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		
+		GET_USER_ID
+		
+		this->mysql_exec(
+			"INSERT INTO era"
+			"(file,start,end,user)"
+			"SELECT "
+				"id,",
+				era_start, 5, ',',
+				era_end, 5, ',',
+				user_id, " "
+			"FROM _file "
+			"WHERE id=", file_id, " "
+			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
+		);
+		
+		this->mysql_exec(
+			"INSERT INTO era2tag"
+			"(era,tag)"
+			"SELECT e.id, t.id "
+			"FROM "
+				"era e,"
+				"tag t "
+			"WHERE e.file=",  file_id, " "
+			  "AND e.start=", era_start, 5, " "
+			  "AND e.end=",   era_end, 5, " "
+			  "AND t.id IN(", _f::strlen, tag_ids, tag_ids_len, ")"
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view update_tag_thumbnail(const char* s){
 		const uint64_t tag_id = a2n<uint64_t>(&s);
 		if (tag_id == 0)
@@ -3033,7 +3082,9 @@ class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
 		}
 };
 
-int main(int argc,  char** argv){
+int main(int argc,  const char* const* argv){
+	const char* const* const argv_orig = argv;
+	
 	curl_global_init(CURL_GLOBAL_ALL);
 	
 	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,foo,they"));
@@ -3041,9 +3092,8 @@ int main(int argc,  char** argv){
 	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","foo,what,does"));
 	assert(not matches__left_up_to_space__right_up_to_comma_or_null("bar foo","who,does,foo"));
 	
-	char** dummy_argv = argv;
 	int port_n = 0;
-	std::vector<char*> external_db_env_vars;
+	std::vector<const char*> external_db_env_vars;
 	external_db_env_vars.reserve(1);
 	external_db_env_vars.push_back("TAGEM_MYSQL_CFG");
 	while (*(++argv)){
@@ -3089,7 +3139,7 @@ int main(int argc,  char** argv){
 	}
 	
 	int dummy_argc = 0;
-	folly::Init init(&dummy_argc, &dummy_argv);
+	folly::Init init(&dummy_argc, (char***)&argv_orig);
 	
 	if (mysql_library_init(0, NULL, NULL))
 		throw compsky::mysql::except::SQLLibraryInit();
@@ -3105,7 +3155,7 @@ int main(int argc,  char** argv){
 	MYSQL_RES* res;
 	MYSQL_ROW row;
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
-		char* const db_env_name = external_db_env_vars.at(i);
+		const char* const db_env_name = external_db_env_vars.at(i);
 		
 		DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
 		
