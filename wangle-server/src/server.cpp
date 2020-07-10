@@ -239,9 +239,10 @@ namespace _r {
 		constexpr static const Arr arr;
 		constexpr static const Dict dict;
 		
-		constexpr static QuoteAndEscape quote_and_escape{};
-		constexpr static QuoteNoEscape quote_no_escape{};
-		constexpr static NoQuote no_quote{};
+		constexpr static QuoteAndJSONEscape quote_and_json_escape;
+		constexpr static QuoteAndEscape quote_and_escape;
+		constexpr static QuoteNoEscape quote_no_escape;
+		constexpr static NoQuote no_quote;
 	};
 }
 
@@ -418,7 +419,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	char* get_itr_from_buf(nullptr_t,  const char* const _headers,  Args... args){
-		size_t sz = 0;
+		size_t sz = 0; // NOTE: If there is a free(): corrupted chunk error, it is probably because strlens has calculated the wrong size for the container.
 		
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
@@ -468,34 +469,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		 * In the latter case, this->itr is incremented so that a string_view of this->buf can be replied
 		 */
 		
-		using namespace _r;
-		
-		constexpr static const char* const _headers =
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			#include "headers/Cache-Control/1day.c"
-			"\n"
-		;
-		
-		char* const itr_init = get_itr_from_buf(stacked_itr, _headers, args...);
+		char* const itr_init = this->get_itr_from_buf(stacked_itr, _r::json_init, args...);
 		char* itr = itr_init;
 		
-		compsky::asciify::asciify(itr, _headers);
+		compsky::asciify::asciify(itr, _r::json_init);
 		this->mysql_seek(0); // Reset to first result
 		this->init_json_rows(itr, _flag, args...);
 		*itr = 0;
 		
-		set_buf_to_itr(mallocd_dst, itr_init);
-		set_buf_to_itr(stacked_itr, itr);
+		this->set_buf_to_itr(mallocd_dst, itr_init);
+		this->set_buf_to_itr(stacked_itr, itr);
 	}
 	
 	void begin_json_response(){
 		this->reset_buf_index();
-		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-		);
+		this->asciify(_r::json_init);
 	}
 	
 	template<typename... Args>
@@ -590,13 +578,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		
 		this->begin_json_response();
-		this->asciify('[');
 		const char* name;
-		while(this->mysql_assign_next_row(&name))
-			this->asciify('"', _f::esc, '"', name, '"', ',');
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
+		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name);
 		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
@@ -824,7 +807,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify('[');
 		
 		
-		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir")
@@ -840,10 +822,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"GROUP BY f.id"
 		);
-		const char* md5_hash;
+		const char* md5_hash = nullptr;
 		const char* dir_id;
 		const char* file_name;
-		const char* f_title;
+		const char* file_title;
 		const char* file_sz;
 		const char* file_added_timestamp;
 		const char* file_origin_timestamp;
@@ -858,32 +840,30 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* tag_ids;
 		const char* mimetype;
 		const char* file2_values;
-		while(this->mysql_assign_next_row(&md5_hash, &dir_id, &file_name, &f_title, &file_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids, &mimetype, &file2_values)){
-			this->asciify(
-				'"', md5_hash, '"', ',',
-				dir_id, ',',
-				'"', _f::esc, '"', file_name, '"', ',',
-				'"', _f::esc, '"', f_title,   '"', ',',
-				'"', file_sz, '"', ',',
-				file_added_timestamp, ',',
-				file_origin_timestamp, ',',
-				duration, ',',
-				w, ',',
-				h, ',',
-				views, ',',
-				likes, ',',
-				dislikes, ',',
-				fps, ',',
-				'"', external_db_and_post_ids, '"', ',',
-				'"', tag_ids, '"', ',',
-				mimetype, ',',
-				'"', file2_values, '"'
-			);
-		}
-		if(this->last_char_in_buf() != '"')
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_no_escape, &md5_hash,
+			_r::flag::quote_no_escape, &dir_id,
+			_r::flag::quote_and_escape, &file_name,
+			_r::flag::quote_and_escape, &file_title,
+			_r::flag::quote_no_escape, &file_sz,
+			_r::flag::no_quote, &file_added_timestamp,
+			_r::flag::no_quote, &file_origin_timestamp,
+			_r::flag::no_quote, &duration,
+			_r::flag::no_quote, &w,
+			_r::flag::no_quote, &h,
+			_r::flag::no_quote, &views,
+			_r::flag::no_quote, &likes,
+			_r::flag::no_quote, &dislikes,
+			_r::flag::no_quote, &fps,
+			_r::flag::quote_no_escape, &external_db_and_post_ids,
+			_r::flag::no_quote, &mimetype,
+			_r::flag::quote_no_escape, &file2_values
+		);
+		if(unlikely(md5_hash == nullptr))
 			// No results - probably because the user hasn't the permission to view the file
 			return _r::not_found;
-		this->asciify(']');
 		this->asciify(',');
 		
 		
@@ -907,7 +887,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(',');
 		
 		
-		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT dir, name, mimetype "
 			"FROM file_backup "
@@ -917,22 +896,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* backup_dir_id;
 		const char* backup_file_name;
 		const char* backup_mimetype;
-		while(this->mysql_assign_next_row(&backup_dir_id, &backup_file_name, &backup_mimetype)){
-			this->asciify(
-				'[',
-					'"', backup_dir_id, '"', ',',
-					'"', _f::esc, '"', backup_file_name, '"', ',',
-					'"', backup_mimetype, '"',
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
+		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_no_escape, &backup_dir_id, _r::flag::quote_and_escape, &backup_file_name, _r::flag::no_quote, &backup_mimetype);
 		this->asciify(',');
 		
 		
-		this->asciify('{');
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name, d.device "
 			"FROM _dir d "
@@ -947,18 +914,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			")"
 			  "AND d.id NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 		);
-		while(this->mysql_assign_next_row(&backup_dir_id, &backup_file_name, &backup_mimetype)){
-			this->asciify(
-				'"', backup_dir_id, '"', ':',
-				'[',
-					'"', _f::esc, '"', backup_file_name, '"', ',',
-					'"', backup_mimetype, '"',
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify('}');
+		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &backup_dir_id, _r::flag::quote_and_escape, &backup_file_name, _r::flag::no_quote, &backup_mimetype);
 		this->asciify(',');
 		
 		
@@ -1438,13 +1394,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		char* _itr_plus_offset = _buf_plus_offset;
 		// Reserve the first part of this->buf for writing SQL queries, and use the rest for writing the response.
 		
-		compsky::asciify::asciify(
-			_itr_plus_offset,
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
-			"[["
-		);
+		compsky::asciify::asciify(_itr_plus_offset, _r::json_init);
 		
 		{
 			this->mysql_query_db_by_id(
@@ -1465,17 +1415,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			const char* n_likes;
 			const char* username;
 			const char* text;
-			while(this->mysql_assign_next_row(&user, &timestamp, &n_likes, &username, &text)){
-				compsky::asciify::asciify(
-					_itr_plus_offset,
-						'"', user, '"', ',', // As a string because Javascript rounds large numbers (!!!)
-						timestamp, ',',
-						n_likes, ',',
-						'"', username, '"', ',',
-						'"', _f::json_esc, text, '"',
-					"],["
-				);
-			}
+			this->init_json_rows(_itr_plus_offset, _r::flag::arr, _r::flag::quote_no_escape, &user, _r::flag::no_quote, &timestamp, _r::flag::no_quote, &n_likes, _r::flag::quote_no_escape, &username, _r::flag::quote_and_json_escape, &text);
 			if (user == nullptr)
 				return _r::not_found;
 		}
@@ -1505,26 +1445,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			const char* timestamp;
 			const char* username;
 			const char* content;
-			while(this->mysql_assign_next_row(&id, &parent, &user, &timestamp, &username, &content)){
-				compsky::asciify::asciify(
-					_itr_plus_offset,
-					'[',
-						'"', id, '"', ',', // As a string because Javascript rounds large numbers (!!!)
-						'"', parent, '"', ',', // As a string because Javascript rounds large numbers (!!!)
-						'"', user, '"', ',',  // As a string because Javascript rounds large numbers (!!!)
-						timestamp, ',',
-						'"', username, '"', ',',
-						'"', _f::json_esc, content, '"',
-					']',
-					','
-				);
-			}
-			if (*(_itr_plus_offset - 1) == ',')
-				// If there was at least one iteration of the loop...
-				--_itr_plus_offset; // ...wherein a trailing comma was left
+			this->init_json_rows(
+				_itr_plus_offset,
+				_r::flag::arr,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_no_escape, &parent,
+				_r::flag::quote_no_escape, &user,
+				_r::flag::no_quote, &timestamp,
+				_r::flag::quote_no_escape, &username,
+				_r::flag::quote_and_json_escape, &content
+			);
 		}
 		
-		compsky::asciify::asciify(_itr_plus_offset, "]]");
 		*_itr_plus_offset = 0;
 		
 		return std::string_view(_buf_plus_offset,  (uintptr_t)_itr_plus_offset - (uintptr_t)_buf_plus_offset);
@@ -1683,20 +1615,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* count;
 		this->reset_buf_index();
 		this->begin_json_response();
-		this->asciify('[');
-		while(this->mysql_assign_next_row(&id, &name, &device, &count)){
-			this->asciify(
-				'[',
-					'"', id, '"', ',',
-					'"', _f::esc, '"', name, '"', ',',
-					'"', device, '"', ',',
-					count,
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
+		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &device);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1796,9 +1715,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER
 		this->reset_buf_index();
 		this->asciify(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/json.c"
-			"\n"
+			_r::json_init,
 			"\"NONE,", user->allowed_file2_vars_csv, "\""
 		);
 		return this->get_buf_as_string_view();
@@ -1952,15 +1869,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view get_protocol_json(const char* s){
-		this->mysql_query_buf("SELECT id, name, \"\" FROM protocol");
+		this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
 		
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
 			const char* id;
 			const char* name;
-			const char* empty; // To deliver it as id:[name] rather than id:name // TODO: Tidy
-			this->init_json(nullptr, _r::flag::dict, &_r::protocol_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &empty);
+			const char* dummy; // To deliver it as id:[name] rather than id:name // TODO: Tidy
+			this->init_json(nullptr, _r::flag::dict, &_r::protocol_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::no_quote, &dummy);
 		}
 		return _r::protocol_json;
 	}

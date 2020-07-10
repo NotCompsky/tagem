@@ -89,6 +89,12 @@ namespace _r {
 		) + 195
 	);
 	
+	constexpr static const char* const json_init =
+		#include "headers/return_code/OK.c"
+		#include "headers/Content-Type/json.c"
+		"\n"
+	;
+	
 	constexpr static const std::string_view EMPTY_JSON_LIST = 
 		#include "headers/return_code/OK.c" // To encourage browsers to cache it.
 		#include "headers/Content-Type/json.c"

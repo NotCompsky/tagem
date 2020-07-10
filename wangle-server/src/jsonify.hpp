@@ -8,6 +8,7 @@ namespace _r {
 		struct Dict{};
 		struct Arr{};
 		
+		struct QuoteAndJSONEscape{};
 		struct QuoteAndEscape{};
 		struct QuoteNoEscape{};
 		struct NoQuote{};
@@ -24,6 +25,8 @@ namespace _r {
 	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteNoEscape,  const char** str,  Args... args);
 	template<typename... Args>
 	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndEscape,  const char** str,  Args... args);
+	template<typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndJSONEscape,  const char** str,  Args... args);
 	
 	template<typename... Args>
 	void asciify_json_list_response_entry(char*& itr,  const flag::NoQuote,  const char** str,  Args... args){
@@ -38,6 +41,11 @@ namespace _r {
 	template<typename... Args>
 	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndEscape,  const char** str,  Args... args){
 		compsky::asciify::asciify(itr, '"', _f::esc, '"', *str, '"', ',');
+		asciify_json_list_response_entry(itr, args...);
+	}
+	template<typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndJSONEscape,  const char** str,  Args... args){
+		compsky::asciify::asciify(itr, '"', _f::json_esc, *str, '"', ',');
 		asciify_json_list_response_entry(itr, args...);
 	}
 	
@@ -60,17 +68,24 @@ namespace _r {
 		asciify_json_list_response_entry(itr, args...);
 	}
 	
-	template<typename ArrOrDict,  typename... Args>
-	void asciify_json_response_row(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
-		compsky::asciify::asciify(itr, opener_symbol(f_arr_or_dict));
+	template<typename... Args>
+	void asciify_json_response_row(char*& itr,  const flag::Arr f_arr_or_dict,  Args... args){
+		compsky::asciify::asciify(itr, '[');
 		asciify_json_response_entry(itr, f_arr_or_dict, args...);
-		compsky::asciify::asciify(itr, closer_symbol(f_arr_or_dict));
+		compsky::asciify::asciify(itr, ']');
 		compsky::asciify::asciify(itr, ',');
 	}
 	template<typename Flag>
 	void asciify_json_response_row(char*& itr,  const flag::Arr,  const Flag f,  const char** str){
 		asciify_json_list_response_entry(itr, f, str);
 		compsky::asciify::asciify(itr, ',');
+	}
+	template<typename Flag,  typename... Args>
+	void asciify_json_response_row(char*& itr,  const flag::Dict f_arr_or_dict,  const Flag f,  const char** str,  Args... args){
+		asciify_json_list_response_entry(itr, f, str);
+		compsky::asciify::asciify(itr, ':');
+		constexpr static const flag::Arr _arr;
+		asciify_json_response_row(itr, _arr, args...);
 	}
 	
 	
