@@ -246,6 +246,7 @@ function $$$try_to_pause_yt_video(){
 		$$$yt_player.pauseVideo();
 }
 function $$$next_video_from_yt_video(){
+	$$$yt_player.next_video_when_reach_t = undefined;
 	if($$$playlist_file_ids === undefined)
 		$$$try_to_pause_yt_video();
 	else
