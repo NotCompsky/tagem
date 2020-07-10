@@ -93,7 +93,7 @@ function $$$make_tbl_selectable(id){
 
 function $$$getCellValue(tr, idx){
 	const node = tr.children[idx];
-	return node.dataset.n || node.innerText
+	return node.dataset.n || node.textContent
 }
 
 function $$$comparer(idx, asc){

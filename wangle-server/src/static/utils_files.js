@@ -474,8 +474,8 @@ function $$$view_file(_file_id_and_t){
 				_s = "";
 				for(const [start,end,era_tag_ids] of eras){
 					_s += "<tr class='tr'>";
-						_s += "<td class='td'>" + $$$t2human(start) + "</td>";
-						_s += "<td class='td'>" + $$$t2human(end)   + "</td>";
+						_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
+						_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(start) + "</a></td>";
 						_s += "<td class='td'>" + era_tag_ids + "</td>";
 					_s += "</tr>";
 				}

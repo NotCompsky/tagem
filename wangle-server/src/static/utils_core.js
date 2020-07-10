@@ -91,13 +91,13 @@ function $$$sub_into(data, node, fn_name){
 	let s = "";
 	if (data instanceof Array)
 		data = Object.fromEntries(data.entries()); // Convert ["foo","bar"] -> {0:"foo", 1:"bar"}
-	const _s = node.text();
+	const _s = node.textContent;
 	if(_s === "")
 		return;
-	for (var tagid of node.text().split(",")){
+	for (var tagid of node.textContent.split(",")){
 		s += $$$link_to_named_fn_w_param_id_w_human_name(fn_name,tagid,data[tagid]);
 	}
-	node.html(s);
+	node.innerHTML = s;
 }
 
 function $$$invert_dict(data){
