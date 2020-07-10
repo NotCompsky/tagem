@@ -989,9 +989,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* cover;
 		const char* count;
 		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
+		this->asciify(_r::opener_symbol(f_arr_or_dict));
 		this->asciify_json_response_rows(this->itr, f_arr_or_dict, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &thumb, _r::flag::quote_and_escape, &cover, _r::flag::no_quote, &count);
-		std::swap(this->res, this->res2);
 		this->asciify(_r::closer_symbol(f_arr_or_dict));
+		std::swap(this->res, this->res2);
 	}
 	
 	void asciify_file_info__no_end(){
