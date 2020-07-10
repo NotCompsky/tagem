@@ -877,7 +877,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* era_start;
 		const char* era_end;
 		const char* era_tag_ids;
-		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::no_quote, &era_start, _r::flag::no_quote, &era_end, _r::flag::quote_no_escape, &era_tag_ids);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::no_quote, &era_start,
+			_r::flag::no_quote, &era_end,
+			_r::flag::quote_no_escape, &era_tag_ids
+		);
 		this->asciify(',');
 		
 		
@@ -890,7 +896,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* backup_dir_id;
 		const char* backup_file_name;
 		const char* backup_mimetype;
-		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_no_escape, &backup_dir_id, _r::flag::quote_and_escape, &backup_file_name, _r::flag::no_quote, &backup_mimetype);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_no_escape, &backup_dir_id,
+			_r::flag::quote_and_escape, &backup_file_name,
+			_r::flag::no_quote, &backup_mimetype
+		);
 		this->asciify(',');
 		
 		
@@ -908,7 +920,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			")"
 			  "AND d.id NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 		);
-		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &backup_dir_id, _r::flag::quote_and_escape, &backup_file_name, _r::flag::no_quote, &backup_mimetype);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::dict,
+			_r::flag::quote_no_escape, &backup_dir_id,
+			_r::flag::quote_and_escape, &backup_file_name,
+			_r::flag::no_quote, &backup_mimetype
+		);
 		this->asciify(',');
 		
 		
@@ -924,7 +942,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		const char* tag_id;
 		const char* tag_name;
-		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &tag_id, _r::flag::quote_and_escape, &tag_name);
+		this->init_json_rows(
+			this->itr, _r::flag::dict,
+			_r::flag::quote_no_escape, &tag_id,
+			_r::flag::quote_and_escape, &tag_name
+		);
 		this->asciify(']');
 		
 		
@@ -1085,7 +1107,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* id;
 		const char* name;
 		this->reset_buf_index();
-		this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &name, _r::flag::quote_no_escape, &id);
+		this->init_json(
+			&this->itr,
+			_r::flag::dict,
+			nullptr,
+			_r::flag::quote_no_escape, &name,
+			_r::flag::quote_no_escape, &id
+		);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -1409,7 +1437,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			const char* n_likes;
 			const char* username;
 			const char* text;
-			if (not this->init_json_rows(_itr_plus_offset, _r::flag::arr, _r::flag::quote_no_escape, &user, _r::flag::no_quote, &timestamp, _r::flag::no_quote, &n_likes, _r::flag::quote_no_escape, &username, _r::flag::quote_and_json_escape, &text))
+			if (not this->init_json_rows(
+				_itr_plus_offset,
+				_r::flag::arr,
+				_r::flag::quote_no_escape, &user,
+				_r::flag::no_quote, &timestamp,
+				_r::flag::no_quote, &n_likes,
+				_r::flag::quote_no_escape, &username,
+				_r::flag::quote_and_json_escape, &text
+			))
 				return _r::not_found;
 		}
 		
@@ -1608,7 +1644,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* count;
 		this->reset_buf_index();
 		this->begin_json_response();
-		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &device);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_no_escape, &id,
+			_r::flag::quote_and_escape, &name,
+			_r::flag::quote_no_escape, &device
+		);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1724,7 +1766,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			regenerate_mimetype_json = false;
 			const char* id;
 			const char* name;
-			this->init_json(nullptr, _r::flag::dict, &_r::mimetype_json, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &name);
+			this->init_json(
+				nullptr,
+				_r::flag::dict,
+				&_r::mimetype_json,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_no_escape, &name
+			);
 		}
 		return _r::mimetype_json;
 	}
@@ -1757,7 +1805,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* id;
 		const char* name;
 		this->reset_buf_index();
-		this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name);
+		this->init_json(
+			&this->itr,
+			_r::flag::dict,
+			nullptr,
+			_r::flag::quote_no_escape, &id,
+			_r::flag::quote_and_escape, &name
+		);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -1785,7 +1839,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES(user_id)
 			);
 			this->itr = this->buf;
-			this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &protocol, _r::flag::quote_and_escape, &embed_pre, _r::flag::quote_and_escape, &embed_post);
+			this->init_json(
+				&this->itr,
+				_r::flag::dict,
+				nullptr,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_and_escape, &name,
+				_r::flag::quote_no_escape, &protocol,
+				_r::flag::quote_and_escape, &embed_pre,
+				_r::flag::quote_and_escape, &embed_post
+			);
 			return this->get_buf_as_string_view();
 		}
 		
@@ -1802,7 +1865,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM _device "
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME(GUEST_ID_STR)
 			);
-			this->init_json(nullptr, _r::flag::dict, &_r::devices_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &protocol, _r::flag::quote_and_escape, &embed_pre, _r::flag::quote_and_escape, &embed_post);
+			this->init_json(
+				nullptr,
+				_r::flag::dict, &_r::devices_json,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_and_escape, &name,
+				_r::flag::quote_no_escape, &protocol,
+				_r::flag::quote_and_escape, &embed_pre,
+				_r::flag::quote_and_escape, &embed_post
+			);
 		}
 		return _r::devices_json;
 	}
@@ -1822,7 +1893,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE u2t.user=", user_id
 		);
 		this->itr = this->buf;
-		this->init_json(&this->itr, _r::flag::arr, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &description, _r::flag::quote_and_escape, &content);
+		this->init_json(
+			&this->itr,
+			_r::flag::arr,
+			nullptr,
+			_r::flag::quote_no_escape, &id,
+			_r::flag::quote_and_escape, &name,
+			_r::flag::quote_and_escape, &description,
+			_r::flag::quote_and_escape, &content
+		);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -1870,7 +1949,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			const char* id;
 			const char* name;
 			const char* dummy; // To deliver it as id:[name] rather than id:name // TODO: Tidy
-			this->init_json(nullptr, _r::flag::dict, &_r::protocol_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::no_quote, &dummy);
+			this->init_json(
+				nullptr,
+				_r::flag::dict,
+				&_r::protocol_json,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_and_escape, &name,
+				_r::flag::no_quote, &dummy
+			);
 		}
 		return _r::protocol_json;
 	}
@@ -1887,7 +1973,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS(user_id)
 			);
 			this->itr = this->buf;
-			this->init_json(&this->itr, _r::flag::arr, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &id2);
+			this->init_json(
+				&this->itr,
+				_r::flag::arr,
+				nullptr,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_no_escape, &id2
+			);
 			return this->get_buf_as_string_view();
 		}
 		
@@ -1902,7 +1994,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"WHERE id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 			);
-			this->init_json(nullptr, _r::flag::arr, &_r::tag2parent_json, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &id2);
+			this->init_json(
+				nullptr,
+				_r::flag::arr,
+				&_r::tag2parent_json,
+				_r::flag::quote_no_escape, &id,
+				_r::flag::quote_no_escape, &id2
+			);
 		}
 		return _r::tag2parent_json;
 	}
