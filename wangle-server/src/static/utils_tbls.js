@@ -6,16 +6,15 @@ function $$$column_from_timestamp(selector, timestamp_indx){
 		$link.text($$$timestamp2dt($link.value));
 	});
 }
-function $$$column_id2name(x, selector, fn_name, col){
+function $$$column_id2name(x, id, fn_name, col){
+	const y = $$$document_getElementById(id).getElementsByClassName('tbody')[0];
 	// x might be a dictionary itself (such as dirs/tags) or a string name of such a dictionary
 	const data=(typeof x === "string")?$$$window[x]:x;
 	if (col === undefined){
-		$$$sub_into(data, document.querySelector(selector), fn_name);
+		$$$sub_into(data, y, fn_name);
 	} else {
-		$(selector).find('.tr').each(function (i, el){
-			var $tds = $(this).find('.td');
-			$$$sub_into(data, $tds.eq(col), fn_name);
-		});
+		for(let x of y.getElementsByClassName('tr'))
+			$$$sub_into(data, x.getElementsByClassName('td')[col], fn_name);
 	}
 }
 function $$$filter_tbl(tbl_id, name_col_ids, tags_col_ids){

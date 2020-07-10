@@ -1113,6 +1113,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// NOTE: Each era should be associated with at least one tag.
 			"WHERE e.file=", id, " "
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+			  "HAVING COUNT(*)" // Ensure we don't get an empty result - (NULL,NULL,NULL) - when it really means we have no results
 		);
 		const char* era_start;
 		const char* era_end;

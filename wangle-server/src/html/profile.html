@@ -220,7 +220,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"<a onclick=\"" MINIMISED_JS_DECL_backup_files "()\">Send backup request</a>"
 "</div>"
 
-"<table class=\"file-meta\">"
+"<table id=\"eras-info\" class=\"file-meta\">"
 	"<thead>"
 		"<tr>"
 			"<th>Start</th>"
@@ -228,7 +228,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 			"<th>Tags</th>"
 		"</tr>"
 	"</thead>"
-	"<tbody id=\"eras-info-tbody\"></tbody>"
+	"<tbody id=\"eras-info-tbody\" class=\"tbody\"></tbody>"
 "</table>"
 
 "<table class=\"file-meta\">"

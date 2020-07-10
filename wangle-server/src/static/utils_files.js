@@ -72,8 +72,8 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
 			$$$get_tbl_body("f").innerHTML = s;
-			$$$column_id2name('x', "#f .tbody", '$$$view_db', 3);
-			$$$column_id2name(tags,"#f .tbody", '$$$view_tag', 4);
+			$$$column_id2name('x', "f", '$$$view_db', 3);
+			$$$column_id2name(tags,"f", '$$$view_tag', 4);
 			
 			$$$apply_thumbnail_width();
 		}
@@ -432,7 +432,7 @@ function $$$view_file(_file_id_and_t){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], eras, backups, _d, _t] = data;
+				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], eras, backups, _d, t_dict] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$d = _d;
@@ -473,14 +473,14 @@ function $$$view_file(_file_id_and_t){
 				
 				_s = "";
 				for(const [start,end,era_tag_ids] of eras){
-					_s += "<tr>";
-						_s += "<td>" + start + "</td>";
-						_s += "<td>" + end   + "</td>";
-						_s += "<td>" + era_tag_ids + "</td>";
+					_s += "<tr class='tr'>";
+						_s += "<td class='td'>" + $$$t2human(start) + "</td>";
+						_s += "<td class='td'>" + $$$t2human(end)   + "</td>";
+						_s += "<td class='td'>" + era_tag_ids + "</td>";
 					_s += "</tr>";
 				}
 				$$$document_getElementById('eras-info-tbody').innerHTML = _s;
-				$$$column_id2name(_t,"#eras-info-tbody", '$$$view_tag', 2);
+				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 2);
 			}
 		);
 		}

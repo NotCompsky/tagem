@@ -70,8 +70,8 @@ function $$$populate_e_table(path,params,page_n){
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
 			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
 			$$$get_tbl_body("f").innerHTML = s;
-			$$$column_id2name('x', "#f .tbody", '$$$view_db', 3);
-			$$$column_id2name(tags,"#f .tbody", '$$$view_tag', 4);
+			$$$column_id2name('x', "f", '$$$view_db', 3);
+			$$$column_id2name(tags,"f", '$$$view_tag', 4);
 			
 			$$$apply_thumbnail_width();
 		}
