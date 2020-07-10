@@ -270,8 +270,42 @@ namespace _r {
 			']', ','
 		);
 	}
-	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str1,  const char* const* str2,  const char* const* str3){
-		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",\"\",\"\"],") + 2*strlen(*str1) + 2*strlen(*str2) + 2*strlen(*str3);
+	
+	constexpr
+	size_t strlens(){
+		return 0;
+	}
+	template<typename... Args>
+	size_t strlens(const uint64_t* m,  Args... args);
+	
+	template<typename... Args>
+	size_t strlens(const unsigned* m,  Args... args);
+	
+	template<typename... Args>
+	size_t strlens(const char** str,  Args... args);
+	
+	template<typename Int>
+	size_t strlens_int(Int m){
+		size_t n = 1; // Space for the comma
+		do{
+			++n;
+		}while((m /= 10) != 0);
+		return n;
+	}
+	
+	template<typename... Args>
+	size_t strlens(const uint64_t* m,  Args... args){
+		return strlens_int<uint64_t>(*m) + strlens(args...);
+	}
+	
+	template<typename... Args>
+	size_t strlens(const unsigned* m,  Args... args){
+		return strlens_int<unsigned>(*m) + strlens(args...);
+	}
+	
+	template<typename... Args>
+	size_t strlens(const char** str,  Args... args){
+		return 1 + 2*strlen(*str) + 1 + 1 /* Quotes and trailing comma */ + strlens(args...);
 	}
 	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str1,  const char* const* str2){
@@ -282,9 +316,6 @@ namespace _r {
 				'"', _f::esc, '"', *str2, '"',
 			']', ','
 		);
-	}
-	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str1,  const char* const* str2){
-		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",\"\"],") + 2*strlen(*str1) + 2*strlen(*str2);
 	}
 	
 	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* id,  const char** name,  const char** description,  const char** content){
@@ -305,9 +336,6 @@ namespace _r {
 			'[', *m, ',', *n, ']', ','
 		);
 	}
-	size_t strlens(const flag::Arr& _flag,  const uint64_t*,  const uint64_t*){
-		return std::char_traits<char>::length("[1234567890123456789,1234567890123456789],");
-	}
 	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str){
 		compsky::asciify::asciify(
@@ -317,9 +345,6 @@ namespace _r {
 			','
 		);
 	}
-	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str){
-		return std::char_traits<char>::length("\"1234567890123456789\":\"\",") + 2*strlen(*str);
-	}
 	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const char* const* str1,  const char* const* str2){
 		compsky::asciify::asciify(
@@ -328,9 +353,6 @@ namespace _r {
 				'"', _f::esc, '"', *str2, '"',
 			','
 		);
-	}
-	size_t strlens(const flag::Dict& _flag,  const char* const* str1,  const char* const* str2){
-		return std::char_traits<char>::length("\"\":\"\",") + 2*strlen(*str1) + 2*strlen(*str2);
 	}
 	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
@@ -345,9 +367,6 @@ namespace _r {
 			','
 		);
 	}
-	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str0,  const unsigned*,  const char* const* str1,  const char* const* str2){
-		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",123456789,\"\",\"\"],") + 2*strlen(*str0) + 2*strlen(*str1) + 2*strlen(*str2);
-	}
 	
 	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const uint64_t* m){
 		compsky::asciify::asciify(
@@ -358,9 +377,6 @@ namespace _r {
 				']',
 			','
 		);
-	}
-	size_t strlens(const flag::Dict& _flag,  const uint64_t*,  const char* const* str0,  const uint64_t*){
-		return std::char_traits<char>::length("\"1234567890123456789\":[\"\",1234567890123456789],") + 2*strlen(*str0);
 	}
 	
 	constexpr
@@ -556,14 +572,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 #endif
 	
 	
-	template<typename FlagType,  typename... Args>
-	char* get_itr_from_buf(nullptr_t,  const FlagType& _flag,  const char* const _headers,  Args... args){
+	template<typename... Args>
+	char* get_itr_from_buf(nullptr_t,  const char* const _headers,  Args... args){
 		size_t sz = 0;
 		
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
 		while(this->mysql_assign_next_row__no_free(args...)){
-			sz += _r::strlens(_flag, args...);;
+			sz += 1 + _r::strlens(args...) /* Space for the entries and a trailing comma */  + 1;
 		}
 		sz += 1;
 		sz += 1;
@@ -573,8 +589,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			exit(4096);
 		return reinterpret_cast<char*>(buf);
 	}
-	template<typename FlagType,  typename... Args>
-	char* get_itr_from_buf(char** buf,  const FlagType,  const char* const,  Args...){
+	template<typename... Args>
+	char* get_itr_from_buf(char** buf,  const char* const,  Args...){
 		return *buf;
 	}
 	void set_buf_to_itr(nullptr_t, char*){}
@@ -614,7 +630,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"\n"
 		;
 		
-		char* const itr_init = get_itr_from_buf(stacked_itr, _flag, _headers, args...);
+		char* const itr_init = get_itr_from_buf(stacked_itr, _headers, args...);
 		char* itr = itr_init;
 		
 		compsky::asciify::asciify(itr, _headers);
