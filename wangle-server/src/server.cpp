@@ -14,6 +14,7 @@
 #include "db_info.hpp"
 #include "user_auth.hpp"
 #include "static_response.hpp"
+#include "jsonify.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
 
@@ -26,6 +27,7 @@
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/mysql/qryqry.hpp>
+#include <compsky/mysql/alternating_qry.hpp>
 #include <compsky/utils/is_str_dblqt_escaped.hpp>
 
 #include <folly/init/Init.h>
@@ -253,148 +255,14 @@ namespace _r {
 	std::mutex devices_json_mutex;
 	std::mutex protocol_json_mutex;
 	
-	
 	namespace flag {
-		struct Dict{};
-		struct Arr{};
+		constexpr static const Arr arr;
+		constexpr static const Dict dict;
+		
+		constexpr static QuoteAndEscape quote_and_escape{};
+		constexpr static QuoteNoEscape quote_no_escape{};
+		constexpr static NoQuote no_quote{};
 	};
-	
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str1,  const char* const* str2,  const char* const* str3){
-		compsky::asciify::asciify(
-			itr,
-			'"', *n, '"', ':', '[',
-				'"', _f::esc, '"', *str1, '"', ',',
-				'"', _f::esc, '"', *str2, '"', ',',
-				'"', _f::esc, '"', *str3, '"',
-			']', ','
-		);
-	}
-	
-	constexpr
-	size_t strlens(){
-		return 0;
-	}
-	template<typename... Args>
-	size_t strlens(const uint64_t* m,  Args... args);
-	
-	template<typename... Args>
-	size_t strlens(const unsigned* m,  Args... args);
-	
-	template<typename... Args>
-	size_t strlens(const char** str,  Args... args);
-	
-	template<typename Int>
-	size_t strlens_int(Int m){
-		size_t n = 1; // Space for the comma
-		do{
-			++n;
-		}while((m /= 10) != 0);
-		return n;
-	}
-	
-	template<typename... Args>
-	size_t strlens(const uint64_t* m,  Args... args){
-		return strlens_int<uint64_t>(*m) + strlens(args...);
-	}
-	
-	template<typename... Args>
-	size_t strlens(const unsigned* m,  Args... args){
-		return strlens_int<unsigned>(*m) + strlens(args...);
-	}
-	
-	template<typename... Args>
-	size_t strlens(const char** str,  Args... args){
-		return 1 + 2*strlen(*str) + 1 + 1 /* Quotes and trailing comma */ + strlens(args...);
-	}
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str1,  const char* const* str2){
-		compsky::asciify::asciify(
-			itr,
-			'"', *n, '"', ':', '[',
-				'"', _f::esc, '"', *str1, '"', ',',
-				'"', _f::esc, '"', *str2, '"',
-			']', ','
-		);
-	}
-	
-	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* id,  const char** name,  const char** description,  const char** content){
-		compsky::asciify::asciify(
-			itr,
-			'[',
-				*id, ',',
-				'"', _f::esc, '"', *name, '"', ',',
-				'"', _f::esc, '"', *description, '"', ',',
-				'"', _f::json_esc, *content, '"',
-			']', ','
-		);
-	}
-	
-	void asciifiis(const flag::Arr& _flag,  char*& itr,  const uint64_t* m,  const uint64_t* n){
-		compsky::asciify::asciify(
-			itr,
-			'[', *m, ',', *n, ']', ','
-		);
-	}
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str){
-		compsky::asciify::asciify(
-			itr,
-			'"', *n, '"', ':',
-				'"', _f::esc, '"', *str, '"',
-			','
-		);
-	}
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const char* const* str1,  const char* const* str2){
-		compsky::asciify::asciify(
-			itr,
-			'"', _f::esc, '"', *str1, '"', ':',
-				'"', _f::esc, '"', *str2, '"',
-			','
-		);
-	}
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const unsigned* m,  const char* const* str1,  const char* const* str2){
-		compsky::asciify::asciify(
-			itr,
-			'"', *n, '"', ':', '[',
-					'"', _f::esc, '"', *str0, '"', ',',
-					*m, ',',
-					'"', _f::esc, '"', *str1, '"', ',',
-					'"', _f::esc, '"', *str2, '"',
-				']',
-			','
-		);
-	}
-	
-	void asciifiis(const flag::Dict& _flag,  char*& itr,  const uint64_t* n,  const char* const* str0,  const uint64_t* m){
-		compsky::asciify::asciify(
-			itr,
-			'"', *n, '"', ':', '[',
-					'"', _f::esc, '"', *str0, '"', ',',
-					*m,
-				']',
-			','
-		);
-	}
-	
-	constexpr
-	char opener(const flag::Dict& _flag){
-		return '{';
-	}
-	constexpr
-	char opener(const flag::Arr& _flag){
-		return '[';
-	}
-	constexpr
-	char closer(const flag::Dict& _flag){
-		return '}';
-	}
-	constexpr
-	char closer(const flag::Arr& _flag){
-		return ']';
-	}
 }
 
 class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  const std::string_view> {
@@ -578,7 +446,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
-		while(this->mysql_assign_next_row__no_free(args...)){
+		while(compsky::mysql::assign_next_row__no_free__alternating(this->res, &this->row, args...)){
 			sz += 1 + _r::strlens(args...) /* Space for the entries and a trailing comma */  + 1;
 		}
 		sz += 1;
@@ -601,20 +469,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		*buf = const_cast<const char*>(itr);
 	}
 	
-	template<typename FlagType,  typename... Args>
-	void init_json_rows(char*& itr,  const FlagType& _flag,  Args... args){
-		compsky::asciify::asciify(itr, _r::opener(_flag));
-		while(this->mysql_assign_next_row(args...)){
-			_r::asciifiis(_flag, itr, args...);
-		}
+	template<typename ArrOrDict,  typename... Args>
+	void asciify_json_response_rows(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
+		while(compsky::mysql::assign_next_row__alternating(this->res, &this->row, args...))
+			_r::asciify_json_response_row(itr, f_arr_or_dict, args...);
 		if (unlikely(*(itr - 1) == ','))
-			// If there was at least one iteration of the loop...
-			--itr; // ...wherein a trailing comma was left
-		*(itr++) = _r::closer(_flag);
+			--itr;
 	}
 	
-	template<typename StackdBuf,  typename MallocdBuf,  typename FlagType,  typename... Args>
-	void init_json(const StackdBuf stacked_itr,  const FlagType& _flag,  MallocdBuf mallocd_dst,  Args... args){
+	template<typename ArrOrDict,  typename... Args>
+	void init_json_rows(char*& itr,  const ArrOrDict _flag,  Args... args){
+		compsky::asciify::asciify(itr, _r::opener_symbol(_flag));
+		this->asciify_json_response_rows(itr, _flag, args...);
+		*(itr++) = _r::closer_symbol(_flag);
+	}
+	
+	template<typename StackdBuf,  typename MallocdBuf,  typename ArrOrDict,  typename... Args>
+	void init_json(const StackdBuf stacked_itr,  const ArrOrDict _flag,  MallocdBuf mallocd_dst,  Args... args){
 		/*
 		 * stacked_itr is either nullptr or this->itr
 		 * In the first case,  itr_init is a new malloc'd string that is assigned to mallocd_dst
@@ -651,81 +522,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 	}
 	
-	struct QuoteAndEscape{};
-	struct QuoteNoEscape{};
-	struct NoQuote{};
-	constexpr static QuoteAndEscape quote_and_escape{};
-	constexpr static QuoteNoEscape quote_no_escape{};
-	constexpr static NoQuote no_quote{};
-	
-	constexpr
-	void asciify_json_list_response_entry(){
-		--this->itr; // Remove trailing comma
-	}
-	
-	template<typename... Args>
-	void asciify_json_list_response_entry(const NoQuote,  const char** str1,  Args... args){
-		this->asciify(*str1, ',');
-		this->asciify_json_list_response_entry(args...);
-	}
-	template<typename... Args>
-	void asciify_json_list_response_entry(const QuoteNoEscape,  const char** str1,  Args... args){
-		this->asciify('"',  *str1, '"', ',');
-		this->asciify_json_list_response_entry(args...);
-	}
-	template<typename... Args>
-	void asciify_json_list_response_entry(const QuoteAndEscape,  const char** str1,  Args... args){
-		this->asciify('"',  _f::esc, '"', *str1, '"', ',');
-		this->asciify_json_list_response_entry(args...);
-	}
-	
-	
-	template<typename... Args>
-	void asciify_json_list_response_row(Args... args){
-		this->asciify('[');
-		this->asciify_json_list_response_entry(args...);
-		this->asciify(']');
-		this->asciify(',');
-	}
-	template<typename Flag>
-	void asciify_json_list_response_row(const Flag f,  const char** str){
-		this->asciify_json_list_response_entry(f, str);
-		this->asciify(',');
-	}
-	template<typename Flag>
-	bool mysql_assign_next_row_for_json_list_response(const Flag flag,  const char** str){
-		return this->mysql_assign_next_row(str);
-	}
-	template<typename Flag1,  typename Flag2>
-	bool mysql_assign_next_row_for_json_list_response(const Flag1 flag1,  const char** str1,  const Flag2 flag2,  const char** str2){
-		return this->mysql_assign_next_row(str1, str2);
-	}
-	template<typename Flag1,  typename Flag2,  typename Flag3>
-	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3){
-		return this->mysql_assign_next_row(str1, str2, str3);
-	}
-	template<typename Flag1,  typename Flag2,  typename Flag3,  typename Flag4>
-	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3,  const Flag4,  const char** str4){
-		return this->mysql_assign_next_row(str1, str2, str3, str4);
-	}
-	template<typename Flag1,  typename Flag2,  typename Flag3,  typename Flag4,  typename Flag5>
-	bool mysql_assign_next_row_for_json_list_response(const Flag1,  const char** str1,  const Flag2,  const char** str2,  const Flag3,  const char** str3,  const Flag4,  const char** str4,  const Flag5,  const char** str5){
-		return this->mysql_assign_next_row(str1, str2, str3, str4, str5);
-	}
-	template<typename... Args>
-	void asciify_json_list_response_into_buf(Args... args){
-		this->asciify('[');
-		while(this->mysql_assign_next_row_for_json_list_response(args...)){
-			this->asciify_json_list_response_row(args...);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
-	}
 	template<typename... Args>
 	void write_json_list_response_into_buf(Args... args){
 		this->begin_json_response();
-		this->asciify_json_list_response_into_buf(args...);
+		this->init_json_rows(this->itr, _r::flag::arr, args...);
 		*this->itr = 0;
 	}
 	
@@ -754,7 +554,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
 		const char* id;
-		this->write_json_list_response_into_buf(this->no_quote, &id);
+		this->write_json_list_response_into_buf(_r::flag::no_quote, &id);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -840,7 +640,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify('[');
 		
 		const char* id_str;
-		const char* name;
+		const char* name = nullptr;
 		
 		this->asciify('[');
 		this->mysql_query_after_itr(
@@ -849,11 +649,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
-		while(this->mysql_assign_next_row(&name))
-			this->asciify_json_list_response_row(this->quote_and_escape, &name);
-		if(this->last_char_in_buf() != ',')
+		this->asciify_json_response_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name);
+		if (unlikely(name == nullptr))
 			return _r::unauthorised;
-		--this->itr;
 		this->asciify(']');
 		this->asciify(',');
 		
@@ -866,10 +664,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		while(this->mysql_assign_next_row(&id_str, &name))
-			this->asciify_json_list_response_row(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
+		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
 		this->asciify(']');
 		this->asciify(',');
 		
@@ -882,10 +677,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		while(this->mysql_assign_next_row(&id_str, &name))
-			this->asciify_json_list_response_row(this->quote_no_escape, &id_str, this->quote_and_escape, &name);
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
+		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
 		this->asciify(']');
 		
 		this->asciify(']');
@@ -1135,7 +927,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* era_start;
 		const char* era_end;
 		const char* era_tag_ids;
-		this->asciify_json_list_response_into_buf(this->no_quote, &era_start, this->no_quote, &era_end, this->quote_no_escape, &era_tag_ids);
+		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::no_quote, &era_start, _r::flag::no_quote, &era_end, _r::flag::quote_no_escape, &era_tag_ids);
 		this->asciify(',');
 		
 		
@@ -1206,8 +998,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		const char* tag_id;
 		const char* tag_name;
-		constexpr _r::flag::Dict dict;
-		this->init_json_rows(this->itr, dict, &tag_id, &tag_name);
+		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &tag_id, _r::flag::quote_and_escape, &tag_name);
 		this->asciify(']');
 		
 		
@@ -1237,7 +1028,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		
 		const char* tag_id;
-		this->write_json_list_response_into_buf(this->no_quote, &tag_id);
+		this->write_json_list_response_into_buf(_r::flag::no_quote, &tag_id);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
@@ -1402,9 +1193,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query("SELECT name, id FROM _file WHERE name IN(", body, ")");
 		const char* id;
 		const char* name;
-		constexpr _r::flag::Dict dict;
 		this->reset_buf_index();
-		this->init_json(&this->itr, dict, nullptr, &name, &id);
+		this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &name, _r::flag::quote_no_escape, &id);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -1691,7 +1481,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		const char* username;
 		const char* user_id;
-		this->write_json_list_response_into_buf(this->quote_no_escape, &user_id, this->quote_no_escape, &username);
+		this->write_json_list_response_into_buf(_r::flag::quote_no_escape, &user_id, _r::flag::quote_no_escape, &username);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1984,7 +1774,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		const char* id;
 		const char* name;
-		this->write_json_list_response_into_buf(this->quote_no_escape, &id, this->quote_and_escape, &name);
+		this->write_json_list_response_into_buf(_r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -2079,10 +1869,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
 			regenerate_mimetype_json = false;
-			uint64_t id;
-			const char* str1;
-			constexpr _r::flag::Dict dict;
-			this->init_json(nullptr, dict, &_r::mimetype_json, &id, &str1);
+			const char* id;
+			const char* name;
+			this->init_json(nullptr, _r::flag::dict, &_r::mimetype_json, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &name);
 		}
 		return _r::mimetype_json;
 	}
@@ -2112,11 +1901,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			std::cerr << e.what() << std::endl;
 			return _r::EMPTY_JSON_LIST;
 		}
-		uint64_t id;
+		const char* id;
 		const char* name;
-		constexpr _r::flag::Dict dict;
 		this->reset_buf_index();
-		this->init_json(&this->itr, dict, nullptr, &id, &name);
+		this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -2133,37 +1921,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view get_device_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
-			uint64_t id;
+			const char* id;
 			const char* name;
-			unsigned protocol;
+			const char* protocol;
 			const char* embed_pre;
 			const char* embed_post;
-			constexpr _r::flag::Dict dict;
 			this->mysql_query(
 				"SELECT id, name, protocol, embed_pre, embed_post "
 				"FROM _device "
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES(user_id)
 			);
 			this->itr = this->buf;
-			this->init_json(&this->itr, dict, nullptr, &id, &name, &protocol, &embed_pre, &embed_post);
+			this->init_json(&this->itr, _r::flag::dict, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &protocol, _r::flag::quote_and_escape, &embed_pre, _r::flag::quote_and_escape, &embed_post);
 			return this->get_buf_as_string_view();
 		}
 		
 		std::unique_lock lock(_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
-			uint64_t id;
+			const char* id;
 			const char* name;
-			unsigned protocol;
+			const char* protocol;
 			const char* embed_pre;
 			const char* embed_post;
-			constexpr _r::flag::Dict dict;
 			this->mysql_query_buf(
 				"SELECT id, name, protocol, embed_pre, embed_post "
 				"FROM _device "
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME(GUEST_ID_STR)
 			);
-			this->init_json(nullptr, dict, &_r::devices_json, &id, &name, &protocol, &embed_pre, &embed_post);
+			this->init_json(nullptr, _r::flag::dict, &_r::devices_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_no_escape, &protocol, _r::flag::quote_and_escape, &embed_pre, _r::flag::quote_and_escape, &embed_post);
 		}
 		return _r::devices_json;
 	}
@@ -2172,11 +1958,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		GREYLIST_GUEST
 		
-		uint64_t id;
+		const char* id;
 		const char* name;
 		const char* description;
 		const char* content;
-		constexpr _r::flag::Arr arr;
 		this->mysql_query(
 			"SELECT t.id, t.name, t.description, t.content "
 			"FROM task t "
@@ -2184,7 +1969,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE u2t.user=", user_id
 		);
 		this->itr = this->buf;
-		this->init_json(&this->itr, arr, nullptr, &id, &name, &description, &content);
+		this->init_json(&this->itr, _r::flag::arr, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &description, _r::flag::quote_and_escape, &content);
 		return this->get_buf_as_string_view();
 	}
 	
@@ -2229,11 +2014,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
-			uint64_t id; // unsigned, really - just can't justify creating another function for template
+			const char* id;
 			const char* name;
-			const char* empty; // To deliver it as id:[name] rather than id:name
-			constexpr _r::flag::Dict dict;
-			this->init_json(nullptr, dict, &_r::protocol_json, &id, &name, &empty);
+			const char* empty; // To deliver it as id:[name] rather than id:name // TODO: Tidy
+			this->init_json(nullptr, _r::flag::dict, &_r::protocol_json, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &empty);
 		}
 		return _r::protocol_json;
 	}
@@ -2241,9 +2025,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view get_tag2parent_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
-			uint64_t id;
-			uint64_t id2;
-			constexpr _r::flag::Arr arr;
+			const char* id;
+			const char* id2;
 			this->mysql_query(
 				"SELECT id, parent "
 				"FROM tag2parent "
@@ -2251,23 +2034,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS(user_id)
 			);
 			this->itr = this->buf;
-			this->init_json(&this->itr, arr, nullptr, &id, &id2);
+			this->init_json(&this->itr, _r::flag::arr, nullptr, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &id2);
 			return this->get_buf_as_string_view();
 		}
 		
 		std::unique_lock lock(_r::tag2parent_json_mutex);
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
-			uint64_t id;
-			uint64_t id2;
-			constexpr _r::flag::Arr arr;
+			const char* id;
+			const char* id2;
 			this->mysql_query_buf(
 				"SELECT id, parent "
 				"FROM tag2parent "
 				"WHERE id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 			);
-			this->init_json(nullptr, arr, &_r::tag2parent_json, &id, &id2);
+			this->init_json(nullptr, _r::flag::arr, &_r::tag2parent_json, _r::flag::quote_no_escape, &id, _r::flag::quote_no_escape, &id2);
 		}
 		return _r::tag2parent_json;
 	}
