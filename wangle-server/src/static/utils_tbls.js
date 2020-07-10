@@ -1,11 +1,3 @@
-function $$$column_from_timestamp(selector, timestamp_indx){
-	$(selector).find('.tr').each(function (i, el){
-		var $tds = $(this).find('.td');
-		var $link = $tds.eq(timestamp_indx);
-		$link.value = $link.text();
-		$link.text($$$timestamp2dt($link.value));
-	});
-}
 function $$$column_id2name(x, id, fn_name, col){
 	const y = $$$document_getElementById(id).getElementsByClassName('tbody')[0];
 	// x might be a dictionary itself (such as dirs/tags) or a string name of such a dictionary
