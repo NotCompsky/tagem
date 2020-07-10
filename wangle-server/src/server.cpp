@@ -453,6 +453,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const bool rc = (likely(*(itr - 1) == ','));
 		if (rc)
 			--itr;
+		return rc;
 	}
 	
 	template<typename ArrOrDict,  typename... Args>
