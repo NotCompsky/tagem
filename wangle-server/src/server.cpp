@@ -1,8 +1,5 @@
 #define DEBUG
 
-#define USE_VECTOR
-#include <compsky/asciify/asciify.hpp>
-
 #include "FrameDecoder.h"
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
@@ -14,6 +11,7 @@
 #include "db_info.hpp"
 #include "user_auth.hpp"
 #include "static_response.hpp"
+#include "asciify_flags.hpp"
 #include "jsonify.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
@@ -172,24 +170,6 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 
 
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
-
-namespace _f {
-	using namespace compsky::asciify::flag;
-	constexpr static const Escape esc;
-	constexpr static const esc::DoubleQuote esc_dblqt;
-	constexpr static const AlphaNumeric alphanum;
-	constexpr static const StrLen strlen;
-	constexpr static const JSONEscape json_esc;
-	constexpr static const Repeat repeat;
-	constexpr static const Zip3 zip3;
-	constexpr static const NElements n_elements;
-	constexpr static const Hex hex;
-	constexpr static const grammatical_case::Lower lower_case;
-	constexpr static const grammatical_case::Upper upper_case;
-	constexpr static const esc::SpacesAndNonAscii esc_spaces_and_non_ascii;
-	constexpr static const esc::URI_until_space::Unescape unescape_URI_until_space;
-	constexpr static const UntilNullOr until;
-}
 
 FILE* EXTERNAL_CMDS_TO_RUN = stderr;
 
@@ -419,10 +399,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	void mysql_free_res(){
 		mysql_free_result(this->res);
-	}
-	
-	void mysql_free_res2(){
-		mysql_free_result(this->res2);
 	}
 	
 	void mysql_seek(const int i){
@@ -1037,52 +1013,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	void asciify_tags_arr(){
+	template<typename ArrOrDict>
+	void asciify_tags_arr_or_dict(const ArrOrDict f_arr_or_dict){
 		const char* id;
 		const char* name;
 		const char* thumb;
 		const char* cover;
 		const char* count;
-		this->reset_buf_index();
-		this->begin_json_response();
-		this->asciify('[');
-		while(this->mysql_assign_next_row(&id, &name, &thumb, &cover, &count)){
-			this->asciify(
-				'[',
-					'"', id, '"', ',',
-					'"', _f::esc, '"', name, '"', ',',
-					'"', _f::esc, '"', thumb, '"', ',',
-					'"', _f::esc, '"', cover, '"', ',',
-					count,
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify(']');
-	}
-	
-	void asciify_tags_dict(){
-		const char* id;
-		const char* name;
-		const char* thumb;
-		const char* cover;
-		const char* count;
-		this->asciify('{');
-		while(this->mysql_assign_next_row2(&id, &name, &thumb, &cover, &count)){
-			this->asciify(
-				'"', id, '"', ':',
-				'[',
-					'"', _f::esc, '"', name, '"', ',',
-					'"', _f::esc, '"', thumb, '"', ',',
-					'"', _f::esc, '"', cover, '"', ',',
-					count,
-				']', ','
-			);
-		}
-		if(this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify('}');
+		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
+		this->asciify_json_response_rows(this->itr, f_arr_or_dict, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &thumb, _r::flag::quote_and_escape, &cover, _r::flag::no_quote, &count);
+		std::swap(this->res, this->res2);
+		this->asciify(_r::closer_symbol(f_arr_or_dict));
 	}
 	
 	void asciify_file_info__no_end(){
@@ -1145,7 +1086,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// If there was at least one iteration of the loop...
 			--this->itr; // ...wherein a trailing comma was left
 		this->asciify("],");
-		this->asciify_tags_dict();
+		this->asciify_tags_arr_or_dict(_r::flag::dict);
 		this->asciify("]");
 		*this->itr = 0;
 	}
@@ -1705,12 +1646,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
 		
-		this->mysql_query(
+		this->mysql_query2(
 			TAGS_INFOS("", _f::strlen, tag_ids, tag_ids_len, "")
 			"ORDER BY FIELD(t.id,", _f::strlen, tag_ids, tag_ids_len, ")"
 			// WARNING: No limit
 		);
-		this->asciify_tags_arr();
+		this->reset_buf_index();
+		this->begin_json_response();
+		this->asciify_tags_arr_or_dict(_r::flag::arr);
 		
 		return this->get_buf_as_string_view();
 	}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "asciify_flags.hpp"
+
 
 namespace _r {
 		namespace flag {
