@@ -798,7 +798,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->begin_json_response();
 		this->asciify('[');
 		
-		
+		--this->itr; // Removes the previous open bracket. This is because the following SQL query has only ONE response - an array would be appropriate if there were more
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir")
@@ -850,11 +850,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::no_quote, &dislikes,
 			_r::flag::no_quote, &fps,
 			_r::flag::quote_no_escape, &external_db_and_post_ids,
+			_r::flag::quote_no_escape, &tag_ids,
 			_r::flag::no_quote, &mimetype,
 			_r::flag::quote_no_escape, &file2_values
 		))
 			// No results - probably because the user hasn't the permission to view the file
 			return _r::not_found;
+		--this->itr; // Removes the previous close bracket. This is because the following SQL query has only ONE response - an array would be appropriate if there were more
 		this->asciify(',');
 		
 		
