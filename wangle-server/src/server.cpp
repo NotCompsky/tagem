@@ -447,18 +447,20 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename ArrOrDict,  typename... Args>
-	void asciify_json_response_rows(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
+	bool asciify_json_response_rows(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
 		while(compsky::mysql::assign_next_row__alternating(this->res, &this->row, args...))
 			_r::asciify_json_response_row(itr, f_arr_or_dict, args...);
-		if (unlikely(*(itr - 1) == ','))
+		const bool rc = (likely(*(itr - 1) == ','));
+		if (rc)
 			--itr;
 	}
 	
 	template<typename ArrOrDict,  typename... Args>
-	void init_json_rows(char*& itr,  const ArrOrDict _flag,  Args... args){
+	bool init_json_rows(char*& itr,  const ArrOrDict _flag,  Args... args){
 		compsky::asciify::asciify(itr, _r::opener_symbol(_flag));
-		this->asciify_json_response_rows(itr, _flag, args...);
+		const bool rc = this->asciify_json_response_rows(itr, _flag, args...);
 		*(itr++) = _r::closer_symbol(_flag);
+		return rc;
 	}
 	
 	template<typename StackdBuf,  typename MallocdBuf,  typename ArrOrDict,  typename... Args>
@@ -599,22 +601,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify('[');
 		
 		const char* id_str;
-		const char* name = nullptr;
+		const char* name;
 		
-		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT name "
 			"FROM _dir "
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
-		this->asciify_json_response_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name);
-		if (unlikely(name == nullptr))
+		if (not this->asciify_json_response_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name))
 			return _r::unauthorised;
-		this->asciify(']');
 		this->asciify(',');
 		
-		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
 			"FROM _dir d "
@@ -624,10 +622,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY depth DESC"
 		);
 		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
-		this->asciify(']');
 		this->asciify(',');
 		
-		this->asciify('[');
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
 			"FROM _dir d "
@@ -637,7 +633,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY depth DESC"
 		);
 		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
-		this->asciify(']');
 		
 		this->asciify(']');
 		*this->itr = 0;
@@ -822,7 +817,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"GROUP BY f.id"
 		);
-		const char* md5_hash = nullptr;
+		const char* md5_hash;
 		const char* dir_id;
 		const char* file_name;
 		const char* file_title;
@@ -840,7 +835,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* tag_ids;
 		const char* mimetype;
 		const char* file2_values;
-		this->init_json_rows(
+		if(not this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
 			_r::flag::quote_no_escape, &md5_hash,
@@ -860,8 +855,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::quote_no_escape, &external_db_and_post_ids,
 			_r::flag::no_quote, &mimetype,
 			_r::flag::quote_no_escape, &file2_values
-		);
-		if(unlikely(md5_hash == nullptr))
+		))
 			// No results - probably because the user hasn't the permission to view the file
 			return _r::not_found;
 		this->asciify(',');
@@ -1410,13 +1404,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"WHERE p.id=", post_id
 			);
 			
-			const char* user = nullptr;
+			const char* user;
 			const char* timestamp;
 			const char* n_likes;
 			const char* username;
 			const char* text;
-			this->init_json_rows(_itr_plus_offset, _r::flag::arr, _r::flag::quote_no_escape, &user, _r::flag::no_quote, &timestamp, _r::flag::no_quote, &n_likes, _r::flag::quote_no_escape, &username, _r::flag::quote_and_json_escape, &text);
-			if (user == nullptr)
+			if (not this->init_json_rows(_itr_plus_offset, _r::flag::arr, _r::flag::quote_no_escape, &user, _r::flag::no_quote, &timestamp, _r::flag::no_quote, &n_likes, _r::flag::quote_no_escape, &username, _r::flag::quote_and_json_escape, &text))
 				return _r::not_found;
 		}
 		
