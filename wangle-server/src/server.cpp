@@ -606,7 +606,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
-		if (not this->asciify_json_response_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name))
+		if (not this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name))
 			return _r::unauthorised;
 		this->asciify(',');
 		
@@ -618,7 +618,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
+		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
 		this->asciify(',');
 		
 		this->mysql_query_after_itr(
@@ -629,7 +629,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		this->asciify_json_response_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
+		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
 		
 		this->asciify(']');
 		*this->itr = 0;
