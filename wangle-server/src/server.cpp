@@ -140,7 +140,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"GROUP_CONCAT(p.cover ORDER BY (1/(1+t2pt.depth))*(p.cover!=\"\") DESC LIMIT 1)," \
 		"IFNULL(A.n,0) " \
 	"FROM _tag t " \
-	"JOIN tag2parent_tree t2pt ON t2pt.tag=t.id " \
+	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
 	"JOIN _tag p ON p.id=t2pt.parent " \
 	"LEFT JOIN(" \
 		"SELECT tag, COUNT(*) AS n " \
@@ -833,7 +833,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT d.id, d.name "
 			"FROM _dir d "
 			"JOIN dir2parent_tree dt ON dt.parent=d.id "
-			"WHERE dt.dir=", id, " "
+			"WHERE dt.id=", id, " "
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
@@ -848,7 +848,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
 			"FROM _dir d "
-			"JOIN dir2parent_tree dt ON dt.dir=d.id "
+			"JOIN dir2parent_tree dt ON dt.id=d.id "
 			"WHERE dt.parent=", id, " "
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
@@ -2127,10 +2127,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			this->mysql_query(
-				"SELECT tag, parent "
-				"FROM tag2parent t2p "
-				"WHERE t2p.tag NOT IN" USER_DISALLOWED_TAGS(user_id)
-				  "AND t2p.parent NOT IN" USER_DISALLOWED_TAGS(user_id)
+				"SELECT id, parent "
+				"FROM tag2parent "
+				"WHERE id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				  "AND parent NOT IN" USER_DISALLOWED_TAGS(user_id)
 			);
 			this->itr = this->buf;
 			this->init_json(&this->itr, arr, nullptr, &id, &id2);
@@ -2144,10 +2144,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			uint64_t id2;
 			constexpr _r::flag::Arr arr;
 			this->mysql_query_buf(
-				"SELECT tag, parent "
-				"FROM tag2parent t2p "
-				"WHERE t2p.tag NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				  "AND t2p.parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				"SELECT id, parent "
+				"FROM tag2parent "
+				"WHERE id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				  "AND parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(nullptr, arr, &_r::tag2parent_json, &id, &id2);
 		}
@@ -2401,7 +2401,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		this->mysql_exec(
 			"INSERT INTO tag2parent "
-			"(tag, parent, user)"
+			"(id, parent, user)"
 			"SELECT t.id, p.id,", user_id, " "
 			"FROM _tag t "
 			"JOIN _tag p "
@@ -2409,10 +2409,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 			  "AND t.id NOT IN " USER_DISALLOWED_TAGS(user_id)
 			  "AND p.id NOT IN " USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE tag=tag"
+			"ON DUPLICATE KEY UPDATE parent=parent"
 		);
 		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (tag, parent, depth) "
+			"INSERT INTO tag2parent_tree (id, parent, depth) "
 			"SELECT * "
 			"FROM("
 				"SELECT id AS id, id AS parent, 0 AS depth "
@@ -2424,7 +2424,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"JOIN tag2parent_tree t2pt "
 				"WHERE t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 				"AND t2pt.parent IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
-				"AND t2pt.tag NOT IN" USER_DISALLOWED_TAGS(user_id)
+				"AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			")A "
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
 		);
@@ -2841,7 +2841,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"DELETE t2p "
 			"FROM tag2parent t2p "
-			"JOIN _tag t ON t.id=t2p.tag "
+			"JOIN _tag t ON t.id=t2p.id "
 			"JOIN _tag p ON p.id=t2p.parent "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
@@ -2856,7 +2856,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	void tag_parentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
 		this->mysql_exec(
-			"INSERT INTO tag2parent (tag, parent, user) "
+			"INSERT INTO tag2parent (id, parent, user) "
 			"SELECT t.id, p.id,", user_id, " "
 			"FROM _tag t "
 			"JOIN _tag p "
@@ -2864,15 +2864,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE tag=tag"
+			"ON DUPLICATE KEY UPDATE parent=parent"
 		);
 		
 		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (tag, parent, depth) "
+			"INSERT INTO tag2parent_tree (id, parent, depth) "
 			"SELECT t.id, t2pt.parent, t2pt.depth+1 "
 			"FROM _tag t "
 			"JOIN _tag p "
-			"JOIN tag2parent_tree t2pt ON t2pt.tag=p.id "
+			"JOIN tag2parent_tree t2pt ON t2pt.id=p.id "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
@@ -2882,12 +2882,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// Update all descendant tags
 		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (tag, parent, depth) "
-			"SELECT t2pt.tag, t2pt2.parent, t2pt.depth+1 "
+			"INSERT INTO tag2parent_tree (id, parent, depth) "
+			"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
 			"FROM tag2parent_tree t2pt "
-			"JOIN tag2parent_tree t2pt2 ON t2pt2.tag=t2pt.parent "
-			"WHERE t2pt.tag IN (", _f::strlen, tag_ids, tag_ids_len, ")"
-			  "AND t2pt.tag NOT IN" USER_DISALLOWED_TAGS(user_id)
+			"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
+			"WHERE t2pt.id IN (", _f::strlen, tag_ids, tag_ids_len, ")"
+			  "AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 		);
 		

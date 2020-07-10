@@ -8,7 +8,7 @@
 		"SELECT f2t.file AS id " \
 		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
-		"JOIN file2tag f2t ON f2t.tag=t2pt.tag " \
+		"JOIN file2tag f2t ON f2t.tag=t2pt.id " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_FILES_INNER_PRE2 \
 		"SELECT f.id " \
@@ -23,8 +23,20 @@
 	")"
 #define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
+
+#define USER_DISALLOWED_ERAS_INNER_PRE \
+	"SELECT id " \
+	"FROM era " \
+	"WHERE file IN(" USER_DISALLOWED_FILES_INNER_PRE
+#define USER_DISALLOWED_ERAS_INNER_PRE2 \
+	"SELECT id " \
+	"FROM era " \
+	"WHERE file IN(" USER_DISALLOWED_FILES_INNER_PRE2
+#define USER_DISALLOWED_ERAS_INNER_END \
+	")"
+
 #define USER_DISALLOWED_TAGS_INNER_PRE \
-		"SELECT t2pt.tag AS id " \
+		"SELECT t2pt.id " \
 		"FROM user2blacklist_tag u2ht " \
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
 		"WHERE u2ht.user="

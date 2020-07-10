@@ -1,6 +1,7 @@
 #include "qry.hpp"
 #include <compsky/asciify/asciify.hpp>
 #include <compsky/macros/char_in_arr.hpp>
+#include <compsky/macros/is_contained_in_varargs.hpp>
 #include <cstddef> // for size_t
 
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -11,6 +12,8 @@
 #else
 # define LOG(...)
 #endif
+
+#define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
 
 
 namespace sql_factory{
@@ -35,6 +38,7 @@ namespace arg {
 	typedef uint32_t ArgType;
 	enum Arg : ArgType {
 		invalid,
+		era,
 		file,
 		tag,
 		tag_tree,
@@ -102,38 +106,53 @@ struct SQLArg {
 };
 
 static
-bool has_tag_relation_tbl(const char tbl_alias){
-	switch(tbl_alias){
-		case 'f':
-			return true;
-		default:
-			return false;
-	}
-}
-
-static
 const char* tbl_full_name(const char tbl_alias){
 	switch(tbl_alias){
+		case 'e':
+			return "era";
 		case 'f':
 			return "file";
 		case 'd':
 		case 'D':
 			return "dir";
-		default: // AKA case 't'
+		case 't':
 			return "tag";
+		default:
+			abort();
+	}
+}
+
+static
+const char tbl_arg_to_alias(const arg::ArgType arg){
+	switch(arg){
+		case arg::era:
+			return 'e';
+		case arg::file:
+			return 'f';
+		case arg::dir:
+			return 'd';
+		case arg::tag:
+		case arg::tag_tree:
+			return 't';
+		default:
+			abort();
 	}
 }
 
 static
 const char* tbl_full_name_of_base_tbl(const char tbl_alias){
 	switch(tbl_alias){
+		case 'e':
+			return "era";
 		case 'f':
 			return "_file";
 		case 'd':
 		case 'D':
 			return "_dir";
-		default: // AKA case 't'
+		case 't':
 			return "_tag";
+		default:
+			abort();
 	}
 }
 
@@ -191,6 +210,39 @@ void add_many2many_field_name(std::string& cxxstring,  const char* const attribu
 			return;
 		default:
 			abort();
+	}
+}
+
+static
+bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
+	const bool b = (
+		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir)(arg::tag)(arg::tag_tree))))
+		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file))))
+		//or ((which_tbl=='d') and (ARGTYPE_IN(arg_token, (arg::device)))) // arg::device is not implemented yet
+	);
+	
+	LOG("is_valid_tbl2tbl_reference(%c,%c) == %s\n", which_tbl, tbl_arg_to_alias(arg_token), (b?"TRUE":"FALSE"));
+	
+	return b;
+}
+
+static
+bool has_intermediate_tbl_in_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
+	return not (
+		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir))))
+		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file))))
+		//or ((which_tbl=='d') and (ARGTYPE_IN(arg_token, (arg::device)))) // arg::device is not implemented yet
+	);
+}
+
+static
+bool is_tree_tbl(const arg::ArgType arg){
+	switch(arg){
+		//case arg::dir: // NOTE: not defacto, as we parse the entire path's string
+		case arg::tag_tree:
+			return true;
+		default:
+			return false;
 	}
 }
 
@@ -520,16 +572,49 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				--bracket_depth;
 				break;
 			
+			case arg::era:
 			case arg::file:
-			case arg::dir: {
-				if (which_tbl != 'f')
-					return successness::unimplemented;
+			case arg::dir:
+			case arg::tag:
+			case arg::tag_tree: {
+				if (not is_valid_tbl2tbl_reference(which_tbl, arg_token_base))
+					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name";
-				rc = process_name_list(where, 'd', qry);
+				where += "IN (SELECT x.";
+				if (has_intermediate_tbl_in_tbl2tbl_reference(which_tbl, arg_token_base)){
+					// e.g. for file to tag
+					// 1st example branch
+					where += tbl_full_name(which_tbl); // e.g. "file"
+					where += " FROM ";
+					where += tbl_full_name(which_tbl); // e.g. "file"
+					where += "2";
+					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag"
+				} else {
+					// 2nd example branch
+					where += "id";
+					where += " FROM ";
+					where += tbl_full_name_of_base_tbl(which_tbl); // e.g. "_file"
+				}
+				where += " x JOIN ";
+				if (is_tree_tbl(arg_token_base)){
+					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
+					where += "2parent_tree z ON z.id=x.";
+					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag"
+					where += " JOIN ";
+				}
+				where += tbl_full_name_of_base_tbl(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "_dir"
+				where += " y ON y.id=";
+				if (is_tree_tbl(arg_token_base)){
+					where += "z.id";
+				} else {
+					where += "x.";
+					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
+				}
+				where += " WHERE y.name";
+				rc = process_name_list(where, tbl_arg_to_alias(arg_token_base), qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";
@@ -564,44 +649,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += "IN (SELECT id FROM _dir WHERE device IN(" + connected_local_devices_str + ")";
 				++n_args_since_operator;
 				break;
-				break;
-			}
-			case arg::tag: {
-				if (not has_tag_relation_tbl(which_tbl))
-					return successness::invalid;
-				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
-				where += "IN (SELECT x2t.";
-				where += tbl_full_name(which_tbl);
-				where += " FROM ";
-				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN _tag t ON t.id=x2t.tag WHERE t.name";
-				rc = process_name_list(where, 't', qry);
-				if (rc != successness::ok)
-					return rc;
-				where += ")";
-				++n_args_since_operator;
-				break;
-			}
-			case arg::tag_tree: {
-				if (not has_tag_relation_tbl(which_tbl))
-					return successness::invalid;
-				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
-				where += "IN (SELECT x2t.";
-				where += tbl_full_name(which_tbl);
-				where += " FROM ";
-				where += tbl_full_name(which_tbl);
-				where += "2tag x2t JOIN tag2parent_tree t2pt ON t2pt.tag=x2t.tag JOIN _tag t ON t.id=t2pt.parent WHERE t.name";
-				rc = process_name_list(where, 't', qry);
-				if (rc != successness::ok)
-					return rc;
-				where += ")";
-				++n_args_since_operator;
 				break;
 			}
 			case arg::backups: {
@@ -903,6 +950,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 	unsigned offset = 0;
 	where.reserve(4096);
 	switch(*qry){
+		case 'e':
 		case 'f':
 		case 'd':
 		case 't':
@@ -918,7 +966,13 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 	
 	const char* user_disallowed_X_tbl_filter_inner_pre;
 	const char* user_disallowed_X_tbl_filter_inner_pre2 = nullptr;
+	const char* user_disallowed_X_tbl_filter_inner_end = "";
 	switch(which_tbl){
+		case 'e':
+			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_ERAS_INNER_PRE;
+			user_disallowed_X_tbl_filter_inner_pre2 = USER_DISALLOWED_ERAS_INNER_PRE2;
+			user_disallowed_X_tbl_filter_inner_end = USER_DISALLOWED_ERAS_INNER_END;
+			break;
 		case 'f':
 			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_FILES_INNER_PRE;
 			user_disallowed_X_tbl_filter_inner_pre2 = USER_DISALLOWED_FILES_INNER_PRE2;
@@ -946,8 +1000,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			"X.id\n"
 		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
 		join.c_str(),
-		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id "
-		"LEFT JOIN(", (user_disallowed_X_tbl_filter_inner_pre2) ? user_disallowed_X_tbl_filter_inner_pre2 : "SELECT 0=", user_id, (user_disallowed_X_tbl_filter_inner_pre2) ? "" : " AS id", ")B ON B.id=X.id " // 0=user_id should always resolve to 0, therefore being an empty join
+		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, user_disallowed_X_tbl_filter_inner_end, ")A ON A.id=X.id "
+		"LEFT JOIN(", (user_disallowed_X_tbl_filter_inner_pre2) ? user_disallowed_X_tbl_filter_inner_pre2 : "SELECT 0=", user_id, (user_disallowed_X_tbl_filter_inner_pre2) ? "" : " AS id", user_disallowed_X_tbl_filter_inner_end, ")B ON B.id=X.id " // 0=user_id should always resolve to 0, therefore being an empty join
 		"WHERE ", where.c_str(), "\n"
 		  "AND A.id IS NULL "
 		  "AND B.id IS NULL "
