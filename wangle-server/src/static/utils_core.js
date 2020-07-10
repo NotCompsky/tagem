@@ -44,15 +44,13 @@ function $$$hide_all_except(ids,classes){
 		else 
 			$$$hide(id);
 	}
-	if(classes!==undefined){
-		for(const c of [
-			'file-meta'
-		]){
-			if(classes.includes(c))
-				$$$unhide_class(c);
-			else
-				$$$hide_class(c);
-		}
+	for(const c of [
+		'file-meta'
+	]){
+		if((classes===undefined)||(!classes.includes(c)))
+			$$$hide_class(c);
+		else
+			$$$unhide_class(c);
 	}
 }
 function $$$is_visible(id){
