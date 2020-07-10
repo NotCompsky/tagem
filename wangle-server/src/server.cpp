@@ -1179,7 +1179,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_after_itr(
 			"SELECT "
-				"t.id,"
+				"DISTINCT t.id,"
 				"t.name "
 			"FROM _tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
