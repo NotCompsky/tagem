@@ -513,10 +513,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (sql_factory::parse_into(this->itr, s, connected_local_devices_str, user_id) != sql_factory::successness::ok)
 			return _r::post_not_necessarily_malicious_but_invalid;
 		
-		this->asciify(
-			
-		);
-		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
 		const char* id;
