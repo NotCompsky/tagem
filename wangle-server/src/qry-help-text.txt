@@ -196,4 +196,7 @@ EXAMPLES
 			f t "^Foobar$"
 	t attr parent = "Country" order d size
 		List the Country tags in order of decreasing numbers of files they are associated with
+	f t! "Uploader: " and not t "Youtube Channel" and d "^http" and d "youtube" limit 100
+		List Youtube files directly tagged with "Uploader: <SOMETHING>", where those tags are not recognised as Youtube Channels.
+		Useful for fixing tag mistakes.
 )========="

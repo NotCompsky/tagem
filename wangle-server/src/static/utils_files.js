@@ -410,7 +410,9 @@ function $$$view_file(_file_id_and_t){
 	$$$set_window_location_hash(
 		($$$playlist_file_ids!==undefined)
 		? ('F' + $$$playlist_file_ids.join(","))
-		: ('f' + ((_file_id===undefined)?$$$file_id:_file_id))
+		: ('f' + ((_file_id_and_t===undefined)?$$$file_id:_file_id_and_t))
+		// BUG: This discards era information when viewing a single file and clicking on the File tab again.
+		// TODO: Fix this
 	);
 	
 	if (_file_id !== null){

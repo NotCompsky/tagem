@@ -66,7 +66,8 @@
 	")"
 #define DIR_TBL_USER_PERMISSION_FILTER(user_id) \
 	"AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
-
+#define BACKUP_DIR_TBL_USER_PERMISSION_FILTER(user_id) \
+	"AND d.id NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 
 namespace sql_factory{
 
