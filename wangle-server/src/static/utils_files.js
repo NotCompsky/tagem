@@ -287,8 +287,6 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 		if($$$playlist_file_ids === undefined){
 			for(var i=0; i<5; ++i)
 				$$$document_getElementById('view-'+$$$playlist_listeners_types[i]).removeEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
-		}else{
-			$$$unhide('next-f-in-playlist');
 		}
 	} else {
 		$$$set_file_view_src('iframe', embed_pre+_file_name+$$$D[_device_id][3], null);
@@ -353,6 +351,8 @@ function $$$assign_value_to_file(){
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','file-meta','tagselect-files-container','tagselect-files-btn']);
+	if($$$playlist_file_ids!==undefined)
+		$$$unhide('next-f-in-playlist');
 }
 
 function $$$next_video_when_it_reaches(){
