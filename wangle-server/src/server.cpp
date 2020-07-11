@@ -984,66 +984,34 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		std::swap(this->res, this->res2);
 	}
 	
-	void asciify_file_info__no_end(){
-		//const char* protocol_id;
-		const char* md5_hex;
-		//const char* dir_id;
-		//const char* dir_name;
-		const char* f_id;
-		const char* f_name;
-		const char* f_title;
-		const char* f_sz;
-		const char* file_added_timestamp;
-		const char* file_origin_timestamp;
-		const char* duration;
-		const char* w;
-		const char* h;
-		const char* views;
-		const char* likes;
-		const char* dislikes;
-		const char* fps;
-		const char* external_db_and_post_ids;
-		const char* tag_ids;
-		const char* era_start;
-		const char* era_end;
-		this->begin_json_response();
-		this->asciify("[\"0\",[");
-		while(this->mysql_assign_next_row__no_free(&md5_hex, &f_id, &f_name, &f_title, &f_sz, &file_added_timestamp, &file_origin_timestamp, &duration, &w, &h, &views, &likes, &dislikes, &fps, &external_db_and_post_ids, &tag_ids, &era_start, &era_end)){
-			this->asciify(
-				'[',
-					'"', md5_hex, '"', ',',
-					//dir_id, ',',
-					//'"', _f::esc, '"', dir_name, '"', ',',
-					f_id, ',',
-					'"', _f::esc, '"', f_name,   '"', ',',
-					'"', _f::esc, '"', f_title,  '"', ',',
-					'"', f_sz, '"', ',', // Integer as string because Javascript can't handle big integers
-					file_added_timestamp, ',',
-					file_origin_timestamp, ',',
-					duration, ',',
-					w, ',',
-					h, ',',
-					views, ',',
-					likes, ',',
-					dislikes, ',',
-					fps, ',',
-					'"', external_db_and_post_ids, '"', ',',
-					'"', tag_ids, '"', ',',
-					era_start, ',',
-					era_end,
-				']',
-				','
-			);
-		}
-	}
-	
 	void asciify_file_info(){
-		this->asciify_file_info__no_end();
+		this->begin_json_response();
+		this->asciify("[\"0\",");
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_no_escape, // md5_hex thumbnail
+			_r::flag::quote_no_escape, // file_id
+			_r::flag::quote_and_escape, // file name
+			_r::flag::quote_and_escape, // file title
+			_r::flag::quote_no_escape, // file size
+			_r::flag::no_quote, // file added timestamp
+			_r::flag::no_quote, // file origin timestamp
+			_r::flag::no_quote, // duration
+			_r::flag::no_quote, // w
+			_r::flag::no_quote, // h
+			_r::flag::no_quote, // views
+			_r::flag::no_quote, // likes
+			_r::flag::no_quote, // dislikes
+			_r::flag::no_quote, // fps
+			_r::flag::quote_no_escape, // external db and post IDs
+			_r::flag::quote_no_escape, // tag IDs CSV
+			_r::flag::no_quote, // era start
+			_r::flag::no_quote // era end
+		);
+		
 		this->mysql_free_res();
-		if (this->last_char_in_buf() == ',')
-			// If there was at least one iteration of the loop...
-			--this->itr; // ...wherein a trailing comma was left
-		this->asciify("],");
+		this->asciify(',');
 		this->asciify_tags_arr_or_dict(_r::flag::dict);
 		this->asciify("]");
 		*this->itr = 0;
