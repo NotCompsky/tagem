@@ -29,25 +29,21 @@ uint64_t get_last_insert_id(){
 inline
 uint64_t is_file_in_db(const char* const fp,  unsigned& protocol){
 	constexpr static const compsky::asciify::flag::Escape _f_esc;
-	compsky::mysql::query(_mysql::obj,  RES1,  BUF,
-		"SELECT f.file, D.protocol, 1 "
-		"FROM file_backup f "
-		"JOIN dir d ON d.id=f.dir "
-		"JOIN device D ON D.id=d.device "
-		"WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\" "
-		"UNION "
-		"SELECT f.id, D.protocol, 0 "
-		"FROM file f "
-		"JOIN dir d ON d.id=f.dir "
-		"JOIN device D ON D.id=d.device "
-		"WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\""
-	);
-    
-    uint64_t id = 0;
-	bool is_backup;
-    while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id,  &protocol, &is_backup));
-    
-    return id;
+	for(auto i = 1;  i != 0;  --i){
+		compsky::mysql::query(_mysql::obj,  RES1,  BUF,
+			"SELECT f.", (i)?"id":"file", ", D.protocol, 1 "
+			"FROM file", (i)?"":"_backup", " f "
+			"JOIN dir d ON d.id=f.dir "
+			"JOIN device D ON D.id=d.device "
+			"WHERE CONCAT(d.name, f.name)=\"", _f_esc, '"', fp, "\""
+		);
+		uint64_t id = 0;
+		bool is_backup;
+		while(compsky::mysql::assign_next_row(RES1,  &ROW1,  &id,  &protocol, &is_backup));
+		if (id != 0)
+			return id;
+	}
+	return 0;
 }
 
 
