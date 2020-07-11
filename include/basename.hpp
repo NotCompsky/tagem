@@ -72,8 +72,9 @@ void record_dir(const char* const dir_path,  Args... args){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO dir (device, name) "
-		"SELECT ",
+		"INSERT INTO dir (user, device, name) "
+		"SELECT "
+			"4,",
 			device, ","
 			"\"", f_esc, '"', dir_path, "\" "
 		"FROM dir "
@@ -105,7 +106,8 @@ void record_dir_from_filepath(const char* const _file_path,  Args... args){
 	const QByteArray ba = prefix_qstr.toLocal8Bit();
 	const char* const prefix = ba.data();
 #else
-	const char* const prefix = cli::get_trim(_file_path, "New directory prefix.\n%s\n", help_txt);
+	static char _buf[4096];
+	const char* const prefix = cli::get_trim(_buf, _file_path, "New directory prefix.\n%s\n", help_txt);
 #endif
 	
 	record_dir(prefix, args...);
@@ -165,7 +167,8 @@ void insert_file_from_path(const char* const _file_path,  Args... args){
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO file (dir, name) VALUES ("
+		"INSERT INTO file (user, dir, name) VALUES ("
+			"4,"
 			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', f_strlen, pardir_length(_file_path, args...), _file_path, "\"),"
 			"\"", f_esc, '"', basename(_file_path), "\""
 		") ON DUPLICATE KEY UPDATE dir=dir"
@@ -180,7 +183,8 @@ void insert_file_from_path_pair(const char* const dir,  const char* const file_n
 	compsky::mysql::exec(
 		_mysql::obj,
 		BUF,
-		"INSERT INTO file (dir, name) VALUES ("
+		"INSERT INTO file (user, dir, name) VALUES ("
+			"4,"
 			"(SELECT id FROM dir WHERE name=\"", f_esc, '"', dir, "\"),"
 			"\"", f_esc, '"', file_name, "\""
 		") ON DUPLICATE KEY UPDATE dir=dir"
