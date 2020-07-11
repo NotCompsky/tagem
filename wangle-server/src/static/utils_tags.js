@@ -176,7 +176,7 @@ function $$$view_tag(_tag_id,page){
 	}
 	
 	$$$ajax_GET_w_JSON_response(
-		"/a/t/id/"+_tag_id,
+		"/a/t/id/"+$$$tag_id,
 		function(data){
 			const [id, name,thumb,cover,size] = data[0];
 			$$$set_profile_name(name);
