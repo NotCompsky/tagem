@@ -35,7 +35,7 @@ function $$$view_eras(ls){
 		$$$unset_window_location_hash();
 	else{
 		if (ls.length === 0){
-			$$$get_tbl_body("e").innerHTML = "";
+			$$$get_tbl_body("f").innerHTML = "";
 		}else{
 			$$$populate_f_table('e/id',ls.join(","),null,0);
 		}
