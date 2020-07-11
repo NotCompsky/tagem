@@ -440,9 +440,8 @@ function $$$view_file(_file_id_and_t){
 				$$$d = _d;
 				$$$file_name = name;
 				$$$file_title = (title==="")?$$$file_name:title;
-				const db_and_post_ids = ext_db_n_post_ids;
-				if (db_and_post_ids !== "")
-					$$$display_external_dbs(db_and_post_ids.split(",").map(x => x.split(":")));
+				if (ext_db_n_post_ids !== "")
+					$$$display_external_dbs(ext_db_n_post_ids.split(",").map(x => x.split(":")));
 				
 				let _vals = "";
 				const file2_values = file2_values_csv.split(",");
