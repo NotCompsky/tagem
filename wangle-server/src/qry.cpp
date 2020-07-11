@@ -995,11 +995,11 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			"X.id\n"
 		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
 		join.c_str(),
-		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id "
+		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id\n"
 		"WHERE ", where.c_str(), "\n"
-		  "AND A.id IS NULL "
+		  "AND A.id IS NULL\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
-		"LIMIT ", limit, " "
+		"LIMIT ", limit, "\n"
 		"OFFSET ", offset,
 		'\0'
 	);
