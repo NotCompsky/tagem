@@ -35,13 +35,6 @@ CREATE TABLE _device (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
-CREATE TABLE user2blacklist_device (
-	user INT UNSIGNED NOT NULL,
-	device BIGINT UNSIGNED NOT NULL,
-	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (device) REFERENCES _device (id),
-	PRIMARY KEY (user,device)
-);
 INSERT INTO _device (name, protocol) VALUES
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
@@ -72,6 +65,25 @@ CREATE TABLE dir2parent_tree (
 	FOREIGN KEY (dir) REFERENCES _dir (id),
 	FOREIGN KEY (parent) REFERENCES _dir (id),
 	UNIQUE KEY (dir,parent)
+);
+
+CREATE TABLE dir2tag (
+	dir BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
+	FOREIGN KEY (dir) REFERENCES _dir (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (user) REFERENCES user (id),
+	PRIMARY KEY (dir,tag)
+);
+CREATE TABLE device2tag (
+	device BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
+	FOREIGN KEY (device) REFERENCES _device (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (user) REFERENCES user (id),
+	PRIMARY KEY (device,tag)
 );
 
 CREATE TABLE mimetype (

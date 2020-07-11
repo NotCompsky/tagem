@@ -879,7 +879,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT dir, name, mimetype "
 			"FROM file_backup "
 			"WHERE file=", id, " "
-			  "AND dir NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
+			  "AND dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
 		this->init_json_rows(
 			this->itr,
@@ -903,7 +903,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM file_backup "
 				"WHERE file=", id,
 			")"
-			  "AND d.id NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
+			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
 		this->init_json_rows(
 			this->itr,
@@ -1970,7 +1970,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  BACKUP_DIR_TBL_USER_PERMISSION_FILTER(user_id)
+			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			  ,(dir_id==0)?" OR ":" AND d.id=", dir_id
 		);
 		const char* mimetype = nullptr;

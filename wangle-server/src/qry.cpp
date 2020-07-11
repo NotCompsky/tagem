@@ -965,17 +965,12 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 	}
 	
 	const char* user_disallowed_X_tbl_filter_inner_pre;
-	const char* user_disallowed_X_tbl_filter_inner_pre2 = nullptr;
-	const char* user_disallowed_X_tbl_filter_inner_end = "";
 	switch(which_tbl){
 		case 'e':
 			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_ERAS_INNER_PRE;
-			user_disallowed_X_tbl_filter_inner_pre2 = USER_DISALLOWED_ERAS_INNER_PRE2;
-			user_disallowed_X_tbl_filter_inner_end = USER_DISALLOWED_ERAS_INNER_END;
 			break;
 		case 'f':
 			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_FILES_INNER_PRE;
-			user_disallowed_X_tbl_filter_inner_pre2 = USER_DISALLOWED_FILES_INNER_PRE2;
 			break;
 		case 'd':
 			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_DIRS_INNER_PRE;
@@ -1000,11 +995,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			"X.id\n"
 		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
 		join.c_str(),
-		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, user_disallowed_X_tbl_filter_inner_end, ")A ON A.id=X.id "
-		"LEFT JOIN(", (user_disallowed_X_tbl_filter_inner_pre2) ? user_disallowed_X_tbl_filter_inner_pre2 : "SELECT 0=", user_id, (user_disallowed_X_tbl_filter_inner_pre2) ? "" : " AS id", user_disallowed_X_tbl_filter_inner_end, ")B ON B.id=X.id " // 0=user_id should always resolve to 0, therefore being an empty join
+		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id "
 		"WHERE ", where.c_str(), "\n"
 		  "AND A.id IS NULL "
-		  "AND B.id IS NULL "
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, " "
 		"OFFSET ", offset,
