@@ -2,7 +2,6 @@
 #include "basename.hpp"
 #include "protocol.hpp"
 
-#define DEBUG
 #include <compsky/mysql/query.hpp>
 #include <boost/regex.hpp>
 #include <pHash.h>
@@ -320,8 +319,6 @@ void insert_hashes_into_db(const FileType file_type_flag,  const char* const fil
 			(length_to_go != 0)  &&
 			((uintptr_t)itr - (uintptr_t)BUF)  <  BUF_SZ - (1 + 19 + 1 + 19 + 2)
 		);
-		
-		printf("EXECUTING: %.*s\n", (int)((uintptr_t)itr - (uintptr_t)BUF - which_relation.insert_trailing_length), BUF);
 		
 		compsky::mysql::exec_buffer(
 			_mysql::obj,
