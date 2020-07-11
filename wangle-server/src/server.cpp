@@ -1576,13 +1576,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, ' ')
 		GET_USER_ID
 		
+		this->mysql_query2(
+			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", _f::strlen, dir_ids, dir_ids_len, ")")
+		);
 		this->mysql_query(
 			"SELECT "
 				"d.id,"
 				"d.name,"
 				"d.device,"
-				"COUNT(*)"
+				"GROUP_CONCAT(DISTINCT d2t.tag),"
+				"COUNT(DISTINCT f.id)"
 			"FROM _dir d "
+			"JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN _file f ON f.dir=d.id "
 			"WHERE d.id IN (", _f::strlen, dir_ids, dir_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
@@ -1591,16 +1596,26 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY FIELD(d.id,", _f::strlen, dir_ids, dir_ids_len, ")"
 			// WARNING: No limit
 		);
+		
 		this->reset_buf_index();
 		this->begin_json_response();
+		this->asciify('[');
+		
 		this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
 			_r::flag::quote_no_escape, // device
+			_r::flag::quote_no_escape, // tag IDs
 			_r::flag::no_quote // count
 		);
+		this->asciify(',');
+		
+		this->asciify_tags_arr_or_dict(_r::flag::dict);
+		
+		this->asciify(']');
+		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
 	}

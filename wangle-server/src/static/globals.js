@@ -43,4 +43,6 @@ const $$$BLANK_IMG_SRC = "data:,";
 
 var $$$get_file_ids;
 var $$$get_tag_ids;
+var $$$get_dir_ids;
 var $$$file_tagger_fn; // Allows for updating file tag lists when they have tags manually added
+var $$$dir_tagger_fn;

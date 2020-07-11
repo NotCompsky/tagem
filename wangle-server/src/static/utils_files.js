@@ -146,37 +146,11 @@ function $$$get_selected_file_ids(){
 	return file_ids.substr(1);
 }
 
-function $$$tag_files_then(file_ids, selector, fn){
-	const tagselect = $(selector);
-	const tags = tagselect.select2('data');
-	if(file_ids==="")
-		return;
-	if(!$$$logged_in())
-		return $$$alert_requires_login();
-	$$$ajax_POST_w_text_response(
-		"/f/t/" + file_ids + "/" + tags.map(x => x.id).join(","),
-		function(){
-			tagselect.val("").change(); // Deselect all
-			fn(file_ids, tags);
-		}
-	);
-}
-function $$$after_tagged_this_file(file_ids, tags){
+function $$$after_tagged_this_file(ids, tags){
 	$$$display_tags_add(tags, '#tags', 'f')
 }
-function $$$after_tagged_selected_files(file_ids, tags){
-	for(let node of $$$document_getElementById('f').getElementsByClassName('tr')){
-		if(!file_ids.includes(node.dataset.id))
-			continue;
-		if(node.dataset.id==="0"){
-			$$$debug__err_alert("after_tagged_selected_files ($$$after_tagged_selected_files) attempting to tag file of ID 0");
-			continue;
-		}
-		let _s = "";
-		for(tag of tags)
-			_s += $$$link_to_named_fn_w_param_id_w_human_name("$$$view_tag",tag.id,tag.text);
-		node.getElementsByClassName('td')[3].innerHTML += _s;
-	}
+function $$$after_tagged_selected_files(ids, tags){
+	$$$after_tagged_selected_stuff('f',ids,tags,4);
 }
 
 

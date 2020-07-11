@@ -1,3 +1,31 @@
+function $$$tag_stuff_then(alias, ids, selector, fn){
+	// alias is either file 'f', dir 'd', or device 'D'
+	const tagselect = $(selector);
+	const tags = tagselect.select2('data');
+	if(ids==="")
+		return;
+	if(!$$$logged_in())
+		return $$$alert_requires_login();
+	$$$ajax_POST_w_text_response(
+		"/" + alias + "/t/" + ids + "/" + tags.map(x => x.id).join(","),
+		function(){
+			tagselect.val("").change(); // Deselect all
+			fn(ids, tags);
+		}
+	);
+}
+function $$$after_tagged_selected_stuff(alias, ids, tags, col){
+	// col is the index of the tag column
+	for(let node of $$$document_getElementById(alias).getElementsByClassName('tr')){
+		if(!ids.includes(node.dataset.id))
+			continue;
+		let _s = "";
+		for(tag of tags)
+			_s += $$$link_to_named_fn_w_param_id_w_human_name("$$$view_tag",tag.id,tag.text);
+		node.getElementsByClassName('td')[col].innerHTML += _s;
+	}
+}
+
 function $$$populate_t_id2name_table(arr){
 	if (arr.length===0){
 		$$$get_tbl_body('t').innerHTML = "";

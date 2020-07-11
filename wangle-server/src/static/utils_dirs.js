@@ -11,7 +11,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 		_dir_id_or_path=$$$dir_id;
 	if(page===undefined)
 		page = 0;
-	let ls = ['f','f-action-btns','tags-container','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];
+	let ls = ['f','f-action-btns','tags-container','parents-container','children-container','tagselect-dirs-container','tagselect-files-container','tagselect-files-btn'];
 	if(!is_not_in_db){
 		ls.push('merge-files-btn');
 		ls.push('backup-files-btn');
@@ -20,7 +20,9 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 	$$$hide_all_except(ls);
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
+	$$$dir_tagger_fn = $$$after_tagged_this_dir;
 	$$$get_file_ids = $$$get_selected_file_ids;
+	$$$get_dir_ids = $$$get_this_dir_id;
 
 	if (_dir_id_or_path !== undefined){
 		if(is_not_in_db){
@@ -51,8 +53,24 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 		$$$set_profile_name_from_this_dir();
 	}
 }
+function $$$get_selected_dir_ids(){
+	return $$$get_selected_ids('d');
+}
+function $$$get_this_dir_id(){
+	return $$$dir_id;
+}
+
+function $$$after_tagged_this_dir(ids, tags){
+	$$$display_tags_add(tags, '#tags', 'd')
+}
+function $$$after_tagged_selected_dirs(ids, tags){
+	$$$after_tagged_selected_stuff('d',ids,tags,3);
+}
+
 function $$$view_dirs(ls){
 	$$$hide_all_except(['d']);
+	$$$dir_tagger_fn = $$$after_tagged_selected_dirs;
+	$$$get_dir_ids = $$$get_selected_dir_ids;
 		const tbl = $$$document_getElementById('d').getElementsByClassName('tbody')[0];
 	if (ls.length===0){
 		tbl.innerHTML = "";
@@ -61,18 +79,21 @@ function $$$view_dirs(ls){
 			"/a/d/id/"+ls.join(","),
 			function(data){
 				let s = "";
-				for (const [id, name, device, size] of data){
-					s += "<div class='tr'>";
+				$$$get_dir_ids = $$$get_selected_dir_ids;
+				for (const [[id, name, device, tag_ids, size], t_dict] of data){
+					s += "<div class='tr' data-id='" + id + "'>";
 						s += "<div class='td'>";
-							s += "<a onclick='$$$view_dir(" + id + ",0)'>" + $$$escape_html_text(name) + "</a>";
+							s += "<a onclick='$$$view_dir(this.parentNode.parentNode.dataset.id,0)'>" + $$$escape_html_text(name) + "</a>";
 						s += "</div>";
 						s += "<div class='td'>";
 							s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";
 						s += "</div>";
 						s += "<div class='td dir-size'>" + size + "</div>";
+						s += "<div class='td'>" + tag_ids + "</div>";
 					s += "</div>";
 				}
 				tbl.innerHTML = s;
+				$$$column_id2name(t_dict,"d",'$$$view_tag', 3);
 			}
 		);
 	}
