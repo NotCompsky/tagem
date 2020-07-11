@@ -513,7 +513,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
-		this->write_json_list_response_into_buf(_r::flag::no_quote);
+		this->write_json_list_response_into_buf(_r::flag::quote_no_escape);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -910,7 +910,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::dict,
 			_r::flag::quote_no_escape, // dir_id,
 			_r::flag::quote_and_escape, // dir_name,
-			_r::flag::no_quote // device_id
+			_r::flag::quote_no_escape // device_id
 		);
 		this->asciify(',');
 		
@@ -958,7 +958,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LIMIT 1000"
 		);
 		
-		this->write_json_list_response_into_buf(_r::flag::no_quote);
+		this->write_json_list_response_into_buf(_r::flag::quote_no_escape);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
