@@ -29,6 +29,7 @@ function $$$hide_all_except(ids,classes){
 		'protocolselect-container',
 		'tagselect-files-container',
 		'tagselect-files-btn',
+		'tagselect-dirs-container',
 		'tagselect-self-p-container',
 		'tagselect-self-p-btn',
 		'tagselect-self-c-container',
