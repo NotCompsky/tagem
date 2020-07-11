@@ -103,9 +103,9 @@ function $$$view_user(_db_id, _user_id){
 				
 				const tags = data[4];
 				if (tags === "")
-					$$$display_tags([], "#tags", 'x/u');
+					$$$display_tags([], "tags", 'x/u');
 				else 
-					$$$display_tags(tags.split(","), "#tags", 'x/u');
+					$$$display_tags(tags.split(","), "tags", 'x/u');
 				
 				$$$user_name = data[0];
 				$$$set_profile_name($$$user_name);

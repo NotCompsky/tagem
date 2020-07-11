@@ -55,29 +55,37 @@ function $$$populate_t_id2name_table(arr){
 	);
 }
 
-function $$$unlink_this_tag_from_this(alias,node){
+function $$$tbl_alias_to_id_value(alias){
+	switch(alias){
+		case 'f':
+			return $$$file_id;
+		case 'd':
+			return $$$dir_id;
+		case 't':
+			return $$$tag_id;
+	}
+}
+function $$$unlink_this_tag_from_this(node,alias,relation,fn){
 	// alias is either 'f' for file, or 'd' for directory, or 'D' for device
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
+	if(relation===undefined)
+		// alias is 'f' or 'd' or 'D', and the relation can only be to a tag
+		// Whereas a tag can have a relation only to a parent or child tag
+		relation='t';
 	$$$ajax_POST_w_text_response(
-		"/" + alias + "/t-/"+$$$file_id+"/"+node.parentNode.dataset.id,
+		"/"+alias+"/"+relation+"-/"+$$$tbl_alias_to_id_value(alias)+"/"+node.parentNode.dataset.id,
 		function(){
 			node.parentNode.classList.add("hidden");
+			if(fn!==undefined)
+				fn(node.parentNode.id);
 		}
 	);
 }
 function $$$unlink_tag_from_this_tag(node,relation){
-	if(!$$$logged_in())
-		return $$$alert_requires_login();
-	$$$ajax_POST_w_text_response(
-		"/t/"+relation+"-/"+$$$tag_id+"/"+node.parentNode.dataset.id,
-		function(){
-			const x = node.parentNode;
-			const id = x.dataset.id;
-			x.classList.add("hidden");
-			$$$del_from_t2p( ((relation==="c")?id:$$$tag_id), ((relation==="c")?$$$tag_id:id) );
-		}
-	);
+	$$$unlink_this_tag_from_this(node,'t',relation,function(id){
+		$$$del_from_t2p( ((relation==="c")?id:$$$tag_id), ((relation==="c")?$$$tag_id:id) );
+	});
 }
 function $$$del_from_t2p(t,p){
 	let i;
@@ -102,9 +110,9 @@ function $$$display_tag(id, name, thumb, fn_name, alias){
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">-</button>"
 		+ "</div>";
 }
-function $$$display_tags(tag_ids, selector, fn_name, alias){
+function $$$display_tags(tag_ids, node_id, fn_name, alias){
 	if(tag_ids.length===0){
-		document.querySelector(selector).innerHTML = "";
+		$$$document_getElementById(node_id).innerHTML = "";
 		return;
 	}
 	$$$ajax_data_w_JSON_response(
@@ -116,20 +124,20 @@ function $$$display_tags(tag_ids, selector, fn_name, alias){
 			for (const [id, name, thumb, cover, size] of data){
 				s += $$$display_tag(id, name, thumb, fn_name, alias);
 			}
-			document.querySelector(selector).innerHTML = s;
+			$$$document_getElementById(node_id).innerHTML = s;
 		}
 	);
 }
-function $$$display_tags_add(tags, selector, fn_name, alias){
+function $$$display_tags_add(tags, node_id, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file
 	const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name, alias));
-	document.querySelector(selector).innerHTML += arr.join("");
+	$$$document_getElementById(node_id).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), '#parents', "$$$unlink_this_parent_tag_from_this_tag");
+	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), 'parents', "$$$unlink_this_parent_tag_from_this_tag");
 }
 function $$$display_child_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), '#children', "$$$unlink_this_child_tag_from_this_tag");
+	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), 'children', "$$$unlink_this_child_tag_from_this_tag");
 }
 
 // Functions used in HTML

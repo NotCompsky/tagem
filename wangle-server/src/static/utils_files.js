@@ -149,7 +149,7 @@ function $$$get_selected_file_ids(){
 }
 
 function $$$after_tagged_this_file(ids, tags){
-	$$$display_tags_add(tags, '#tags', 'f')
+	$$$display_tags_add(tags, 'tags', 'f')
 }
 function $$$after_tagged_selected_files(ids, tags){
 	$$$after_tagged_selected_stuff('f',ids,tags,4);
@@ -427,7 +427,7 @@ function $$$view_file(_file_id_and_t){
 				$$$document_getElementById('values').innerHTML = _vals;
 				
 				$$$file_tags = (tag_ids==="") ? [] : tag_ids.split(",");
-				$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this", "f");
+				$$$display_tags($$$file_tags, "tags", "$$$unlink_this_tag_from_this", "f");
 				
 				$$$mimetype = mime;
 				

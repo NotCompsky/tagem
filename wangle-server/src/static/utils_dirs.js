@@ -40,7 +40,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 				$$$dir_name = data[0];
 				$$$display_related_dirs($$$dir_id,"parents",data[1]);
 				$$$display_related_dirs($$$dir_id,"children",data[2]);
-				$$$display_tags(data[3], "#tags", "$$$unlink_this_tag_from_this", 'd');
+				$$$display_tags(data[3], "tags", "$$$unlink_this_tag_from_this", 'd');
 				$$$set_profile_name_from_this_dir();
 			});
 			$$$populate_f_table('d', $$$dir_id, null, page);
@@ -61,7 +61,7 @@ function $$$get_this_dir_id(){
 }
 
 function $$$after_tagged_this_dir(ids, tags){
-	$$$display_tags_add(tags, '#tags', 'd')
+	$$$display_tags_add(tags, 'tags', 'd')
 }
 function $$$after_tagged_selected_dirs(ids, tags){
 	$$$after_tagged_selected_stuff('d',ids,tags,3);
