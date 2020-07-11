@@ -74,14 +74,6 @@ CREATE TABLE dir2parent_tree (
 	UNIQUE KEY (dir,parent)
 );
 
-CREATE TABLE user2blacklist_file (
-	user INT UNSIGNED NOT NULL,
-	file BIGINT UNSIGNED NOT NULL,
-	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (file) REFERENCES _file (id),
-	PRIMARY KEY (user,file)
-);
-
 CREATE TABLE mimetype (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(32) NOT NULL UNIQUE KEY
