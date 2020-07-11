@@ -447,10 +447,7 @@ function $$$view_file(_file_id_and_t){
 				$$$document_getElementById("view-btns").innerHTML = _s;
 				$$$view_file__hides();
 				
-				_s = "";
-				for(const era of eras)
-					_s += $$$create_era_info_row(era);
-				$$$document_getElementById('eras-info-tbody').innerHTML = _s;
+				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 2);
 			}
 		);
