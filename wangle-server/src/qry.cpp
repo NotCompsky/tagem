@@ -1,6 +1,5 @@
 #include "qry.hpp"
 #include <compsky/asciify/asciify.hpp>
-#include <compsky/macros/char_in_arr.hpp>
 #include <compsky/macros/is_contained_in_varargs.hpp>
 #include <cstddef> // for size_t
 
@@ -14,6 +13,7 @@
 #endif
 
 #define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
+#define CHAR_IN(x,ls) IS_CONTAINED_IN_VARARGS(char,x,ls)
 
 
 namespace sql_factory{
@@ -216,9 +216,9 @@ void add_many2many_field_name(std::string& cxxstring,  const char* const attribu
 static
 bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
 	const bool b = (
-		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir)(arg::tag)(arg::tag_tree))))
-		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file)(arg::tag)(arg::tag_tree))))
-		//or ((which_tbl=='d') and (ARGTYPE_IN(arg_token, (arg::device)))) // arg::device is not implemented yet
+		   (CHAR_IN(which_tbl,('e')('f')('d')/*('D')*/) and ARGTYPE_IN(arg_token, (arg::tag)(arg::tag_tree)))
+		or ((which_tbl=='f') and (arg_token==arg::dir))
+		or ((which_tbl=='e') and (arg_token==arg::file))
 	);
 	
 	LOG("is_valid_tbl2tbl_reference(%c,%c) == %s\n", which_tbl, tbl_arg_to_alias(arg_token), (b?"TRUE":"FALSE"));
