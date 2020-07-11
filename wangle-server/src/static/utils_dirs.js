@@ -80,7 +80,7 @@ function $$$view_dirs(ls){
 			function(data){
 				let s = "";
 				$$$get_dir_ids = $$$get_selected_dir_ids;
-				for (const [[id, name, device, tag_ids, size], t_dict] of data){
+				for (const [id, name, device, tag_ids, size] of data[0]){
 					s += "<div class='tr' data-id='" + id + "'>";
 						s += "<div class='td'>";
 							s += "<a onclick='$$$view_dir(this.parentNode.parentNode.dataset.id,0)'>" + $$$escape_html_text(name) + "</a>";
@@ -93,7 +93,7 @@ function $$$view_dirs(ls){
 					s += "</div>";
 				}
 				tbl.innerHTML = s;
-				$$$column_id2name(t_dict,"d",'$$$view_tag', 3);
+				$$$column_id2name(data[1],"d",'$$$view_tag', 3);
 			}
 		);
 	}

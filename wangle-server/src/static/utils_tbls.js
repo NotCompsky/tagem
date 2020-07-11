@@ -31,7 +31,7 @@ function $$$filter_tbl(tbl_id, name_col_ids, tags_col_ids){
 		
 		for (const [name_regexp, name_col_id] of name_regexps){
 			if (name_regexp !== undefined){
-				const name = cols[name_col_id].textContent;
+				const name = cols[name_col_id].innerText;
 				if (!(name_regexp.test(name))){
 					cl.add('hidden');
 					cl.remove('selected1');
@@ -44,7 +44,7 @@ function $$$filter_tbl(tbl_id, name_col_ids, tags_col_ids){
 		
 		for (const [tags_regexp, tags_col_id] of tags_regexps){
 			if (tags_regexp !== undefined){
-				const name = cols[tags_col_id].textContent;
+				const name = cols[tags_col_id].innerText;
 				if (!(tags_regexp.test(name))){
 					cl.add('hidden');
 					cl.remove('selected1');

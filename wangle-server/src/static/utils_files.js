@@ -41,12 +41,14 @@ function $$$populate_f_table(path,params,post_data,page_n){
 				$$$dir_id=a;
 			}
 			for (let [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, era_start, era_end] of data){
+				let era = "";
 				if(era_end!==0){
 					// era_end should be >= era_start, so era_end===0 implies era_start===0 too
 					duration = era_end - era_start;
+					era = "@" + era_start + "-" + era_end;
 				}
-				s += "<div class='tr' data-id='" + id + "' data-era-start='" + era_start + "' data-era-end='" + era_end + "'>";
-					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id+\'@\'+this.parentNode.parentNode.dataset.era_start+\'-\'+this.parentNode.parentNode.dataset.era_end)" src="' + thumb + '"></img></div>';
+				s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
+					s += '<div class="td"><img class="thumb" onclick="$$$view_file(this.parentNode.parentNode.dataset.id+this.parentNode.parentNode.dataset.era)" src="' + thumb + '"></img></div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(title) + "</div>";
