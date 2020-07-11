@@ -248,8 +248,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 "</div>"
 
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-files","Add Tags to Files", MINIMISED_JS_DECL_tag_files_then "(" MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")))
-#undef FILE_TAGGER_FN
-#undef FILE_TAGGER_FILE_IDS
 
 "</div>"
 
