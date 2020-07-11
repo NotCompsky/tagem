@@ -24,8 +24,8 @@ INSERT INTO protocol (id, name) VALUES
 (4, "youtube-dl");
 
 CREATE TABLE _device (
-	# Storage device - such as a hard drive, or a website (a remote storage device)
-	# Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
+	-- Storage device - such as a hard drive, or a website (a remote storage device)
+	-- Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(1024) NOT NULL UNIQUE KEY,
@@ -55,14 +55,14 @@ INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
 CREATE TABLE _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	parent BIGINT UNSIGNED,
-	parent_not_null BIGINT AS (IFNULL(parent,0)), # Allows foreign key checks to work
+	parent_not_null BIGINT AS (IFNULL(parent,0)), -- Allows foreign key checks to work
 	device BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(255) NOT NULL,
 	FOREIGN KEY (parent) REFERENCES _dir (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id),
-	UNIQUE KEY (parent_not_null,name), # Only one name if parent is NULL
+	UNIQUE KEY (parent_not_null,name), -- Only one name if parent is NULL
 	UNIQUE KEY (parent,name)
 );
 CREATE TABLE dir2parent_tree (
@@ -154,7 +154,7 @@ CREATE TABLE _file (
     PRIMARY KEY (id)
 );
 
-# Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
+-- Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
 
 
 CREATE TABLE file_backup (
@@ -174,12 +174,12 @@ CREATE TABLE file_backup (
 
  
 CREATE TABLE file2 (
-	# Stores the user-defined variable tables
+	-- Stores the user-defined variable tables
 	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	min BIGINT NOT NULL,
 	max BIGINT NOT NULL,
-	# NOTE: min and max are only relevant for GUI input. File sizes above 4GB would be impossible to input via Qt5 getInt method, but would be otherwise supported if the int type used is BIGINT or BIGINT UNSIGNED.
-	conversion INT UNSIGNED NOT NULL, # 0 if no conversion (i.e. the end data type is integer), otherwise the integer is not input directly by a human but relates to something else like a string
+	-- NOTE: min and max are only relevant for GUI input. File sizes above 4GB would be impossible to input via Qt5 getInt method, but would be otherwise supported if the int type used is BIGINT or BIGINT UNSIGNED.
+	conversion INT UNSIGNED NOT NULL, -- 0 if no conversion (i.e. the end data type is integer), otherwise the integer is not input directly by a human but relates to something else like a string
 	name VARBINARY(128),
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
@@ -214,8 +214,8 @@ CREATE TABLE _tag (
 );
 INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!");
 UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
-# NOTE: Permissions are AND (each non-zero bit is another required permission)
-# NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
+-- NOTE: Permissions are AND (each non-zero bit is another required permission)
+-- NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
 CREATE TABLE tag2parent (
 	tag BIGINT UNSIGNED NOT NULL,
@@ -283,7 +283,7 @@ CREATE TABLE box (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     file_id BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
-    x DOUBLE NOT NULL,  # As proportion of (image|frame) width
+    x DOUBLE NOT NULL,  -- As proportion of (image|frame) width
     y DOUBLE NOT NULL,
     w DOUBLE NOT NULL,
     h DOUBLE NOT NULL,
@@ -292,7 +292,7 @@ CREATE TABLE box (
 
 CREATE TABLE box2tag (
 	box_id BIGINT UNSIGNED NOT NULL,
-	tag_id BIGINT UNSIGNED NOT NULL,  # ID of box tag
+	tag_id BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (`box_id`, `tag_id`)
 );
 
@@ -326,29 +326,29 @@ CREATE TABLE era2tag (
 
 
 
-# The following tables populate the tags of relationships, not boxes.
-# For instance, a man typing on a keyboard would be represented by (a box tagged "man") related to (a box tagged "keyboard") via (a relationship tagged "typing").
-# relationtag2tag generates extra relationship tags based on the master and slave box tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
+-- The following tables populate the tags of relationships, not boxes.
+-- For instance, a man typing on a keyboard would be represented by (a box tagged "man") related to (a box tagged "keyboard") via (a relationship tagged "typing").
+-- relationtag2tag generates extra relationship tags based on the master and slave box tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
 
 CREATE TABLE relation (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    master_id BIGINT UNSIGNED NOT NULL,  # ID of master box
+    master_id BIGINT UNSIGNED NOT NULL,  -- ID of master box
     slave_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE relation2tag (
     relation_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,  # ID of box tag
+    tag_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (`relation_id`, `tag_id`)
 );
 
 
 
-# For instance, suppose there is (a box tagged "human" and "male") which is related to (a box tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
-# The following tables describe the rules. Each rule is of the form (ID,  a = list of master tag IDs,  b = list of slave tag IDs,  c = list of resulting master tags,  d =list of resulting slave tags).
-# If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master box), then all tags of c are added to the master box, and all tags of d are added to the slave box.
-# NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related box. For instance, (a "body part" box) related to (a "human" box) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" box, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
+-- For instance, suppose there is (a box tagged "human" and "male") which is related to (a box tagged "arm") via (the "body part" tag). We would like the arm to inherit (the "human" and "male" tags).
+-- The following tables describe the rules. Each rule is of the form (ID,  a = list of master tag IDs,  b = list of slave tag IDs,  c = list of resulting master tags,  d =list of resulting slave tags).
+-- If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master box), then all tags of c are added to the master box, and all tags of d are added to the slave box.
+-- NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related box. For instance, (a "body part" box) related to (a "human" box) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" box, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
 
 CREATE TABLE relation_add_box_tags__rules (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -356,9 +356,9 @@ CREATE TABLE relation_add_box_tags__rules (
 	req_relation_operator INT UNSIGNED NOT NULL DEFAULT 0,
 	req_master_operator INT UNSIGNED NOT NULL DEFAULT 0,
 	req_slave_operator INT UNSIGNED NOT NULL DEFAULT 0,
-	compiled_init VARBINARY(1024), # e.g. 'CALL descendant_tags_id_from_ids("foobar", "5,17");'
-	compiled_tbls VARBINARY(1024), # e.g. 'foobar'
-	compiled_fltr VARBINARY(4096), # e.g. ' AND r2t.tag_id=foobar.node'
+	compiled_init VARBINARY(1024), -- e.g. 'CALL descendant_tags_id_from_ids("foobar", "5,17");'
+	compiled_tbls VARBINARY(1024), -- e.g. 'foobar'
+	compiled_fltr VARBINARY(4096), -- e.g. ' AND r2t.tag_id=foobar.node'
 	compiled_hvng VARBINARY(4096),
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
@@ -443,8 +443,8 @@ CREATE TABLE settings (
 	PRIMARY KEY (name)
 );
 
-# Row-level security for modern MySQL/MariaDB
-# Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
+-- Row-level security for modern MySQL/MariaDB
+-- Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
 CREATE TABLE permission (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARCHAR(32) NOT NULL UNIQUE KEY
