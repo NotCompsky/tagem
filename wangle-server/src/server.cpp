@@ -423,9 +423,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		sz += std::char_traits<char>::length(_headers);
 		sz += 1;
-		while(compsky::mysql::assign_next_row__no_free__alternating(this->res, &this->row, args...)){
-			sz += 1 + _r::strlens(args...) /* Space for the entries and a trailing comma */  + 1;
-		}
+		sz += _r::get_size_of_json_response_rows_from_sql_res(this->res, &this->row, args...);
 		sz += 1;
 		sz += 1;
 		
@@ -448,8 +446,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename ArrOrDict,  typename... Args>
 	bool asciify_json_response_rows(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
-		while(compsky::mysql::assign_next_row__alternating(this->res, &this->row, args...))
-			_r::asciify_json_response_row(itr, f_arr_or_dict, args...);
+		_r::asciify_json_response_rows_from_sql_res(this->res, &this->row, itr, f_arr_or_dict, args...);
 		const bool rc = (likely(*(itr - 1) == ','));
 		if (rc)
 			--itr;
@@ -516,8 +513,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		
-		const char* id;
-		this->write_json_list_response_into_buf(_r::flag::no_quote, &id);
+		this->write_json_list_response_into_buf(_r::flag::no_quote);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -577,8 +573,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		
 		this->begin_json_response();
-		const char* name;
-		this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_and_escape // name
+		);
 		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
@@ -597,16 +596,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->begin_json_response();
 		this->asciify('[');
 		
-		const char* id_str;
-		const char* name;
-		
 		this->mysql_query_after_itr(
 			"SELECT name "
 			"FROM _dir "
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
-		if (not this->init_json_rows(this->itr, _r::flag::arr, _r::flag::quote_and_escape, &name))
+		if (not this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_and_escape // name
+		))
 			return _r::unauthorised;
 		this->asciify(',');
 		
@@ -618,7 +618,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::dict,
+			_r::flag::quote_no_escape, // id_str
+			_r::flag::quote_and_escape // name
+		);
 		this->asciify(',');
 		
 		this->mysql_query_after_itr(
@@ -629,7 +634,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY depth DESC"
 		);
-		this->init_json_rows(this->itr, _r::flag::dict, _r::flag::quote_no_escape, &id_str, _r::flag::quote_and_escape, &name);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::dict,
+			_r::flag::quote_no_escape, // id_str
+			_r::flag::quote_and_escape // name
+		);
 		
 		this->asciify(']');
 		*this->itr = 0;
@@ -814,45 +824,27 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"GROUP BY f.id"
 		);
-		const char* md5_hash;
-		const char* dir_id;
-		const char* file_name;
-		const char* file_title;
-		const char* file_sz;
-		const char* file_added_timestamp;
-		const char* file_origin_timestamp;
-		const char* duration;
-		const char* w;
-		const char* h;
-		const char* views;
-		const char* likes;
-		const char* dislikes;
-		const char* fps;
-		const char* external_db_and_post_ids;
-		const char* tag_ids;
-		const char* mimetype;
-		const char* file2_values;
 		if(not this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
-			_r::flag::quote_no_escape, &md5_hash,
-			_r::flag::quote_no_escape, &dir_id,
-			_r::flag::quote_and_escape, &file_name,
-			_r::flag::quote_and_escape, &file_title,
-			_r::flag::quote_no_escape, &file_sz,
-			_r::flag::no_quote, &file_added_timestamp,
-			_r::flag::no_quote, &file_origin_timestamp,
-			_r::flag::no_quote, &duration,
-			_r::flag::no_quote, &w,
-			_r::flag::no_quote, &h,
-			_r::flag::no_quote, &views,
-			_r::flag::no_quote, &likes,
-			_r::flag::no_quote, &dislikes,
-			_r::flag::no_quote, &fps,
-			_r::flag::quote_no_escape, &external_db_and_post_ids,
-			_r::flag::quote_no_escape, &tag_ids,
-			_r::flag::no_quote, &mimetype,
-			_r::flag::quote_no_escape, &file2_values
+			_r::flag::quote_no_escape, // md5_hash,
+			_r::flag::quote_no_escape, // dir_id,
+			_r::flag::quote_and_escape, // file_name,
+			_r::flag::quote_and_escape, // file_title,
+			_r::flag::quote_no_escape, // file_sz,
+			_r::flag::no_quote, // file_added_timestamp,
+			_r::flag::no_quote, // file_origin_timestamp,
+			_r::flag::no_quote, // duration,
+			_r::flag::no_quote, // w,
+			_r::flag::no_quote, // h,
+			_r::flag::no_quote, // views,
+			_r::flag::no_quote, // likes,
+			_r::flag::no_quote, // dislikes,
+			_r::flag::no_quote, // fps,
+			_r::flag::quote_no_escape, // external_db_and_post_ids,
+			_r::flag::quote_no_escape, // tag_ids,
+			_r::flag::no_quote, // mimetype,
+			_r::flag::quote_no_escape // file2_values
 		))
 			// No results - probably because the user hasn't the permission to view the file
 			return _r::not_found;
@@ -873,15 +865,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"GROUP BY e.id "
 			"HAVING COUNT(*)" // Ensure we don't get an empty result - (NULL,NULL,NULL) - when it really means we have no results
 		);
-		const char* era_start;
-		const char* era_end;
-		const char* era_tag_ids;
 		this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
-			_r::flag::no_quote, &era_start,
-			_r::flag::no_quote, &era_end,
-			_r::flag::quote_no_escape, &era_tag_ids
+			_r::flag::no_quote, // era_start,
+			_r::flag::no_quote, // era_end,
+			_r::flag::quote_no_escape // era_tag_ids
 		);
 		this->asciify(',');
 		
@@ -892,15 +881,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE file=", id, " "
 			  "AND dir NOT IN" USER_DISALLOWED_BACKUP_DIRS(user_id)
 		);
-		const char* backup_dir_id;
-		const char* backup_file_name;
-		const char* backup_mimetype;
 		this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
-			_r::flag::quote_no_escape, &backup_dir_id,
-			_r::flag::quote_and_escape, &backup_file_name,
-			_r::flag::no_quote, &backup_mimetype
+			_r::flag::quote_no_escape, // backup_dir_id,
+			_r::flag::quote_and_escape, // backup_file_name,
+			_r::flag::no_quote // backup_mimetype
 		);
 		this->asciify(',');
 		
@@ -922,9 +908,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->init_json_rows(
 			this->itr,
 			_r::flag::dict,
-			_r::flag::quote_no_escape, &backup_dir_id,
-			_r::flag::quote_and_escape, &backup_file_name,
-			_r::flag::no_quote, &backup_mimetype
+			_r::flag::quote_no_escape, // dir_id,
+			_r::flag::quote_and_escape, // dir_name,
+			_r::flag::no_quote // device_id
 		);
 		this->asciify(',');
 		
@@ -939,12 +925,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE e.file=", id, " "
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
 		);
-		const char* tag_id;
-		const char* tag_name;
 		this->init_json_rows(
 			this->itr, _r::flag::dict,
-			_r::flag::quote_no_escape, &tag_id,
-			_r::flag::quote_and_escape, &tag_name
+			_r::flag::quote_no_escape, // tag_id,
+			_r::flag::quote_and_escape // tag_name
 		);
 		this->asciify(']');
 		
@@ -974,8 +958,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LIMIT 1000"
 		);
 		
-		const char* tag_id;
-		this->write_json_list_response_into_buf(_r::flag::no_quote, &tag_id);
+		this->write_json_list_response_into_buf(_r::flag::no_quote);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
@@ -986,14 +969,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename ArrOrDict>
 	void asciify_tags_arr_or_dict(const ArrOrDict f_arr_or_dict){
-		const char* id;
-		const char* name;
-		const char* thumb;
-		const char* cover;
-		const char* count;
 		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
 		this->asciify(_r::opener_symbol(f_arr_or_dict));
-		this->asciify_json_response_rows(this->itr, f_arr_or_dict, _r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name, _r::flag::quote_and_escape, &thumb, _r::flag::quote_and_escape, &cover, _r::flag::no_quote, &count);
+		this->asciify_json_response_rows(
+			this->itr,
+			f_arr_or_dict,
+			_r::flag::quote_no_escape, // id,
+			_r::flag::quote_and_escape, // name,
+			_r::flag::quote_and_escape, // thumb,
+			_r::flag::quote_and_escape, // cover,
+			_r::flag::no_quote // count
+		);
 		this->asciify(_r::closer_symbol(f_arr_or_dict));
 		std::swap(this->res, this->res2);
 	}
@@ -1104,15 +1090,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// Now return a map of name to ID
 		this->mysql_query("SELECT name, id FROM _file WHERE name IN(", body, ")");
-		const char* id;
-		const char* name;
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
 			_r::flag::dict,
 			nullptr,
-			_r::flag::quote_no_escape, &name,
-			_r::flag::quote_no_escape, &id
+			_r::flag::quote_no_escape, // name,
+			_r::flag::quote_no_escape // id
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1398,9 +1382,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN post2like p2l ON p2l.user=u.id "
 			"WHERE p2l.post=", post_id
 		);
-		const char* username;
-		const char* user_id;
-		this->write_json_list_response_into_buf(_r::flag::quote_no_escape, &user_id, _r::flag::quote_no_escape, &username);
+		this->write_json_list_response_into_buf(
+			_r::flag::quote_no_escape, // user_id
+			_r::flag::quote_no_escape // username
+		);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1432,19 +1417,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"WHERE p.id=", post_id
 			);
 			
-			const char* user;
-			const char* timestamp;
-			const char* n_likes;
-			const char* username;
-			const char* text;
 			if (not this->init_json_rows(
 				_itr_plus_offset,
 				_r::flag::arr,
-				_r::flag::quote_no_escape, &user,
-				_r::flag::no_quote, &timestamp,
-				_r::flag::no_quote, &n_likes,
-				_r::flag::quote_no_escape, &username,
-				_r::flag::quote_and_json_escape, &text
+				_r::flag::quote_no_escape, // user,
+				_r::flag::no_quote, // timestamp,
+				_r::flag::no_quote, // n_likes,
+				_r::flag::quote_no_escape, // username,
+				_r::flag::quote_and_json_escape // text
 			))
 				return _r::not_found;
 		}
@@ -1468,21 +1448,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"ORDER BY c.parent ASC" // Put parentless comments first
 			);
 			
-			const char* id;
-			const char* parent;
-			const char* user;
-			const char* timestamp;
-			const char* username;
-			const char* content;
 			this->init_json_rows(
 				_itr_plus_offset,
 				_r::flag::arr,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_no_escape, &parent,
-				_r::flag::quote_no_escape, &user,
-				_r::flag::no_quote, &timestamp,
-				_r::flag::quote_no_escape, &username,
-				_r::flag::quote_and_json_escape, &content
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_no_escape, // parent,
+				_r::flag::quote_no_escape, // user,
+				_r::flag::no_quote, // timestamp,
+				_r::flag::quote_no_escape, // username,
+				_r::flag::quote_and_json_escape // content
 			);
 		}
 		
@@ -1638,18 +1612,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY FIELD(d.id,", _f::strlen, dir_ids, dir_ids_len, ")"
 			// WARNING: No limit
 		);
-		const char* id;
-		const char* name;
-		const char* device;
-		const char* count;
 		this->reset_buf_index();
 		this->begin_json_response();
 		this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
-			_r::flag::quote_no_escape, &id,
-			_r::flag::quote_and_escape, &name,
-			_r::flag::quote_no_escape, &device
+			_r::flag::quote_no_escape, // id,
+			_r::flag::quote_and_escape, // name,
+			_r::flag::quote_no_escape // device
 		);
 		
 		return this->get_buf_as_string_view();
@@ -1669,9 +1639,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LIMIT 1"
 		);
 		
-		const char* id;
-		const char* name;
-		this->write_json_list_response_into_buf(_r::flag::quote_no_escape, &id, _r::flag::quote_and_escape, &name);
+		this->write_json_list_response_into_buf(
+			_r::flag::quote_no_escape, // id
+			_r::flag::quote_and_escape // name
+		);
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1764,14 +1735,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
 			regenerate_mimetype_json = false;
-			const char* id;
-			const char* name;
 			this->init_json(
 				nullptr,
 				_r::flag::dict,
 				&_r::mimetype_json,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_no_escape, &name
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_no_escape // name
 			);
 		}
 		return _r::mimetype_json;
@@ -1802,15 +1771,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			std::cerr << e.what() << std::endl;
 			return _r::EMPTY_JSON_LIST;
 		}
-		const char* id;
-		const char* name;
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
 			_r::flag::dict,
 			nullptr,
-			_r::flag::quote_no_escape, &id,
-			_r::flag::quote_and_escape, &name
+			_r::flag::quote_no_escape, // id
+			_r::flag::quote_and_escape // name
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1828,11 +1795,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view get_device_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
-			const char* id;
-			const char* name;
-			const char* protocol;
-			const char* embed_pre;
-			const char* embed_post;
 			this->mysql_query(
 				"SELECT id, name, protocol, embed_pre, embed_post "
 				"FROM _device "
@@ -1843,11 +1805,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				&this->itr,
 				_r::flag::dict,
 				nullptr,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_and_escape, &name,
-				_r::flag::quote_no_escape, &protocol,
-				_r::flag::quote_and_escape, &embed_pre,
-				_r::flag::quote_and_escape, &embed_post
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_and_escape, // name,
+				_r::flag::quote_no_escape, // protocol,
+				_r::flag::quote_and_escape, // embed_pre,
+				_r::flag::quote_and_escape // embed_post
 			);
 			return this->get_buf_as_string_view();
 		}
@@ -1855,11 +1817,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		std::unique_lock lock(_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
-			const char* id;
-			const char* name;
-			const char* protocol;
-			const char* embed_pre;
-			const char* embed_post;
 			this->mysql_query_buf(
 				"SELECT id, name, protocol, embed_pre, embed_post "
 				"FROM _device "
@@ -1867,12 +1824,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			);
 			this->init_json(
 				nullptr,
-				_r::flag::dict, &_r::devices_json,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_and_escape, &name,
-				_r::flag::quote_no_escape, &protocol,
-				_r::flag::quote_and_escape, &embed_pre,
-				_r::flag::quote_and_escape, &embed_post
+				_r::flag::dict,
+				&_r::devices_json,
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_and_escape, // name,
+				_r::flag::quote_no_escape, // protocol,
+				_r::flag::quote_and_escape, // embed_pre,
+				_r::flag::quote_and_escape // embed_post
 			);
 		}
 		return _r::devices_json;
@@ -1882,10 +1840,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		GREYLIST_GUEST
 		
-		const char* id;
-		const char* name;
-		const char* description;
-		const char* content;
 		this->mysql_query(
 			"SELECT t.id, t.name, t.description, t.content "
 			"FROM task t "
@@ -1897,10 +1851,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			&this->itr,
 			_r::flag::arr,
 			nullptr,
-			_r::flag::quote_no_escape, &id,
-			_r::flag::quote_and_escape, &name,
-			_r::flag::quote_and_escape, &description,
-			_r::flag::quote_and_escape, &content
+			_r::flag::quote_no_escape, // id,
+			_r::flag::quote_and_escape, // name,
+			_r::flag::quote_and_escape, // description,
+			_r::flag::quote_and_escape // content
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1946,16 +1900,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
-			const char* id;
-			const char* name;
-			const char* dummy; // To deliver it as id:[name] rather than id:name // TODO: Tidy
 			this->init_json(
 				nullptr,
 				_r::flag::dict,
 				&_r::protocol_json,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_and_escape, &name,
-				_r::flag::no_quote, &dummy
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_and_escape, // name,
+				_r::flag::no_quote // dummy  // To deliver it as id:[name] rather than id:name // TODO: Tidy
 			);
 		}
 		return _r::protocol_json;
@@ -1964,8 +1915,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view get_tag2parent_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
-			const char* id;
-			const char* id2;
 			this->mysql_query(
 				"SELECT id, parent "
 				"FROM tag2parent "
@@ -1977,8 +1926,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				&this->itr,
 				_r::flag::arr,
 				nullptr,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_no_escape, &id2
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_no_escape // id2
 			);
 			return this->get_buf_as_string_view();
 		}
@@ -1986,8 +1935,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		std::unique_lock lock(_r::tag2parent_json_mutex);
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
-			const char* id;
-			const char* id2;
 			this->mysql_query_buf(
 				"SELECT id, parent "
 				"FROM tag2parent "
@@ -1998,8 +1945,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				nullptr,
 				_r::flag::arr,
 				&_r::tag2parent_json,
-				_r::flag::quote_no_escape, &id,
-				_r::flag::quote_no_escape, &id2
+				_r::flag::quote_no_escape, // id,
+				_r::flag::quote_no_escape // id2
 			);
 		}
 		return _r::tag2parent_json;

@@ -14,39 +14,39 @@ namespace _r {
 		struct NoQuote{};
 	}
 	
-	constexpr
-	void asciify_json_list_response_entry(char*& itr){
+	template<size_t col_indx>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row){
 		--itr; // Remove trailing comma
 	}
 	
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::NoQuote,  const char** str,  Args... args);
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteNoEscape,  const char** str,  Args... args);
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndEscape,  const char** str,  Args... args);
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndJSONEscape,  const char** str,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::NoQuote,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteNoEscape,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteAndEscape,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteAndJSONEscape,  Args... args);
 	
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::NoQuote,  const char** str,  Args... args){
-		compsky::asciify::asciify(itr, *str, ',');
-		asciify_json_list_response_entry(itr, args...);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::NoQuote,  Args... args){
+		compsky::asciify::asciify(itr, row[col_indx], ',');
+		asciify_json_list_response_entry<col_indx+1>(itr, row, args...);
 	}
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteNoEscape,  const char** str,  Args... args){
-		compsky::asciify::asciify(itr, '"', *str, '"', ',');
-		asciify_json_list_response_entry(itr, args...);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteNoEscape,  Args... args){
+		compsky::asciify::asciify(itr, '"', row[col_indx], '"', ',');
+		asciify_json_list_response_entry<col_indx+1>(itr, row, args...);
 	}
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndEscape,  const char** str,  Args... args){
-		compsky::asciify::asciify(itr, '"', _f::esc, '"', *str, '"', ',');
-		asciify_json_list_response_entry(itr, args...);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteAndEscape,  Args... args){
+		compsky::asciify::asciify(itr, '"', _f::esc, '"', row[col_indx], '"', ',');
+		asciify_json_list_response_entry<col_indx+1>(itr, row, args...);
 	}
-	template<typename... Args>
-	void asciify_json_list_response_entry(char*& itr,  const flag::QuoteAndJSONEscape,  const char** str,  Args... args){
-		compsky::asciify::asciify(itr, '"', _f::json_esc, *str, '"', ',');
-		asciify_json_list_response_entry(itr, args...);
+	template<size_t col_indx,  typename... Args>
+	void asciify_json_list_response_entry(char*& itr,  MYSQL_ROW row,  const flag::QuoteAndJSONEscape,  Args... args){
+		compsky::asciify::asciify(itr, '"', _f::json_esc, row[col_indx], '"', ',');
+		asciify_json_list_response_entry<col_indx+1>(itr, row, args...);
 	}
 	
 	constexpr char opener_symbol(const flag::Dict){ return '{'; }
@@ -55,50 +55,61 @@ namespace _r {
 	constexpr char closer_symbol(const flag::Arr){  return ']'; }
 	
 	template<typename Flag,  typename... Args>
-	void asciify_json_response_entry(char*& itr,  flag::Dict,  const Flag f,  const char** str,  Args... args){
-		asciify_json_list_response_entry(itr, f, str);
+	void asciify_json_response_entry(char*& itr,  MYSQL_ROW row,  flag::Dict,  const Flag f,  Args... args){
+		asciify_json_list_response_entry<0>(itr, row, f);
 		compsky::asciify::asciify(itr, ':');
 		compsky::asciify::asciify(itr, '[');
-		asciify_json_list_response_entry(itr, args...);
+		asciify_json_list_response_entry<1>(itr, row, args...);
 		compsky::asciify::asciify(itr, ']');
 		compsky::asciify::asciify(itr, ',');
 	}
 	template<typename... Args>
-	void asciify_json_response_entry(char*& itr,  flag::Arr f,  Args... args){
-		asciify_json_list_response_entry(itr, args...);
+	void asciify_json_response_entry(char*& itr,  MYSQL_ROW row,  flag::Arr f,  Args... args){
+		asciify_json_list_response_entry<0>(itr, row, args...);
 	}
 	
 	template<typename... Args>
-	void asciify_json_response_row(char*& itr,  const flag::Arr f_arr_or_dict,  Args... args){
+	void asciify_json_response_row(char*& itr,  MYSQL_ROW row,  const flag::Arr f_arr_or_dict,  Args... args){
 		compsky::asciify::asciify(itr, '[');
-		asciify_json_response_entry(itr, f_arr_or_dict, args...);
+		asciify_json_response_entry(itr, row, f_arr_or_dict, args...);
 		compsky::asciify::asciify(itr, ']');
 		compsky::asciify::asciify(itr, ',');
 	}
-	template<typename Flag>
-	void asciify_json_response_row(char*& itr,  const flag::Arr,  const Flag f,  const char** str){
-		asciify_json_list_response_entry(itr, f, str);
+	template<typename ArrOrDict,  typename Flag>
+	void asciify_json_response_row(char*& itr,  MYSQL_ROW row,  const ArrOrDict,  const Flag f){
+		asciify_json_list_response_entry<0>(itr, row, f);
 		compsky::asciify::asciify(itr, ',');
 	}
 	template<typename Flag,  typename... Args>
-	void asciify_json_response_row(char*& itr,  const flag::Dict f_arr_or_dict,  const Flag f,  const char** str,  Args... args){
-		asciify_json_list_response_entry(itr, f, str);
+	void asciify_json_response_row(char*& itr,  MYSQL_ROW row,  const flag::Dict f_arr_or_dict,  const Flag f,  Args... args){
+		asciify_json_list_response_entry<0>(itr, row, f);
 		compsky::asciify::asciify(itr, ':');
 		constexpr static const flag::Arr _arr;
-		asciify_json_response_row(itr, _arr, args...);
+		compsky::asciify::asciify(itr, '[');
+		asciify_json_list_response_entry<1>(itr, row, args...);
+		compsky::asciify::asciify(itr, ']');
+		compsky::asciify::asciify(itr, ',');
 	}
 	
 	
-	constexpr
-	size_t strlens(){
+	template<typename ArrOrDict,  typename... Args>
+	void asciify_json_response_rows_from_sql_res(MYSQL_RES* res,  MYSQL_ROW* row,  char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
+		while(likely((*row = mysql_fetch_row(res))))
+			asciify_json_response_row(itr, *row, f_arr_or_dict, args...);
+		mysql_free_result(res);
+	}
+	
+	
+	template<size_t col_indx>
+	size_t strlens(MYSQL_ROW row){
 		return 0;
 	}
-	template<typename... Args>
-	size_t strlens(const flag::NoQuote,  const char** str,  Args... args);
-	template<typename... Args>
-	size_t strlens(const flag::QuoteNoEscape,  const char** str,  Args... args);
-	template<typename... Args>
-	size_t strlens(const flag::QuoteAndEscape,  const char** str,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::NoQuote,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::QuoteNoEscape,  Args... args);
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::QuoteAndEscape,  Args... args);
 	
 	template<typename Int>
 	size_t strlens_int(Int m){
@@ -109,18 +120,29 @@ namespace _r {
 		return n;
 	}
 	
-	template<typename... Args>
-	size_t strlens(const flag::NoQuote,  const char** str,  Args... args){
-		return strlen(*str) + 1 /* Trailing comma */ + strlens(args...);
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::NoQuote,  Args... args){
+		return strlen(row[col_indx]) + 1 /* Trailing comma */ + strlens<col_indx+1>(row, args...);
 	}
 	
-	template<typename... Args>
-	size_t strlens(const flag::QuoteNoEscape,  const char** str,  Args... args){
-		return 1 + strlen(*str) + 1 + 1 + strlens(args...);
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::QuoteNoEscape,  Args... args){
+		return 1 + strlen(row[col_indx]) + 1 + 1 + strlens<col_indx+1>(row, args...);
 	}
 	
+	template<size_t col_indx,  typename... Args>
+	size_t strlens(MYSQL_ROW row, const flag::QuoteAndEscape,  Args... args){
+		return 1 + 2*strlen(row[col_indx]) + 1 + 1 + strlens<col_indx+1>(row, args...);
+	}
+	
+	
+	
 	template<typename... Args>
-	size_t strlens(const flag::QuoteAndEscape,  const char** str,  Args... args){
-		return 1 + 2*strlen(*str) + 1 + 1 + strlens(args...);
+	size_t get_size_of_json_response_rows_from_sql_res(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args){
+		size_t sz = 0;
+		while(likely((*row = mysql_fetch_row(res)))){
+			sz += strlens<0>(*row, args...);
+		}
+		return sz;
 	}
 } // namespace _r
