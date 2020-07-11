@@ -80,7 +80,8 @@ unsigned guess_protocol(const char* url){
 		delete dialog;
 #else
 		constexpr static const cli::flag::ArgSeparator f;
-		protocol_guess = (cli::get_which("Protocol of %s: ", url, f, protocol::strings[protocol_guess], protocol::strings[protocol::youtube_dl])) ? protocol_guess : protocol::youtube_dl;
+		static char _buf[4096];
+		protocol_guess = (cli::get_which(_buf, "Protocol of %s: ", url, f, protocol::strings[protocol_guess], protocol::strings[protocol::youtube_dl])) ? protocol_guess : protocol::youtube_dl;
 #endif
 	}
 	
@@ -145,6 +146,7 @@ uint64_t get_device_id__insert_if_not_exist(const char* const file_path,  Args..
 	if (device_id)
 		return device_id;
 	constexpr const char* const help_txt = "This filepath is from a new 'device'. Please input the device prefix (which only involves deleting characters from the end of the string). For instance, for YouTube videos, the 'device' would be https://www.youtube.com/watch?v=";
+	char _buf[4096];
 #ifndef CLI_ONLY
 	bool ok;
 	const QString prefix = QInputDialog::getText(
@@ -156,9 +158,9 @@ uint64_t get_device_id__insert_if_not_exist(const char* const file_path,  Args..
 		&ok
 	);
 #else
-	const char* const prefix = cli::get_trim(file_path, "New device prefix.\n%s\n", help_txt);
+	const char* const prefix = cli::get_trim(_buf, file_path, "New device prefix.\n%s\n", help_txt);
 #endif
 	const unsigned protocol = guess_protocol(file_path, args...);
-	compsky::mysql::exec(_mysql::obj, BUF, "INSERT INTO device (name, protocol) VALUES (\"", prefix, "\", ", protocol, ")");
-	return get_device_id(file_path);
+	compsky::mysql::exec(_mysql::obj, BUF, "INSERT INTO device (user, name, protocol) VALUES (4,\"", prefix, "\", ", protocol, ")");
+	return get_device_id_from_file_path(file_path);
 }
