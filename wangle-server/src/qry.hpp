@@ -3,18 +3,30 @@
 
 #include <string>
 
+#define DIR2TAG_SUBQUERY \
+	"(" \
+		"SELECT d2pt.id AS dir, d2t.tag " \
+		"FROM dir2parent_tree d2pt " \
+		"JOIN dir2tag d2t ON d2t.dir=d2pt.parent " \
+		"UNION " \
+		"SELECT d.id, D2t.tag " \
+		"FROM _dir d " \
+		"JOIN _device D ON D.id=d.device " \
+		"JOIN device2tag D2t ON D2t.device=D.id " \
+	")"
+
 
 #define USER_DISALLOWED_FILES_INNER_PRE \
 		"SELECT f2t.file AS id " \
 		"FROM user2blacklist_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
+		"JOIN tag2parent_tree t2pt ON t2pt.id=u2ht.tag " \
 		"JOIN(" \
 			"SELECT file, tag " \
 			"FROM file2tag " \
 			"UNION " \
 			"SELECT f.id, d2t.tag " \
 			"FROM _file f " \
-			"JOIN dir2tag d2t ON d2t.dir=f.dir " \
+			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir" \
 		")f2t ON f2t.tag=t2pt.id " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_FILES(user_id) \
@@ -36,7 +48,7 @@
 			"UNION " \
 			"SELECT f.id, d2t.tag " \
 			"FROM _file f " \
-			"JOIN dir2tag d2t ON d2t.dir=f.dir " \
+			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir " \
 		")e2t " \
 		"JOIN tag2parent_tree t2pt ON t2pt.id=e2t.tag " \
 		"JOIN user2blacklist_tag u2t ON u2t.tag=t2pt.parent " \
@@ -49,7 +61,7 @@
 #define USER_DISALLOWED_TAGS_INNER_PRE \
 		"SELECT t2pt.id " \
 		"FROM user2blacklist_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
+		"JOIN tag2parent_tree t2pt ON t2pt.id=u2ht.tag " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_TAGS(user_id) \
 	"(" \
@@ -64,7 +76,7 @@
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
 		"SELECT D2t.device AS id " \
 		"FROM user2blacklist_tag u2ht " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag " \
+		"JOIN tag2parent_tree t2pt ON t2pt.id=u2ht.tag " \
 		"JOIN device2tag D2t ON D2t.tag=t2pt.id " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_DEVICES(user_id) \
@@ -77,9 +89,8 @@
 	")"
 #define USER_DISALLOWED_DIRS_INNER_PRE \
 		"SELECT d2t.dir AS id " \
-		"FROM dir2parent_tree d2pt " \
-		"JOIN dir2tag d2t ON d2t.tag=d2pt.id " \
-		"JOIN tag2parent_tree t2pt ON t2pt.parent=d2t.tag " \
+		"FROM" DIR2TAG_SUBQUERY "d2t " \
+		"JOIN tag2parent_tree t2pt ON t2pt.id=d2t.tag " \
 		"JOIN user2blacklist_tag u2ht ON u2ht.tag=t2pt.parent " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_DIRS(user_id) \
