@@ -17,9 +17,13 @@ function $$$set_era_vertex(){
 function $$$tag_era(){
 	if(($$$era_start===null)||($$$era_end===null))
 		return $$$alert("Error: era_start==="+era_start+" and era_end==="+era_end);
+	const _tag_ids = $('#tagselect-era').val().join(",");
 	$$$ajax_POST_w_text_response(
-		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+$('#tagselect-era').val().join(","),
-		$$$hide_tagselect_era
+		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+_tag_ids,
+		function(){
+			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([$$$era_start,$$$era_end,_tag_ids]);
+			$$$hide_tagselect_era();
+		}
 	);
 }
 
@@ -42,4 +46,14 @@ function $$$view_eras(ls){
 	}
 	
 	$$$set_profile_name("Eras");
+}
+
+function $$$create_era_info_row(era){
+	const [start,end,era_tag_ids] = era;
+	let _s = "";
+	_s += "<tr class='tr'>";
+		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
+		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
+		_s += "<td class='td'>" + era_tag_ids + "</td>";
+	_s += "</tr>";
 }

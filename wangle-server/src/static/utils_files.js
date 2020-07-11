@@ -448,13 +448,8 @@ function $$$view_file(_file_id_and_t){
 				$$$view_file__hides();
 				
 				_s = "";
-				for(const [start,end,era_tag_ids] of eras){
-					_s += "<tr class='tr'>";
-						_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
-						_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
-						_s += "<td class='td'>" + era_tag_ids + "</td>";
-					_s += "</tr>";
-				}
+				for(const era of eras)
+					_s += $$$create_era_info_row(era);
 				$$$document_getElementById('eras-info-tbody').innerHTML = _s;
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 2);
 			}
