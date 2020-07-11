@@ -101,7 +101,7 @@ function $$$add_to_db(obj_type){
 	}
 	$$$ajax_POST_data_w_text_response(
 		"/" + obj_type + "/add/" + ((obj_type==='f')?tag_ids.join(",")+"/":""), // Trailing slash is for server's convenience
-		urls.map(([parent,url]) => parent+'\t'+url).join('\n'),
+		urls.map(([parent,parent_name,url]) => parent+'\t'+url).join('\n'),
 		function(){
 			if(obj_type==='f')
 				tagselect.val("").change();
