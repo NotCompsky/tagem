@@ -80,6 +80,13 @@ namespace _r {
 		asciify_json_list_response_entry<0>(itr, row, f);
 		compsky::asciify::asciify(itr, ',');
 	}
+	template<typename Flag1,  typename Flag2>
+	void asciify_json_response_row(char*& itr,  MYSQL_ROW row,  const flag::Dict,  const Flag1 f,  const Flag2 g){
+		asciify_json_list_response_entry<0>(itr, row, f);
+		compsky::asciify::asciify(itr, ':');
+		asciify_json_list_response_entry<1>(itr, row, g);
+		compsky::asciify::asciify(itr, ',');
+	}
 	template<typename Flag,  typename... Args>
 	void asciify_json_response_row(char*& itr,  MYSQL_ROW row,  const flag::Dict f_arr_or_dict,  const Flag f,  Args... args){
 		asciify_json_list_response_entry<0>(itr, row, f);
@@ -141,6 +148,7 @@ namespace _r {
 	size_t get_size_of_json_response_rows_from_sql_res(MYSQL_RES* res,  MYSQL_ROW* row,  Args... args){
 		size_t sz = 0;
 		while(likely((*row = mysql_fetch_row(res)))){
+			sz += 2; // Worst case scenario
 			sz += strlens<0>(*row, args...);
 		}
 		return sz;

@@ -1009,8 +1009,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::no_quote, // era start
 			_r::flag::no_quote // era end
 		);
-		
-		this->mysql_free_res();
 		this->asciify(',');
 		this->asciify_tags_arr_or_dict(_r::flag::dict);
 		this->asciify("]");
