@@ -4,6 +4,13 @@ CREATE TABLE user (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
+INSERT INTO user
+(id,name)
+VALUES
+(1,"Guest"), -- Necessary user (name does not matter)
+(2,"Admin"),
+(99,"Invalid");
+UPDATE user SET id=0 WHERE id=99;
 
 CREATE TABLE protocol (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
