@@ -1585,7 +1585,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::arr,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_no_escape // device
+			_r::flag::quote_no_escape, // device
+			_r::flag::no_quote // count
 		);
 		
 		return this->get_buf_as_string_view();
