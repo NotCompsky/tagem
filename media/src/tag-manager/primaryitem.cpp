@@ -32,8 +32,8 @@ void PrimaryItem::delete_self(){
     
     const QString qs = (prnt) ? prnt->text() : "0";
     
-	constexpr static const char* const sql__delete_from = "DELETE FROM tag2parent WHERE parent_id=";
-	constexpr static const char* const sql__and_tagidq  = " AND tag_id=";
+	constexpr static const char* const sql__delete_from = "DELETE FROM tag2parent WHERE parent=";
+	constexpr static const char* const sql__and_tagidq  = " AND tag=";
 	constexpr static const size_t foo = std::char_traits<const char>::length(sql__delete_from);
 	static char buf[std::char_traits<char>::length(sql__delete_from) + 19 + std::char_traits<char>::length(sql__and_tagidq) + 19];
     compsky::mysql::exec(_mysql::obj, buf, sql__delete_from,  qs,  sql__and_tagidq, this->text());

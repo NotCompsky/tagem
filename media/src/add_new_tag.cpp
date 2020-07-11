@@ -46,7 +46,7 @@ uint64_t get_id_from_table(const char* const table_name,  const String entry_nam
 };
 
 void tag2parent_add(const uint64_t tagid,  const uint64_t parid){
-	constexpr static const char* const sql__insert =       "INSERT IGNORE INTO tag2parent (tag_id, parent_id) VALUES (";
+	constexpr static const char* const sql__insert =       "INSERT IGNORE INTO tag2parent (tag, parent) VALUES (";
 	
 	static char buf[500];
 	
@@ -55,8 +55,8 @@ void tag2parent_add(const uint64_t tagid,  const uint64_t parid){
 }
 
 void tag2parent_rm(const uint64_t tagid,  const uint64_t parid){
-	constexpr static const char* const sql1 = "DELETE FROM tag2parent WHERE tag_id=";
-	constexpr static const char* const sql2 = " AND parent_id=";
+	constexpr static const char* const sql1 = "DELETE FROM tag2parent WHERE tag=";
+	constexpr static const char* const sql2 = " AND parent=";
 	
 	static char buf[std::char_traits<char>::length(sql1) + 19 + std::char_traits<char>::length(sql2) + 19 + 1];
 	

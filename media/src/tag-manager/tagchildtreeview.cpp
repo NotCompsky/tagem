@@ -19,14 +19,14 @@ TagChildTreeView::TagChildTreeView(QWidget* parent) : TagTreeView(true, parent) 
 	compsky::mysql::query_buffer(
 		_mysql::obj,
 		RES1,
-		"SELECT t2p.parent_id, t.id, IFNULL(A.c,0), t.name "
+		"SELECT t2p.parent, t.id, IFNULL(A.c,0), t.name "
 		"FROM tag2parent t2p "
-		"JOIN tag t ON t.id=t2p.tag_id "
+		"JOIN tag t ON t.id=t2p.tag "
 		"LEFT JOIN ("
-			"SELECT tag_id, COUNT(file_id) AS `c` "
+			"SELECT tag, COUNT(file_id) AS `c` "
 			"FROM file2tag "
-			"GROUP BY tag_id"
-		") A ON A.tag_id=t.id"
+			"GROUP BY tag"
+		") A ON A.tag=t.id"
 	);
     this->place_tags(0);
 };

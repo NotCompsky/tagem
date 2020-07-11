@@ -84,7 +84,7 @@ BoxRelationDialog::BoxRelationDialog(const uint64_t _id,  MainWindow* const _win
 		QHBoxLayout* hbox = new QHBoxLayout;
 		
 		hbox->addWidget(new QLabel(_tag_name));
-		hbox->addWidget(new UnlinkTagBtn("DELETE FROM relation2tag WHERE relation_id=", _id, " AND tag_id=", _tag_id, this));
+		hbox->addWidget(new UnlinkTagBtn("DELETE FROM relation2tag WHERE relation_id=", _id, " AND tag=", _tag_id, this));
 		
 		l->addLayout(hbox);
 	}

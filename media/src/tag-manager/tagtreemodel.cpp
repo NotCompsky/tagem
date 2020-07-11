@@ -120,5 +120,5 @@ bool TagTreeModel::removeRows(int row,  int count,  QModelIndex parent){
     if (!QStandardItemModel::removeRows(row, count, parent))
         return false;
     
-	qDebug() << "DELETE FROM tag2parent WHERE parent_id=", parent_id, " AND tag_id=", tag_id;
+	qDebug() << "DELETE FROM tag2parent WHERE parent=", parent_id, " AND tag=", tag_id;
 };
