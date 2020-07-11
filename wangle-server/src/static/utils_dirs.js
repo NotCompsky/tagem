@@ -5,35 +5,6 @@ function $$$display_related_dirs(dir_id,rel,arr){
 	$$$document_getElementById(rel).innerHTML = arr.filter(x => x[0]!==dir_id).map(([id,name]) => "<a onclick=\"$$$view_dir('" + id + "',0)\">" + $$$escape_html_text(name) + "</a>").join("<br/>");
 }
 
-function $$$populate_d_id2name_table(arr){
-	const tbl = $$$document_getElementById('d').getElementsByClassName('tbody')[0];
-	if (arr.length===0){
-		tbl.innerHTML = "";
-		return;
-	}
-	
-	$$$ajax_data_w_JSON_response(
-		"GET",
-		"/a/d/id/"+arr.join(","),
-		null,
-		function(data){
-			let s = "";
-			for (const [id, name, device, size] of data){
-				s += "<div class='tr'>";
-					s += "<div class='td'>";
-						s += "<a onclick='$$$view_dir(" + id + ",0)'>" + $$$escape_html_text(name) + "</a>";
-					s += "</div>";
-					s += "<div class='td'>";
-						s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";
-					s += "</div>";
-					s += "<div class='td dir-size'>" + size + "</div>";
-				s += "</div>";
-			}
-			tbl.innerHTML = s;
-		}
-	);
-}
-
 
 function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 	if(_dir_id_or_path==="")
@@ -82,7 +53,29 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 }
 function $$$view_dirs(ls){
 	$$$hide_all_except(['d']);
-	$$$populate_d_id2name_table(ls);
+		const tbl = $$$document_getElementById('d').getElementsByClassName('tbody')[0];
+	if (ls.length===0){
+		tbl.innerHTML = "";
+	}else{
+		$$$ajax_GET_w_JSON_response(
+			"/a/d/id/"+ls.join(","),
+			function(data){
+				let s = "";
+				for (const [id, name, device, size] of data){
+					s += "<div class='tr'>";
+						s += "<div class='td'>";
+							s += "<a onclick='$$$view_dir(" + id + ",0)'>" + $$$escape_html_text(name) + "</a>";
+						s += "</div>";
+						s += "<div class='td'>";
+							s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";
+						s += "</div>";
+						s += "<div class='td dir-size'>" + size + "</div>";
+					s += "</div>";
+				}
+				tbl.innerHTML = s;
+			}
+		);
+	}
 	$$$unset_window_location_hash();
 	$$$set_profile_name("All Directories");
 }
