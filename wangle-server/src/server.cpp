@@ -1623,14 +1623,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view guess_dir_given_file(const char* s){
 		// Given a file URL, this should return the ID and name of the directory most suited to being its parent.
-		const char* const file_url = s;
 		
 		GET_USER_ID
+		
+		if (unlikely(skip_to_body(&s)))
+			return _r::not_found;
+		
+		const char* const file_url = s;
 		
 		this->mysql_query(
 			"SELECT id, name "
 			"FROM _dir "
-			"WHERE LEFT(\"", _f::esc, '"', _f::until, ' ', file_url, "\",LENGTH(name))=name "
+			"WHERE LEFT(\"", _f::esc, '"', file_url, "\",LENGTH(name))=name "
 			"ORDER BY LENGTH(name) DESC "
 			"LIMIT 1"
 		);

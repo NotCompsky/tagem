@@ -140,7 +140,9 @@ function $$$add_to_db__append(obj_type, data){
 		let parent_id;
 		if(parent === undefined){
 			if(parent_type==='d'){
-				$$$ajax_GET_w_JSON_response("/a/f/guess-dir/"+x,function(data){$$$add_to_db__append(obj_type,data);});
+				$$$ajax_POST_data_w_JSON_response("/a/f/guess-dir",x,function(data){
+					$$$add_to_db__append(obj_type,data);
+				});
 				return;
 			}
 			// Guess the parent
