@@ -468,7 +468,7 @@ void MainWindow::init_file_from_db(){
 	  #endif
 	}
   #ifdef BOXABLE
-    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM box WHERE file_id=", this->file_id);
+    compsky::mysql::query(_mysql::obj,  RES1,  BUF,  "SELECT id,frame_n,x,y,w,h FROM box WHERE file=", this->file_id);
     {
     uint64_t box_id;
     uint64_t frame_n;
@@ -489,7 +489,7 @@ void MainWindow::init_file_from_db(){
         this->boxid2pointer[box_id] = iw;
         
         
-        compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag_id FROM box2tag WHERE box_id=", box_id);
+        compsky::mysql::query(_mysql::obj,  RES2,  BUF,  "SELECT tag FROM box2tag WHERE box_id=", box_id);
 		// TODO: Integrate this into the first query, to reduce network overhead
         
         uint64_t tag_id;
@@ -712,7 +712,7 @@ void MainWindow::media_open(){
 			BUF,
 			"SELECT id, start, end, start_method_id, end_method_id "
 			"FROM era "
-			"WHERE file_id=", this->file_id, " "
+			"WHERE file=", this->file_id, " "
 			"ORDER BY start ASC"
 		);
 		uint64_t id;
@@ -932,7 +932,7 @@ const QString MainWindow::media_tag(const QString str){
 		printf("%lu %s\n", tagid, this->get_media_fp());
 	} else {
 		this->ensure_fileID_set();
-		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file_id, tag_id) VALUES(", this->file_id, ',', tagid, ")");
+		compsky::mysql::exec(_mysql::obj,  BUF,  "INSERT IGNORE INTO file2tag (file, tag) VALUES(", this->file_id, ',', tagid, ")");
 	}
 	
 	return tag_id2name[tagid];
