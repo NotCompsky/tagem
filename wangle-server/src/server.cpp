@@ -1993,10 +1993,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		
 		this->mysql_query(
-			"SELECT m.name, CONCAT(d.name, f", (dir_id==0)?"":"2", ".name) "
+			"SELECT m.name, CONCAT(GROUP_CONCAT(d.name ORDER BY d2pt.depth DESC SEPARATOR ''), f", (dir_id==0)?"":"2", ".name) "
 			"FROM _file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
-			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
+			"JOIN dir2parent_tree d2pt ON d2pt.id=f", (dir_id==0)?"":"2", ".dir "
+			"JOIN _dir d ON d.id=d2pt.parent "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
