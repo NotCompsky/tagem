@@ -185,10 +185,9 @@ CREATE TABLE file2 (
 	PRIMARY KEY (id)
 );
 INSERT INTO file2
-(min, max, conversion, name)
+(id,min, max, conversion, name)
 VALUES
-(0, 9223372036854775807, 0, "duration")
-;
+(1,0, 100, 0, "Score");
 
 CREATE TABLE user2shown_file2 (
 	user INT UNSIGNED NOT NULL,
@@ -196,6 +195,11 @@ CREATE TABLE user2shown_file2 (
 	FOREIGN KEY (file2) REFERENCES file2 (id),
 	PRIMARY KEY (user,file2)
 );
+INSERT INTO user2shown_file2
+(user,file2)
+SELECT id, 1
+FROM user
+;
 
 
 CREATE TABLE _tag (
