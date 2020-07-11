@@ -610,6 +610,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::unauthorised;
 		this->asciify(',');
 		
+		// List of all parent directories
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
 			"FROM _dir d "
@@ -626,13 +627,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		this->asciify(',');
 		
+		// List of all IMMEDIATE child directories
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
 			"FROM _dir d "
-			"JOIN dir2parent_tree dt ON dt.id=d.id "
-			"WHERE dt.parent=", id, " "
+			"WHERE d.parent=", id, " "
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
-			"ORDER BY depth DESC"
+			"ORDER BY name ASC"
 		);
 		this->init_json_rows(
 			this->itr,
@@ -1584,10 +1585,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"d.id,"
 				"d.name,"
 				"d.device,"
-				"GROUP_CONCAT(DISTINCT d2t.tag),"
+				"IFNULL(GROUP_CONCAT(DISTINCT d2t.tag),\"\"),"
 				"COUNT(DISTINCT f.id)"
 			"FROM _dir d "
-			"JOIN dir2tag d2t ON d2t.dir=d.id "
+			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN _file f ON f.dir=d.id "
 			"WHERE d.id IN (", _f::strlen, dir_ids, dir_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
