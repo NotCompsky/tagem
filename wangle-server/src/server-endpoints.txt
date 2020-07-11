@@ -151,6 +151,12 @@ POST /f/t/>
 	return this->post__add_tag_to_file(++str)
 POST /f/t-/>
 	return this->post__rm_tags_from_files(++str)
+POST /d/t-/>
+	// TODO
+	return _r::not_implemented_yet
+POST /x/u/t-/>
+	// TODO
+	return _r::not_implemented_yet
 POST /q/ >
 	return this->parse_qry(++str)
 POST /login >

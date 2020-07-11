@@ -192,3 +192,8 @@
 ".popup .unmake-popup{"
 	"display:block!important;"
 "}"
+
+"#right-side{"
+	"max-height:100vh;"
+	"overflow-y:scroll;"
+"}"

@@ -620,7 +620,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::dict,
+			_r::flag::arr,
 			_r::flag::quote_no_escape, // id_str
 			_r::flag::quote_and_escape // name
 		);
@@ -636,9 +636,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::dict,
+			_r::flag::arr,
 			_r::flag::quote_no_escape, // id_str
 			_r::flag::quote_and_escape // name
+		);
+		this->asciify(',');
+		
+		this->mysql_query_after_itr(
+			"SELECT tag "
+			"FROM dir2tag "
+			"WHERE dir=", id
+			// No tags are blacklisted, otherwise the directory would have been rejected above
+		);
+		this->init_json_rows(
+			this->itr,
+			_r::flag::arr,
+			_r::flag::quote_no_escape // tag id
 		);
 		
 		this->asciify(']');

@@ -40,7 +40,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 		_dir_id_or_path=$$$dir_id;
 	if(page===undefined)
 		page = 0;
-	let ls = ['f','f-action-btns','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];
+	let ls = ['f','f-action-btns','tags-container','parents-container','children-container','tagselect-files-container','tagselect-files-btn'];
 	if(!is_not_in_db){
 		ls.push('merge-files-btn');
 		ls.push('backup-files-btn');
@@ -67,6 +67,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 				$$$dir_name = data[0];
 				$$$display_related_dirs($$$dir_id,"parents",data[1]);
 				$$$display_related_dirs($$$dir_id,"children",data[2]);
+				$$$display_tags(data[3], "#tags", "$$$unlink_this_tag_from_this", 'd');
 				$$$set_profile_name_from_this_dir();
 			});
 			$$$populate_f_table('d', $$$dir_id, null, page);

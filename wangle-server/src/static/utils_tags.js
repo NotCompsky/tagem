@@ -27,11 +27,12 @@ function $$$populate_t_id2name_table(arr){
 	);
 }
 
-function $$$unlink_this_tag_from_this_file(node){
+function $$$unlink_this_tag_from_this(alias,node){
+	// alias is either 'f' for file, or 'd' for directory, or 'D' for device
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
-		"/f/t-/"+$$$file_id+"/"+node.parentNode.dataset.id,
+		"/" + alias + "/t-/"+$$$file_id+"/"+node.parentNode.dataset.id,
 		function(){
 			node.parentNode.classList.add("hidden");
 		}
@@ -66,14 +67,14 @@ function $$$unlink_this_parent_tag_from_this_tag(node){
 function $$$unlink_this_child_tag_from_this_tag(node){
 	$$$unlink_tag_from_this_tag(node,'c');
 }
-function $$$display_tag(id, name, thumb, fn_name){
+function $$$display_tag(id, name, thumb, fn_name, alias){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ "<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>"
 			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + $$$escape_html_text(name) + "</a>"
-			+ "<button class=\"del\" onclick=\"" + fn_name + "(this)\">-</button>"
+			+ "<button class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">-</button>"
 		+ "</div>";
 }
-function $$$display_tags(tag_ids, selector, fn_name){
+function $$$display_tags(tag_ids, selector, fn_name, alias){
 	if(tag_ids.length===0){
 		document.querySelector(selector).innerHTML = "";
 		return;
@@ -85,15 +86,15 @@ function $$$display_tags(tag_ids, selector, fn_name){
 		function(data){
 			let s = "";
 			for (const [id, name, thumb, cover, size] of data){
-				s += $$$display_tag(id, name, thumb, fn_name);
+				s += $$$display_tag(id, name, thumb, fn_name, alias);
 			}
 			document.querySelector(selector).innerHTML = s;
 		}
 	);
 }
-function $$$display_tags_add(tags, selector, fn_name){
+function $$$display_tags_add(tags, selector, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file
-	const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name));
+	const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name, alias));
 	document.querySelector(selector).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){

@@ -163,7 +163,7 @@ function $$$tag_files_then(file_ids, selector, fn){
 	);
 }
 function $$$after_tagged_this_file(file_ids, tags){
-	$$$display_tags_add(tags, '#tags')
+	$$$display_tags_add(tags, '#tags', 'f')
 }
 function $$$after_tagged_selected_files(file_ids, tags){
 	for(let node of $$$document_getElementById('f').getElementsByClassName('tr')){
@@ -452,7 +452,7 @@ function $$$view_file(_file_id_and_t){
 				$$$document_getElementById('values').innerHTML = _vals;
 				
 				$$$file_tags = (tag_ids==="") ? [] : tag_ids.split(",");
-				$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this_file");
+				$$$display_tags($$$file_tags, "#tags", "$$$unlink_this_tag_from_this", "f");
 				
 				$$$mimetype = mime;
 				
