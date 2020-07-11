@@ -32,7 +32,7 @@ enum {
 
 
 inline
-const char* get_ext(char* const buf,  const char* const basename,  const int codec_id){
+const char* get_ext(const int codec_id){
 	const char* file_ext;
 	switch(codec_id){
 		case AV_CODEC_ID_OPUS:
@@ -62,14 +62,12 @@ bool is_file(const char* const path){
 
 
 inline
-int extract_audio(const char* const output_filepath_basename,  const char* const input_filepath,  const bool _extract_audio,  const bool print_output_file_path){
+int extract_audio(char* const output_filepath_basename,  const char* const input_filepath,  const bool _extract_audio,  const bool print_output_file_path){
 	int err = ERR_SUCCESS;
 	AVFormatContext* input_fmt_ctx = avformat_alloc_context();
 	AVFormatContext* output_fmt_ctx;
 	AVPacket pkt;
-	static char output_filepath[4096];
 	const char* file_ext;
-	size_t basename_len;
 	AVOutputFormat* outfmt;
 	AVStream* input_audio;
 	AVStream* output_audio;
@@ -104,33 +102,31 @@ int extract_audio(const char* const output_filepath_basename,  const char* const
 		goto cleanup2;
 	}
 	
-	file_ext = get_ext(output_filepath, output_filepath_basename, input_audio->codecpar->codec_id);
+	file_ext = get_ext(input_audio->codecpar->codec_id);
 	if (file_ext == nullptr){
 		fprintf(stderr,  "Not implemented for codec of file: %s\n", input_filepath);
 		goto cleanup2;
 	}
-	basename_len = strlen(output_filepath_basename);
-	memcpy(output_filepath, output_filepath_basename, basename_len);
-	memcpy(output_filepath + basename_len,  file_ext,  strlen(file_ext) + 1);
+	memcpy(output_filepath_basename + strlen(output_filepath_basename),  file_ext,  strlen(file_ext) + 1);
 	if (print_output_file_path){
-		printf("%s\n", output_filepath);
+		printf("%s\n", output_filepath_basename);
 	}
-	if (is_file(output_filepath)  or  not _extract_audio)
+	if (is_file(output_filepath_basename)  or  not _extract_audio)
 		goto cleanup2;
 	
 	/*if (file_ext == nullptr){
 		const char* const _file_ext = 
-		std::filesystem::copy(input_filepath, output_filepath_basename);
+		std::filesystem::copy(input_filepath, output_filepath_basename_basename);
 		return ERR_SUCCESS;
 	}*/
 	
-	outfmt = av_guess_format(NULL, output_filepath, NULL);
+	outfmt = av_guess_format(NULL, output_filepath_basename, NULL);
 	if (outfmt == NULL){
 		err = ERR_CANNOT_GUESS_FORMAT;
 		goto cleanup2;
 	}
 	
-	avformat_alloc_output_context2(&output_fmt_ctx, outfmt, NULL, output_filepath);
+	avformat_alloc_output_context2(&output_fmt_ctx, outfmt, NULL, output_filepath_basename);
 	if (!output_fmt_ctx){
 		err = ERR_CANNOT_ALLOC_OUTPUT_CONTEXT;
 		goto cleanup2;
@@ -151,7 +147,7 @@ int extract_audio(const char* const output_filepath_basename,  const char* const
 	output_audio->time_base.num = input_audio->time_base.num;
 	output_audio->time_base.den = input_audio->time_base.den;
 	
-	if (avio_open(&output_fmt_ctx->pb, output_filepath, AVIO_FLAG_WRITE)){
+	if (avio_open(&output_fmt_ctx->pb, output_filepath_basename, AVIO_FLAG_WRITE)){
 		err = ERR_CANNOT_OPEN_OUTPUT_FILE;
 		goto cleanup4;
 	}
