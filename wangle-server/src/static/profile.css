@@ -42,7 +42,7 @@ body {
   #left-side.active {
     z-index: 4;
   }
-  #left-side.active > *:not(.logo) {
+  #left-side.active > * {
     opacity: 1;
     transition: 0.3s 0.2s;
   }
@@ -57,16 +57,8 @@ body {
     width: 56px;
     overflow: hidden;
   }
-  #left-side:not(.active) > *:not(.logo):not(#left-side-button) {
+  #left-side:not(.active) > *:not(#left-side-button) {
     opacity: 0;
-  }
-  #left-side:not(.active) .logo {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    transform-origin: bottom;
-    display: flex;
-    align-items: center;
-    margin-top: -10px;
   }
 }
 
@@ -96,20 +88,6 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #181d2f;
-}
-
-.logo {
-  font-family: "DM Sans", sans-serif;
-  font-size: 15px;
-  color: #fff;
-  font-weight: 600;
-  text-align: center;
-  height: 68px;
-  line-height: 68px;
-  letter-spacing: 4px;
-  position: sticky;
-  top: 0;
-  background: linear-gradient(to bottom, #151728 0%, #151728 76%, rgba(21, 23, 40, 0) 100%);
 }
 
 .side-title {
