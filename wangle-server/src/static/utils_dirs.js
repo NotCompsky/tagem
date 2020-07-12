@@ -26,14 +26,9 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 
 	if (_dir_id_or_path !== undefined){
 		if(is_not_in_db){
-			const dir = Object.entries(d).filter(x => (x[1][0]===_dir_id_or_path))[0];
-			if(dir===undefined){
-				$$$alert("Directory does not exist in the database");
-				$$$dir_id = "0";
-			}else{
-				$$$dir_id = dir[0];
-			}
+			$$$dir_id = "0"; // $$$dir_id will be set by the call to populate_f_table
 			$$$populate_f_table(':', null, _dir_id_or_path,page);
+			$$$set_window_location_hash(':'+page+'/'+_dir_id_or_path);
 		}else{
 			$$$dir_id = _dir_id_or_path;
 			$$$ajax_GET_w_JSON_response("/a/d/i/"+$$$dir_id, function(data){
@@ -44,7 +39,12 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 				$$$set_profile_name_from_this_dir();
 			});
 			$$$populate_f_table('d', $$$dir_id, null, page);
+			$$$set_window_location_hash('d'+page+'/'+$$$dir_id);
 		}
+	}else{
+		// Returning to directory listing via "Dir" tab/button
+		$$$set_window_location_hash('d'+page+'/'+$$$dir_id);
+		// BUG: This switches :PAGE/directory/path/ to dPAGE/DIR_ID
 	}
 	
 	if(is_not_in_db){
@@ -97,6 +97,4 @@ function $$$view_dirs(ls){
 			}
 		);
 	}
-	$$$unset_window_location_hash();
-	$$$set_profile_name("All Directories");
 }
