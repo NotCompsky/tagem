@@ -1,0 +1,444 @@
+// Each icon sourced from https://github.com/tabler/tabler-icons
+// Can preview SVGs using https://www.w3schools.com/html/tryit.asp?filename=tryhtml_svg_circle
+
+MIT License
+Copyright (c) 2020 Paweł Kuna
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+DB:Database
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-database" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <ellipse cx="12" cy="6" rx="8" ry="3"></ellipse>
+  <path d="M4 6v6a8 3 0 0 0 16 0v-6" />
+  <path d="M4 12v6a8 3 0 0 0 16 0v-6" />
+</svg>
+
+// Idea: For deleting files/dirs/etc.
+TRASH:Delete
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="4" y1="7" x2="20" y2="7" />
+  <line x1="10" y1="11" x2="10" y2="17" />
+  <line x1="14" y1="11" x2="14" y2="17" />
+  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+</svg>
+
+
+USER:User
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+// Idea: Use for unlinking tags from files/dirs/devices/etc
+UNLINK:Unlink
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-unlink" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+  <line x1="16" y1="21" x2="16" y2="19" />
+  <line x1="19" y1="16" x2="21" y2="16" />
+  <line x1="3" y1="8" x2="5" y2="8" />
+  <line x1="8" y1="3" x2="8" y2="5" />
+</svg>
+
+FILE:File
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+</svg>
+
+// SVG compiled by me, using the FILE icon, combined with an obstructed rectangle.
+FILES:Files
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+	<path d="M15.595745086669922,2.4680850505828857 v3.659574508666992 a0.914893627166748,0.914893627166748 0 0 0 0.914893627166748,0.914893627166748 h3.659574508666992"/>
+	<path d="M18.306989058852196,19.024316668510437 h-9.316109657287598 a1.8632218837738037,1.8632218837738037 0 0 1 -1.8632218837738037,-1.8632218837738037 v-13.042552947998047 a1.8632218837738037,1.8632218837738037 0 0 1 1.8632218837738037,-1.8632218837738037 h6.521276473999023 l4.658054828643799,4.658054828643799 v10.247720718383789 a1.8632218837738037,1.8632218837738037 0 0 1 -1.8632218837738037,1.8632218837738037 z"/><path d="M6.893617451190949,4.868085026741028L3.27659609913826,4.868085026741028"/>
+	<path d="M4.021276950836182,4.761702059099264 L4.021276950836182,22.314895039482963"/>
+	<path d="M3.914893984794617,21.570213168859482L18.808511316776276,21.463830187916756"/>
+	<path d="M18.063830450177193,19.229787588119507L18.063830450177193,21.676596149802208"/>
+</svg>
+
+SAVE_FILE:Save File
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-floppy" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+  <circle cx="12" cy="14" r="2" />
+  <polyline points="14 4 14 8 8 8 8 4" />
+</svg>
+
+NEW_FILE:+File
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-plus" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+  <line x1="12" y1="11" x2="12" y2="17" />
+  <line x1="9" y1="14" x2="15" y2="14" />
+</svg>
+
+// NOTE: Probably prefer TRASH icon
+DELETE_FILE:-File
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+  <path d="M10 12l4 4m0 -4l-4 4" />
+</svg>
+
+DOWNLOAD_FILE:Download File
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-download" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+  <line x1="12" y1="11" x2="12" y2="17" />
+  <polyline points="9 14 12 17 15 14" />
+</svg>
+
+TEXT_EDITOR:Text Editor
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+  <line x1="9" y1="9" x2="10" y2="9" />
+  <line x1="9" y1="13" x2="15" y2="13" />
+  <line x1="9" y1="17" x2="15" y2="17" />
+</svg>
+
+
+
+DIR:Dir
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+</svg>
+
+NEW_DIR:+Dir
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder-plus" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+  <line x1="12" y1="10" x2="12" y2="16" />
+  <line x1="9" y1="13" x2="15" y2="13" />
+</svg>
+
+// NOTE: Probably prefer TRASH icon
+DELETE_DIR:-Dir
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folder-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+  <path d="M10 11l4 4m0 -4l-4 4" />
+</svg>
+
+DIRS:Dirs
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+  <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
+</svg>
+
+
+// Idea: Use to switch video to audio-only, and to display file types when the CSS table layout hides the thumbnails.
+
+MUSIC:Music
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-music" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="6" cy="17" r="3" />
+  <circle cx="16" cy="17" r="3" />
+  <polyline points="9 17 9 4 19 4 19 17" />
+  <line x1="9" y1="8" x2="19" y2="8" />
+</svg>
+
+VIDEO:Video
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-movie" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <line x1="8" y1="4" x2="8" y2="20" />
+  <line x1="16" y1="4" x2="16" y2="20" />
+  <line x1="4" y1="8" x2="8" y2="8" />
+  <line x1="4" y1="16" x2="8" y2="16" />
+  <line x1="4" y1="12" x2="20" y2="12" />
+  <line x1="16" y1="8" x2="20" y2="8" />
+  <line x1="16" y1="16" x2="20" y2="16" />
+</svg>
+
+IMAGE:Image
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="15" y1="8" x2="15.01" y2="8" />
+  <rect x="4" y="4" width="16" height="16" rx="3" />
+  <path d="M4 15l4 -4a3 5 0 0 1 3 0l 5 5" />
+  <path d="M14 14l1 -1a3 5 0 0 1 3 0l 2 2" />
+</svg>
+
+
+
+
+SHUTDOWN:Shutdown
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-power" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M7 6a7.75 7.75 0 1 0 10 0" />
+  <line x1="12" y1="4" x2="12" y2="12" />
+</svg>
+
+REFRESH:Refresh
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -5v5h5" />
+  <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 5v-5h-5" />
+</svg>
+
+PLUS:Plus
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="12" y1="5" x2="12" y2="19" />
+  <line x1="5" y1="12" x2="19" y2="12" />
+</svg>
+
+
+// Idea: for playlists
+REPEAT_ONE:Repeat One
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-repeat-once" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
+  <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3-3l3-3" />
+  <path d="M11 11l1 -1v4" />
+</svg>
+
+REPEAT:Repeat All
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-repeat" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3" />
+  <path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3-3l3-3" />
+</svg>
+
+SETTINGS:Settings
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+
+SEARCH:Search
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+SORT_ASC:Sort Asc
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sort-ascending" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="4" y1="6" x2="11" y2="6" />
+  <line x1="4" y1="12" x2="11" y2="12" />
+  <line x1="4" y1="18" x2="13" y2="18" />
+  <polyline points="15 9 18 6 21 9" />
+  <line x1="18" y1="6" x2="18" y2="18" />
+</svg>
+
+SORT_DESC:Sort Desc
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sort-descending" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="4" y1="6" x2="13" y2="6" />
+  <line x1="4" y1="12" x2="11" y2="12" />
+  <line x1="4" y1="18" x2="11" y2="18" />
+  <polyline points="15 15 18 18 21 15" />
+  <line x1="18" y1="6" x2="18" y2="18" />
+</svg>
+
+
+
+NEW_SECTION:+Section
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-new-section" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="9" y1="12" x2="15" y2="12" />
+  <line x1="12" y1="9" x2="12" y2="15" />
+  <path d="M4 6v-1a1 1 0 0 1 1 -1h1m5 0h2m5 0h1a1 1 0 0 1 1 1v1m0 5v2m0 5v1a1 1 0 0 1 -1 1h-1m-5 0h-2m-5 0h-1a1 1 0 0 1 -1 -1v-1m0 -5v-2m0 -5" />
+</svg>
+
+
+
+
+HISTORY:History
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-history" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="12 8 12 12 14 14" />
+  <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />
+</svg>
+
+INFO_CIRCLE:Help
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <line x1="12" y1="8" x2="12.01" y2="8" />
+  <polyline points="11 12 12 12 12 16 13 16" />
+</svg>
+
+LOGIN:Login
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-login" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+  <path d="M20 12h-13l3 -3m0 6l-3 -3" />
+</svg>
+
+LOGOUT:Logout
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-logout" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+  <path d="M7 12h14l-3 -3m0 6l3 -3" />
+</svg>
+
+LOCKED:Locked
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-lock" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="5" y="11" width="14" height="10" rx="2" />
+  <circle cx="12" cy="16" r="1" />
+  <path d="M8 11v-4a4 4 0 0 1 8 0v4" />
+</svg>
+
+UNLOCKED:Unlocked
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-lock-open" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="5" y="11" width="14" height="10" rx="2" />
+  <circle cx="12" cy="16" r="1" />
+  <path d="M8 11v-5a4 4 0 0 1 8 0" />
+</svg>
+
+// Idea: Symbol for switching table layout CSS to true table view
+LIST:List
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-list" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="9" y1="6" x2="20" y2="6" />
+  <line x1="9" y1="12" x2="20" y2="12" />
+  <line x1="9" y1="18" x2="20" y2="18" />
+  <line x1="5" y1="6" x2="5" y2="6.01" />
+  <line x1="5" y1="12" x2="5" y2="12.01" />
+  <line x1="5" y1="18" x2="5" y2="18.01" />
+</svg>
+
+// Idea: Symbol for switching table layout CSS to true table view
+THUMBNAIL_VIEW:Thumbnail View
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-id" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="16" rx="3" />
+  <circle cx="9" cy="10" r="2" />
+  <line x1="15" y1="8" x2="17" y2="8" />
+  <line x1="15" y1="12" x2="17" y2="12" />
+  <line x1="7" y1="16" x2="17" y2="16" />
+</svg>
+
+// Idea: Symbol for switching table layout CSS to thumbnails view
+GRID:Grid
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-grid" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="4" y="4" width="6" height="6" rx="1" />
+  <rect x="14" y="4" width="6" height="6" rx="1" />
+  <rect x="4" y="14" width="6" height="6" rx="1" />
+  <rect x="14" y="14" width="6" height="6" rx="1" />
+</svg>
+
+// Idea: Symbol for switching between day and night CSS
+MOON:Night
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M16.2 4a9.03 9.03 0 1 0 3.9 12a6.5 6.5 0 1 1 -3.9 -12" />
+</svg>
+
+
+
+
+EDIT:Edit
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />
+  <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
+  <line x1="16" y1="5" x2="19" y2="8" />
+</svg>
+
+
+
+VIEW:View
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-eye" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="2" />
+  <path d="M2 12l1.5 2a11 11 0 0 0 17 0l1.5 -2" />
+  <path d="M2 12l1.5 -2a11 11 0 0 1 17 0l1.5 2" />
+</svg>
+
+REPORT:Report
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-flag" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="5" x2="5" y2="21" />
+  <line x1="19" y1="5" x2="19" y2="14" />
+  <path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0" />
+  <path d="M5 14a5 5 0 0 1 7 0a5 5 0 0 0 7 0" />
+</svg>
+
+
+SQUARE_PLUS:+
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-square-plus" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <line x1="9" y1="12" x2="15" y2="12" />
+  <line x1="12" y1="9" x2="12" y2="15" />
+</svg>
+
+SQUARE_DELETE:-
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-square-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="4" y="4" width="16" height="16" rx="2" />
+  <path d="M10 10l4 4m0 -4l-4 4" />
+</svg>
+
+
+
+
+
+TAG:Tag
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
+  <circle cx="9" cy="9" r="2" />
+</svg>
+
+// An SVG I (Adam) constructed as a fusion of TAG and a plus symbol
+TAG_PLUS:+Tag
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
+  <line x1="9" y1="12" x2="15" y2="12" />
+  <line x1="12" y1="9" x2="12" y2="15" />
+</svg>
+
+// An SVG I (Adam) constructed with my very 1000% great artistic skillz
+TAGS:Tags
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+	<path stroke="none" d="M0 0h24v24H0z"/>
+	<circle cx="11.747252464294434" cy="5.703297138214111" r="2" />
+	<path d="M14.08750473007342,0.8021979322366519 L22.234023885414672,8.94871838243239 a1.357753336429596,1.357753336429596 0 0 1 0,1.810337781906128 L16.803010539696288,16.1900695100569 a1.357753336429596,1.357753336429596 0 0 1 -1.810337781906128,0 L6.846153602448908,8.043549491479325 v-3.620675563812256 a3.620675563812256,3.620675563812256 0 0 1 3.620675563812256,-3.620675563812256 h3.620675563812256"/>
+	<path d="M20.90069341659546,37.83516550064087 L29.047210216522217,45.981688022613525 a1.3577532768249512,1.3577532768249512 0 0 1 0,1.810337781906128 L23.616197109222412,53.22303628921509 a1.3577532768249512,1.3577532768249512 0 0 1 -1.810337781906128,0 L13.65934133529663,45.07651376724243 v-3.620675563812256 a3.620675563812256,3.620675563812256 0 0 1 3.620675563812256,-3.620675563812256 h3.620675563812256"/>
+	<path d="M15.721429705619812,13.04724296927452 L3.9620240926742554,20.39687141776085" transform="rotate(-102.407, 9.84173, 16.7221)"/>
+	<path d="M14.197789192199707,21.890103101730343L21.890096426010132,14.197795867919922"/>
+	<path d="M5.406580924987793,8.153840184211731L5.406580924987793,12.549444317817688"/>
+	<path d="M7.054932475090026,5.956038117408752L5.406580924987793,8.153840184211731"/>
+	<path d="M21.890096987810765,15.296696845401298 L21.89009709618284,15.296696964610588"/>
+</svg>
+
+
+
+BACKUP:+Backup
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-upload" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+  <polyline points="7 9 12 4 17 9" />
+  <line x1="12" y1="4" x2="12" y2="16" />
+</svg>

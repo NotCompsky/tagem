@@ -1,0 +1,11 @@
+// SVGs I wrote myself. Same license as repository.
+
+TRIANGLE_LEFT:&#9666;
+<svg viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none">
+	<path d="m22+1.5 -20 10.5+20+10z"/>
+</svg>
+
+TRIANGLE_RIGHT:&#9656;
+<svg viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none">
+	<path d="m2+1.5 20 10.5-20+10z"/>
+</svg>

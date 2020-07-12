@@ -197,3 +197,10 @@
 	"max-height:100vh;"
 	"overflow-y:scroll;"
 "}"
+
+".side-menu svg, #profile-menu svg, #view-btns-container svg{"
+	"max-height:24px;"
+"}"
+".side-title svg{"
+	"max-height:48px;"
+"}"
