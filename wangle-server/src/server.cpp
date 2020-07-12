@@ -1381,6 +1381,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// Reserve the first part of this->buf for writing SQL queries, and use the rest for writing the response.
 		
 		compsky::asciify::asciify(_itr_plus_offset, _r::json_init);
+		compsky::asciify::asciify(_itr_plus_offset, '[');
 		
 		{
 			this->mysql_query_db_by_id(
@@ -1406,6 +1407,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				_r::flag::quote_and_json_escape // text
 			))
 				return _r::not_found;
+			compsky::asciify::asciify(_itr_plus_offset, ',');
 		}
 		
 		if (db_info.is_true(DatabaseInfo::has_cmnt_tbl)){
@@ -1438,6 +1440,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				_r::flag::quote_and_json_escape // content
 			);
 		}
+		compsky::asciify::asciify(_itr_plus_offset, ']');
 		
 		*_itr_plus_offset = 0;
 		
