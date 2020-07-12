@@ -2072,7 +2072,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			goto dl_or_cp_file__return;
 		}
 		
-		this->mysql_query("SELECT name FROM _dir WHERE id=", dir_id); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
+		this->mysql_query(
+			"SELECT GROUP_CONCAT(d.name ORDER BY d2pt.depth DESC SEPARATOR '')"
+			"FROM _dir d "
+			"JOIN dir2parent_tree d2pt ON d2pt.parent=d.id "
+			"WHERE d2pt.id=", dir_id
+		); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
+		
 		if (not this->mysql_assign_next_row(&dir_name)){
 			// No visible directory with the requested ID
 			// MySQL results already freed
