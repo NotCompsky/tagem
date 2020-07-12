@@ -10,5 +10,5 @@ function $$$set_thumbnail_width(n){
 	$$$apply_thumbnail_width();
 }
 function $$$prompt_thumb_w(){
-	$$$set_thumbnail_width(parseInt(prompt("Width")));
+	$$$set_thumbnail_width(parseInt($$$prompt("Width")));
 }

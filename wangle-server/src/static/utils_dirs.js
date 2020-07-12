@@ -52,6 +52,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 	}else if(_dir_id_or_path===undefined){
 		$$$set_profile_name_from_this_dir();
 	}
+	$$$set_profile_thumb('d');
 }
 function $$$get_selected_dir_ids(){
 	return $$$get_selected_ids('d');

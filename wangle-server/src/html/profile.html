@@ -82,9 +82,13 @@ R"=========(
     <div id="main-container">
       <div class="profile">
         <div class="profile-avatar">
-          <img id="profile-img" src="/favicon.ico"/>
 )========="
+		"<div id=\"profile-img\">"
+			"<img id=\"profile-img-etc\" src=\"/favicon.ico\"/>"
+			"<div id=\"profile-img-qry\" class=\"hidden\">" SVG_SEARCH "</div>"
+			"<div id=\"profile-img-d\"   class=\"hidden\""  SVG_DIR    "</div>"
 			"<div id=\"profile-name\" onclick=\"" MINIMISED_JS_DECL_edit_title "()\"></div>"
+		"</div>"
 R"=========(
         </div>
         <img id="profile-cover"/>

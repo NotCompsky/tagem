@@ -199,8 +199,14 @@
 "}"
 
 ".side-menu svg, #profile-menu svg, #view-btns-container svg{"
-	"max-height:24px;"
+	"width:24px;"
 "}"
 ".side-title svg{"
-	"max-height:48px;"
+	"width:48px;"
+"}"
+
+
+"#profile-img img, #profile-img svg{"
+	"width:100%;"
+	"border-radius:50%;"
 "}"
