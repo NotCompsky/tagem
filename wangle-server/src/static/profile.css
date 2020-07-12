@@ -38,49 +38,12 @@ body {
   background-color: #151728;
   overflow: auto;
 }
-@media screen and (max-width: 930px) {
-  #left-side.active {
-    z-index: 4;
-  }
-  #left-side.active > * {
-    opacity: 1;
-    transition: 0.3s 0.2s;
-  }
-  #left-side.active #left-side-button svg:first-child {
-    opacity: 0;
-  }
-  #left-side.active #left-side-button svg:last-child {
-    transform: translate(-50%, -50%);
-    opacity: 1;
-  }
-  #left-side:not(.active) {
-    width: 56px;
-    overflow: hidden;
-  }
-  #left-side:not(.active) > *:not(#left-side-button) {
-    opacity: 0;
-  }
-}
 
 #right-side {
   width: 280px;
   background-color: #151728;
   display: flex;
   flex-direction: column;
-}
-@media screen and (max-width: 1210px) {
-  #right-side {
-    position: fixed;
-    right: 0;
-    top: 0;
-    transition: 0.3s;
-    height: 100%;
-    transform: translateX(280px);
-    z-index: 4;
-  }
-  #right-side.active {
-    transform: translatex(0);
-  }
 }
 
 .main {
@@ -325,14 +288,6 @@ body {
 .status-menu-item + .status-menu-item {
   margin-left: 10px;
 }
-@media screen and (max-width: 500px) {
-  .status-menu {
-    font-size: 14px;
-  }
-  .status-menu-item + .status-menu-item {
-    margin-left: 0;
-  }
-}
 
 .status-img {
   width: 50px;
@@ -380,14 +335,6 @@ body {
   width: 16px;
   flex-shrink: 0;
   margin-right: 8px;
-}
-@media screen and (max-width: 1320px) {
-  .status-action {
-    width: 16px;
-    overflow: hidden;
-    color: transparent;
-    white-space: nowrap;
-  }
 }
 
 .account-button {
@@ -505,14 +452,6 @@ body {
   pointer-events: none;
   transition: 0.3s;
 }
-@media screen and (max-width: 1210px) {
-  .overlay.active {
-    z-index: 3;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: all;
-  }
-}
 
 #right-side-button {
   position: absolute;
@@ -541,81 +480,11 @@ body {
 #right-side-button svg {
   width: 22px;
 }
-@media screen and (max-width: 1210px) {
-  #right-side-button {
-    display: block;
-  }
-}
 
 #left-side-button {
   display: none;
 }
-@media screen and (max-width: 930px) {
-  #left-side-button {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-    height: 60px;
-    background-color: rgba(39, 42, 58, 0.5);
-    border: 0;
-    padding: 0;
-    line-height: 0;
-    color: #fff;
-    border-bottom: 1px solid #272a3a;
-  }
-  #left-side-button svg {
-    transition: 0.2s;
-    width: 24px;
-  }
-  #left-side-button svg:last-child {
-    position: absolute;
-    left: 50%;
-    transform: translate(100%, -50%);
-    top: 50%;
-    opacity: 0;
-  }
-}
 
-@media screen and (max-width: 700px) {
-  .profile-avatar {
-    top: -25px;
-    left: 50%;
-    transform: translatex(-50%);
-    align-items: center;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  #profile-img {
-    height: 100px;
-    width: 100px;
-  }
-
-  #profile-name {
-    margin: 5px 0;
-  }
-
-  #profile-menu{
-    padding-left: 0;
-    width: 100%;
-    overflow: auto;
-    justify-content: center;
-  }
-
-  #profile-menu a{
-    padding: 16px;
-    font-size: 15px;
-  }
-}
-@media screen and (max-width: 480px) {
-  #profile-menu a:nth-last-child(1),
-  #profile-menu a:nth-last-child(2) {
-    display: none;
-  }
-}
 ::-webkit-scrollbar {
   width: 10px;
   border-radius: 10px;
