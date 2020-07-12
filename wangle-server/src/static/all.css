@@ -203,10 +203,22 @@
 "}"
 ".side-title svg{"
 	"width:48px;"
+	"height:48px;"
 "}"
 
 
 "#profile-img img, #profile-img svg{"
 	"width:100%;"
 	"border-radius:50%;"
+"}"
+
+"#profile-menu a svg{"
+	"width:48px;"
+	"height:48px;"
+	"padding-left:10px;"
+"}"
+
+".table a svg{"
+	"width:24px;"
+	"display:inline;"
 "}"

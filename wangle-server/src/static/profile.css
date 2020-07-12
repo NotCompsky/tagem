@@ -233,19 +233,12 @@ body {
 #profile-menu{
   position: absolute;
   bottom: 0;
-  padding-left: 200px;
+  padding-left:190px;
   background: #151728;
   width: 100%;
-  display: flex;
   border-radius: 0 0 4px 4px;
 }
 
-#profile-menu a{
-  padding: 20px 16px;
-  color: #5c5e6e;
-  transition: 0.3s;
-  cursor: pointer;
-}
 #profile-menu a.active, #profile-menu a:hover {
   color: #fff;
   background-color: #1b1d2e;

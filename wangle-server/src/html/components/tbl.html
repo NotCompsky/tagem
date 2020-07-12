@@ -24,13 +24,12 @@
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
+	"<div id=\"" TBL_ID "-action-btns\" class=\"action-btns\">"
 #ifdef IS_SELECTABLE
-	// Display examples of what each selection colour means
-	"<button onclick=\"" MINIMISED_JS_DECL_toggle "('selection-help')\">" SVG_HELP "</button>"
+		// Display examples of what each selection colour means
+		"<a onclick=\"" MINIMISED_JS_DECL_toggle "('selection-help')\">" SVG_INFO_CIRCLE "</a>"
 # undef IS_SELECTABLE
 #endif
-
-	"<div id=\"" TBL_ID "-action-btns\" class=\"action-btns\">"
 		"<button onclick=\"" MINIMISED_JS_DECL_next_page "('" TBL_ID "',-1)\" class=\"next-page\">&#9666;</button>"
 		"<button onclick=\"" MINIMISED_JS_DECL_next_page "('" TBL_ID  "',1)\" class=\"next-page\">&#9656;</button>"
 		"<button onclick=\"" MINIMISED_JS_DECL_filter_tbl "('" TBL_ID "'," TBL_NAME_COLS "," TBL_TAGS_COLS ");\">Filter</button>"
