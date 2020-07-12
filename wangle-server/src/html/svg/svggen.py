@@ -4,7 +4,7 @@
 import re
 
 
-def parse_lines(text_only:bool, text_too:bool, ls:list):
+def parse_lines(text_only:bool, text_too:bool, display_licences:bool, ls:list):
 	lines:iter = (line for line in ls)
 	license:str = ""
 	icons:dict = {}
@@ -24,7 +24,7 @@ def parse_lines(text_only:bool, text_too:bool, ls:list):
 			if text_only or text_too:
 				icon += m.group(2)
 			icon = re.sub("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', icon) # Necessary to render as img.src
-			icons[icon_name] = '"' + license + icon.replace("\\","\\\\").replace('"','\\"') + '"'
+			icons[icon_name] = '"' + (license if display_licences else "") + icon.replace("\\","\\\\").replace('"','\\"') + '"'
 			continue
 		if license == "":
 			license = "<!--The following icon is subject to the following license:"
@@ -47,6 +47,7 @@ if __name__ == "__main__":
 	parser.add_argument("srcs", nargs="+", help="Source file")
 	parser.add_argument("--text-only", default=False, action="store_true", help="Use text labels only")
 	parser.add_argument("--text-too", default=False, action="store_true", help="Place text alongside labels")
+	parser.add_argument("--display-licences", default=False, action="store_true")
 	args = parser.parse_args()
 	
 	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(__file__)]+[os.path.getmtime(fp) for fp in args.srcs]):
@@ -55,5 +56,5 @@ if __name__ == "__main__":
 	
 	with open(args.dst, "w") as f:
 		for fp in args.srcs:
-			for key, value in parse_lines(args.text_only, args.text_too, open(fp).read().split("\n")).items():
+			for key, value in parse_lines(args.text_only, args.text_too, args.display_licences, open(fp).read().split("\n")).items():
 				f.write(f"#define SVG_{key} {value}\n")
