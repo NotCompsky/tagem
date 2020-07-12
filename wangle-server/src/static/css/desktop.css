@@ -1,0 +1,85 @@
+"#main-container{"
+	"min-width:50pc;"
+	"max-width:100vw;"
+"}"
+
+".select2-search__field{"
+	"min-width:20pc;"
+"}"
+
+"#sidebar{"
+	"width:10%;"
+"}"
+
+"#view *{"
+	"min-height:50vh;"
+"}"
+
+"#view object, #view iframe{"
+	"min-width:60vw;"
+"}"
+
+".replies{"
+	"padding-left:50px;"
+"}"
+
+"#verified{"
+	"width:16px;"
+"}"
+
+".select2{"
+	"min-width:20em;"
+"}"
+
+".del{"
+	"border-radius:5px;"
+"}"
+
+"#likes{"
+	"top:10%;"
+	"bottom:10%;"
+	"min-width:20%;"
+"}"
+
+"#likes a{"
+	"margin-left:05%;"
+"}"
+
+"#add-f-backup,#file2-container,#view-btns-container{"
+	"padding:10px;"
+	"outline-offset:-5px;"
+"}"
+
+".popup{"
+	"left:25vw;"
+	"top:25vh;"
+	"width:50vw;"
+	"height:50vh;"
+"}"
+
+"#right-side{"
+	"max-height:100vh;"
+"}"
+
+".side-menu svg, #profile-menu svg, #view-btns-container svg{"
+	"width:24px;"
+"}"
+".side-title svg{"
+	"width:48px;"
+	"height:48px;"
+"}"
+
+"#profile-menu a svg{"
+	"width:48px;"
+	"height:48px;"
+	"padding-left:10px;"
+"}"
+
+".table a svg{"
+	"width:24px;"
+"}"
+
+"#profile-img-etc{"
+	"width:150px!important;"
+	"height:150px;"
+"}"

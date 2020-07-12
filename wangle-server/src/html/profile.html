@@ -18,7 +18,17 @@
 	
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/s/tbl1.css\">"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"/s/tbl2.css\">"
-	"<link rel=\"stylesheet\" href=\"/s/a.css\"/>"
+	"<style>"
+		#include "../static/css/profile.css"
+		#include "../static/css/common.css"
+		
+		"@media screen and (min-width:1161px){"
+			#include "../static/css/desktop.css"
+		"}"
+		"@media screen and (max-width:1160px){"
+			#include "../static/css/mobile.css"
+		"}"
+	"</style>"
 "</head>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 "<script type=\"text/javascript\">" 
