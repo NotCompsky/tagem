@@ -608,7 +608,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				where += tbl_full_name_of_base_tbl(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "_dir"
 				where += " y ON y.id=";
 				if (is_tree_tbl(arg_token_base)){
-					where += "z.id";
+					where += "z.parent";
 				} else {
 					where += "x.";
 					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
