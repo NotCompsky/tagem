@@ -540,8 +540,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->buf[CACHE_DIR_STRLEN + 32 + 3] = 'g';
 		this->buf[CACHE_DIR_STRLEN + 32 + 4] = 0;
 		FILE* const f = fopen(this->buf, "rb");
-		if (f == nullptr)
+		if (f == nullptr){
+			fprintf(stderr, "No such file thumbnail: %s\n", this->buf);
 			return _r::invalid_file;
+		}
 		
 		struct stat st;
 		stat(this->buf, &st);
@@ -1991,7 +1993,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
-			  ,(dir_id==0)?" OR ":" AND d.id=", dir_id
+			  ,(dir_id==0)?" OR ":" AND d2pt.id=", dir_id
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
