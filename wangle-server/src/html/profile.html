@@ -268,6 +268,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</div>"
 "</div>"
 
+"<div id=\"selection-help\">" // NOTE: Do not class as class "help", for display reasons
+	"<h3>Selection Types</h3>"
+	"<p class=\"selected1\">Primary</p> is used for assigning tags"
+	"<br/>"
+	"<p class=\"selected2\">Secondary</p> is used only to select duplicates of the primary file for merging"
+"</div>"
+
 #define COL_NAMES ("Thumb")("Name")("#Files")
 #define COL_FILTERS (0,"")(2,"regexp")(1,"12 - 34")
 #define TBL_ID "t"
