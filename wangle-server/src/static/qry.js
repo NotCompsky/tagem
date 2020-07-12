@@ -14,7 +14,6 @@ function $$$view_qry(s){
 		$$$set_window_location_hash('?'+s);
 		$$$set_profile_name('?'+s);
 		$$$set_profile_thumb('qry');
-		$$$set_profile_cover('https://ichef.bbci.co.uk/images/ic/1008x567/p07nzhmt.jpg');
 	},
 	$$$unhide_qry_help
 	);

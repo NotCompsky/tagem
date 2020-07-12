@@ -137,7 +137,6 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"t.id," \
 		"t.name," \
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
-		"GROUP_CONCAT(p.cover ORDER BY (1/(1+t2pt.depth))*(p.cover!=\"\") DESC LIMIT 1)," \
 		"IFNULL(A.n,0) " \
 	"FROM _tag t " \
 	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
@@ -154,7 +153,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	")A ON A.tag=t.id "
 #define WHERE_TAGS_INFOS(...) \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
-	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL OR p.cover != \"\")" \
+	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id) \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
@@ -990,7 +989,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
 			_r::flag::quote_and_escape, // thumb,
-			_r::flag::quote_and_escape, // cover,
 			_r::flag::no_quote // count
 		);
 		this->asciify(_r::closer_symbol(f_arr_or_dict));

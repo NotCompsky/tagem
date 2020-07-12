@@ -38,7 +38,7 @@ function $$$populate_t_id2name_table(arr){
 		function(data){
 			$$$unhide('tagselect-self-p');
 			let s = "";
-			for (const [id, name, thumb, cover, size] of data){
+			for (const [id, name, thumb, size] of data){
 				s += "<div class='tr' data-id=\"" + id + "\">";
 					s += "<div class='td thumb'>";
 						s += "<img onclick='$$$view_tag(\"" + id + "\",0)' src='" + thumb + "'/>";
@@ -121,7 +121,7 @@ function $$$display_tags(tag_ids, node_id, fn_name, alias){
 		null,
 		function(data){
 			let s = "";
-			for (const [id, name, thumb, cover, size] of data){
+			for (const [id, name, thumb, size] of data){
 				s += $$$display_tag(id, name, thumb, fn_name, alias);
 			}
 			$$$document_getElementById(node_id).innerHTML = s;
@@ -215,10 +215,9 @@ function $$$view_tag(_tag_id,page){
 	$$$ajax_GET_w_JSON_response(
 		"/a/t/id/"+$$$tag_id,
 		function(data){
-			const [id, name,thumb,cover,size] = data[0];
+			const [id, name,thumb,size] = data[0];
 			$$$set_profile_name(name);
 			$$$set_profile_thumb(thumb);
-			$$$set_profile_cover(cover);
 		}
 	);
 	

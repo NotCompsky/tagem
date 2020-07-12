@@ -20,6 +20,3 @@ function $$$set_profile_thumb(url){
 	$$$unhide('profile-img-etc');
 	$$$document_getElementById('profile-img-etc').src = url;
 }
-function $$$set_profile_cover(url){
-	$$$document_getElementById('profile-cover').src = url;
-}
