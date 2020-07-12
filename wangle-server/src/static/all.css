@@ -222,3 +222,11 @@
 	"width:24px;"
 	"display:inline;"
 "}"
+
+"#profile-img-etc{"
+	"width:150px!important;"
+	"height:150px;"
+"}"
+".profile-avatar{"
+	"pointer-events:none;" // Ensure it doesn't block profile-menu buttons
+"}"

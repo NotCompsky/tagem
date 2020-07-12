@@ -15,6 +15,8 @@ function $$$set_profile_thumb(url){
 		$$$hide('profile-img-etc');
 		return;
 	}
+	$$$hide('profile-img-d');
+	$$$hide('profile-img-qry');
 	$$$unhide('profile-img-etc');
 	$$$document_getElementById('profile-img-etc').src = url;
 }
