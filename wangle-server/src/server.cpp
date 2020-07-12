@@ -526,7 +526,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		constexpr static const size_t prefix_len = std::char_traits<char>::length(prefix);
 		
 		if (*md5hex == ' ')
-			return _r::img_not_found;
+			return _r::invalid_file;
 		
 		for (auto i = 0;  i < 32;  ++i){
 			if (not is_valid_hex_char(md5hex[i]))
@@ -541,7 +541,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->buf[CACHE_DIR_STRLEN + 32 + 4] = 0;
 		FILE* const f = fopen(this->buf, "rb");
 		if (f == nullptr)
-			return _r::img_not_found;
+			return _r::invalid_file;
 		
 		struct stat st;
 		stat(this->buf, &st);

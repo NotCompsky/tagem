@@ -41,7 +41,7 @@ function $$$populate_t_id2name_table(arr){
 			for (const [id, name, thumb, size] of data){
 				s += "<div class='tr' data-id=\"" + id + "\">";
 					s += "<div class='td thumb' onclick='$$$view_tag(\"" + id + "\",0)'>";
-						s += "<img src='" + thumb + "'/>";
+						s += "<img class='thumb' src='" + thumb + "' onerror='$$$set_src_to_tag_svg(this)'/>";
 					s += "</div>";
 					s += "<div class='td'>";
 						s += $$$escape_html_text(name);

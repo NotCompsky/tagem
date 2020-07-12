@@ -48,7 +48,9 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					era = "@" + era_start + "-" + era_end;
 				}
 				s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
-					s += '<div class="td" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)"><img class="thumb" src="' + thumb + '"></img></div>';
+					s += '<div class="td" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
+						s += '<img class="thumb" src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
+					s += '</div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(title) + "</div>";

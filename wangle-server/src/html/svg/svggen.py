@@ -23,6 +23,7 @@ def parse_lines(text_only:bool, text_too:bool, ls:list):
 					icon += re.sub(' (?:xmlns|class|width|height)="[^"]*"','',re.sub("^[\s]*", "", line)).replace(" />", "/>")
 			if text_only or text_too:
 				icon += m.group(2)
+			icon = re.sub("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', icon) # Necessary to render as img.src
 			icons[icon_name] = '"' + license + icon.replace("\\","\\\\").replace('"','\\"') + '"'
 			continue
 		if license == "":
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 	parser.add_argument("--text-too", default=False, action="store_true", help="Place text alongside labels")
 	args = parser.parse_args()
 	
-	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(fp) for fp in args.srcs]):
+	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(__file__)]+[os.path.getmtime(fp) for fp in args.srcs]):
 		# Already generated
 		exit(0)
 	

@@ -158,7 +158,8 @@ if __name__ == "__main__":
 					fps.append(os.path.join(path, fp))
 		else:
 			fps.append(path)
-	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(fp) for fp in fps]):
+	
+	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(__file__)]+[os.path.getmtime(fp) for fp in fps]):
 		exit(0)
 	
 	run(fps, True)
@@ -180,6 +181,8 @@ if __name__ == "__main__":
 			f.write(f"#define MINIMISED_JS_DECL_{human_name} \"{minimised_name}\"\n")
 		f.write(f"#define MINIMISED_JS_{args.macro_name} \"")
 		for human_name, (var_type, minimised_name, parameters, value) in human2minimised.items():
+			if value is not None:
+				value = re.sub("!!!MACRO!!!([A-Za-z0-9_]+)", '''" \\1 "''', value)
 			f.write(f"{var_type} {minimised_name}")
 			if parameters is not None:
 				f.write(f"({parameters}){{{value}}}")

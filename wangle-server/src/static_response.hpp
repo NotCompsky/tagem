@@ -73,22 +73,6 @@ namespace _r {
 		"Your IP address has been temporarily banned"
 	;
 	
-	constexpr static const std::string_view img_not_found(
-		#include "headers/return_code/OK.c" // To encourage browsers to cache it.
-		#include "headers/Content-Type/png.c"
-		#include "headers/Cache-Control/1day.c"
-		"Content-Length: 195\n"
-		"\n"
-		#include "i/404.txt" // WARNING: Corrupt, because the end of transmission character is skipped in this 'raw' string. // TODO: Figure out why
-		, std::char_traits<char>::length(
-			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/png.c"
-			#include "headers/Cache-Control/1day.c"
-			"Content-Length: 195\n"
-			"\n"
-		) + 195
-	);
-	
 	constexpr static const char* const json_init =
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/json.c"
