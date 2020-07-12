@@ -2164,16 +2164,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
 	}
 	
-	bool add_to_db__unpack_tpl(const char* const id_and_url,  const size_t id_and_url_length,  uint64_t& parent_id,  const char*& url,  size_t& url_length){
-		url = id_and_url;
-		parent_id = a2n<uint64_t>(&url);
-		if(unlikely(*url != '\t'))
-			return true;
-		++url;
-		url_length = id_and_url_length - ( (uintptr_t)url - (uintptr_t)id_and_url );
-		return false;
-	}
-	
 	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
 		this->mysql_exec(
 			"INSERT INTO _tag "
@@ -2216,20 +2206,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 	}
 	
-	bool add_D_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const id_and_url,  const size_t id_and_url_len){
-		const char* url;
-		size_t url_len;
-		uint64_t protocol;
-		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, protocol, url, url_len)))
-			return true;
-		
+	bool add_D_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len){
 		this->mysql_exec(
 			"INSERT INTO _device "
-			"(protocol, name,user)"
-			"SELECT ", protocol, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",", user_id, " "
-			"FROM _device "
-			"WHERE NOT EXISTS"
-			"(SELECT id FROM _device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"(protocol,name,user)"
+			"SELECT "
+				"id,"
+				"\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",",
+				user_id, " "
+			"FROM protocol "
+			"WHERE LEFT(\"", _f::esc, '"', _f::strlen,  url_len,  url,  "\",LENGTH(name))=name "
+			  "AND NOT EXISTS"
+				"(SELECT id FROM _device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+			"ORDER BY LENGTH(name) DESC "
 			"LIMIT 1"
 		);
 		regenerate_device_json = true;
