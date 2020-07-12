@@ -40,8 +40,8 @@ function $$$populate_t_id2name_table(arr){
 			let s = "";
 			for (const [id, name, thumb, size] of data){
 				s += "<div class='tr' data-id=\"" + id + "\">";
-					s += "<div class='td thumb'>";
-						s += "<img onclick='$$$view_tag(\"" + id + "\",0)' src='" + thumb + "'/>";
+					s += "<div class='td thumb' onclick='$$$view_tag(\"" + id + "\",0)'>";
+						s += "<img src='" + thumb + "'/>";
 					s += "</div>";
 					s += "<div class='td'>";
 						s += $$$escape_html_text(name);
