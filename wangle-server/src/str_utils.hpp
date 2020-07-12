@@ -57,6 +57,16 @@ const char* get_comma_separated_ints(const char** str,  const char separator){
 }
 
 constexpr
+bool in_str_not_at_end(const char* str,  const char c){
+	while(*str != 0){
+		if (*str == c)
+			return (str[1] != 0);
+		++str;
+	}
+	return false;
+}
+
+constexpr
 bool in_str(const char* str,  const char c){
 	while(*str != 0){
 		if (*str == c)

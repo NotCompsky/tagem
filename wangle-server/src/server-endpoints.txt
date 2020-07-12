@@ -30,8 +30,6 @@ GET /a/d/all-file-names/>
 GET /a/f/e/id/>
 	return this->eras_w_file_infos_given_ids(++str)
 
-GET /a/f/guess-dir >
-	return this->guess_dir_given_file(str)
 GET /a/f/id/>
 	return this->files_given_ids(++str)
 GET /a/f/i/>

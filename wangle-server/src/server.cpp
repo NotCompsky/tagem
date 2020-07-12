@@ -207,7 +207,6 @@ size_t CACHE_DIR_STRLEN;
 const char* FILES_GIVEN_REMOTE_DIR = nullptr;
 
 static bool regenerate_mimetype_json = true;
-static bool regenerate_dir_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
 static bool regenerate_tag2parent_json = true;
@@ -1621,30 +1620,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view guess_dir_given_file(const char* s){
-		// Given a file URL, this should return the ID and name of the directory most suited to being its parent.
-		
-		GET_USER_ID
-		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
-		
-		const char* const file_url = s;
-		
+	template<typename... Args>
+	void qry_mysql_for_next_parent_dir(const UserIDIntType user_id,  const char* const fields,  const uint64_t child_dir_id,  Args... args){
+		// This function is to be used to traverse the _dir table from the deepest ancestor to the immediate parent
 		this->mysql_query(
-			"SELECT id, name "
+			"SELECT ", fields, " "
 			"FROM _dir "
-			"WHERE LEFT(\"", _f::esc, '"', file_url, "\",LENGTH(name))=name "
+			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
+			  "AND parent", (child_dir_id==0)?" IS NULL AND 0=":"=", child_dir_id, " "
+			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY LENGTH(name) DESC "
 			"LIMIT 1"
 		);
-		
-		this->write_json_list_response_into_buf(
-			_r::flag::quote_no_escape, // id
-			_r::flag::quote_and_escape // name
-		);
-		
-		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view files_given_dir(const char* s){
@@ -2229,7 +2216,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 	}
 	
-	bool add_D_to_db(const UserIDIntType user_id,  const char* const id_and_url,  const size_t id_and_url_len){
+	bool add_D_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const id_and_url,  const size_t id_and_url_len){
 		const char* url;
 		size_t url_len;
 		uint64_t protocol;
@@ -2249,59 +2236,117 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return false;
 	}
 	
-	bool add_d_to_db(const UserIDIntType user_id,  const char* const id_and_url,  const size_t id_and_url_len){
-		const char* url;
-		size_t url_len;
-		uint64_t device;
-		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, device, url, url_len)))
-			return true;
+	bool add_file_or_dir_to_db(const char which_tbl,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const char* const mimetype = ""){
+		// Add ancestor directories
+		size_t offset = 0;
+		uint64_t parent_dir_id = 0;
+		while(true){
+			this->qry_mysql_for_next_parent_dir(user_id,  "id, LENGTH(name)",  parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+			size_t closest_parent_dir_length = 0;
+			while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
+			if (unlikely(closest_parent_dir_length == 0))
+				// No such directory was found. This is probably because the user does not have permission to view an ancestor directory.
+				return true;
+			offset += closest_parent_dir_length;
+			if (not in_str_not_at_end(url + offset,  '/')){
+				/* The closest parent is also the immediate parent of the directory to add
+				 * Have one final check to find the largest prefix
+				 * E.g. parsing a YouTube video url "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
+				 *    https://         1st dir
+				 *    www.youtube.com/ 2nd dir
+				 *    watch?v=         3rd dir
+				 * This section accounts for the final dir, if it exists
+				 */
+				this->qry_mysql_for_next_parent_dir(user_id,  "id, LENGTH(name)",  parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+				size_t closest_parent_dir_length = 0;
+				while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
+				offset += closest_parent_dir_length;
+				break;
+			}
+			// NOTE: The directory to add may not end in a slash. However, all its parent directories must. The following SQL will not insert the directory we wish to add, only insert all its ancestors.
+			this->mysql_exec(
+				"INSERT INTO _dir"
+				"(parent,device,user,name)"
+				"SELECT "
+					"id,"
+					"device,",
+					user_id, ","
+					"\"", _f::esc, '"', _f::until, '/', url+offset, "/\" "
+				"FROM _dir "
+				"WHERE id=", parent_dir_id, " "
+				// No need to check permissions, that has already been done in qry_mysql_for_next_parent_dir
+				"ON DUPLICATE KEY UPDATE device=VALUES(device)"
+			);
+		}
 		
-		this->mysql_exec(
-			"INSERT INTO _dir "
-			"(device, name, user)"
-			"SELECT ", device, ",\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",", user_id, " "
-			"FROM _dir "
-			"WHERE NOT EXISTS"
-			"(SELECT id FROM _dir WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
-			  "AND ", device, " NOT IN" USER_DISALLOWED_DEVICES(user_id)
-			"LIMIT 1"
-		);
-		regenerate_dir_json = true;
-		return false;
-	}
-	
-	bool add_f_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* id_and_url,  const size_t id_and_url_len){
-		const char* url;
-		size_t url_len;
-		uint64_t dir_id;
-		if (unlikely(this->add_to_db__unpack_tpl(id_and_url, id_and_url_len, dir_id, url, url_len)))
-			return true;
+		if (offset == url_len)
+			// Directory that we are trying to add already existed
+			// Maybe we should still tag it...?
+			// NOTE: The behaviour for attempting to add existing files is to still tag them
+			return false;
 		
-		this->mysql_exec(
-			"INSERT INTO _file "
-			"(dir, name, user)"
-			"SELECT d.id,SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1),", user_id, " "
-			"FROM _file f "
-			"JOIN _dir d ON d.id=", dir_id, " "
-			"WHERE NOT EXISTS"
-			"(SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.id=", dir_id, " AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1))"
-			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
-			"LIMIT 1"
-		);
-		this->mysql_exec(
-			"INSERT INTO file2tag "
-			"(file, tag, user)"
-			"SELECT f.id, t.id,", user_id, " "
-			"FROM _file f "
-			"JOIN _dir d ON d.id=f.dir "
-			"JOIN _tag t "
-			"WHERE t.id IN (", _f::strlen, tag_ids, tag_ids_len, ") "
-			  "AND f.name=SUBSTR(\"", _f::esc, '"', _f::strlen, url_len, url, "\",LENGTH(d.name)+1) "
-			  "AND f.dir=", dir_id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
-			"ON DUPLICATE KEY UPDATE file=file"
-		);
+		// Add entry to primary table
+		if (which_tbl == 'd'){
+			this->mysql_exec(
+				"INSERT INTO _dir "
+				"(parent, device, user, name)"
+				"SELECT "
+					"id,",
+					"device,",
+					user_id, ","
+					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\","
+				"FROM _dir "
+				"WHERE id=", parent_dir_id
+				// NOTE: The user has been verified to have permission to access the parent directory.
+				// Guaranteed not to be a duplicate
+			);
+		} else /* == 'f' */ {
+			this->mysql_exec(
+				"INSERT INTO _file "
+				"(dir, name, user, mimetype)"
+				"SELECT ",
+					parent_dir_id, ","
+					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\",",
+					user_id, ","
+					"IFNULL(mt.id,0)"
+				"FROM _file f "
+				"LEFT JOIN mimetype mt ON mt.name=\"", mimetype, "\" "
+				"WHERE NOT EXISTS"
+				"(SELECT id FROM _file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\")"
+				  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+				"LIMIT 1"
+			);
+		}
+		
+		// Add tags
+		if (which_tbl == 'd'){
+			this->mysql_exec(
+				"INSERT INTO dir2tag "
+				"(dir, tag, user)"
+				"SELECT d.id, t.id,", user_id, " "
+				"FROM _dir d "
+				"JOIN _tag t "
+				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
+				  "AND d.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
+				  "AND d.parent=", parent_dir_id, " "
+				DIR_TBL_USER_PERMISSION_FILTER(user_id)
+				"ON DUPLICATE KEY UPDATE dir=dir"
+			);
+		} else /* if (which_tbl == 'f') */ {
+			this->mysql_exec(
+				"INSERT INTO file2tag "
+				"(file, tag, user)"
+				"SELECT f.id, t.id,", user_id, " "
+				"FROM _file f "
+				"JOIN _dir d ON d.id=f.dir "
+				"JOIN _tag t "
+				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
+				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
+				  "AND f.dir=", parent_dir_id, " "
+				DIR_TBL_USER_PERMISSION_FILTER(user_id)
+				"ON DUPLICATE KEY UPDATE file=file"
+			);
+		}
 		
 		return false;
 	}
@@ -2310,10 +2355,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* tag_ids;
 		size_t tag_ids_len;
 		
-		if((tbl == 'f') or (tbl == 't')){
-			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
-			++s; // Skip trailing slash
-		}
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
+		++s; // Skip trailing slash
 		
 		GET_USER_ID
 		
@@ -2331,15 +2374,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				return _r::not_found;
 			switch(tbl){
 				case 'f':
-					if (unlikely(this->add_f_to_db(user_id, tag_ids, tag_ids_len, url, url_len)))
-						return _r::not_found;
-					break;
 				case 'd':
-					if (unlikely(this->add_d_to_db(user_id, url, url_len)))
+					if (unlikely(this->add_file_or_dir_to_db(tbl, user_id, tag_ids, tag_ids_len, url, url_len)))
 						return _r::not_found;
 					break;
 				case 'D':
-					if (unlikely(this->add_D_to_db(user_id, url, url_len)))
+					if (unlikely(this->add_D_to_db(user_id, tag_ids, tag_ids_len, url, url_len)))
 						return _r::not_found;
 					break;
 				case 't':
@@ -2596,34 +2636,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 							return _r::not_found;
 					}
 					
-					const bool is_mimetype_set = (mimetype[0]);
-					
-					this->mysql_exec(
-						"INSERT INTO _file"
-						"(name, dir, user, mimetype)"
-						"VALUES(",
-							'"', _f::esc, '"', file_name, '"', ',',
-							dir_id, ',',
-							user_id, ',',
-							(is_mimetype_set)?"(SELECT id FROM mimetype WHERE name=SUBSTRING_INDEX(\"":"",
-							(is_mimetype_set)?mimetype:"", // TODO: Escape mimetype properly
-							(is_mimetype_set)?"\",';',1))":"0",
-						")"
-						"ON DUPLICATE KEY UPDATE dir=dir"
-					);
-					this->mysql_exec(
-						"INSERT INTO file2tag"
-						"(file, tag, user)"
-						"SELECT f.id, t.id,", user_id, " "
-						"FROM _file f "
-						"JOIN _tag t "
-						"WHERE f.name=\"", _f::esc, '"', file_name, "\" "
-						  "AND f.dir=", dir_id, " "
-						  "AND t.id IN (", _f::strlen, tag_ids, tag_ids_len,") "
-						  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-						  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-						"ON DUPLICATE KEY UPDATE file=file"
-					);
+					this->add_file_or_dir_to_db('f', user_auth::SpecialUserID::guest, tag_ids, tag_ids_len, url_buf, strlen(url_buf), mimetype);
 					
 					url = s;
 					if (c == ' ')
