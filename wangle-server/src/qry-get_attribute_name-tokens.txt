@@ -38,7 +38,7 @@ size >
 name >
 	attribute_name = attribute_name::NAME;
 	attribute_kind = attribute_kind::many_to_one;
-	return successness::ok
+	return (which_tbl!='e') ? successness::ok : successness::invalid
 tag >
 	attribute_name = attribute_name::TAG;
 	attribute_kind = attribute_kind::many_to_many;

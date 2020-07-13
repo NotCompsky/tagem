@@ -44,10 +44,10 @@ INPUT DATA TYPES
 			[ATTRIBUTE_KIND] attributes
 				[ATTRIBUTE_NAME]            [VALID_TABLES]
 			many-to-one attributes
-				name                          all except D
+				name                          all except D and e
 				dir                           f
 				mime                          f
-				size                          all except x and D
+				size                          all except x, D and e
 				duration                      f
 				md5                           f
 				sha                           f

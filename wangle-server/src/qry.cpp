@@ -106,6 +106,15 @@ struct SQLArg {
 };
 
 static
+char has_name_attribute(const char tbl_alias){
+	switch(tbl_alias){
+		case 'e':
+			return false;
+	}
+	return true;
+}
+
+static
 const char* tbl_full_name(const char tbl_alias){
 	switch(tbl_alias){
 		case 'e':
@@ -821,6 +830,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					attribute_name = attribute_name::NAME;
 					attribute_kind = attribute_kind::unique;
 					comparison_mode = 'r';
+					if (not has_name_attribute(which_tbl))
+						return successness::invalid;
 				} else {
 					rc = get_attribute_name(which_tbl, qry, attribute_name, attribute_kind);
 					if (rc != successness::ok)
