@@ -113,7 +113,6 @@ const char* tbl_full_name(const char tbl_alias){
 		case 'f':
 			return "file";
 		case 'd':
-		case 'D':
 			return "dir";
 		case 't':
 			return "tag";
@@ -147,7 +146,6 @@ const char* tbl_full_name_of_base_tbl(const char tbl_alias){
 		case 'f':
 			return "_file";
 		case 'd':
-		case 'D':
 			return "_dir";
 		case 't':
 			return "_tag";
@@ -217,7 +215,7 @@ static
 bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
 	const bool b = (
 		   (CHAR_IN(which_tbl,('e')('f')('d')/*('D')*/) and ARGTYPE_IN(arg_token, (arg::tag)(arg::tag_tree)))
-		or ((which_tbl=='f') and (arg_token==arg::dir))
+		or ((which_tbl=='f') and ARGTYPE_IN(arg_token, (arg::dir)(arg::dir_basename)))
 		or ((which_tbl=='e') and (arg_token==arg::file))
 	);
 	
@@ -229,7 +227,7 @@ bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_to
 static
 bool has_intermediate_tbl_in_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_token){
 	return not (
-		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir))))
+		   ((which_tbl=='f') and (ARGTYPE_IN(arg_token, (arg::dir)(arg::dir_basename))))
 		or ((which_tbl=='e') and (ARGTYPE_IN(arg_token, (arg::file))))
 		//or ((which_tbl=='d') and (ARGTYPE_IN(arg_token, (arg::device)))) // arg::device is not implemented yet
 	);
@@ -575,6 +573,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			case arg::era:
 			case arg::file:
 			case arg::dir:
+			case arg::dir_basename:
 			case arg::tag:
 			case arg::tag_tree: {
 				if (not is_valid_tbl2tbl_reference(which_tbl, arg_token_base))
@@ -613,23 +612,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += "x.";
 					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
 				}
-				where += " WHERE y.name";
+				where += " WHERE y.";
+				where += (arg_token_base==arg::dir)?"full_path":"name";
 				rc = process_name_list(where, tbl_arg_to_alias(arg_token_base), qry);
-				if (rc != successness::ok)
-					return rc;
-				where += ")";
-				++n_args_since_operator;
-				break;
-			}
-			case arg::dir_basename: {
-				if (which_tbl != 'f')
-					return successness::unimplemented;
-				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.id ";
-				if (is_inverted)
-					where += "NOT ";
-				where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE SUBSTR(SUBSTRING_INDEX(d.name, '/', -2), 1, LENGTH(SUBSTRING_INDEX(d.name, '/', -2))-1)";
-				rc = process_name_list(where, 'd', qry);
 				if (rc != successness::ok)
 					return rc;
 				where += ")";

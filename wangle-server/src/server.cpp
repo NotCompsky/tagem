@@ -1987,11 +1987,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		
 		this->mysql_query(
-			"SELECT m.name, CONCAT(GROUP_CONCAT(d.name ORDER BY d2pt.depth DESC SEPARATOR ''), f", (dir_id==0)?"":"2", ".name) "
+			"SELECT m.name, CONCAT(d.full_path, f", (dir_id==0)?"":"2", ".name) "
 			"FROM _file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
-			"JOIN dir2parent_tree d2pt ON d2pt.id=f", (dir_id==0)?"":"2", ".dir "
-			"JOIN _dir d ON d.id=d2pt.parent "
+			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
@@ -2076,10 +2075,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		}
 		
 		this->mysql_query(
-			"SELECT GROUP_CONCAT(d.name ORDER BY d2pt.depth DESC SEPARATOR '')"
+			"SELECT d.full_path "
 			"FROM _dir d "
-			"JOIN dir2parent_tree d2pt ON d2pt.parent=d.id "
-			"WHERE d2pt.id=", dir_id
+			"WHERE d.id=", dir_id
 		); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		
 		if (not this->mysql_assign_next_row(&dir_name)){
@@ -2264,11 +2262,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// NOTE: The directory to add may not end in a slash. However, all its parent directories must. The following SQL will not insert the directory we wish to add, only insert all its ancestors.
 			this->mysql_exec(
 				"INSERT INTO _dir"
-				"(parent,device,user,name)"
+				"(parent,device,user,full_path,name)"
 				"SELECT "
 					"id,"
 					"device,",
 					user_id, ","
+					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
 					"\"", _f::esc, '"', _f::until, '/', url+offset, "/\" "
 				"FROM _dir "
 				"WHERE id=", parent_dir_id, " "
@@ -2287,11 +2286,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (which_tbl == 'd'){
 			this->mysql_exec(
 				"INSERT INTO _dir "
-				"(parent, device, user, name)"
+				"(parent, device, user, full_path, name)"
 				"SELECT "
 					"id,",
 					"device,",
 					user_id, ","
+					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
 					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\","
 				"FROM _dir "
 				"WHERE id=", parent_dir_id

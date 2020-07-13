@@ -52,12 +52,15 @@ CREATE TABLE _dir (
 	device BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(255) NOT NULL,
+	full_path VARBINARY(4096) NOT NULL,
 	FOREIGN KEY (parent) REFERENCES _dir (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES _device (id),
 	UNIQUE KEY (parent_not_null,name), -- Only one name if parent is NULL
+	--UNIQUE KEY (full_path), -- Field is too long to be a key
 	UNIQUE KEY (parent,name)
 );
+
 CREATE TABLE dir2parent_tree (
 	dir BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
