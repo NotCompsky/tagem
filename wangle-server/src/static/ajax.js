@@ -14,29 +14,26 @@ function $$$ajax_w_JSON_response(mthd,url,fn){
 	$$$ajax(mthd,"json",url,fn);
 }
 
-function $$$ajax_data_w_JSON_response(mthd,url,data,fn){
+function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
 	$.ajax({
 		type:mthd,
 		data:data,
-		dataType:"json",
+		dataType:resp_type,
 		url:url,
-		success:fn,
-		error:$$$err_alert
+		success:succ,
+		error:err
 	});
+}
+
+function $$$ajax_data_w_JSON_response(mthd,url,data,fn){
+	$$$ajax_data_w_err(mthd,url,"json",data,fn,$$$err_alert);
 }
 
 function $$$ajax_POST_w_JSON_response(url,fn){
 	$$$ajax_w_JSON_response("POST",url,fn);
 }
 function $$$ajax_POST_data_w_err(url,resp_type,data,succ,err){
-	$.ajax({
-		type:"POST",
-		data:data,
-		dataType:resp_type,
-		url:url,
-		success:succ,
-		error:$$$err_alert
-	});
+	$$$ajax_data_w_err("POST",url,resp_type,data,succ,err);
 }
 function $$$ajax_POST_data_w_JSON_response_and_err(url,data,succ,err){
 	$$$ajax_POST_data_w_err(url,"json",data,succ,err);
