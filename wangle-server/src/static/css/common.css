@@ -1,3 +1,7 @@
+"#main-container{"
+	"max-width:100vw;"
+"}"
+
 ".selected1{"
 	"background:#055;"
 "}"
@@ -163,4 +167,34 @@
 
 ".profile-avatar{"
 	"pointer-events:none;" // Ensure it doesn't block profile-menu buttons
+"}"
+
+"#right-side{"
+	"max-height:100vh;"
+"}"
+
+
+
+
+
+
+// Dimensions that aren't 100% sure to be common
+
+".side-menu svg, #profile-menu svg, #view-btns-container svg{"
+	"width:24px;"
+"}"
+
+".side-title svg{"
+	"width:48px;"
+	"height:48px;"
+"}"
+
+"#profile-menu a svg{"
+	"width:48px;"
+	"height:48px;"
+	"padding-left:10px;"
+"}"
+
+".table a svg{"
+	"width:24px;"
 "}"
