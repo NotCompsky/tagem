@@ -9,6 +9,7 @@ function onYouTubeIframeAPIReady(){
 		height: '390',
 		width: '640',
 		events:{
+			'onError': $$$on_media_error,
 			'onReady': $$$YTPlayer_onReady,
 			'onStateChange':$$$YTPlayer_onStateChange
 		}

@@ -206,7 +206,7 @@ function $$$YTPlayer_onStateChange(e){
 		}
 		return;
 	}
-	if ((e.data == YT.PlayerState.ENDED) && ($$$playlist_file_ids===undefined))
+	if ((e.data == YT.PlayerState.ENDED) && (!$$$is_playlist_running()))
 		$$$playlist_listener();
 }
 function $$$view_yt_video__from_onReady(){
@@ -228,10 +228,10 @@ function $$$try_to_pause_yt_video(){
 }
 function $$$next_video_from_yt_video(){
 	$$$yt_player.next_video_when_reach_t = undefined;
-	if($$$playlist_file_ids === undefined)
-		$$$try_to_pause_yt_video();
-	else
+	if($$$is_playlist_running())
 		$$$playlist_listener(); // Go to next file in playlist
+	else
+		$$$try_to_pause_yt_video();
 }
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
@@ -265,7 +265,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 				$$$set_file_view_src('object', src, _mimetype_str);
 		}
 		
-		if($$$playlist_file_ids === undefined){
+		if(!$$$is_playlist_running()){
 			for(var i=0; i<5; ++i)
 				$$$document_getElementById('view-'+$$$playlist_listeners_types[i]).removeEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
 		}
@@ -334,13 +334,13 @@ function $$$assign_value_to_file(){
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn'],['file-meta']);
-	if($$$playlist_file_ids!==undefined)
+	if($$$is_playlist_running())
 		$$$unhide('next-f-in-playlist');
 }
 
 function $$$next_video_when_it_reaches(){
 	if(this.currentTime >= this.next_video_when_reach_t){
-		if($$$playlist_file_ids === undefined)
+		if(!$$$is_playlist_running())
 			this.pause();
 		else
 			$$$playlist_listener(); // Go to next file in playlist
@@ -392,7 +392,7 @@ function $$$view_file(_file_id_and_t){
 	$$$get_file_ids = $$$get_file_id;
 	
 	$$$set_window_location_hash(
-		($$$playlist_file_ids!==undefined)
+		($$$is_playlist_running)
 		? ('F' + $$$playlist_file_ids.join(","))
 		: ('f' + ((_file_id_and_t===undefined)?$$$file_id:_file_id_and_t))
 		// BUG: This discards era information when viewing a single file and clicking on the File tab again.
@@ -517,13 +517,17 @@ function $$$backup_files(){
 	);
 }
 
+function $$$is_playlist_running(){
+	return ($$$playlist_file_ids!==undefined)
+}
+
 const $$$playlist_listeners = new Array(5);
 const $$$playlist_listeners_types = ['img','video','audio','iframe','object'];
 const $$$playlist_listeners_eventnames = ['load','ended','ended','load','load'];
 const $$$playlist_listeners_fns = [$$$playlist_listener_delayed, $$$playlist_listener, $$$playlist_listener, $$$playlist_listener_delayed, $$$playlist_listener_delayed];
 var $$$playlist_file_ids;
 function $$$playlist_listener(){
-	if($$$playlist_file_ids===undefined)
+	if(!$$$is_playlist_running())
 		return;
 	$$$playlist_file_ids.push($$$playlist_file_ids.shift());
 	$$$view_file($$$playlist_file_ids[0]);
@@ -531,6 +535,11 @@ function $$$playlist_listener(){
 async function $$$playlist_listener_delayed(){
 	await $$$sleep(2000);
 	$$$playlist_listener();
+}
+async function $$$on_media_error(){
+	// TODO: Iterate through backups (either remote or "existing" local devices), and only then move to next file in playlist
+	if($$$is_playlist_running())
+		$$$playlist_listener_delayed();
 }
 function $$$view_files_as_playlist(file_ids_csv){
 	if(file_ids_csv===undefined)
