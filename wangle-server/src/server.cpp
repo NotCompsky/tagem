@@ -1844,7 +1844,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
 			_r::flag::quote_and_escape, // description,
-			_r::flag::quote_and_escape // content
+			_r::flag::quote_and_json_escape // content
 		);
 		return this->get_buf_as_string_view();
 	}
