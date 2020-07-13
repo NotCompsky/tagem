@@ -827,7 +827,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						return rc;
 					
 					comparison_mode = *(++qry);
-					if (not ((comparison_mode == '>') or (comparison_mode == '<') or (comparison_mode == '=') or (comparison_mode == 'r')) or (*(++qry) != ' '))
+					if (not CHAR_IN(comparison_mode, ('>')('<')('=')('r')) or (*(++qry) != ' '))
 						return successness::invalid;
 				}
 				
