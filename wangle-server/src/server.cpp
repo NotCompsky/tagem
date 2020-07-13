@@ -1995,7 +1995,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE f.id=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
-			  ,(dir_id==0)?" OR ":" AND d2pt.id=", dir_id
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
