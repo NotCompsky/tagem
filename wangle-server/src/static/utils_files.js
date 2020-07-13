@@ -133,14 +133,14 @@ function $$$get_file_id(){
 function $$$get_selected2_file_ids(){
 	return $("#f .tbody .tr.selected2").map((i, el) => el.dataset.id).get().join(",");
 }
-function $$$get_selected_file_ids(){
+function $$$get_selected_file_ids(and_eras){
 	let file_ids = "";
 	let files_wo_ids = [];
 	for(let node of $$$get_tbl_body('f').getElementsByClassName('selected1')){
 		if(node.dataset.id==="0")
 			files_wo_ids.push(node);
 		else 
-			file_ids += "," + node.dataset.id
+			file_ids += "," + node.dataset.id + ((and_eras===true)?node.dataset.era:"");
 	}
 	if(files_wo_ids.length!==0){
 		$$$add_files_to_db(files_wo_ids);
@@ -545,7 +545,7 @@ async function $$$on_media_error(){
 }
 function $$$view_files_as_playlist(file_ids_csv){
 	if(file_ids_csv===undefined)
-		file_ids_csv = $$$get_file_ids();
+		file_ids_csv = $$$get_selected_file_ids(true);
 	if(file_ids_csv===""){
 		$$$playlist_file_ids = undefined;
 		return;
