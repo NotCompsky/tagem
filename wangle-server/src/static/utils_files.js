@@ -450,7 +450,7 @@ function $$$view_file(_file_id_and_t){
 				$$$view_file__hides();
 				
 				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
-				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 2);
+				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 3);
 			}
 		);
 		}

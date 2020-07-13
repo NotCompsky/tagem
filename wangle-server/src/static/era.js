@@ -21,7 +21,7 @@ function $$$tag_era(){
 	$$$ajax_POST_w_text_response(
 		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+_tag_ids,
 		function(){
-			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([$$$era_start,$$$era_end,_tag_ids]);
+			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([0,$$$era_start,$$$era_end,_tag_ids]);
 			$$$hide_tagselect_era();
 		}
 	);
@@ -49,11 +49,32 @@ function $$$view_eras(ls){
 }
 
 function $$$create_era_info_row(era){
-	const [start,end,era_tag_ids] = era;
+	const [id,start,end,era_tag_ids] = era;
 	let _s = "";
-	_s += "<tr class='tr'>";
+	_s += "<tr class='tr' data-id='" + id + "'>";
+		_s += "<td class='td'>" + id + "</td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
 		_s += "<td class='td'>" + era_tag_ids + "</td>";
 	_s += "</tr>";
+	return _s;
+}
+
+function $$$era_tagger_fn(ids,t_dict){
+	for(x of $$$document_getElementById('eras-info-tbody')){
+		if(!ids.includes(x.dataset.id))
+			continue;
+		x.getElementsByClassName('td')[3].innerHTML += "and some new tags";
+	}
+}
+
+function $$$get_era_ids(){
+	let ids = "";
+	for(let node of $$$get_tbl_body('eras-info').getElementsByClassName('selected1')){
+		if(node.dataset.id==="0")
+			return $$$alert("Can only tag eras with non-zero IDs.\nSome eras have ID of zero, probably because they are newly added eras.");
+		else 
+			ids += "," + node.dataset.id
+	}
+	return ids.substr(1);
 }

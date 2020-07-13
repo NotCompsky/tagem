@@ -101,6 +101,8 @@ POST /t/add/>
 	return this->add_to_tbl('t', ++str)
 POST /e/add/>
 	return this->add_era(++str)
+POST /e/t/>
+	return this->post__add_tags_to_eras(++str)
 POST /x/c/rm/>
 	return this->external_cmnt_rm(++str)
 POST /dl/>

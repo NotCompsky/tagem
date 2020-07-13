@@ -39,6 +39,7 @@ function $$$on_document_ready(){
 	
 	$$$make_tbl_selectable("f");
 	$$$make_tbl_selectable("t");
+	$$$make_tbl_selectable("eras-info");
 	$$$init_qry();
 	
 	for(node of $$$document_getElementsByTagName('input')){

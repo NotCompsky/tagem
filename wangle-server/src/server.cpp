@@ -868,6 +868,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_after_itr(
 			"SELECT "
+				"e.id,"
 				"e.start,"
 				"e.end,"
 				"GROUP_CONCAT(e2t.tag)"
@@ -882,6 +883,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->init_json_rows(
 			this->itr,
 			_r::flag::arr,
+			_r::flag::quote_no_escape, // era ID
 			_r::flag::no_quote, // era_start,
 			_r::flag::no_quote, // era_end,
 			_r::flag::quote_no_escape // era_tag_ids
@@ -2353,6 +2355,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		size_t tag_ids_len;
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
+		// NOTE: A tag_ids of "0" should be allowed, at least for adding directories.
 		++s; // Skip trailing slash
 		
 		GET_USER_ID
@@ -2794,6 +2797,32 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::not_found;
 		
 		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__add_tags_to_eras(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, '/')
+		++s; // Skip trailing slash
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_USER_ID
+		
+		BLACKLIST_GUEST
+		
+		this->mysql_exec(
+			"INSERT INTO era2tag"
+			"(era, tag)"
+			"SELECT "
+				"e.id,"
+				"t.id,"
+			"FROM _tag t "
+			"JOIN era e "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  "AND e.id IN (", _f::strlen, ids, ids_len, ")"
+			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+			"ON DUPLICATE KEY UPDATE era=era"
+		);
 		
 		return _r::post_ok;
 	}
