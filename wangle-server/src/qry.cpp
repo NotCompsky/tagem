@@ -129,6 +129,7 @@ const char tbl_arg_to_alias(const arg::ArgType arg){
 		case arg::file:
 			return 'f';
 		case arg::dir:
+		case arg::dir_basename:
 			return 'd';
 		case arg::tag:
 		case arg::tag_tree:
