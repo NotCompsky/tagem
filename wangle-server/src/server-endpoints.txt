@@ -85,21 +85,6 @@ GET /favicon.ico >
 			) + 318
 		)
 
-GET /s/tbl1.css >
-	return
-		#include "headers/return_code/OK.c"
-		#include "headers/Content-Type/css.c"
-		#include "headers/Cache-Control/1day.c"
-		"\\n"
-		#include "static/table_as_blocks.css"
-GET /s/tbl2.css >
-	return
-		#include "headers/return_code/OK.c"
-		#include "headers/Content-Type/css.c"
-		#include "headers/Cache-Control/1day.c"
-		"\\n"
-		#include "static/table_as_table.css"
-
 GET /S/f/>
 	return this->stream_file(++str)
 

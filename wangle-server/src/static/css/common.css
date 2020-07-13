@@ -180,6 +180,10 @@
 
 // Dimensions that aren't 100% sure to be common
 
+"#text-edit{"
+	"max-height:75vh;"
+"}"
+
 "#my-settings svg{"
 	"width:24px;"
 "}"
