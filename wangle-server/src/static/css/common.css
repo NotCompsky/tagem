@@ -180,6 +180,10 @@
 
 // Dimensions that aren't 100% sure to be common
 
+"#my-settings svg{"
+	"width:24px;"
+"}"
+
 ".side-menu svg, #profile-menu svg, #view-btns-container svg{"
 	"width:24px;"
 "}"

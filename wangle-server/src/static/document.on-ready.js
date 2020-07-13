@@ -19,14 +19,17 @@ function $$$on_document_ready(){
 		css = $$$stylesheet_opts[0];
 	$$$switch_stylesheet(css);
 	
-	if($$$use_regex === undefined){
-		$$$use_regex = $$$get_cookie("use_regex");
-		if($$$use_regex !== undefined){
-			$$$use_regex = ($$$use_regex === "1");
-		}else{
-			$$$use_regex = confirm("Use Regular Expressions?\nSay no if you don't know what they are");
-			$$$set_cookie("use_regex", ($$$use_regex)?"1":"0", 3600);
-		}
+	$$$use_regex = $$$get_cookie("use_regex");
+	if($$$use_regex !== undefined){
+		$$$use_regex = ($$$use_regex === "1");
+		$$$set_use_regex_tbl_entry();
+	}else{
+		$$$set_use_regex();
+	}
+	
+	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
+		const val2 = $$$get_cookie(key);
+		$$$set_user_setting_as(key,((val2===undefined)?val:val2));
 	}
 	
 	let w = $$$get_cookie("w");

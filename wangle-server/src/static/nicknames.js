@@ -7,6 +7,7 @@ const $$$document_getElementsByTagName = $$$document.getElementsByTagName.bind($
 const $$$confirm = confirm;
 const $$$prompt = prompt;
 const $$$window = window;
+const $$$parseInt = parseInt;
 
 function $$$for_node_in_document_getElementsByClassName(s, fn){
 	for(let e of $$$document_getElementsByClassName(s))

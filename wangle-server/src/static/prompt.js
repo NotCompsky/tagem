@@ -5,3 +5,15 @@ function $$$prompt_from(s, ls){
 			return x;
 	}
 }
+
+function $$$get_int(){
+	while(true){
+		const s = $$$prompt('Integer');
+		if(s===null)
+			// User cancelled the prompt
+			return null;
+		const n = $$$parseInt(s);
+		if(!isNaN(n))
+			return n;
+	}
+}
