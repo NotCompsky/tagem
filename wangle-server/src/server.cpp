@@ -179,8 +179,6 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
 
-FILE* EXTERNAL_CMDS_TO_RUN = stderr;
-
 static
 std::vector<DatabaseInfo> db_infos;
 
@@ -2472,8 +2470,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if(*s == 0)
 			return _r::not_found;
 		const size_t permalink_length = (uintptr_t)s - (uintptr_t)permalink;
-		fprintf(EXTERNAL_CMDS_TO_RUN, "rscrape-submission %.*s\n",  (int)permalink_length,  permalink);
-		fflush(EXTERNAL_CMDS_TO_RUN);
+		
+		const char* args[] = {"record-reddit-post", _buf, dir_path, nullptr};
+		
+		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  this->buf)))
+			return _r::server_error;
+		
 		return _r::post_ok;
 	}
 	
@@ -2961,13 +2963,6 @@ int main(int argc,  const char* const* argv){
 				break;
 			case 'x':
 				external_db_env_vars.push_back(*(++argv));
-				break;
-			case 'X':
-				EXTERNAL_CMDS_TO_RUN = fopen(*(++argv), "wb");
-				if(unlikely(EXTERNAL_CMDS_TO_RUN == nullptr)){
-					fprintf(stderr, "Cannot open file to write external commands to: %s\n", *argv);
-					abort();
-				}
 				break;
 			case 'Y':
 				YTDL_FORMAT = *(++argv);

@@ -3,13 +3,6 @@ USAGE
 	[[OPTIONS]] p [PORT_NUMBER] c [THUMBNAIL_DIRECTORY] [[EXTERNAL_DATABASES]]
 
 OPTIONS
-	X /path/to/file
-		Write external commands to this file
-		Hint: If these are BASH commands, could execute these lines as they are written:
-			mkfifo /tmp/tagem-external-cmds.pipe
-			(./server X /tmp/tagem-external-cmds.txt ...)&
-			while read line; do  eval "$line";  done < /tmp/tagem-external-cmds.pipe
-		Obviously security concerns etc.
 	Y [youtube-dl format]
 		DEFAULT
 			The default value restricts downloads to [height<=720] and prioritises the most compressed formats.
