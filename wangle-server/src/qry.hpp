@@ -17,7 +17,7 @@
 
 #define JOIN_TAG_BLACKLIST \
 	"FROM user2blacklist_tag u2ht " \
-	"JOIN tag2parent_tree t2pt ON t2pt.id=u2ht.tag "
+	"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag "
 
 #define USER_DISALLOWED_FILES_INNER_PRE \
 		"SELECT f2t.file AS id " \
@@ -52,8 +52,8 @@
 			"SELECT f.id, d2t.tag " \
 			"FROM _file f " \
 			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir " \
-		")e2t ON e2t.tag=t2pt.id" \
-		"WHERE u2t.user="
+		")e2t ON e2t.tag=t2pt.id " \
+		"WHERE u2ht.user="
 #define USER_DISALLOWED_ERAS(user_id) \
 	"(" \
 		USER_DISALLOWED_ERAS_INNER_PRE, user_id, \
