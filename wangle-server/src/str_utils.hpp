@@ -57,16 +57,6 @@ const char* get_comma_separated_ints(const char** str,  const char separator){
 }
 
 constexpr
-bool in_str_not_at_end(const char* str,  const char c){
-	while(*str != 0){
-		if (*str == c)
-			return (str[1] != 0);
-		++str;
-	}
-	return false;
-}
-
-constexpr
 bool in_str(const char* str,  const char c){
 	while(*str != 0){
 		if (*str == c)
@@ -159,3 +149,49 @@ bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  
 	}
 	return false;
 }
+
+
+
+constexpr
+bool char_in(const char c){
+	return false;
+}
+
+template<typename... Args>
+constexpr
+bool char_in(const char c,  const char d,  Args... args){
+	return (c == d) or char_in(c, args...);
+}
+
+template<typename... Args>
+constexpr
+size_t n_chars_until_char_in(const char* const str_orig,  Args... args){
+	const char* str = str_orig;
+	while(not char_in(*str, args...))
+		++str;
+	return (uintptr_t)str - (uintptr_t)str_orig;
+}
+
+static_assert(n_chars_until_char_in("foo/bar/ree/gee/", '/') == 3);
+static_assert(n_chars_until_char_in("/bar/ree/gee/", '/') == 0);
+static_assert(n_chars_until_char_in("/bar/ree/gee/", 'a', 'b', 'c') == 1);
+
+
+
+template<typename... Args>
+constexpr
+bool in_str_not_at_end__where_end_marked_by(const char* str,  const char c,  Args... args){
+	while(not char_in(*str, args...)){
+		if (*str == c)
+			return (not char_in(str[1], args...));
+		++str;
+	}
+	return false;
+}
+constexpr
+bool in_str_not_at_end(const char* const str,  const char c){
+	return in_str_not_at_end__where_end_marked_by(str, c, '\0');
+}
+static_assert(in_str_not_at_end("www.youtube.com/watch?v=ABCDEFGHIJK", '/'));
+static_assert(not in_str_not_at_end("watch?v=ABCDEFGHIJK", '/'));
+static_assert(not in_str_not_at_end("foobar/", '/'));

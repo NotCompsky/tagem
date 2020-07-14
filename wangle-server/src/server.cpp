@@ -1117,7 +1117,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::not_implemented_yet;
 		
 		this->mysql_query(
-			"SELECT CONCAT(d.name, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
+			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
 			"FROM _dir d "
 			"WHERE d.id=", dir_id
 		);
@@ -1744,9 +1744,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  Args... name_args){
 		this->reset_buf_index();
 		this->asciify(
-			"SELECT id, name "
+			"SELECT id, ", (tbl_alias=='d')?"full_path ":"name ",
 			"FROM ", (tbl_alias=='d')?"_dir":"_tag", " "
-			"WHERE name ", name_args..., "\" "
+			"WHERE ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
 			"AND id NOT IN"
 		);
 		switch(tbl_alias){
@@ -2243,11 +2243,17 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			this->qry_mysql_for_next_parent_dir(user_id,  "id, LENGTH(name)",  parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
 			size_t closest_parent_dir_length = 0;
 			while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
-			if (unlikely(closest_parent_dir_length == 0))
+			if (unlikely(closest_parent_dir_length == 0)){
 				// No such directory was found. This is probably because the user does not have permission to view an ancestor directory.
 				return true;
+			}
 			offset += closest_parent_dir_length;
-			if (not in_str_not_at_end(url + offset,  '/')){
+			size_t url_len_of_next_step = n_chars_until_char_in(url + offset, '/', '\n', '\0');
+			if (url[offset + url_len_of_next_step] == '/')
+				// Include the trailing slash, if it exists
+				++url_len_of_next_step;
+			const size_t url_len_up_until_next_step = offset + url_len_of_next_step;
+			if (not in_str_not_at_end__where_end_marked_by(url + offset,  '/',  '\n', '\0')){
 				/* The closest parent is also the immediate parent of the directory to add
 				 * Have one final check to find the largest prefix
 				 * E.g. parsing a YouTube video url "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
@@ -2270,8 +2276,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					"id,"
 					"device,",
 					user_id, ","
-					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
-					"\"", _f::esc, '"', _f::until, '/', url+offset, "/\" "
+					"\"", _f::esc, '"', _f::strlen, url_len_up_until_next_step, url, "\","
+					"\"", _f::esc, '"', _f::strlen, url_len_of_next_step, url+offset, "\" "
 				"FROM _dir "
 				"WHERE id=", parent_dir_id, " "
 				// No need to check permissions, that has already been done in qry_mysql_for_next_parent_dir
@@ -2295,7 +2301,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					"device,",
 					user_id, ","
 					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
-					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\","
+					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				"FROM _dir "
 				"WHERE id=", parent_dir_id
 				// NOTE: The user has been verified to have permission to access the parent directory.
@@ -2640,6 +2646,32 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					
 					this->add_file_or_dir_to_db('f', user_auth::SpecialUserID::guest, tag_ids, tag_ids_len, url_buf, strlen(url_buf), mimetype);
 					
+					char* f_basename = nullptr;
+					char* f_basename_itr = this->file_path;
+					while(*f_basename_itr != 0){
+						if(*f_basename_itr == '/')
+							f_basename = f_basename_itr;
+						++f_basename_itr;
+					}
+					if (unlikely(f_basename == nullptr))
+						f_basename = this->file_path;
+					else
+						++f_basename; // Skip slash
+					
+					this->mysql_exec(
+						"INSERT INTO file_backup"
+						"(file,dir,name,user,mimetype)"
+						"SELECT "
+							"f.id,",
+							dir_id, ',',
+							'"', _f::esc, '"', f_basename, '"', ',',
+							user_id, ',',
+							"mt.id "
+						"FROM mimetype mt "
+						"JOIN _file f ON f.name=\"", _f::esc, '"', f_basename, "\" "
+						"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\""
+					);
+					
 					url = s;
 					if (c == ' ')
 						goto post__dl_break2;
@@ -2816,12 +2848,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"(era, tag)"
 			"SELECT "
 				"e.id,"
-				"t.id,"
+				"t.id "
 			"FROM _tag t "
 			"JOIN era e "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND e.id IN (", _f::strlen, ids, ids_len, ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
 			"ON DUPLICATE KEY UPDATE era=era"
 		);
