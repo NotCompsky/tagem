@@ -20,6 +20,8 @@ In active development. Documentation almost non-existent as yet, though plenty o
 
 ## Native App
 
+WARNING: This app has not yet been updated - it currently assumes an old database structure.
+
 ![Screenshot of tagemvid](https://i.imgur.com/OmgWJmk.png)
 ![Screenshot of tagemvid](https://i.imgur.com/rk7wynk.png)
 
