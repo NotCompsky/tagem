@@ -86,7 +86,7 @@ void intercept_exit(int){
 			"FROM file2", CURRENT_HASHING_METHOD, " f2h "
 			"JOIN _file f ON f.id=f2h.file "
 			"JOIN _dir d ON d.id=f.dir "
-			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
@@ -107,7 +107,7 @@ void intercept_abort(int _signal){
 			"SELECT f.id "
 			"FROM _file f "
 			"JOIN _dir d ON d.id=f.dir "
-			"WHERE CONCAT(d.name, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
+			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
 	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
@@ -568,7 +568,7 @@ void save_hash(const Duration file_type_flag,  const char* const hash_name,  con
 void and_dir_regexp(char*& itr,  const char* const dir_regexp){
 	compsky::asciify::asciify(
 		itr,
-		" AND d.name REGEXP \"", _f::esc, '"', dir_regexp, "\""
+		" AND d.full_path REGEXP \"", _f::esc, '"', dir_regexp, "\""
 	);
 #define ADD_DIR_REGEXP_SZ (23+128)
 }
@@ -664,7 +664,7 @@ void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const
 			"SELECT f.id "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE d.name=\"", _f::esc, '"', file_path, "\" "
+			"WHERE d.full_path=\"", _f::esc, '"', file_path, "\" "
 			  "AND f.name=\"", _f::esc, '"', ename, "\" "
 			  "AND ", which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 		);
@@ -715,7 +715,7 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"SELECT "
 			"f.", (is_backup_tbl)?"file":"id", ",",
 			(is_backup_tbl)?"d.id":"0", ","
-			"CONCAT(d.name, f.name) "
+			"CONCAT(d.full_path, f.name) "
 		"FROM ", (is_backup_tbl)?"file_backup":"_file", " f "
 		"JOIN _dir d ON d.id=f.dir "
 		"JOIN _device D ON D.id=d.device "
