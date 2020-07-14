@@ -180,6 +180,10 @@
 
 // Dimensions that aren't 100% sure to be common
 
+"#qry input{"
+	"font-size:24px;"
+"}"
+
 "#text-editor a svg{"
 	"width:24px;"
 "}"
