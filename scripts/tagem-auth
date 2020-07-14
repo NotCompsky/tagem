@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+
+get_auth(){
+	echo "$(echo "$1" | grep "^$2: " | sed "s_^$2: __g")"
+}
+
+
+auth="$(cat "$TAGEM_MYSQL_CFG")"
+host="$(get_auth "$auth" HOST)"
+path="$(get_auth "$auth" PATH)"
+user="$(get_auth "$auth" USER)"
+pwrd="$(get_auth "$auth" PWRD)"
+port="$(get_auth "$auth" PORT)"
+tagem_auth=(--host "$host" --port "$port" --user "$user" --password="$pwrd" --socket="$path")
