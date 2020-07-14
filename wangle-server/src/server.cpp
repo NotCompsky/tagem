@@ -120,6 +120,15 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found; \
 	DatabaseInfo& db_info = db_infos.at(db_indx);
 
+#define GET_NUMBER(type,name) \
+	const type name = a2n<type>(&s);
+
+#define GET_NUMBER_NONZERO(type,name) \
+	GET_NUMBER(type,name) \
+	if (unlikely(name == 0)) \
+		return _r::not_found; \
+	++s; // Skip trailing slash or space
+
 
 #define GET_FILE2_VAR_NAME(s) \
 	const char* const file2_var_name = s; \
@@ -563,7 +572,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view get_all_file_names_given_dir_id(const char* s){
-		const uint64_t id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,id)
 		
 		this->mysql_query(
 			"SELECT name "
@@ -584,7 +593,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view dir_info(const char* s){
-		const uint64_t id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,id)
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
@@ -805,7 +814,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view file_info(const char* s){
-		const uint64_t id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,id)
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
@@ -961,7 +970,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view tags_given_file(const char* id_str){
-		const uint64_t id = a2n<uint64_t>(id_str);
+		GET_NUMBER_NONZERO(uint64_t,id)
 		
 #ifdef n_cached
 		if (const int indx = cached_stuff::from_cache(cached_stuff::tags_given_file, id))
@@ -1189,13 +1198,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
-		const uint64_t file_id = a2n<uint64_t>(&s);
-		++s;
-		const uint64_t new_path__dir_id = a2n<uint64_t>(s);
-		
-		if ((file_id == 0) or (new_path__dir_id == 0))
-			return _r::not_found;
-		
+		GET_NUMBER_NONZERO(uint64_t, file_id)
+		GET_NUMBER_NONZERO(uint64_t, new_path__dir_id)
 		GET_USER_ID
 		
 		if (unlikely(skip_to_body(&s)))
@@ -1966,9 +1970,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		constexpr static const size_t room_for_headers = 1000;
 		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
-		const uint64_t id = a2n<uint64_t>(&s);
-		if (unlikely(id == 0))
-			return _r::not_found;
+		GET_NUMBER_NONZERO(uint64_t, id)
 		
 		uint64_t dir_id = 0;
 		if(*s == '/'){
@@ -2400,11 +2402,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view add_era(const char* s){
-		const uint64_t file_id = a2n<uint64_t>(&s);
-		if (file_id == 0)
-			return _r::not_found;
-		
-		++s; // Skip slash
+		GET_NUMBER_NONZERO(uint64_t, file_id)
 		
 		const float era_start = a2f<float>(&s);
 		if(*s != '-')
@@ -2449,11 +2447,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view update_tag_thumbnail(const char* s){
-		const uint64_t tag_id = a2n<uint64_t>(&s);
-		if (tag_id == 0)
-			return _r::not_found;
-		
-		++s; // Skip slash
+		GET_NUMBER_NONZERO(uint64_t, tag_id)
 		
 		const char* const url = s;
 		const size_t url_length = count_until(url, ' ');
@@ -2486,7 +2480,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view post__set_file_title(const char* s){
-		const uint64_t f_id = a2n<uint64_t>(&s);
+		GET_NUMBER_NONZERO(uint64_t, f_id)
 		GET_USER_ID
 		GREYLIST_GUEST
 		
@@ -2504,8 +2498,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view post__merge_files(const char* s){
-		const uint64_t orig_f_id = a2n<uint64_t>(&s);
-		++s; // Skip slash
+		GET_NUMBER_NONZERO(uint64_t, orig_f_id)
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dupl_f_ids, dupl_f_ids_len, s, ' ')
 		GET_USER_ID
 		
@@ -2531,11 +2524,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view post__backup_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip slash
-		const uint64_t dir_id = a2n<uint64_t>(&s);
-		if (dir_id == 0)
-			return _r::not_found;
+		GET_NUMBER_NONZERO(uint64_t, dir_id)
 		
-		//++s; // Do not skip slash, as it is skipped by the following macro
+		--s; // Do not skip slash, as it is skipped by the following macro
 		const bool is_ytdl = (IS_STR_EQL(s, 5, "ytdl/"));
 		
 		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
@@ -2595,8 +2586,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view post__dl(const char* s){
 		static char url_buf[4096];
 		
-		const uint64_t dir_id = a2n<uint64_t>(&s);
-		++s;
+		GET_NUMBER(uint64_t, dir_id)
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip slash
@@ -2867,8 +2857,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view post__add_var_to_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip trailing slash
-		const uint64_t value = a2n<uint64_t>(&s);
-		++s; // Skip trailing slash
+		GET_NUMBER(uint64_t, value)
 		GET_FILE2_VAR_NAME(s)
 		
 		const UserIDIntType user_id = user->id;
@@ -2888,8 +2877,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view post__edit_tag_cmnt(const char* s){
-		const uint64_t tag_id = a2n<uint64_t>(&s);
-		++s;
+		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		
 		printf("Edit tag cmnt: %lu: %s\n", tag_id, s);
 		
