@@ -2646,17 +2646,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					
 					this->add_file_or_dir_to_db('f', user_auth::SpecialUserID::guest, tag_ids, tag_ids_len, url_buf, strlen(url_buf), mimetype);
 					
-					char* f_basename = nullptr;
-					char* f_basename_itr = this->file_path;
-					while(*f_basename_itr != 0){
-						if(*f_basename_itr == '/')
-							f_basename = f_basename_itr;
-						++f_basename_itr;
-					}
-					if (unlikely(f_basename == nullptr))
-						f_basename = this->file_path;
-					else
-						++f_basename; // Skip slash
+					const char* f_name = basename__accepting_trailing_slash(this->file_path);
 					
 					this->mysql_exec(
 						"INSERT INTO file_backup"
@@ -2664,11 +2654,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 						"SELECT "
 							"f.id,",
 							dir_id, ',',
-							'"', _f::esc, '"', f_basename, '"', ',',
+							'"', _f::esc, '"', f_name, '"', ',',
 							user_id, ',',
 							"mt.id "
 						"FROM mimetype mt "
-						"JOIN _file f ON f.name=\"", _f::esc, '"', f_basename, "\" "
+						"JOIN _file f ON f.name=\"", _f::esc, '"', f_name, "\" "
 						"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\""
 					);
 					
