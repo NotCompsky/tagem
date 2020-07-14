@@ -1971,6 +1971,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_NUMBER_NONZERO(uint64_t, id)
 		
 		uint64_t dir_id = 0;
+		--s;
 		if(*s == '/'){
 			++s; // Skip trailing slash
 			dir_id = a2n<uint64_t>(s);
