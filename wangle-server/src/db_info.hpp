@@ -7,9 +7,9 @@
 
 struct DatabaseInfo {
 	MYSQL* mysql_obj;
-	char buf[512];
-	char* auth[6];
 	constexpr static const size_t buf_sz = 512;
+	char buf[buf_sz];
+	char* auth[6];
 	
 	enum B : unsigned {
 		has_post_tbl,
