@@ -2473,9 +2473,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::not_found;
 		const size_t permalink_length = (uintptr_t)s - (uintptr_t)permalink;
 		
-		const char* args[] = {"record-reddit-post", _buf, dir_path, nullptr};
+		this->asciify(_f::strlen, permalink, permalink_length, '\0');
 		
-		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  this->buf)))
+		const char* args[] = {"record-reddit-post", this->buf, nullptr};
+		
+		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  this->buf,  0)))
 			return _r::server_error;
 		
 		return _r::post_ok;
