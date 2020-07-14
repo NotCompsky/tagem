@@ -218,6 +218,7 @@ function $$$view_tag(_tag_id,page){
 			const [id, name,thumb,size] = data[0];
 			$$$set_profile_name(name);
 			$$$set_profile_thumb(thumb);
+			$$$set_window_location_hash('t0/'+$$$tag_id);
 		}
 	);
 	
