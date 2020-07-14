@@ -771,24 +771,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			this->asciify(
 				// Should be equivalent to asciify_file_info
 				'[',
-					"\"/i/f/", _f::lower_case, _f::hex, hash, "\"", ',',
-					0, ',',
-					'"', _f::esc, '"', ename,   '"', ',',
-					'"', '"', ',',
-					'"', st.st_size, '"', ',',
-					'"', st.st_ctime, '"', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'0', ',',
-					'"', '"', ',',
-					'"', '"', ',',
-					'0', ',',
-					'0',
+					"\"/i/f/", _f::lower_case, _f::hex, hash, "\"", ',', // thumbnail
+					0, ',',                                              // ID
+					'"', _f::esc, '"', ename,   '"', ',',                // name
+					'"', '"', ',',                                       // title
+					'"', st.st_size, '"', ',',                           // size
+					'"', st.st_ctime, '"', ',',                          // t_added
+					'0', ',',                                            // t_origin
+					'0', ',',                                            // duration
+					'0', ',',                                            // w
+					'0', ',',                                            // h
+					'0', ',',                                            // views
+					'0', ',',                                            // likes
+					'0', ',',                                            // dislikes
+					'0', ',',                                            // fps
+					'"', '"', ',',                                       // DB and post IDs
+					'"', '"', ',',                                       // f2t tag IDs
 				']',
 				','
 			);
@@ -969,7 +967,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view tags_given_file(const char* id_str){
+	std::string_view tags_given_file(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
 		
 #ifdef n_cached
