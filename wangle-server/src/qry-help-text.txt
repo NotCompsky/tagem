@@ -45,6 +45,8 @@ INPUT DATA TYPES
 				[ATTRIBUTE_NAME]            [VALID_TABLES]
 			many-to-one attributes
 				name                          all except D and e
+				title                         f
+				description                   f
 				dir                           f
 				mime                          f
 				size                          all except x, D and e
@@ -199,4 +201,8 @@ EXAMPLES
 	f t! "Uploader: " and not t "Youtube Channel" and d "^http" and d "youtube" limit 100
 		List Youtube files directly tagged with "Uploader: <SOMETHING>", where those tags are not recognised as Youtube Channels.
 		Useful for fixing tag mistakes.
+	f attr title r "Podcast" and not eras 1-?
+		Look for videos with "Podcast" in the title, which have not got any associated eras
+	e t "Advert"
+		Look for eras tagged "Advert"
 )========="

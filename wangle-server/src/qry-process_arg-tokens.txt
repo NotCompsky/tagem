@@ -12,6 +12,8 @@ and >
 	return arg::operator_and
 attr >
 	return arg::attribute
+eras >
+	return arg::eras
 backups >
 	return arg::backups
 e >

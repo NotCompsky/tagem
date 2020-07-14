@@ -45,6 +45,7 @@ namespace arg {
 		dir,
 		dir_basename,
 		device_exists,
+		eras,
 		backups,
 		external_db,
 		order_by_asc,
@@ -73,6 +74,8 @@ namespace attribute_name {
 	constexpr static const char* const DIR = "dir";
 	constexpr static const char* const DURATION = "duration";
 	constexpr static const char* const NAME = "name";
+	constexpr static const char* const TITLE = "title";
+	constexpr static const char* const DESCRIPTION = "description";
 	constexpr static const char* const TAG = "tag";
 	constexpr static const char* const ID = "id";
 	constexpr static const char* const AUDIO_HASH = "audio_hash";
@@ -280,7 +283,7 @@ const char* get_tbl_name_from_attr_name(const char* const attribute_name){
 #define X(_,n,data) or (attribute_name == attribute_name::data)
 static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
-	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(T_ORIGIN)(T_RECORDED)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
+	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(T_ORIGIN)(T_RECORDED)(WIDTH)(HEIGHT)(LIKES)(DISLIKES)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
 }
 
 static
@@ -536,6 +539,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	unsigned n_calls__limit = 0;  // Doesn't reallly matter to the serverif multiple limits are specified
 	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
 	unsigned n_calls__backups = 0;
+	unsigned n_calls__eras = 0;
 	
 	unsigned ersatz_count = 0;
 	
@@ -646,9 +650,18 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				break;
 				break;
 			}
+			case arg::eras:
 			case arg::backups: {
-				if ((++n_calls__backups == 2) or (which_tbl != 'f'))
+				if (which_tbl != 'f')
 					return successness::invalid;
+				
+				if (arg_token_base == arg::eras){
+					if (++n_calls__eras == 2)
+						return successness::invalid;
+				} else {
+					if (++n_calls__backups == 2)
+						return successness::invalid;
+				}
 				
 				rc = get_int_range(qry, min, max);
 				if (rc != successness::ok)
@@ -658,7 +671,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "IN(SELECT file FROM file_backup GROUP BY file HAVING COUNT(*)>=";
+				where += "IN(SELECT file FROM ";
+				where += (arg_token_base==arg::eras)?"era":"file_backup";
+				where += " GROUP BY file HAVING COUNT(*)>=";
 				where += std::to_string(min);
 				where += " AND COUNT(*)<=";
 				where += std::to_string(max);
