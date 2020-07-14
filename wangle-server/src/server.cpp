@@ -827,6 +827,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir")
 				"f.mimetype,"
+				"IFNULL(f.description,\"\"),"
 				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
 			"FROM _file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
@@ -858,6 +859,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::quote_no_escape, // external_db_and_post_ids,
 			_r::flag::quote_no_escape, // tag_ids,
 			_r::flag::no_quote, // mimetype,
+			_r::flag::quote_and_json_escape, // description
 			_r::flag::quote_no_escape // file2_values
 		))
 			// No results - probably because the user hasn't the permission to view the file

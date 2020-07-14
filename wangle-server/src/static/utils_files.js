@@ -333,7 +333,7 @@ function $$$assign_value_to_file(){
 
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn'],['file-meta']);
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','tagselect-eras-container','descr'],['file-meta']);
 	if($$$is_playlist_running())
 		$$$unhide('next-f-in-playlist');
 }
@@ -411,7 +411,7 @@ function $$$view_file(_file_id_and_t){
 		$$$ajax_GET_w_JSON_response(
 			"/a/f/i/"+$$$file_id,
 			function(data){
-				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, file2_values_csv], eras, backups, _d, t_dict] = data;
+				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, description, file2_values_csv], eras, backups, _d, t_dict] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$d = _d;
@@ -448,6 +448,8 @@ function $$$view_file(_file_id_and_t){
 				}
 				$$$document_getElementById("view-btns").innerHTML = _s;
 				$$$view_file__hides();
+				
+				$$$document_getElementById('descr').textContent = description;
 				
 				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 3);
