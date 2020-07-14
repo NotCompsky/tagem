@@ -10,25 +10,82 @@ fi
 
 
 mysql_exec(){
-	mysql "${tagem_auth[@]}" -e "$1" tagem && echo "Success: $1" || echo "Failure: $1"
+	mysql "${tagem_auth[@]}" -e "$1" tagem
+	if [ $? = 0 ]; then
+		return 1
+	fi
+	printf "%s\n" "Failure"
+	echo "$1"
+	return 0
 }
 
 
+if [ "$URLS_MUST_END_WITH_SLASH" = "" ]; then
+	URLS_MUST_END_WITH_SLASH="^$"
+fi
+if [ "$TRY_AGAIN_FROM" = "" ]; then
+	TRY_AGAIN_FROM="^$"
+fi
+
+
 while read -r id url; do
-	echo "$url"
-	while read -r w; do
-		read -r h
-		read -r fps
-		read -r duration
-		read -r views
-		read -r likes
-		read -r dislikes
-		read -r thumbnail
-		read -r title
-		read -r descr
-		read -r t_origin
-		mysql_exec "UPDATE _file SET w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IFNULL(_file.t_origin,$t_origin) WHERE id=$id"
-		mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
-	done < <(youtube-dl --quiet --dump-json "$url" | jq '.width, .height, .fps, .duration, .view_count, .like_count, .dislike_count, .thumbnail, .title, .description, .timestamp')
+	if [ "$(echo "$url" | grep -E "$URLS_MUST_END_WITH_SLASH")" ]; then
+		url="$url/"
+	fi
+	echo "$url" >&2
+	while true; do
+		ytdl_err=1
+		while read -r w; do
+			ytdl_err=""
+			read -r h
+			read -r fps
+			read -r duration
+			read -r views
+			read -r likes
+			read -r dislikes
+			read -r thumbnail
+			read -r title
+			read -r descr
+			if [ "$descr" = null ]; then
+				descr="\"\""
+			fi
+			read -r t_origin
+			read -r upload_date
+			read -r uploader
+			
+			if [ "$t_origin" = null ]; then
+				t_origin="$(date -d "${upload_date:1:-1}" +%s)"
+			fi
+			if [ "$t_origin" = "" ]; then
+				t_origin=0
+			fi
+			
+			if [ "$uploader" = null ]; then
+				dummy=1
+			else
+				uploader="\"Uploader: ${uploader:1}"
+				mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
+				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
+					echo "Tag \"Uploader\" does not exist" >&2
+					exit
+				fi
+				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $id, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
+			fi
+			
+			mysql_exec "UPDATE _file SET w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin) WHERE id=$id"
+			mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
+		done < <(youtube-dl --quiet --dump-json "$url" | jq '.width, .height, .fps, .duration, .view_count, .like_count, .dislike_count, .thumbnail, .title, .description, .timestamp, .upload_date, .uploader')
+		
+		
+		if [ "$ytdl_err" ]; then
+			if [ "$(echo "$url" | grep 'gfycat')" ]; then
+				url="$(echo "$url" | sed -E "s_${TRY_AGAIN_FROM}_${TRY_AGAIN_TO}_g")"
+				echo "Trying again with url: $url" >&2
+				continue
+			fi
+		fi
+		break
+	done
+	
 	sleep 2
-done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT f.id, CONCAT(d.name,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name REGEXP '^https://' AND d.name REGEXP '$regexp'" tagem)
+done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN _tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND (f.likes IS NULL OR t.id IS NULL)" tagem)
