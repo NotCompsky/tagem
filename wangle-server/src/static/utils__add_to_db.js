@@ -45,7 +45,7 @@ function $$$add_to_db(obj_type){
 		return;
 	}
 	
-	const urls = [...queue.textContent.matchAll(/[^\n]+/g)];
+	const urls = [...queue.innerText.matchAll(/[^\n]+/g)];
 	if(urls.length===0){
 		$$$alert("No URLs");
 		return;
