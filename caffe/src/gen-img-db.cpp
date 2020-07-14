@@ -57,10 +57,7 @@ C10_DEFINE_int(
     "Number of image parsing and conversion threads.");
 
 
-char STMT[4096];
-
 MYSQL_RES* RES;
-MYSQL_ROW ROW;
 
 struct Jomsborg {
     const char* fp;
@@ -206,6 +203,7 @@ void ConvertImageDataset(
   uint64_t tag_id;
   double x, y, w, h;
   auto f = compsky::asciify::flag::guarantee::between_zero_and_one_inclusive;
+  MYSQL_ROW row;
   while(compsky::mysql::assign_next_result(RES, &ROW, &fp, &tag_id, f, &x, f, &y, f, &w, f, &h){
     lines.emplace_back(fp, tag_id, x, y, w, h);
   }
@@ -272,40 +270,66 @@ void ConvertImageDataset(
 
 int main(int argc, char** argv) {
   // USAGE: ./make_image_db TAG1 TAG2 ... TAGN - [original caffe args]
+  char buf[4096];
+  char* itr = buf;
+  
   int myargs_n = 0;
-  compsky::mysql::init(getenv("TAGEM_MYSQL_CFG"));
-
-  constexpr const char* a = "SELECT name, tag_id, x, y, w, h FROM file JOIN(SELECT file_id, tag_id, x, y, w, h FROM instance JOIN(SELECT instance_id, tag_id FROM instance2tag WHERE tag_id IN(";
-  constexpr const char* b = "))) A ON A.instance_id = id) B ON B.file_id=id";
-
-  size_t i = 0;
-
-  memcpy(STMT + i,  a,  strlen(a));
-  i += strlen(a);
+  
+  MYSQL* _mysql_conn;
+  constexpr static const size_t _mysql_buf_sz = 512;
+  char _mysql_buf[_mysql_buf_sz];
+  char* _mysql_auth[6];
+  compsky::mysql::init_auth(_mysql_buf, _mysql_buf_sz, _mysql_auth, getenv("TAGEM_MYSQL_CFG"));
+  compsky::mysql::login_from_auth(_mysql_conn, _mysql_auth);
+  
+	compsky::asciify::asciify(
+		itr,
+		"SELECT "
+			"name,"
+			"tag,"
+			"x,"
+			"y,"
+			"w,"
+			"h "
+		"FROM _file "
+		"JOIN("
+			"SELECT "
+				"file,"
+				"tag,"
+				"x,"
+				"y,"
+				"w,"
+				"h "
+			"FROM instance "
+			"JOIN("
+				"SELECT "
+					"instance,"
+					"tag "
+				"FROM instance2tag "
+				"WHERE tag IN("
+	);
 
   while (true){
     const char* arg = argv[++myargs_n];
     if (arg[0] == '-')
         break;
-    STMT[i++] = '"';
-    memcpy(STMT + i,  arg,  strlen(arg));
-    i += strlen(arg);
-    STMT[i++] = '"';
-    STMT[i++] = ',';
+    compsky::asciify::asciify(itr, '"', arg, '"', ',');
   }
-  --i;
+  --itr; // Remove trailing comma
 
-  memcpy(STMT + i,  b,  strlen(b));
-  i += strlen(b);
+	compsky::asciify::asciify(
+		itr,
+		")) A ON A.instance = id) B ON B.file=id"
+	);
 
-  compsky::mysql::query_buffer(STMT,  i - 1);
+  compsky::mysql::query_buffer(buf,  (uintptr_t)itr - (uintptr_t)buf);
 
   argc += myargs_n;
 
   caffe2::GlobalInit(&argc, &argv);
   caffe2::ConvertImageDataset(FLAGS_output_db_name, FLAGS_shuffle);
   
-  compsky::mysql::exit();
+  compsky::mysql::wipe_auth(_mysql_buf, _mysql_buf_sz);
   
   return 0;
 }
