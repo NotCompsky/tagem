@@ -5,6 +5,9 @@ Usage:
 
 //#include "../../media/src/file2.hpp"
 
+#define CLI_ONLY
+#include "basename.hpp"
+
 #include <string.h> // for strlen
 #include <unistd.h> // for getcwd
 #include <cstdlib> // for malloc and getenv
@@ -12,6 +15,10 @@ Usage:
 #include <cstdarg> // To avoid error in MariaDB/mysql.h: ‘va_list’ has not been declared
 #include <cstdio> // to avoid printf error
 #include <compsky/mysql/query.hpp> // for compsky::mysql::exec
+
+
+char BUF[4096];
+char* ITR;
 
 
 namespace ERR {
@@ -24,6 +31,13 @@ namespace ERR {
         GETCWD
     };
 }
+
+namespace _mysql {
+	MYSQL* obj;
+}
+
+MYSQL_RES* RES1; // unused, but for linking
+MYSQL_ROW  ROW1; // unused, but for linking
 
 
 namespace _f {
@@ -57,7 +71,7 @@ int main(const int argc, const char** argv){
 			Assigns no tags, only registers the file and assigns file2size and file2duration values
 	*/
 	
-	constexpr static const size_t buf_sz = 4 * 1024 * 1024;
+	constexpr static const size_t buf_sz = 40 * 1024 * 1024;
 	char* buf = (char*)malloc(buf_sz);
 	if(buf == nullptr)
 		return ERR::MALLOC;
@@ -71,10 +85,9 @@ int main(const int argc, const char** argv){
 	cwd[cwd_len] = '/';
 	cwd[cwd_len+1] = 0;
     
-	MYSQL* mysql_obj;
 	constexpr static const size_t mysql_auth_sz = 512;
 	char mysql_auth[mysql_auth_sz];
-	compsky::mysql::init(mysql_obj, mysql_auth, mysql_auth_sz, getenv("TAGEM_MYSQL_CFG"));
+	compsky::mysql::init(_mysql::obj, mysql_auth, mysql_auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
 	
 	unsigned int i = 0;
@@ -122,26 +135,7 @@ int main(const int argc, const char** argv){
 
 	
 	char* itr;
-
 	
-    itr = buf;
-	compsky::asciify::asciify(
-		itr,
-		"INSERT IGNORE INTO tag (name) "
-		"VALUES "
-	);
-	for (auto j = tag_offset;  j < tag_offset + n_tags;  ++j){
-		const char* const name = argv[j];
-		compsky::asciify::asciify(
-			itr,
-			'(',
-				'"', _f::esc, '"', name, '"',
-			')',
-			','
-		);
-	}
-	--itr; // Ignore trailing comma
-	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	
 	itr = buf;
 	compsky::asciify::asciify(
@@ -151,37 +145,31 @@ int main(const int argc, const char** argv){
 	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
 		const char* const name = argv[j];
+		static char _buf[4096];
 		compsky::asciify::asciify(
-			itr,
-			"("
-				"\"",
-					_f::esc, '"',  (name[0] == '/') ? "" : cwd,
-					_f::esc, '"', name,
-				"\""
-			"),"
+			_buf,
+			(name[0] == '/') ? "" : cwd,
+			name,
+			'\0'
 		);
+		insert_file_from_path(_buf);
 	}
-	--itr; // Ignore trailing comma
-	compsky::asciify::asciify(
-		itr,
-		" ON DUPLICATE KEY UPDATE name=name" // i.e. IGNORE
-	);
-	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	
 	itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"INSERT IGNORE INTO file2tag (file_id, tag_id) "
+		"INSERT INTO file2tag (file_id, tag_id) "
 		"SELECT f.id, t.id "
 		"FROM file f, tag t "
 		"WHERE f.name IN ("
 	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
-		const char* const name = argv[j];
+		const char* name = argv[j];
+		if (name[0] == '/')
+			name = basename(name);
 		compsky::asciify::asciify(
 			itr,
 			'"',
-				_f::esc, '"',  (name[0] == '/') ? "" : cwd,
 				_f::esc, '"', name,
 			'"',
 			','
@@ -205,13 +193,13 @@ int main(const int argc, const char** argv){
 		itr,
 		")"
 	);
-	compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+	compsky::mysql::exec_buffer(_mysql::obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	
 	for (const Variable var : variable_values){
 		/*MYSQL_RES* res;
 		MYSQL_ROW  row;
 		compsky::mysql::query(
-			mysql_obj,
+			_mysql::obj,
 			res,
 			buf,
 			"SELECT conversion "
@@ -224,7 +212,7 @@ int main(const int argc, const char** argv){
 		itr = buf;
 		compsky::asciify::asciify(
 			itr,
-			"INSERT IGNORE INTO file2", var.name, " "
+			"INSERT INTO file2", var.name, " "
 			"(file, x) "
 			"SELECT id, "
 		);
@@ -235,14 +223,15 @@ int main(const int argc, const char** argv){
 			case 's':
 				char _insert_string_var[1024];
 				compsky::mysql::exec(
-					mysql_obj,
+					_mysql::obj,
 					_insert_string_var,
-					"INSERT IGNORE INTO file2_", var.name, " "
+					"INSERT INTO file2_", var.name, " "
 					"(s)"
 					"VALUES"
 					"("
 						"\"", _f::esc, '"', var.value, "\""
 					")"
+					"ON DUPLICATE KEY UPDATE s=s"
 				);
 				compsky::asciify::asciify(
 					itr,
@@ -273,7 +262,8 @@ int main(const int argc, const char** argv){
 		compsky::asciify::asciify(
 			itr,
 			")"
+			"ON DUPLICATE KEY UPDATE file=file"
 		);
-		compsky::mysql::exec_buffer(mysql_obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
+		compsky::mysql::exec_buffer(_mysql::obj,  buf,  (uintptr_t)itr - (uintptr_t)buf);
 	}
 }

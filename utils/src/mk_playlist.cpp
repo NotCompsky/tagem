@@ -44,14 +44,33 @@ std::vector<char*> COMMAND_ARGS; // Actually const char*, but interfaces with ex
 #endif
 
 
-const char* jump_to_filename(const char* fp){
-	const char* s = fp;
+template<typename String>
+String jump_to_filename(String fp){
+	String s = fp;
 	while(*fp != 0){
 		if (*fp == '/')
 			s = fp + 1;
 		++fp;
 	}
 	return s;
+}
+
+
+template<typename String>
+String at_last_slash(String s){
+	while(*s != 0)
+		++s;
+	while(*s != '/')
+		--s;
+	return s;
+}
+
+
+void copy_filename(const char* from,  char* to){
+	from = at_last_slash(from);
+	to = at_last_slash(to);
+	while(*from != 0)
+		*(++to) = *(++from);
 }
 
 
@@ -83,25 +102,28 @@ void process_rule(InlistFilterRules& r,  const char* const rule_name,  const cha
 	
 	static const char* _fp;
 	while(compsky::mysql::assign_next_row__no_free(res, &row, &_fp)){
-		// It is free'd by InlistFilterRules::get_results
-		const char* fp_ = _fp;
-		if (STRIP_TO_FILENAMES)
-			fp_ = jump_to_filename(_fp);
 		static char buf[4096];
+		memcpy(buf,  _fp,  strlen(_fp) + 1);
+		// It is free'd by InlistFilterRules::get_results
+		char* fp_ = buf;
+		if (STRIP_TO_FILENAMES)
+			fp_ = jump_to_filename(fp_);
 		if (PREFIX != nullptr){
 			memcpy(buf,  PREFIX,  PREFIX_LEN);
 			memcpy(buf + PREFIX_LEN,  fp_,  strlen(fp_) + 1);
 			fp_ = buf;
 		}
 		if (EXTRACT_AUDIO_INTO_DIR != nullptr){
-			static char buf[4096];
-			memcpy(buf, EXTRACT_AUDIO_INTO_DIR, strlen(EXTRACT_AUDIO_INTO_DIR));
-			memcpy(buf + strlen(EXTRACT_AUDIO_INTO_DIR),  jump_to_filename(_fp),  strlen(jump_to_filename(_fp)) + 1); // TODO: Reduce number of memcpy calls (the first one only needed once, not every iteration)
+			static char buf2[4096];
+			memcpy(buf2, EXTRACT_AUDIO_INTO_DIR, strlen(EXTRACT_AUDIO_INTO_DIR));
+			memcpy(buf2 + strlen(EXTRACT_AUDIO_INTO_DIR),  jump_to_filename(_fp),  strlen(jump_to_filename(_fp)) + 1); // TODO: Reduce number of memcpy calls (the first one only needed once, not every iteration)
 			int rc;
-			if (rc = extract_audio(buf, _fp, EXTRACT_AUDIO, PRINT_EXTRACTED_AUDI_OUTFILE_PATHS)){
-				fprintf(stderr,  "Cannot extract audio: error #%d\nFrom %s\nTo   %s\n",  rc,  _fp,  buf);
+			if (rc = extract_audio(buf2, _fp, EXTRACT_AUDIO, PRINT_EXTRACTED_AUDI_OUTFILE_PATHS)){
+				fprintf(stderr,  "Cannot extract audio: error #%d\nFrom %s\nTo   %s\n",  rc,  _fp,  buf2);
 				continue;
 			}
+			copy_filename(buf2, fp_);
+			printf("%s\n", fp_);
 		}
 #ifdef EXEC_CMD
 		if (COMMAND_ARGS.size() != 0){
@@ -206,7 +228,7 @@ int main(const int argc,  char** argv){
 				PREFIX_LEN = strlen(PREFIX);
 				break;
 			case 'x':
-				EXTRACT_AUDIO_INTO_DIR = *(++argv);
+				EXTRACT_AUDIO_INTO_DIR = *(++argv); // WARNING: Fails totally if does not end with slash. TODO: Fix this.
 				break;
 			case 'X':
 				EXTRACT_AUDIO = true;

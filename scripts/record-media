@@ -4,7 +4,25 @@
 DIR_ROOT="$1"
 DEVICE="$2"
 if [ "$DEVICE" = "" ]; then
+	if [ "$YTDL" = "" ]; then
+		EXIT=1
+	fi
+fi
+if [ "$(echo "@@@$FORCE_TRANSLATE_dir_id@@@$FORCE_TRANSLATE_regexp@@@" | grep '@@@@@@[^@]')" ]; then
+	EXIT=1
+fi
+if [ "$EXIT" ]; then
 	echo "USAGE: $0 [DIR_ROOT] [DEVICE_NAME]" >&2
+	echo "Options" >&2
+	echo "	export YTDL=[URL]" >&2
+	echo "		youtube-dl URL into DIR_ROOT (DIR_ROOT must not contain strings like %(...)s)" >&2
+	echo "		If DIR_ROOT is not set, then no videos are downloaded, but they will still be recorded in the database" >&2
+	echo "	export FORCE_TRANSLATE_dir_id=[DIR_ID]" >&2
+	echo "	export FORCE_TRANSLATE_regexp=[SED_REPLACE_EXPRESSION]" >&2
+	echo ""
+	echo "Environmental Variables" >&2
+	echo "	USERNAME" >&2
+	echo "		Username recognised by the server" >&2
 	exit
 fi
 
@@ -22,93 +40,226 @@ mysql_exec(){
 }
 
 
+# Just use the server (lazy solution)
+insert_dir(){
+	curl "http://localhost:1999/d/add/0/" -H "Cookie: username=$USERNAME" --data-raw "$1"
+}
+
+
+sarst_regexp='(/(videos?|watch)(|[-/]|[?]v=))([a-z0-9]{5,18})(/[^/]*)?$'
+
+
+if [ "$GUESS_DIR_FROM_FNAME" = "" ]; then
+	GUESS_DIR_FROM_FNAME='
+Gfycat
+^([A-Z][a-z]{3,12}){3}[.](mp4|gif|webm)
+4309
+s/[.][a-z34]+$//g'
+fi
+
+if [ "$GET_ID_FROM_URL" = "" ]; then
+	GET_ID_FROM_URL='
+YouTube
+^https?://www.youtube.com/watch[?]v=([A-Za-z0-9]+)[^A-Za-z0-9].*$
+\1'
+fi
+
+
+dl_files=1
+if [ "$YTDL" ]; then
+	cmds=(youtube-dl --quiet -i)
+	if [ "$DL" ]; then
+		cmds+=(--print-json -o "$DIR_ROOT/%(extractor)s-%(id)s.%(ext)s")
+	else
+		cmds+=(--dump-json)
+		dl_files=""
+	fi
+	cmds+=("$YTDL")
+	is_piped=""
+else
+	cmds=(find "$DIR_ROOT" -type f -regextype sed -iregex ".*[.]\(mp3\|webm\|opus\|ogg\|jpe\?g\|png\|mp4\|mkv\|gif\|avi\|mov\)$")
+	cmds2=(sed -E 's/^(.*[.])([^.]+)$/\1\2\n\1info.json/g')
+	is_piped=1
+fi
+
+
 while read -r media_path; do
-	read -r info_json_path
+	json=""
+	if [ "$YTDL" ]; then
+		json="$media_path"
+		read -r media_path < <(jq '._filename' <<< "$json")
+		media_path="${media_path:1:-1}"
+	else
+		read -r info_json_path
+		json="$(cat "$info_json_path")"
+	fi
 	
 	file_name_on_disk="$(basename "$media_path")"
-	dir_name_on_disk="$(dirname "$media_path")"
+	dir_name_on_disk="$(dirname "$media_path")/"
 	
-	if [ -f "$info_json_path" ]; then
-		while read -r url; do
-			read -r thumbnail
-			read -r w
-			read -r h
-			read -r duration
-			read -r fps
-			read -r views
-			read -r views2
-			read -r likes
-			read -r likes2
-			read -r dislikes
-			read -r dislikes2
-			read -r date
-			read -r uploader
-			read -r title
-			read -r descr
+	ehhhh_ok=""
+	if [ "$json" ]; then
+		dummy=1
+	elif [ "$FORCE_TRANSLATE_dir_id" ]; then
+		ehhhh_ok="$FORCE_TRANSLATE_dir_id"
+		ehh_ok_regexp="$FORCE_TRANSLATE_regexp"
+	else
+		while read -r blank_line; do
+			read -r description
+			read -r filename_regexp
+			read -r dir_id
+			read -r substitution_regexp
 			
-			if [ "$views" = null ]; then
-				views="$views2"
-			fi
-			if [ "$likes" = null ]; then
-				likes="$likes2"
-			fi
-			if [ "$dislikes" = null ]; then
-				dislikes="$dislikes2"
+			if [ "$substitution_regexp" = "" ]; then
+				break
 			fi
 			
+			if [ "$(echo "$file_name_on_disk" | grep -E -- "$filename_regexp")" ]; then
+				ehhhh_ok="$dir_id"
+				ehh_ok_regexp="$substitution_regexp"
+				break
+			fi
+		done <<< "$GUESS_DIR_FROM_FNAME"
+		if [ "$ehhhh_ok" = "" ]; then
+			continue
+		fi
+	fi
+	
+	while read -r url; do
+		read -r thumbnail
+		read -r w
+		read -r h
+		read -r duration
+		read -r fps
+		read -r views
+		read -r views2
+		read -r likes
+		read -r likes2
+		read -r dislikes
+		read -r dislikes2
+		read -r timestamp
+		read -r date
+		read -r uploader
+		read -r title
+		read -r descr
+		
+		if [ "$views" = null ]; then
+			views="$views2"
+		fi
+		if [ "$likes" = null ]; then
+			likes="$likes2"
+		fi
+		if [ "$dislikes" = null ]; then
+			dislikes="$dislikes2"
+		fi
+		
+		t_origin="$timestamp"
+		if [ "$timestamp" = null ]; then
+			t_origin=""
+		elif [ "$timestamp" = 0 ]; then
+			t_origin=""
+		fi
+		if [ "$t_origin" = "" ]; then
 			t_origin="$(date -d "${upload_date:1:-1}" +%s)"
 			if [ "$t_origin" = "" ]; then
 				t_origin=0
 			fi
+		fi
+		
+		IFS=$'\t' read -r dname fname < <(echo "$url" | sed -E 's_^"https?://(.*/)([^/]+)/?"$_https://\1\t\2_g')
+		if [ "$fname" = "" ]; then
+			echo "ERROR: fname is empty" >&2
+			echo "dname == $dname" >&2
+			echo "media_path == $media_path" >&2
+			break
+		fi
+		
+		matched_GET_ID_FROM_URL=""
+		while read -r blank_line; do
+			read -r description
+			read -r url_regexp
+			read -r replacement
 			
-			echo "$url"
-			IFS=' ' read -r dname fname < <(echo "$url" | sed -E 's_/([^/]+)/?$_/" "\1_g')
-			
-			if [ "$dname" = "\"https://www.youtube.com/\"" ]; then
-				dname="\"https://www.youtube.com/watch?v=\""
-				fname="\"${fname:9}"
-			else
-				mysql_exec "INSERT INTO _dir (name,device,user) VALUES ($dname,(SELECT id FROM _device WHERE name='https://'),4) ON DUPLICATE KEY UPDATE user=user"
+			if [ "$(echo "$url" | grep "$url_regexp")" ]; then
+				fname="$(echo "$url" | grep -E "s_${url_regexp}_${replacement}_g")"
+				matched_GET_ID_FROM_URL=1
+				break
 			fi
+		done <<< "$GET_ID_FROM_URL"
+		
+		if [ "$matched_GET_ID_FROM_URL" ]; then
+			dummy=1
+		elif [ "$(echo "$dname" | grep -E "$sarst_regexp")" ]; then
+			IFS=$'\t' read -r dname fname < <(echo "$dname" | sed -E "s_${sarst_regexp}_"'\1\t\4_g')
 			
-			echo "$fname"
-			echo "$dname"
-			echo ""
-			
-			dir_identifier="(SELECT id FROM _dir WHERE name=$dname)"
-			
-			mysql_exec "INSERT INTO _file (user,dir,name,title,description,w,h,duration,fps,views,likes,dislikes,t_origin) VALUES(
+			insert_dir "$dname"
+		elif [ "$(echo "$dname" | grep '/[0-9]\+/')" ]; then
+			echo "Directory seems to include ID" >&2
+			echo "dname == $dname" >&2
+			echo "fname == $fname" >&2
+			read -p "Input dir  name: https://" dname < /dev/tty
+			dname="https://$dname"
+			read -p "Input file name: " fname < /dev/tty
+		else
+			insert_dir "$dname"
+		fi
+		
+		echo "$fname"
+		echo "$dname"
+		echo ""
+		
+		dname="\"$dname\""
+		fname="\"$fname\""
+		
+		dir_identifier="(SELECT id FROM _dir WHERE full_path=$dname)"
+		
+		mysql_exec "INSERT INTO _file (user,dir,name,title,description,w,h,duration,fps,views,likes,dislikes,t_origin) VALUES(
 4,
 $dir_identifier,
 $fname,LEFT($title,100),LEFT($descr,1000),$w,$h,$duration,$fps,$views,$likes,$dislikes,$t_origin
-			) ON DUPLICATE KEY UPDATE
-			w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin)"
-			
-			file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=(SELECT id FROM _dir WHERE name=$dname))"
-			
-			if [ "$thumbnail" = null ]; then
-				dummy=1
-			else
-				mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($file_identifier,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
+		) ON DUPLICATE KEY UPDATE
+		w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin)"
+		
+		file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=(SELECT id FROM _dir WHERE full_path=$dname))"
+		
+		if [ "$thumbnail" = null ]; then
+			dummy=1
+		else
+			mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($file_identifier,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
+		fi
+		
+		if [ "$uploader" = null ]; then
+			dummy=1
+		else
+			uploader="\"Uploader: ${uploader:1}"
+			mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
+			if mysql_exec "INSERT INTO tag2parent (id,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE parent=parent"; then
+				echo "Tag \"Uploader\" does not exist" >&2
+				exit
 			fi
-			
-			if [ "$uploader" = null ]; then
-				dummy=1
-			else
-				uploader="\"Uploader: ${uploader:1}"
-				mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
-				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
-					echo "Tag \"Uploader\" does not exist" >&2
-					exit
-				fi
-				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $file_identifier, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
-			fi
-			
-			mysql_exec "INSERT INTO _dir (name,device,user) VALUES (\"$dir_name_on_disk\",(SELECT id FROM _device WHERE name=\"$DEVICE\"),4) ON DUPLICATE KEY UPDATE user=user"
-			mysql_exec "INSERT INTO file_backup (user,file,dir,name,mimetype) VALUES (
-			4,
-			$file_identifier,(SELECT id FROM _dir WHERE name=\"$dir_name_on_disk\"),\"$file_name_on_disk\",(SELECT id FROM ext2mimetype WHERE name=\"${file_name_on_disk##*.}\")
-			) ON DUPLICATE KEY UPDATE file=file"
-		done < <(jq '.webpage_url, .thumbnail, .width, .height, .duration, .fps, .view_count, .views, .like_count, .likes, .dislike_count, .dislikes, .date, .uploader, .title, .description' "$info_json_path")
+			mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $file_identifier, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
+		fi
+	done < <(jq '.webpage_url, .thumbnail, .width, .height, .duration, .fps, .view_count, .views, .like_count, .likes, .dislike_count, .dislikes, .timestamp, .date, .uploader, .title, .description' <<< "$json")
+	
+	if [ "$dl_files" = "" ]; then
+		continue
 	fi
-done < <(find "$DIR_ROOT" -type f -regextype sed -iregex ".*[.]\(mp3\|webm\|opus\|ogg\|jpe\?g\|png\|mp4\|mkv\|gif\|avi\|mov\)$" | sed -E 's/^(.*[.])([^.]+)$/\1\2\n\1info.json/g')
+	
+	if [ "$ehhhh_ok" ]; then
+		fname="\"$(echo "$file_name_on_disk" | sed -E "$ehh_ok_regexp")\""
+		mysql_exec "INSERT INTO _file (user,dir,name) VALUES (4,$ehhhh_ok,$fname) ON DUPLICATE KEY UPDATE dir=dir"
+		file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=$ehhhh_ok)"
+	fi
+	
+	insert_dir "$dir_name_on_disk"
+	mysql_exec "INSERT INTO file_backup (user,file,dir,name,mimetype) VALUES (
+	4,
+	$file_identifier,(SELECT id FROM _dir WHERE full_path=\"$dir_name_on_disk\"),\"$file_name_on_disk\",(SELECT id FROM ext2mimetype WHERE name=\"${file_name_on_disk##*.}\")
+	) ON DUPLICATE KEY UPDATE file=file"
+done < <(
+	if [ "$is_piped" ]; then
+		"${cmds[@]}" | "${cmds2[@]}"
+	else
+		"${cmds[@]}"
+	fi
+)
