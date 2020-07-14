@@ -21,10 +21,10 @@ mysql_exec(){
 
 
 if [ "$URLS_MUST_END_WITH_SLASH" = "" ]; then
-	URLS_MUST_END_WITH_SLASH="^$"
+	URLS_MUST_END_WITH_SLASH='^$'
 fi
 if [ "$TRY_AGAIN_FROM" = "" ]; then
-	TRY_AGAIN_FROM="^$"
+	TRY_AGAIN_FROM='^$'
 fi
 
 
@@ -78,7 +78,7 @@ while read -r id url; do
 		
 		
 		if [ "$ytdl_err" ]; then
-			if [ "$(echo "$url" | grep 'gfycat')" ]; then
+			if [ "$(echo "$url" | grep "$TRY_AGAIN_FROM")" ]; then
 				url="$(echo "$url" | sed -E "s_${TRY_AGAIN_FROM}_${TRY_AGAIN_TO}_g")"
 				echo "Trying again with url: $url" >&2
 				continue
