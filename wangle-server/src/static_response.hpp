@@ -82,7 +82,7 @@ namespace _r {
 	constexpr static const std::string_view EMPTY_JSON_LIST = 
 		#include "headers/return_code/OK.c" // To encourage browsers to cache it.
 		#include "headers/Content-Type/json.c"
-		#include "headers/Cache-Control/1day.c"
+		CACHE_CONTROL_HEADER
 		"Content-Length: 2\n"
 		"\n"
 		"[]"

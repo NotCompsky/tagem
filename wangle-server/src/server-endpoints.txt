@@ -3,7 +3,7 @@ GET / >
 	return
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/html.c"
-		#include "headers/Cache-Control/1day.c"
+		CACHE_CONTROL_HEADER
 		"\\n"
 		#include "html/profile.html"
 
@@ -72,14 +72,14 @@ GET /favicon.ico >
 		std::string_view(
 			#include "headers/return_code/OK.c"
 			#include "headers/Content-Type/ico.c"
-			#include "headers/Cache-Control/1day.c"
+			CACHE_CONTROL_HEADER
 			"Content-Length: 318\\n"
 			"\\n"
 			#include "favicon.txt"
 			, std::char_traits<char>::length(
 				#include "headers/return_code/OK.c"
 				#include "headers/Content-Type/ico.c"
-				#include "headers/Cache-Control/1day.c"
+				CACHE_CONTROL_HEADER
 				"Content-Length: 318\\n"
 				"\\n"
 			) + 318

@@ -1,5 +1,7 @@
 #define DEBUG
 
+#define CACHE_CONTROL_HEADER "Cache-Control: max-age=" MAX_CACHE_AGE "\n"
+
 #include "FrameDecoder.h"
 #include "CStringCodec.h"
 #include "skip_to_body.hpp"
@@ -527,7 +529,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		constexpr static const char* const prefix =
 			#include "headers/return_code/OK.c"
 			#include "headers/Content-Type/png.c"
-			#include "headers/Cache-Control/1day.c"
+			CACHE_CONTROL_HEADER
 			"Content-Length: "
 		;
 		constexpr static const size_t prefix_len = std::char_traits<char>::length(prefix);
@@ -2991,7 +2993,7 @@ int main(int argc,  const char* const* argv){
 	std::string db_name2id_json =
 		#include "headers/return_code/OK.c"
 		#include "headers/Content-Type/json.c"
-		#include "headers/Cache-Control/1day.c"
+		CACHE_CONTROL_HEADER
 		"\n"
 		"{\""
 	;

@@ -28,6 +28,10 @@ else()
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
 endif()
 
+if(NOT MAX_CACHE_AGE)
+	set(MAX_CACHE_AGE "0")
+endif()
+
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -51,6 +55,7 @@ target_link_libraries(server wangle::wangle mariadbclient curl)
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
 endif()
+target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
 
 add_custom_target(
 	auto__server_determine_response_hpp ALL
