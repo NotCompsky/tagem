@@ -89,7 +89,7 @@
 #define USER_DISALLOWED_DIRS_INNER_PRE \
 		"SELECT d2t.dir AS id " \
 		JOIN_TAG_BLACKLIST \
-		"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.tag=t2pt.id" \
+		"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.tag=t2pt.id " \
 		"WHERE u2ht.user="
 #define USER_DISALLOWED_DIRS(user_id) \
 	"(" \
