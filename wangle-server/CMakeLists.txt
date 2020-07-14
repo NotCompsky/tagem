@@ -83,5 +83,12 @@ add_custom_target(
 	COMMENT "Generating minimised JavaScript header"
 )
 
-add_dependencies(server auto__server_determine_response_hpp js_hpp)
+add_custom_target(
+	svg_hpp ALL
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/html/svg/svggen.py" "${SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
+	BYPRODUCTS "${SRC_DIR}/html/svg.hpp"
+	COMMENT "Generating SVG icons header"
+)
+
+add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)
