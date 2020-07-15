@@ -917,7 +917,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		
 		this->mysql_query_after_itr(
-			"SELECT d.id, d.name, d.device "
+			"SELECT d.id, d.full_path, d.device "
 			"FROM _dir d "
 			"WHERE d.id IN("
 				"SELECT dir "
@@ -1998,6 +1998,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
+			  "AND ", (dir_id==0)?"0=":"f2.dir=", dir_id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 		);
