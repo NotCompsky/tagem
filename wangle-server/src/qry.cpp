@@ -276,7 +276,7 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 static
 const char* get_tbl_name_from_attr_name(const char* const attribute_name){
 	if ((attribute_name == attribute_name::PARENT) or (attribute_name == attribute_name::PARENTY))
-		return "tag";
+		return "_tag";
 	return attribute_name;
 }
 
@@ -864,9 +864,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				const auto value_kind = get_attribute_value_kind(attribute_name);
 				
 				if (attribute_kind == attribute_kind::many_to_many){
-					where += " X.id IN(SELECT ";
-					where += tbl_full_name(which_tbl);
-					where += " FROM ";
+					where += " X.id IN(SELECT id FROM ";
 					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
 					where += " WHERE ";
 					add_many2many_field_name(where, attribute_name, which_tbl);
