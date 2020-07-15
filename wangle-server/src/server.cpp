@@ -2333,13 +2333,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				const char* file_name;
 				const char* ext = nullptr;
 				
-				get_file_name_and_ext(url, file_name, ext);
+				char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
+				char _url_buf[4096];
+				compsky::asciify::asciify(_url_buf, _f::strlen, url, url_len, '\0');
+				get_file_name_and_ext__filename_ends_with_newline_or_null(_url_buf, file_name, ext);
 				
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 				
-				char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-				compsky::asciify::asciify(this->file_path, _f::strlen, url, url_len, '\0');
-				switch(this->dl_file(user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, this->file_path, is_html_file, mimetype, true, is_ytdl)){
+				switch(this->dl_file(user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _url_buf, is_html_file, mimetype, true, is_ytdl)){
 					case FunctionSuccessness::server_error:
 						++n_errors;
 					case FunctionSuccessness::ok:
@@ -2362,7 +2363,19 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					"FROM mimetype mt "
 					"JOIN _file f ON f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
 					"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\" "
+					"ON DUPLICATE KEY UPDATE file=file"
 				);
+				
+				if (mimetype[0]){
+					this->mysql_exec(
+						"UPDATE _file f "
+						"JOIN file_backup f2 ON f2.file=f.id "
+						"SET f.mimetype=f2.mimetype "
+						"WHERE f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
+						  "AND f2.name=\"", _f::esc, '"', f_name, "\" "
+						  "AND f2.dir=", dl_backup_into_dir_id
+					);
+				}
 			}
 		}
 		

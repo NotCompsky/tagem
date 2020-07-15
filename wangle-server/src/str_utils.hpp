@@ -213,3 +213,17 @@ bool in_str_not_at_end(const char* const str,  const char c){
 static_assert(in_str_not_at_end("www.youtube.com/watch?v=ABCDEFGHIJK", '/'));
 static_assert(not in_str_not_at_end("watch?v=ABCDEFGHIJK", '/'));
 static_assert(not in_str_not_at_end("foobar/", '/'));
+
+
+
+constexpr
+void get_file_name_and_ext__filename_ends_with_newline_or_null(const char* itr,  const char*& file_name,  const char*& ext){
+	while((*itr != 0) and (*itr != '\n')){
+		if (*itr == '/')
+			file_name = itr;
+		else if (*itr == '.')
+			ext = itr;
+		++itr;
+	}
+	++file_name; // Skip the slash
+}
