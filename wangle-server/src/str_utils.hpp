@@ -158,10 +158,12 @@ const char* basename__accepting_trailing_slash(const char* path){
 	while(*path != 0){
 		if (*path == '/'){
 			if (*(++path) == 0)
+				// NOTE: The next character won't be a slash
 				break;
 			// Do not set as start of fname if it is the end of the path
 			fname = path;
 		}
+		++path;
 	}
 	return fname;
 }
