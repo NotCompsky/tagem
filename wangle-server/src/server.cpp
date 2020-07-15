@@ -161,11 +161,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		")" \
 		"AND file NOT IN" USER_DISALLOWED_FILES(user_id) \
 		"GROUP BY tag" \
-	")A ON A.tag=t.id "
+	")A ON A.tag=t.id " \
+	"LEFT JOIN user2hidden_tag u2ht ON u2ht.tag=t.id AND u2ht.user=", user_id, " "
 #define WHERE_TAGS_INFOS(...) \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
 	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id) \
+	"AND u2ht.tag IS NULL " \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
@@ -947,8 +949,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM _tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
 			"JOIN era e ON e.id=e2t.era "
+			"LEFT JOIN user2hidden_tag u2ht ON u2ht.tag=t.id AND u2ht.user=", user_id, " "
 			"WHERE e.file=", id, " "
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+			  "AND u2ht.tag IS NULL"
 		);
 		this->init_json_rows(
 			this->itr, _r::flag::dict,

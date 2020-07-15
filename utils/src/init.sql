@@ -252,12 +252,17 @@ CREATE TABLE tag2parent_tree (
 );
 
 CREATE TABLE user2blacklist_tag (
+	-- Anything tagged with any of these tags are invisible to the user
 	user INT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (tag) REFERENCES _tag (id),
 	PRIMARY KEY (user,tag)
 );
+
+CREATE TABLE user2hidden_tag LIKE user2blacklist_tag;
+-- The tags are invisible to the user
+-- Only stops tags from appearing to the client. Does not, for instance, filter out qry results.
 
 CREATE TABLE file2tag (
 	file BIGINT UNSIGNED NOT NULL,
