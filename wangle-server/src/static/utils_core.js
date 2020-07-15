@@ -6,6 +6,7 @@ function $$$hide_all_except(ids,classes){
 	$$$hide_class('help');
 	for(const id of [
 		'text-editor',
+		'add-f-backup-toggle-container',
 		'add-f-backup',
 		'f',
 		'd',

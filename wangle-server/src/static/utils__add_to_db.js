@@ -58,8 +58,14 @@ function $$$add_to_db(obj_type){
 		return;
 	}
 	
+	const backup_dir_id = $$$get_dir_id_to_backup_into();
+	if(backup_dir_id===""){
+		$$$alert("Backup requested, but no directory selected");
+		return;
+	}
+	
 	$$$ajax_POST_data_w_text_response(
-		"/" + obj_type + "/add/" + tag_ids.join(",")+"/",
+		"/" + obj_type + "/add/" + tag_ids.join(",")+"/" + backup_dir_id + "/" + $$$is_ytdl_checked(), // is_ytdl_checked is meaningless for anything other than files. Safe to include though.
 		urls.join("\n"),
 		function(){
 			tagselect.val("").change();
@@ -69,6 +75,17 @@ function $$$add_to_db(obj_type){
 				$$$refetch_json(obj_type, '/a/'+obj_type+'.json');
 		}
 	);
+}
+
+function $$$get_dir_id_to_backup_into(){
+	const x = $$$document_getElementById("add-f-backup-toggle");
+	if($$$is_node_hidden(x)||(!x.checked))
+		return "0";
+	return $('#dirselect').val();
+}
+
+function $$$is_ytdl_checked(){
+	return $$$document_getElementById('add-f-backup-ytdl').checked ? 1 : 0;
 }
 
 function $$$add_to_db__append(obj_type){

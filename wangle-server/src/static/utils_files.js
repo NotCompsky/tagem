@@ -531,6 +531,7 @@ var $$$playlist_file_ids;
 function $$$playlist_listener(){
 	if(!$$$is_playlist_running())
 		return;
+	$$$yt_player.jump_to_t = undefined;
 	$$$playlist_file_ids.push($$$playlist_file_ids.shift());
 	$$$view_file($$$playlist_file_ids[0]);
 }

@@ -25,3 +25,7 @@ function $$$set_node_visibility(node,b){
 	else
 		node.classList.add("hidden");
 }
+
+function $$$is_node_hidden(node){
+	return node.classList.contains("hidden");
+}

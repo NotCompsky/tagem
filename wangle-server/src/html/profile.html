@@ -3,11 +3,14 @@
 #include "svg/svg.hpp"
 
 
-#define ADD_TOGGLE(id, name) \
+#define ADD_TOGGLE_WITH_ACTION(id, name, fn) \
 	"<div id=\"" id "-container\" class=\"toggle-container\">" \
 		"<b class=\"toggle-name\">" name "</b>" \
-		"<input id=\"" id "\" type=\"checkbox\" class=\"toggle-input\"/>" \
+		"<input id=\"" id "\" type=\"checkbox\" class=\"toggle-input\" onclick=\"" fn "()\"/>" \
 	"</div>"
+
+#define ADD_TOGGLE(id, name) \
+	ADD_TOGGLE_WITH_ACTION(id, name, "")
 
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
@@ -278,6 +281,10 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
 		"<button onclick=\"" MINIMISED_JS_DECL_add_to_db "('" BOOST_PP_TUPLE_ELEM(0, elem) "')\">Add to database</button>" \
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("t","New Tag Name")("f","File URL, e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ")("d","'Directory' URL, i.e. a prefix of file URLS, e.g. https://www.youtube.com/watch?v=")("D","'Device' URL, e.g. https://youtube.com/")))
+
+"<div id=\"add-f-backup-toggle-container\">"
+	ADD_TOGGLE_WITH_ACTION("add-f-backup-toggle","Download Locally?", MINIMISED_JS_DECL_toggle_file_add_backup_dialog)
+"</div>"
 
 "<div id=\"add-f-backup\" class=\"hidden\">"
 	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"

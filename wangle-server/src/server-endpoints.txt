@@ -105,8 +105,6 @@ POST /e/t/>
 	return this->post__add_tags_to_eras(++str)
 POST /x/c/rm/>
 	return this->external_cmnt_rm(++str)
-POST /dl/>
-	return this->post__dl(++str)
 POST /t/c/>
 	return this->post__add_children_to_tags(++str)
 POST /t/c-/>

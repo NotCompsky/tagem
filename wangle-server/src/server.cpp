@@ -123,13 +123,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	DatabaseInfo& db_info = db_infos.at(db_indx);
 
 #define GET_NUMBER(type,name) \
-	const type name = a2n<type>(&s);
+	const type name = a2n<type>(&s); \
+	++s;
 
 #define GET_NUMBER_NONZERO(type,name) \
 	GET_NUMBER(type,name) \
 	if (unlikely(name == 0)) \
-		return _r::not_found; \
-	++s; // Skip trailing slash or space
+		return _r::not_found;
 
 
 #define GET_FILE2_VAR_NAME(s) \
@@ -2236,17 +2236,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return false;
 	}
 	
-	bool add_file_or_dir_to_db(const char which_tbl,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const char* const mimetype = ""){
+	FunctionSuccessness add_file_or_dir_to_db(const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
 		uint64_t parent_dir_id = 0;
+		unsigned n_errors = 0;
 		while(true){
 			this->qry_mysql_for_next_parent_dir(user_id,  "id, LENGTH(name)",  parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
 			size_t closest_parent_dir_length = 0;
 			while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
 			if (unlikely(closest_parent_dir_length == 0)){
 				// No such directory was found. This is probably because the user does not have permission to view an ancestor directory.
-				return true;
+				return FunctionSuccessness::malicious_request;
 			}
 			offset += closest_parent_dir_length;
 			size_t url_len_of_next_step = n_chars_until_char_in(url + offset, '/', '\n', '\0');
@@ -2290,7 +2291,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// Directory that we are trying to add already existed
 			// Maybe we should still tag it...?
 			// NOTE: The behaviour for attempting to add existing files is to still tag them
-			return false;
+			return FunctionSuccessness::ok;
 		
 		// Add entry to primary table
 		if (which_tbl == 'd'){
@@ -2324,6 +2325,42 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 				"LIMIT 1"
 			);
+			
+			if (dl_backup_into_dir_id != 0){
+				const char* file_name;
+				const char* ext = nullptr;
+				
+				get_file_name_and_ext(url, file_name, ext);
+				
+				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
+				
+				char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
+				compsky::asciify::asciify(this->file_path, _f::strlen, url, url_len, '\0');
+				switch(this->dl_file(user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, this->file_path, is_html_file, mimetype, true, is_ytdl)){
+					case FunctionSuccessness::server_error:
+						++n_errors;
+					case FunctionSuccessness::ok:
+						break;
+					case FunctionSuccessness::malicious_request:
+						return FunctionSuccessness::malicious_request;
+				}
+				
+				const char* f_name = basename__accepting_trailing_slash(this->file_path);
+				
+				this->mysql_exec(
+					"INSERT INTO file_backup"
+					"(file,dir,name,user,mimetype)"
+					"SELECT "
+						"f.id,",
+						dl_backup_into_dir_id, ',',
+						'"', _f::esc, '"', f_name, '"', ',',
+						user_id, ',',
+						"mt.id "
+					"FROM mimetype mt "
+					"JOIN _file f ON f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
+					"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\" "
+				);
+			}
 		}
 		
 		// Add tags
@@ -2356,7 +2393,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			);
 		}
 		
-		return false;
+		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
 	}
 	
 	std::string_view add_to_tbl(const char tbl,  const char* s){
@@ -2366,6 +2403,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
 		// NOTE: A tag_ids of "0" should be allowed, at least for adding directories.
 		++s; // Skip trailing slash
+		GET_NUMBER(uint64_t,dir_id)
+		GET_NUMBER(bool,is_ytdl)
+		
+		const char* const user_headers = s;
 		
 		GET_USER_ID
 		
@@ -2384,8 +2425,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			switch(tbl){
 				case 'f':
 				case 'd':
-					if (unlikely(this->add_file_or_dir_to_db(tbl, user_id, tag_ids, tag_ids_len, url, url_len)))
-						return _r::not_found;
+					switch(this->add_file_or_dir_to_db(tbl, user_headers, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl)){
+						case FunctionSuccessness::server_error:
+							return _r::server_error;
+						case FunctionSuccessness::malicious_request:
+							return _r::not_found;
+					}
 					break;
 				case 'D':
 					if (unlikely(this->add_D_to_db(user_id, tag_ids, tag_ids_len, url, url_len)))
@@ -2586,86 +2631,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		}
 		
 		return _r::post_ok;
-	}
-	
-	std::string_view post__dl(const char* s){
-		static char url_buf[4096];
-		
-		GET_NUMBER(uint64_t, dir_id)
-		
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
-		++s; // Skip slash
-		
-		const char* const user_headers = s;
-		
-		GET_USER_ID
-		
-		const bool is_ytdl = false; // TODO: Allow ytdl
-		
-		const char* url = s;
-		unsigned n_errors = 0;
-		while(true){
-			const char c = *s;
-			++s;
-			switch(c){
-				case 0: // unlikely
-					return _r::not_found;
-				case ' ':
-				case ',':
-					const size_t url_len = (uintptr_t)s - (uintptr_t)url - 1;
-					memcpy(url_buf, url, url_len);
-					url_buf[url_len] = 0;
-					
-					const char* itr = url_buf;
-					const char* file_name = nullptr;
-					const char* ext = nullptr;
-					while(*itr != 0){
-						if (*itr == '/')
-							file_name = itr;
-						else if (*itr == '.')
-							ext = itr;
-						++itr;
-					}
-					++file_name; // Skip the slash
-					const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
-					
-					char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-					switch(this->dl_file(user_headers, user_id, dir_id, nullptr, file_name, url_buf, is_html_file, mimetype, true, is_ytdl)){
-						case FunctionSuccessness::server_error:
-							++n_errors;
-						case FunctionSuccessness::ok:
-							break;
-						case FunctionSuccessness::malicious_request:
-							return _r::not_found;
-					}
-					
-					this->add_file_or_dir_to_db('f', user_auth::SpecialUserID::guest, tag_ids, tag_ids_len, url_buf, strlen(url_buf), mimetype);
-					
-					const char* f_name = basename__accepting_trailing_slash(this->file_path);
-					
-					this->mysql_exec(
-						"INSERT INTO file_backup"
-						"(file,dir,name,user,mimetype)"
-						"SELECT "
-							"f.id,",
-							dir_id, ',',
-							'"', _f::esc, '"', f_name, '"', ',',
-							user_id, ',',
-							"mt.id "
-						"FROM mimetype mt "
-						"JOIN _file f ON f.name=\"", _f::esc, '"', f_name, "\" "
-						"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\""
-					);
-					
-					url = s;
-					if (c == ' ')
-						goto post__dl_break2;
-					break;
-			}
-		}
-		post__dl_break2:
-		
-		return (n_errors) ? _r::server_error : _r::post_ok;
 	}
 	
 	void tag_antiparentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
