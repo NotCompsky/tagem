@@ -255,7 +255,7 @@ namespace _r {
 
 class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  const std::string_view> {
   private:
-	constexpr static const size_t buf_sz = 100 * 1024 * 1024; // 100 MiB
+	constexpr static const size_t buf_sz = 20 * 1024 * 1024;
 	char* buf;
 	char* itr;
 	
