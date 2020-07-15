@@ -2074,7 +2074,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* dir_name = nullptr;
 		
 		if (in_str(file_name, '/') and (file_id==nullptr) and not is_ytdl){
-			// TODO: Allow for this
+			fprintf(stderr, "dl_or_cp_file rejected due to slash in file name: %s\n", file_name);
 			rc = FunctionSuccessness::server_error;
 			goto dl_or_cp_file__return;
 		}
@@ -2095,6 +2095,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (not endswith(dir_name, '/')){
 			// TODO: Allow for this
 			rc = FunctionSuccessness::server_error;
+			fprintf(stderr, "dl_or_cp_file rejected due to dir name not ending in slash: %s\n", dir_name);
 			goto dl_or_cp_file__return;
 		}
 		
@@ -2107,6 +2108,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		compsky::asciify::asciify(this->file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
 		
 		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
+		printf("        -> %s\n", this->file_path);
 		
 		this->mysql_free_res();
 		
