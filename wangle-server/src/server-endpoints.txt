@@ -65,8 +65,8 @@ GET /a/x/p/i/>
 GET /a/x/p/l/>
 	return this->external_post_likes(++str)
 
-GET /i/>
-	return this->return_img(++str)
+GET /i/f/>
+	return this->file_thumbnail(++str)
 GET /favicon.ico >
 	return
 		std::string_view(

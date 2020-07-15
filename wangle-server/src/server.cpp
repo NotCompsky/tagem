@@ -1948,20 +1948,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::tag2parent_json;
 	}
 	
-	constexpr
-	std::string_view return_img(const char* s){
-		switch(*(s++)){
-			case 'f':
-				switch(*(s++)){
-					case '/':
-						// /i/f/
-						return this->file_thumbnail(s);
-				}
-				break;
-		}
-		return _r::not_found;
-	}
-	
 	std::string_view stream_file(const char* s){
 		constexpr static const size_t block_sz = 1024 * 1024 * 10;
 		constexpr static const size_t stream_block_sz = 1024 * 1024; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
