@@ -143,6 +143,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found;
 
 
+#define WHERE_HIDDEN_TAGS(tag_id_field) \
+	"AND " tag_id_field " NOT IN(" \
+		"SELECT id " \
+		"FROM tag2parent_tree t2pt " \
+		"JOIN user2hidden_tag u2ht ON u2ht.user=", user_id, " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth " \
+	")"
+
 #define SELECT_TAGS_INFOS_FROM_STUFF(...) \
 	"SELECT " \
 		"t.id," \
@@ -161,13 +168,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		")" \
 		"AND file NOT IN" USER_DISALLOWED_FILES(user_id) \
 		"GROUP BY tag" \
-	")A ON A.tag=t.id " \
-	"LEFT JOIN user2hidden_tag u2ht ON u2ht.tag=t.id AND u2ht.user=", user_id, " "
+	")A ON A.tag=t.id "
+
 #define WHERE_TAGS_INFOS(...) \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
 	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
 	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id) \
-	"AND u2ht.tag IS NULL " \
+	WHERE_HIDDEN_TAGS("t.id") \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
@@ -949,10 +956,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM _tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
 			"JOIN era e ON e.id=e2t.era "
-			"LEFT JOIN user2hidden_tag u2ht ON u2ht.tag=t.id AND u2ht.user=", user_id, " "
 			"WHERE e.file=", id, " "
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
-			  "AND u2ht.tag IS NULL"
+			  WHERE_HIDDEN_TAGS("t.id")
 		);
 		this->init_json_rows(
 			this->itr, _r::flag::dict,
@@ -1486,6 +1492,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM file2tag "
 				"WHERE tag=", id,
 			")"
+			  WHERE_HIDDEN_TAGS("f2t.tag")
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
 			"LIMIT 100 "
@@ -1558,6 +1565,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
 			"ORDER BY FIELD(f.id,", _f::strlen, file_ids, file_ids_len, ")"
 			"LIMIT 100 "
@@ -1672,6 +1680,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f.dir=", id, " "
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
@@ -1706,6 +1715,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE TRUE "
 			  FILE_TBL_USER_PERMISSION_FILTER(user->id)
+			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n

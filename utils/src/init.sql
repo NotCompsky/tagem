@@ -260,9 +260,17 @@ CREATE TABLE user2blacklist_tag (
 	PRIMARY KEY (user,tag)
 );
 
-CREATE TABLE user2hidden_tag LIKE user2blacklist_tag;
--- The tags are invisible to the user
--- Only stops tags from appearing to the client. Does not, for instance, filter out qry results.
+CREATE TABLE user2hidden_tag (
+	-- The tags are invisible to the user
+	-- Only stops tags from appearing to the client. Does not, for instance, filter out qry results.
+	user INT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	max_depth INT UNSIGNED DEFAULT TRUE,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (tag) REFERENCES _tag (id),
+	PRIMARY KEY (user,tag)
+);
+
 
 CREATE TABLE file2tag (
 	file BIGINT UNSIGNED NOT NULL,
