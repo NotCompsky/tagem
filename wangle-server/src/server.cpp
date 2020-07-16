@@ -2348,20 +2348,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				
 				const char* f_name = basename__accepting_trailing_slash(this->file_path);
 				
-				this->mysql_exec(
-					"INSERT INTO file_backup"
-					"(file,dir,name,user,mimetype)"
-					"SELECT "
-						"f.id,",
-						dl_backup_into_dir_id, ',',
-						'"', _f::esc, '"', f_name, '"', ',',
-						user_id, ',',
-						"mt.id "
-					"FROM mimetype mt "
-					"JOIN _file f ON f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
-					"WHERE mt.name=\"", (mimetype[0])?mimetype:"!!NONE!!", "\" "
-					"ON DUPLICATE KEY UPDATE file=file"
-				);
+				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
 				
 				if (mimetype[0]){
 					this->mysql_exec(
@@ -2601,49 +2588,67 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
-		this->mysql_query("SELECT f.id, d.name, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
+		this->mysql_query("SELECT f.id, d.full_path, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
 		char orig_file_path[4096];
 		const char* file_id_str;
 		const char* orig_dir_name;
 		const char* file_name;
 		while(this->mysql_assign_next_row(&file_id_str, &orig_dir_name, &file_name)){
+			if ((url_length != 0) and not is_ytdl)
+				compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
+			else
+				compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
+			
+			char mimetype[100] = {0};
+			MYSQL_RES* const prev_res = this->res;
+			const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
+			this->res = prev_res;
+			if (rc != FunctionSuccessness::ok)
+				return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
+			
+			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", this->file_path, "\",LENGTH(d.name)+1)", user_id, mimetype);
+			// WARNING: The above will crash if there is no such extension in ext2mimetype
+			// This is deliberate, to tell me to add it to the DB.
+		}
 		
-		if ((url_length != 0) and not is_ytdl)
-			compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
-		else
-			compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
-		
-		char mimetype[100] = {0};
-		MYSQL_RES* const prev_res = this->res;
-		const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
-		this->res = prev_res;
-		if (rc != FunctionSuccessness::ok)
-			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
-		
+		return _r::post_ok;
+	}
+	
+	void insert_file_backup(
+		const char* const file_id,
+		const uint64_t file_dir,
+		const uint64_t backup_dir,
+		const char* const file_name_pre,
+		const char* file_name,
+		const char* const file_name_post,
+		const UserIDIntType user_id,
+		char* const mimetype
+	){
 		const bool is_mimetype_set = (mimetype[0]);
-		
 		this->mysql_exec(
 			"INSERT INTO file_backup "
 			"(file,dir,name,mimetype,user)"
-			"SELECT ", file_id_str, ',', dir_id, ",SUBSTR(\"", _f::esc, '"', this->file_path, "\",LENGTH(d.name)+1),mt.id,", user_id, " "
+			"SELECT ",
+				(file_id)?file_id:"f.id", ',',
+				backup_dir, ',',
+				file_name_pre, _f::esc, '"', file_name, file_name_post, ","
+				"IFNULL(mt.id,0),",
+				user_id, " "
 			"FROM _file f "
-			"JOIN _dir d "
 			"LEFT JOIN ",
 				(is_mimetype_set)?"mimetype":"ext2mimetype",
 				" mt ON mt.name=SUBSTRING_INDEX(\"",
 				_f::esc, '"',
-				(is_mimetype_set)?mimetype:this->file_path, // TODO: Escape mimetype properly
+				(is_mimetype_set)?mimetype:file_name, // TODO: Escape mimetype properly
 				(is_mimetype_set)?"\",';',1":"\",'.',-1", ") "
-			"WHERE f.id=", file_id_str, " "
-			  "AND d.id=", dir_id, " "
+			"WHERE f.id=", (file_id)?file_id:"0", " "
+			"OR("
+				"f.name=\"", _f::esc, '"', file_name, "\" "
+				"AND "
+				"f.dir=", file_dir,
+			")"
 			"ON DUPLICATE KEY UPDATE file_backup.mimetype=VALUES(mimetype)"
 		);
-		// WARNING: The above will crash if there is no such extension in ext2mimetype
-		// This is deliberate, to tell me to add it to the DB.
-		
-		}
-		
-		return _r::post_ok;
 	}
 	
 	void tag_antiparentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
