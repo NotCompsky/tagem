@@ -736,6 +736,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			}
 		} else {
 		
+		this->begin_json_response();
 		this->asciify("\"0\",[");
 		struct dirent* e;
 		struct stat st;
@@ -795,7 +796,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					'0', ',',                                            // dislikes
 					'0', ',',                                            // fps
 					'"', '"', ',',                                       // DB and post IDs
-					'"', '"', ',',                                       // f2t tag IDs
+					'"', '"',                                            // f2t tag IDs
 				']',
 				','
 			);
@@ -807,11 +808,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		if (this->last_char_in_buf() == ',')
 			--this->itr;
-		this->asciify("],["); // Empty tags dictionary
-		
-		if (this->last_char_in_buf() == ',')
-			--this->itr;
-		this->asciify("]]");
+		this->asciify("],{}]"); // Empty tags dictionary
 		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
@@ -1089,7 +1086,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec_buf();
 		
 		// Now return a map of name to ID
-		this->mysql_query("SELECT name, id FROM _file WHERE name IN(", body, ")");
+		this->mysql_query("SELECT name, id FROM _file WHERE dir=", dir_id, " AND name IN(", body, ")");
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
