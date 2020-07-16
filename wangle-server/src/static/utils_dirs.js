@@ -7,6 +7,9 @@ function $$$display_related_dirs(dir_id,rel,arr){
 
 
 function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
+	if(_dir_id_or_path===null)
+		// From prompt
+		return;
 	if(_dir_id_or_path==="")
 		_dir_id_or_path=$$$dir_id;
 	if(page===undefined)
