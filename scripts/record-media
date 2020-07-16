@@ -42,7 +42,7 @@ mysql_exec(){
 
 # Just use the server (lazy solution)
 insert_dir(){
-	curl "http://localhost:1999/d/add/0/" -H "Cookie: username=$USERNAME" --data-raw "$1"
+	curl "http://localhost:1999/d/add/0/0/0" -H "Cookie: username=$USERNAME" --data-raw "$1"
 }
 
 
