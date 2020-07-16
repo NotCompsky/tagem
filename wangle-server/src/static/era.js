@@ -71,9 +71,10 @@ function $$$era_tagger_fn(ids,t_dict){
 function $$$get_era_ids(){
 	let ids = "";
 	for(let node of $$$get_tbl_body('eras-info').getElementsByClassName('selected1')){
-		if(node.dataset.id==="0")
-			return $$$alert("Can only tag eras with non-zero IDs.\nSome eras have ID of zero, probably because they are newly added eras.");
-		else 
+		if(node.dataset.id==="0"){
+			$$$alert("Can only tag eras with non-zero IDs.\nSome eras have ID of zero, probably because they are newly added eras.");
+			return "";
+		}else 
 			ids += "," + node.dataset.id
 	}
 	return ids.substr(1);
