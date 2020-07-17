@@ -47,8 +47,10 @@ def process_fn_line(line:str):
 	
 	# Strip indent
 	line = re.sub("^\t+", "", line)
-	if line.startswith("else"):
+	if re.search("^else(?:$|[ {])", line) is not None:
 		line = " " + line
+	if re.search("(?:^|[ }])else$", line) is not None:
+		line = line + " "
 	
 	# Escape escapes
 	line = line.replace("\\", "\\\\")
@@ -75,7 +77,7 @@ def get_next_minimised_name(orig_name:str):
 get_next_minimised_name.i = 0
 get_next_minimised_name.alphabet_1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_"
 get_next_minimised_name.alphabet_2 = get_next_minimised_name.alphabet_1 + "0123456789"
-get_next_minimised_name.reserved_names = ['$']
+get_next_minimised_name.reserved_names = ['$','break','case','catch','class','const','continue','debugger','default','delete','do','else','enum','false','finally','for','function','if','in','instanceof','let','new','null','return','switch','this','throw','true','try','typeof','var','void','while','with','yield','NaN','Infinity']
 
 
 class MySyntaxError(SyntaxError):

@@ -371,7 +371,7 @@ function $$$skip_to_era(e){
 }
 function $$$play_active_media(){
 	if($$$active_media.play!==undefined)
-		$$$active_media.play()
+		$$$active_media.play();
 	else
 		$$$active_media.playVideo();
 }
