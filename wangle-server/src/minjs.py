@@ -58,7 +58,7 @@ def process_fn_line(line:str):
 	# Escape quotes
 	line = line.replace('"', '\\"')
 	
-	return line + "\\n"
+	return line + ("" if MANGLE_NAMES else "\\n")
 
 
 def get_next_minimised_name(orig_name:str):
