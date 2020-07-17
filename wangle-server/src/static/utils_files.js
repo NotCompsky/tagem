@@ -321,12 +321,12 @@ function $$$assign_value_to_file(){
 	if(value==="")
 		return;
 	$$$ajax_POST_w_text_response(
-		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[var_indx],
+		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[0][var_indx],
 		function(){
 			select.val("").change(); // Deselect all
 			input.value = "";
 			if($$$is_visible('values'))
-				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[var_indx], value);
+				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[0][var_indx], value);
 		}
 	);
 }

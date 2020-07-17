@@ -57,7 +57,7 @@ function $$$refetch_all_jsons(){
 	$$$refetch_json('t2p', '/a/t2p.json', $$$when_data_loaded);
 	$$$refetch_json('x', '/a/x.json', $$$when_data_loaded);
 	$$$refetch_json('mt', '/a/mt.json', $$$when_data_loaded);
-	$$$refetch_json('f2', '/a/f2.json', function(){$$$f2=$$$f2.split(",");$$$when_data_loaded()});
+	$$$refetch_json('f2', '/a/f2.json', function(){$$$f2[0]=$$$f2[0].split(",");$$$when_data_loaded()});
 }
 
 function $$$add_key_intercepts(){
