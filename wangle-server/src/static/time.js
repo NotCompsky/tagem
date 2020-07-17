@@ -18,3 +18,7 @@ function $$$set_t_added(t){
 function $$$set_t_origin(t){
 	$$$set_t('t-origin', t);
 }
+
+function $$$dt2timestamp(dt){
+	return Date.parse(dt);
+}

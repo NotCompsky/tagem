@@ -4,6 +4,7 @@ const $$$document = document;
 const $$$document_getElementById = $$$document.getElementById.bind($$$document);
 const $$$document_getElementsByClassName = $$$document.getElementsByClassName.bind($$$document);
 const $$$document_getElementsByTagName = $$$document.getElementsByTagName.bind($$$document);
+const $$$document_querySelector = $$$document.querySelector.bind($$$document);
 const $$$confirm = confirm;
 const $$$prompt = prompt;
 const $$$window = window;

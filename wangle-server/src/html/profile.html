@@ -22,7 +22,7 @@
 	"<style>"
 		#include "../static/css/profile.css"
 		#include "../static/css/common.css"
-		
+		#include "../static/css/3rd-party/datetimepicker.css"
 		"@media screen and (max-width:895px){"
 			#include "../static/css/895-.css"
 		"}"
@@ -46,6 +46,9 @@
 	
 	"window.addEventListener('popstate',  e => " MINIMISED_JS_DECL_load_page_from_a_hash_string "(e.state));"
 	// Although we could store the page's data, thereby reducing requests to the server, it wouldn't be easy to check whether the data is out of date or not.
+	
+	#include "../static/js/3rd-party/php-date-formatter.js"
+	#include "../static/js/3rd-party/datetimepicker.js"
 	
 	"$(document).ready("
 		MINIMISED_JS_DECL_on_document_ready
@@ -239,7 +242,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	"<div id=\"file2\">"
 		"<h3>Assign Value</h3>"
 		"<select id=\"file2-select\"></select>"
-		"<input id=\"file2-value\" type=\"text\" pattern=\"\\d*\" placeholder=\"12345\"/>"
+		"<input class=\"file2-value\" id=\"file2-value\"/>"
+		"<input class=\"file2-value\" id=\"file2-value-dt\"/>"
 		"<button onclick=\"" MINIMISED_JS_DECL_assign_value_to_file "()\">Update DB</button>"
 	"</div>"
 "</div>"

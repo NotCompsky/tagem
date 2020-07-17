@@ -44,11 +44,44 @@ function $$$load_page_from_a_hash_string(S){
 	}
 }
 
+function $$$init_file2_input_for_file2_var_of_index(id){
+	const [name,min,max,conversion] = $$$f2[id];
+	const inp = $$$document_getElementById('file2-value');
+	$$$set_visibility('file2-value-dt', (conversion===2));
+	$$$set_visibility('file2-value', (conversion!==2));
+	switch(conversion){
+		// NOTE: Enum values are listed in file2.hpp
+		case 0: // integer
+			inp.type = "text";
+			inp.pattern = "\d+";
+			inp.placeholder = "12345";
+			inp.min = min;
+			inp.max = max;
+			break;
+		case 2: // datetime
+			//inp.type = "datetime-local"; // Chrome-only
+			break;
+		default:
+			$$$alert("Not implemented yet");
+		//case 1: // string
+		//case 3: // multiline string // TODO: Use <textarea> instead	
+		//	inp.type = "text";
+		//	inp.removeAttribute("pattern");
+		//	break;
+	}
+}
+
 function $$$when_data_loaded(){
 	if($$$D === undefined || $$$P === undefined || $$$t2p === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
 	$$$init_tbls();
 	$$$load_page_from_a_hash_string($$$window.location.hash);
+	
+	$('#file2-select').on('select2:selecting', function(e){
+		$$$init_file2_input_for_file2_var_of_index(e.params.args.data.id);
+	});
+	
+	$('#file2-value-dt').datetimepicker();
 }
 
 function $$$refetch_all_jsons(){
@@ -57,7 +90,7 @@ function $$$refetch_all_jsons(){
 	$$$refetch_json('t2p', '/a/t2p.json', $$$when_data_loaded);
 	$$$refetch_json('x', '/a/x.json', $$$when_data_loaded);
 	$$$refetch_json('mt', '/a/mt.json', $$$when_data_loaded);
-	$$$refetch_json('f2', '/a/f2.json', function(){$$$f2[0]=$$$f2[0].split(",");$$$when_data_loaded()});
+	$$$refetch_json('f2', '/a/f2.json', $$$when_data_loaded);
 }
 
 function $$$add_key_intercepts(){

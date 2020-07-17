@@ -81,9 +81,35 @@ add_custom_target(
 	COMMENT "Generating bigboi switch statement"
 )
 
+set(phpdateformatter_js_fp "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js")
+add_custom_target(
+	phpdateformatter_js ALL
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${phpdateformatter_js_fp}" https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js
+	BYPRODUCTS "${datetimepicker_js_fp}"
+	COMMENT "Downloading datetimepicker.js"
+)
+
+set(datetimepicker_js_fp "${SRC_DIR}/static/js/3rd-party/datetimepicker.js")
+add_custom_target(
+	datetimepicker_js ALL
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${datetimepicker_js_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js
+	BYPRODUCTS "${datetimepicker_js_fp}"
+	COMMENT "Downloading datetimepicker.js"
+)
+
+set(datetimepicker_css_fp "${SRC_DIR}/static/css/3rd-party/datetimepicker.css")
+add_custom_target(
+	datetimepicker_css ALL
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${datetimepicker_css_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css
+	BYPRODUCTS "${datetimepicker_css_fp}"
+	COMMENT "Downloading datetimepicker.css"
+)
+
+
 add_custom_target(
 	js_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/"
+	#DEPENDS datetimepicker_js
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/" #"${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
 	BYPRODUCTS js.hpp
 	COMMENT "Generating minimised JavaScript header"
 )
@@ -94,6 +120,5 @@ add_custom_target(
 	BYPRODUCTS "${SRC_DIR}/html/svg.hpp"
 	COMMENT "Generating SVG icons header"
 )
-
-add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp)
+add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)

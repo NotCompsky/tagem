@@ -1728,27 +1728,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER
 		
 		this->mysql_query(
-			"SELECT f2.min, f2.max, f2.conversion "
-			"FROM file2 f2"
+			"SELECT f2.id, name, f2.min, f2.max, f2.conversion "
+			"FROM file2 f2 "
 			"JOIN user2shown_file2 u2f2 ON u2f2.file2=f2.id "
-			"WHERE u2f2.user=", user_id
+			"WHERE u2f2.user=", user->id
 		);
 		
 		this->reset_buf_index();
-		this->asciify(
-			_r::json_init,
-			"["
-				"\"NONE,", user->allowed_file2_vars_csv, "\","
-		);
+		this->asciify(_r::json_init);
 		this->init_json_rows(
-				this->itr,
-				_r::flag::arr,
-				_r::flag::quote_no_escape, // min
-				_r::flag::quote_no_escape, // max
-				_r::flag::no_quote         // conversion ID
-		);
-		this->asciify(
-			"]"
+			this->itr,
+			_r::flag::dict,
+			_r::flag::quote_no_escape, // ID
+			_r::flag::quote_no_escape, // name (name of SQL table, so no special characters)
+			_r::flag::quote_no_escape, // min
+			_r::flag::quote_no_escape, // max
+			_r::flag::no_quote         // conversion ID
 		);
 		return this->get_buf_as_string_view();
 	}

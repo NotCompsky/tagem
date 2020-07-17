@@ -19,6 +19,10 @@ function $$$unhide_class(s){
 	$$$for_node_in_document_getElementsByClassName(s, $$$unhide_node);
 }
 
+function $$$set_visibility(id,b){
+	$$$set_node_visibility($$$document_getElementById(id),b);
+}
+
 function $$$set_node_visibility(node,b){
 	if(b)
 		node.classList.remove("hidden");

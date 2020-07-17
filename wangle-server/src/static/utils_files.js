@@ -316,10 +316,12 @@ function $$$assign_value_to_file(){
 	const _file_ids = $$$get_file_ids();
 	if(_file_ids==="")
 		return;
-	const input = $$$document_getElementById('file2-value');
-	const value = input.value;
+	const input = $$$document_querySelector('.file2-value:not(.hidden)');
+	let value = input.value;
 	if(value==="")
 		return;
+	if(input.type === "datetime-local")
+		value = $$$dt2timestamp(value);
 	$$$ajax_POST_w_text_response(
 		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[0][var_indx],
 		function(){
