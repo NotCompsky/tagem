@@ -2889,7 +2889,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	constexpr
 	std::string_view determine_response(const char* str){
 		--str;
-#		include "auto__server-determine-response.hpp"
+#		include "auto-generated/auto__server-determine-response.hpp"
 		return _r::not_found;
 	}
   public:
@@ -2992,7 +2992,7 @@ int main(int argc,  const char* const* argv){
 	db_infos.reserve(external_db_env_vars.size());
 	std::string db_name2id_json =
 		HEADER__RETURN_CODE__OK
-		#HEADER__CONTENT_TYPE__JSON
+		HEADER__CONTENT_TYPE__JSON
 		CACHE_CONTROL_HEADER
 		"\n"
 		"{\""

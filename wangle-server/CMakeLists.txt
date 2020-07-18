@@ -55,12 +55,12 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
 set_property(TARGET qry PROPERTY CXX_STANDARD 17)
-target_include_directories(qry PRIVATE "${COMPSKY_INCLUDE_DIRS}" "${AUTO_SRC_DIR}")
+target_include_directories(qry PRIVATE "${COMPSKY_INCLUDE_DIRS}")
 target_compile_definitions(qry PRIVATE DEBUG)
 
 add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/FrameDecoder.cpp" "${SRC_DIR}/qry.cpp" "${SRC_DIR}/skip_to_body.cpp")
 set_property(TARGET server PROPERTY CXX_STANDARD 17)
-target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}" "${AUTO_SRC_DIR}")
+target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(server wangle::wangle mariadbclient curl)
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
@@ -69,7 +69,7 @@ target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
 
 add_custom_target(
 	favicon ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/build-imgs" "${SRC_DIR}/static/img/favicon.ico" "${AUTO_SRC_DIR}/favicon.hpp"
+	COMMAND "${SCRIPTS_DIR}/build-imgs" "${SRC_DIR}/static/img/favicon.ico" "${AUTO_SRC_DIR}/favicon.hpp"
 	BYPRODUCTS "${AUTO_SRC_DIR}/favicon.hpp"
 	COMMENT "Generating favicon header"
 )
@@ -133,11 +133,11 @@ add_custom_target(
 
 set(DISPLAY_LICENSES_INLINE_ARGS)
 if(DISPLAY_LICENSES_INLINE)
-	set(DISPLAY_LICENSES_INLINE_ARGS "--display-licenses")
+	set(DISPLAY_LICENSES_INLINE_ARGS "--display-licences")
 endif()
 add_custom_target(
 	svg_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${DISPLAY_LICENSES_INLINE_ARGS}" "${SCRIPTS_DIR}/svggen.py" "${AUTO_SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/svggen.py" "${DISPLAY_LICENSES_INLINE_ARGS}" "${AUTO_SRC_DIR}/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
 	BYPRODUCTS "${AUTO_SRC_DIR}/svg.hpp"
 	COMMENT "Generating SVG icons header"
 )

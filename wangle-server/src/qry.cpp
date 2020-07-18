@@ -349,13 +349,13 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 static
 arg::ArgType process_arg(const char*& str){
 	LOG("process_arg %s\n", str);
-	#include "qry-process_arg-tokens.hpp"
+	#include "auto-generated/qry-process_arg-tokens.hpp"
 	return arg::invalid;
 }
 
 static
 successness::ReturnType get_attribute_name(const char which_tbl,  const char*& str,  const char*& attribute_name,  attribute_kind::AttributeKind& attribute_kind){
-	#include "qry-get_attribute_name-tokens.hpp"
+	#include "auto-generated/qry-get_attribute_name-tokens.hpp"
 	return successness::invalid;
 }
 

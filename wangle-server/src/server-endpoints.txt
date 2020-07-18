@@ -5,7 +5,7 @@ GET / >
 		HEADER__CONTENT_TYPE__HTML
 		CACHE_CONTROL_HEADER
 		"\\n"
-		#include "html/profile.html"
+		#include "../html/profile.html"
 
 GET /a/f2.json?>
 	return this->get_allowed_file2_vars_json(str)
