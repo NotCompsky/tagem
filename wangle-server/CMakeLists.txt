@@ -49,6 +49,7 @@ find_package(Compsky REQUIRED)
 find_package(CURL REQUIRED)
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
@@ -68,7 +69,7 @@ target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
 add_custom_target(
 	auto__server_determine_response_hpp ALL
 	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/server-endpoints.txt" "${SRC_DIR}/auto__server-determine-response.hpp"
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/server-endpoints.txt" "${SRC_DIR}/auto__server-determine-response.hpp"
 	BYPRODUCTS auto__server-determine-response.hpp
 	COMMENT "Generating bigboi switch statement"
 )
@@ -76,7 +77,7 @@ add_custom_target(
 add_custom_target(
 	qry__process_arg__tokens ALL
 	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/qry-process_arg-tokens.txt" "${SRC_DIR}/qry-process_arg-tokens.hpp"
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/qry-process_arg-tokens.txt" "${SRC_DIR}/qry-process_arg-tokens.hpp"
 	BYPRODUCTS qry-process_arg-tokens.hpp
 	COMMENT "Generating bigboi switch statement"
 )
@@ -84,7 +85,7 @@ add_custom_target(
 add_custom_target(
 	qry__get_attribute_name__tokens ALL
 	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/triegen.py" "${SRC_DIR}/qry-get_attribute_name-tokens.txt" "${SRC_DIR}/qry-get_attribute_name-tokens.hpp"
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/qry-get_attribute_name-tokens.txt" "${SRC_DIR}/qry-get_attribute_name-tokens.hpp"
 	BYPRODUCTS qry-get_attribute_name-tokens.hpp
 	COMMENT "Generating bigboi switch statement"
 )
@@ -92,7 +93,7 @@ add_custom_target(
 set(phpdateformatter_js_fp "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js")
 add_custom_target(
 	phpdateformatter_js ALL
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${phpdateformatter_js_fp}" https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${phpdateformatter_js_fp}" https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js
 	BYPRODUCTS "${datetimepicker_js_fp}"
 	COMMENT "Downloading datetimepicker.js"
 )
@@ -100,7 +101,7 @@ add_custom_target(
 set(datetimepicker_js_fp "${SRC_DIR}/static/js/3rd-party/datetimepicker.js")
 add_custom_target(
 	datetimepicker_js ALL
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${datetimepicker_js_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${datetimepicker_js_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js
 	BYPRODUCTS "${datetimepicker_js_fp}"
 	COMMENT "Downloading datetimepicker.js"
 )
@@ -108,7 +109,7 @@ add_custom_target(
 set(datetimepicker_css_fp "${SRC_DIR}/static/css/3rd-party/datetimepicker.css")
 add_custom_target(
 	datetimepicker_css ALL
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/wget-and-escape" "${datetimepicker_css_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${datetimepicker_css_fp}" https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css
 	BYPRODUCTS "${datetimepicker_css_fp}"
 	COMMENT "Downloading datetimepicker.css"
 )
@@ -117,7 +118,7 @@ add_custom_target(
 add_custom_target(
 	js_hpp ALL
 	#DEPENDS datetimepicker_js
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/js/" #"${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/js/" #"${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
 	BYPRODUCTS js.hpp
 	COMMENT "Generating minimised JavaScript header"
 )
@@ -128,7 +129,7 @@ if(DISPLAY_LICENSES_INLINE)
 endif()
 add_custom_target(
 	svg_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${DISPLAY_LICENSES_INLINE_ARGS}" "${SRC_DIR}/html/svg/svggen.py" "${SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
+	COMMAND ${PYTHON_EXECUTABLE} "${DISPLAY_LICENSES_INLINE_ARGS}" "${SCRIPTS_DIR}/svggen.py" "${SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
 	BYPRODUCTS "${SRC_DIR}/html/svg.hpp"
 	COMMENT "Generating SVG icons header"
 )
