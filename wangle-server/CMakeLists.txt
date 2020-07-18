@@ -117,7 +117,7 @@ add_custom_target(
 add_custom_target(
 	js_hpp ALL
 	#DEPENDS datetimepicker_js
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/" #"${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
+	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/minjs.py" "${MANGLE_JS_NAMES_ARGS}" "ALL" "${SRC_DIR}/js.hpp" "${SRC_DIR}/static/js/" #"${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
 	BYPRODUCTS js.hpp
 	COMMENT "Generating minimised JavaScript header"
 )
