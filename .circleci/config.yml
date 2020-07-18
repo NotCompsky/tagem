@@ -1,0 +1,43 @@
+version: 2
+general:
+  artifacts:
+    - "packages"
+jobs:
+  build:
+    docker:
+      - image: debian:buster
+
+    steps:
+      - checkout
+
+      - run:
+          name: Update Apt Cache
+          command: 'apt update'
+
+      - run:
+          name: Install Dependencies 
+          command: 'apt install -y git curl wget g++ cmake'
+
+      - run:
+          name: libcompsky - Download
+          command: 'git clone https://github.com/NotCompsky/libcompsky'
+      - run:
+          name: libcompsky - Install SQL Client Dev
+          command: 'apt install -y mariadb-client default-libmysqlclient-dev' # qt5-default libqt5widgets5 libqt5charts5 libqt5charts5-dev
+      - run:
+          name: libcompsky - Generate build files
+          command: 'mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake ..  &&  make  &&  make install'
+
+      - run:
+          name: proxygen - Download
+          command: 'git clone https://github.com/facebook/proxygen'
+      - run:
+          name: proxygen - Build
+          command: 'proxygen/proxygen/build.sh'
+
+      - run:
+          name: tagem - Download
+          command: 'git clone https://github.com/NotCompsky/tagem'
+      - run:
+          name: tagem - Build
+          command: 'mkdir tagem/build  &&  cd tagem/build  &&  cmake .. -Dproxygen_root_DIR=../../proxygen -DMAX_CACHE_AGE=0 -DCMAKE_BUILD_TYPE=Release  &&  make server'
