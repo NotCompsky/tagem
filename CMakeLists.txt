@@ -37,7 +37,6 @@ endforeach()
 # set up include-directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}")
 
-add_subdirectory(media)
 add_subdirectory(utils)
 add_subdirectory(caffe)
 if(BUILD_PACKAGES)

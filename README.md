@@ -6,20 +6,11 @@ Programs to rapidly categorise and access files, based on assignable attributes 
 
 In active development.
 
-Breaking changes are still sometimes made to the database, although breaking commits will detail how to upgrade.
+# Demonstration
 
-The server is leading development at the moment, while the native app and most scripts are updated when I have the time.
-
-## Web App
-
-A neutered version of this app is hosted [here](https://notcompsky.github.io/tagem-eg/). It is not allowed to use POST requests, so most features are disabled. However, one can view the files and file table.
+A neutered version of this app is hosted [here](https://notcompsky.github.io/tagem-eg/). GitHub does not allow it to be interactive, so most features are disabled.
 
 ![Query3](https://user-images.githubusercontent.com/30552567/86843555-a000e380-c09e-11ea-9a0d-5a5e4ae38261.png)
-
-## Native App
-
-![Screenshot of tagemvid](https://i.imgur.com/OmgWJmk.png)
-![Screenshot of tagemvid](https://i.imgur.com/rk7wynk.png)
 
 # Installation
 
@@ -45,15 +36,13 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 
 ## Dependencies
 
-### Web Server
-
-#### Required
+### Required
 
 * Facebook's core C++ web stack: [wangle](https://github.com/facebook/wangle), [folly](https://github.com/facebook/folly) and [fizz](https://github.com/facebookincubator/fizz). I recommend building all of these by building [Proxygen](https://github.com/facebook/proxygen), for ease of installation.
 * Python 3 interpreter
 * CMake
 
-#### Optional
+### Optional
 
 * FFMPEG/libAV
     * Used for assigning video statistics (such as duration, fps, width, height).
