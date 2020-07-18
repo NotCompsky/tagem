@@ -1,12 +1,21 @@
 #!/bin/sh
 
-for fp_orig in favicon.ico; do
+build_img(){
+	fp_orig="$1"
+	fp="$2"
+	
 	fp="$(echo "$fp_orig" | sed -E 's/[.](png|ico)$/.txt/g')"
 	if [ "$fp" = "$fp_orig" ]; then
 		echo "fp == fp_orig == $fp" >&2
-		exit
+		exit 1
+	fi
+	if [ -f "$fp" ]; then
+		# Already exists
+		exit 0
 	fi
 	printf 'R"=====(' >  "$fp"
 	cat "$fp_orig"    >> "$fp"
 	printf ')====="'  >> "$fp"
-done
+}
+
+build_img "$@"
