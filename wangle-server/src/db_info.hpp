@@ -69,6 +69,9 @@ struct DatabaseInfo {
 		compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
 		compsky::mysql::login_from_auth(mysql_obj, auth);
 		
+		bool auto_reconnect = true;
+		mysql_options(this->mysql_obj, MYSQL_OPT_RECONNECT, &auto_reconnect);
+		
 		if (not set_bools)
 			return;
 		
