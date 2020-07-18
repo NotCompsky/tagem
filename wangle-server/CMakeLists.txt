@@ -36,6 +36,10 @@ if(NOT DISPLAY_LICENSES_INLINE)
 	set(DISPLAY_LICENSES_INLINE "0")
 endif()
 
+if(NOT SERVER_ROOT_URL)
+	set(SERVER_ROOT_URL "")
+endif()
+
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -128,5 +132,8 @@ add_custom_target(
 	BYPRODUCTS "${SRC_DIR}/html/svg.hpp"
 	COMMENT "Generating SVG icons header"
 )
+
+target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
+
 add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)

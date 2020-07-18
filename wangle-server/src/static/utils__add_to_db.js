@@ -72,7 +72,7 @@ function $$$add_to_db(obj_type){
 			queue.innerHTML = ""; // Remove URLs
 			$$$alert("Success");
 			if((obj_type!=='f')&&(obj_type!=='d'))
-				$$$refetch_json(obj_type, '/a/'+obj_type+'.json');
+				$$$refetch_json(obj_type, '!!!MACRO!!!SERVER_ROOT_URL/a/'+obj_type+'.json');
 		}
 	);
 }

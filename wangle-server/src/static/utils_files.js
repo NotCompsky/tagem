@@ -26,7 +26,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 	}
 	$$$ajax_data_w_JSON_response(
 		($$$file_qry_post_data===null)?"GET":"POST",
-		"/a/f/"+$$$file_qry_url+'/'+$$$file_qry_page_n+(($$$file_qry_url_paramsythings===null)?"":("/"+$$$file_qry_url_paramsythings)),
+		"!!!MACRO!!!SERVER_ROOT_URL/a/f/"+$$$file_qry_url+'/'+$$$file_qry_page_n+(($$$file_qry_url_paramsythings===null)?"":("/"+$$$file_qry_url_paramsythings)),
 		$$$file_qry_post_data,
 		function(datas){
 			$$$get_file_ids = $$$get_selected_file_ids;
@@ -411,7 +411,7 @@ function $$$view_file(_file_id_and_t){
 		$$$undisplay_this_file();
 		$$$file_id = _file_id;
 		$$$ajax_GET_w_JSON_response(
-			"/a/f/i/"+$$$file_id,
+			"!!!MACRO!!!SERVER_ROOT_URL/a/f/i/"+$$$file_id,
 			function(data){
 				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, description, file2_values_csv], eras, backups, _d, t_dict] = data;
 				$$$set_profile_thumb(thumb);

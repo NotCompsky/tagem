@@ -34,7 +34,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 			$$$set_window_location_hash(':'+page+'/'+_dir_id_or_path);
 		}else{
 			$$$dir_id = _dir_id_or_path;
-			$$$ajax_GET_w_JSON_response("/a/d/i/"+$$$dir_id, function(data){
+			$$$ajax_GET_w_JSON_response("!!!MACRO!!!SERVER_ROOT_URL/a/d/i/"+$$$dir_id, function(data){
 				$$$dir_name = data[0];
 				$$$display_related_dirs($$$dir_id,"parents",data[1]);
 				$$$display_related_dirs($$$dir_id,"children",data[2]);
@@ -80,7 +80,7 @@ function $$$view_dirs(ls){
 		tbl.innerHTML = "";
 	}else{
 		$$$ajax_GET_w_JSON_response(
-			"/a/d/id/"+ls.join(","),
+			"!!!MACRO!!!SERVER_ROOT_URL/a/d/id/"+ls.join(","),
 			function(data){
 				let s = "";
 				$$$get_dir_ids = $$$get_selected_dir_ids;

@@ -42,7 +42,7 @@ function $$$init_selects__ajax(var_name){
 		minimumInputLength:1,
 		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
 		ajax:{
-			url: "/a/select2/regex/" + var_name,
+			url: "!!!MACRO!!!SERVER_ROOT_URL/a/select2/regex/" + var_name,
 			dataType:"json",
 			data:function(params){
 				return ($$$use_regex) ? {'q': params.term} : {'q': RegExp.escape(params.term)}

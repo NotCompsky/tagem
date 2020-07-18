@@ -33,7 +33,7 @@ function $$$populate_t_id2name_table(arr){
 	}
 	$$$ajax_data_w_JSON_response(
 		"GET",
-		"/a/t/id/"+arr.join(","),
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+arr.join(","),
 		null,
 		function(data){
 			$$$unhide('tagselect-self-p');
@@ -117,7 +117,7 @@ function $$$display_tags(tag_ids, node_id, fn_name, alias){
 	}
 	$$$ajax_data_w_JSON_response(
 		"GET",
-		"/a/t/id/"+tag_ids.join(","),
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+tag_ids.join(","),
 		null,
 		function(data){
 			let s = "";
@@ -147,7 +147,7 @@ function $$$add_child_tags(fn){
 		"/t/c/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
 			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
-			$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), ls), '/a/t2p.json', function(){
+			$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), ls), '!!!MACRO!!!SERVER_ROOT_URL/a/t2p.json', function(){
 				if($$$get_tag_ids!==$$$get_this_tag_id)
 					// if not currently displaying the tag page
 					return;
@@ -163,7 +163,7 @@ function $$$add_parent_tags(fn){
 		"/t/p/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
 			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
-			$$$add_to_json_then('t2p', $$$zipsplitarr(ls, tagselect.val()), '/a/t2p.json', function(){
+			$$$add_to_json_then('t2p', $$$zipsplitarr(ls, tagselect.val()), '!!!MACRO!!!SERVER_ROOT_URL/a/t2p.json', function(){
 				if($$$get_tag_ids!==$$$get_this_tag_id)
 					// if not currently displaying the tag page
 					return;
@@ -213,7 +213,7 @@ function $$$view_tag(_tag_id,page){
 	}
 	
 	$$$ajax_GET_w_JSON_response(
-		"/a/t/id/"+$$$tag_id,
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+$$$tag_id,
 		function(data){
 			const [id, name,thumb,size] = data[0];
 			$$$set_profile_name(name);
