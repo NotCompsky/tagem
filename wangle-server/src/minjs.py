@@ -32,6 +32,10 @@ def get_human2minimised(human_name:str):
 		raise
 
 
+def escape_line(line:str):
+	return line.replace("\\","\\\\").replace('"','\\"')
+
+
 def process_fn_line(line:str):
 	# Replace var/fn names
 	line = re.sub(f"\$\$\$({valid_var_names})", lambda x: get_human2minimised(x.group(1)), line)
@@ -52,13 +56,7 @@ def process_fn_line(line:str):
 	if re.search("(?:^|[ }])else$", line) is not None:
 		line = line + " "
 	
-	# Escape escapes
-	line = line.replace("\\", "\\\\")
-	
-	# Escape quotes
-	line = line.replace('"', '\\"')
-	
-	return line + ("" if MANGLE_NAMES else "\\n")
+	return escape_line(line) + ("" if MANGLE_NAMES else "\\n")
 
 
 def get_next_minimised_name(orig_name:str):
@@ -173,7 +171,17 @@ if __name__ == "__main__":
 			# const vars and functions may rely on other functions/variables
 			gen = (line for line in value.split("\n"))
 			fn_contents:str = ""
+			is_part_of_multiline_str = False
 			for line in gen:
+				if is_part_of_multiline_str:
+					if line.endswith('`;'):
+						is_part_of_multiline_str = False
+					else:
+						line += "\\n"
+					fn_contents += escape_line(line)
+					continue
+				if line.endswith('`'):
+					is_part_of_multiline_str = True
 				fn_contents += process_fn_line(line)
 			human2minimised[human_name][3] = fn_contents
 	
