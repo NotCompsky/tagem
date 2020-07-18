@@ -1,0 +1,17 @@
+language: c++
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      compiler: clang
+      env: BADGE=linux # To allow OS-wise badges - see https://github.com/travis-ci/travis-ci/issues/9579
+
+before_install:
+  - if [ $TRAVIS_OS_NAME == linux ]; then  sudo apt update  &&  sudo apt install -y mariadb-client-10.1 mariadb-client-core-10.1 default-libmysqlclient-dev;  fi # libcompsky direct dependencies
+  - git clone https://github.com/NotCompsky/libcompsky  &&  mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake .. &&  sudo make install  &&  cd ../..
+  - if [ $TRAVIS_OS_NAME == linux ]; then  sudo apt install curl wget libcurl4-openssl-dev default-libmysqlclient-dev;  fi
+  - git clone https://github.com/facebook/proxygen  &&  cd proxygen/proxygen  &&  sed -i "s/setup_wangle$/setup_wangle; exit 0/g" build.sh  &&  ./build.sh --no-tests  &&  cd ../..
+
+script:
+  - mkdir tagem/build  &&  cd tagem/build  &&  cmake .. -Dproxygen_root_DIR=../../proxygen -DMAX_CACHE_AGE=0 -DCMAKE_BUILD_TYPE=Release  &&  make server
