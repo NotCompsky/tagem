@@ -536,7 +536,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view file_thumbnail(const char* md5hex){
 		constexpr static const char* const prefix =
-			#include "headers/return_code/OK.c"
+			HEADER__RETURN_CODE__OK
 			HEADER__CONTENT_TYPE__PNG
 			CACHE_CONTROL_HEADER
 			"Content-Length: "
@@ -1145,7 +1145,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			fclose(f);
 			this->mysql_free_res();
 			return 
-				#include "headers/return_code/SERVER_ERROR.c"
+				HEADER__RETURN_CODE__SERVER_ERR
 				"\n"
 				"File already exists"
 			;
@@ -2991,7 +2991,7 @@ int main(int argc,  const char* const* argv){
 	
 	db_infos.reserve(external_db_env_vars.size());
 	std::string db_name2id_json =
-		#include "headers/return_code/OK.c"
+		HEADER__RETURN_CODE__OK
 		#HEADER__CONTENT_TYPE__JSON
 		CACHE_CONTROL_HEADER
 		"\n"
