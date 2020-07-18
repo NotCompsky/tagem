@@ -53,6 +53,7 @@ FunctionSuccessness dl_file__curl(const char* user_headers,  const char* const u
 	if (curl_rc != CURLE_OK){
 		remove(dst_pth);
 		rc = FunctionSuccessness::server_error;
+		fprintf(stderr, "dl_file__curl error\n");
 	} else {
 		char* _mimetype = nullptr;
 		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, &_mimetype);
