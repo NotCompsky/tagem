@@ -15,6 +15,13 @@ jobs:
           command: 'apt update'
 
       - run:
+          name: Enable SUDO # See: https://discuss.circleci.com/t/sudo-command-not-found/14208/4
+          command: apt-get install -y sudo
+      - run:
+          name: Use BASH instead of DASH # See https://ubuntuforums.org/showthread.php?t=1932504
+          command: 'ls -al /bin/sh && sudo rm /bin/sh && sudo ln -s /bin/bash /bin/sh && ls -al /bin/sh'
+
+      - run:
           name: Install Dependencies 
           command: 'apt install -y git curl wget g++ cmake'
 
@@ -26,14 +33,14 @@ jobs:
           command: 'apt install -y mariadb-client default-libmysqlclient-dev' # qt5-default libqt5widgets5 libqt5charts5 libqt5charts5-dev
       - run:
           name: libcompsky - Generate build files
-          command: 'mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake ..  &&  make  &&  make install'
+          command: 'mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake ..  &&  make  &&  make install  &&  cd ../..'
 
       - run:
           name: proxygen - Download
           command: 'git clone https://github.com/facebook/proxygen'
       - run:
           name: proxygen - Build
-          command: 'proxygen/proxygen/build.sh'
+          command: 'cd proxygen/proxygen  &&  ./build.sh  &&  cd ../..'
 
       - run:
           name: tagem - Download
