@@ -133,6 +133,13 @@ add_custom_target(
 	COMMENT "Generating SVG icons header"
 )
 
+if(PREPOPULATE_F_TBL)
+	target_compile_definitions(server PRIVATE PREPOPULATE_F_TBL=1)
+endif()
+if(PREPOPULATE_T_TBL)
+	target_compile_definitions(server PRIVATE PREPOPULATE_T_TBL=1)
+endif()
+
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
 
 add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
