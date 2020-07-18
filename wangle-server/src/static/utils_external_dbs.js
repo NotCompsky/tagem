@@ -1,3 +1,8 @@
+function $$$view_db(id){
+	// TODO: Introduce a good external DB overview page
+	$$$view_qry('f x "' + $$$x[id] + '"');
+}
+
 function $$$display_cmnts(_db_id, ls){
 	// ls is an array of: [cmnt_id, parent_id, user_id, timestamp, cmnt_content], with parent_id==0 first (order by (parent_id=0) ASC)
 	let tree = {"0":["0",0,""]};
