@@ -537,7 +537,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view file_thumbnail(const char* md5hex){
 		constexpr static const char* const prefix =
 			#include "headers/return_code/OK.c"
-			#include "headers/Content-Type/png.c"
+			HEADER__CONTENT_TYPE__PNG
 			CACHE_CONTROL_HEADER
 			"Content-Length: "
 		;
@@ -2992,7 +2992,7 @@ int main(int argc,  const char* const* argv){
 	db_infos.reserve(external_db_env_vars.size());
 	std::string db_name2id_json =
 		#include "headers/return_code/OK.c"
-		#include "headers/Content-Type/json.c"
+		#HEADER__CONTENT_TYPE__JSON
 		CACHE_CONTROL_HEADER
 		"\n"
 		"{\""
