@@ -87,6 +87,13 @@
 	"color:#fff;"
 "}"
 
+".db,.db a{"
+	"color:pink;"
+"}"
+".ftitle{"
+	"font-weight:bold;"
+"}"
+
 
 /* Use CSS to display field names without affecting the HTML (which would make sorting the table more complicated) */
 ".w{"

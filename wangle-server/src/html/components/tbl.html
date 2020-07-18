@@ -1,9 +1,9 @@
 #define CREATE_ACTION_BTN(r, data, elem) \
 	"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(1, elem) "\">" BOOST_PP_TUPLE_ELEM(2, elem) "</button>" \
 
-#define CREATE_HEADER(r, data, name) \
-	"<div class=\"td\">" \
-		name \
+#define CREATE_HEADER(r, data, tpl) \
+	"<div class=\"td " BOOST_PP_TUPLE_ELEM(0, tpl) "\">" \
+		BOOST_PP_TUPLE_ELEM(1, tpl) \
 	"</div>"
 #define CREATE_FILTER(r, data, placeholder) \
 	BOOST_PP_IF( \
@@ -43,7 +43,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_
 "<div class=\"thead\">"
 	// Name row
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, COL_NAMES)
+BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_NAMES))
 #undef CREATE_HEADER
 	"</div>"
 
@@ -60,7 +60,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_SORT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
 #undef CREATE_SORT
 #undef COL_FILTERS
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, COL_NAMES)
+BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_NAMES))
 	"</div>"
 #undef COL_NAMES
 #undef CREATE_HIDE
