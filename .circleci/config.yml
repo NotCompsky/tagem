@@ -39,11 +39,8 @@ jobs:
           name: proxygen - Download
           command: 'git clone https://github.com/facebook/proxygen'
       - run:
-          name: proxygen - Take Shortcut
-          command: 'sed -i "s/setup_wangle$/setup_wangle; exit 0/g" proxygen/proxygen/build.sh'
-      - run:
           name: proxygen - Build
-          command: 'cd proxygen/proxygen  &&  ./build.sh --no-tests  &&  cd ../..'
+          command: 'cd proxygen/proxygen  &&  sed -i "s/setup_wangle$/setup_wangle; exit 0/g" build.sh  &&  ./build.sh --no-tests  &&  cd ../..'
 
       - run:
           name: tagem - Download
