@@ -63,7 +63,7 @@ while read -r id url; do
 			if [ "$uploader" = null ]; then
 				dummy=1
 			else
-				uploader="\"Uploader: ${uploader:1}"
+				uploader="\"Uploader: ${uploader:1:-1}\""
 				mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
 				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
 					echo "Tag \"Uploader\" does not exist" >&2
@@ -74,7 +74,12 @@ while read -r id url; do
 			
 			mysql_exec "UPDATE _file SET w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin) WHERE id=$id"
 			mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
-		done < <(youtube-dl --quiet --dump-json "$url" | jq '.width, .height, .fps, .duration, .view_count, .like_count, .dislike_count, .thumbnail, .title, .description, .timestamp, .upload_date, .uploader')
+		done < <(
+			(
+				get_imgur_post_metadata.py "$IMGUR_COOKIES" "$url" \
+				|| youtube-dl --quiet --dump-json "$url"
+			) | jq '.width, .height, .fps, .duration, .view_count, .like_count, .dislike_count, .thumbnail, .title, .description, .timestamp, .upload_date, .uploader' \
+		)
 		
 		
 		if [ "$ytdl_err" ]; then
@@ -88,4 +93,4 @@ while read -r id url; do
 	done
 	
 	sleep 2
-done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN _tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND (f.likes IS NULL OR t.id IS NULL)" tagem)
+done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT DISTINCT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN _tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND f.views IS NULL" tagem)
