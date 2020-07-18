@@ -31,6 +31,16 @@ A neutered version of this app is hosted [here](https://notcompsky.github.io/tag
     * I recommend libmariadb
 * All of the dependencies of Facebook's core C++ stack (gflags, glog, libsqlite3, etc.)
 
+## Installation
+
+## Configuration
+
+### Optional
+
+You'll probably want to add the [scripts](scripts/) directory to your `PATH` environmental variable, or perhaps just copy the scripts to `/usr/local/bin`.
+
+The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added the usual way you add userscripts.
+
 # Development
 
 ## Dependencies
