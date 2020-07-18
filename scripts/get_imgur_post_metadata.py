@@ -4,7 +4,6 @@
 from datetime import datetime as dt
 import re
 import requests
-import json
 
 
 headers = {
