@@ -6,7 +6,21 @@ Plain text logs are preferred to screenshots.
 
 # Development
 
-## Maintainability
+## Overviews
+
+### Server
+
+#### Pipeline
+
+* Python scripts generate C++ header files from `.txt` files describing inline SVGs, server endpoitns, and `qry` tokens.
+* Python script generates a single JavaScript C++ header file from all the non-3rdparty JavaScript files. This JavaScript is optionally minimised. Consequently, the names of each non-3rdparty JavaScript file is unimportant.
+  This header file contains the final names of each JavaScript function, many of which are used in `profile.html`
+* `qry` is built
+* The server itself is built
+
+## General Guidelines
+
+### Maintainability
 
 Deduplicate code where possible. Compile-time deduplication (preferably through metaprogramming, although short macros are also usually acceptable) is preferred when there is a risk of significant runtime performance degredation.
 
@@ -16,7 +30,7 @@ Minimise the dependencies added to the project (without sacrificing features), a
 
 For instance, do not use the `{fmt}` aka `std::fmt` library, use [libcompsky](https://github.com/NotCompsky/libcompsky)::asciify, unless the latter cannot do what is desired (in which case you should file a feature request under that project).
 
-## Code Style
+### Code Style
 
 It's hard to describe hard-and-fast rules for code linting, just try to copy that of the files you are modifying. If adding new files, copy the coding style in [server.cpp](wangle-server/src/server.cpp).
 
@@ -31,6 +45,6 @@ In particular:
 * C++ source code should have the `cpp` extension.
 * C++ header files should have the `hpp` extension.
 
-## Legal Stuff
+# Legal Stuff
 
 I'm not a lawyer. Contributors are expected to have the rights to the code they add, in which case the newly added code will be licensed under 
