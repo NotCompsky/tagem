@@ -32,6 +32,10 @@ if(NOT MAX_CACHE_AGE)
 	set(MAX_CACHE_AGE "0")
 endif()
 
+if(NOT DISPLAY_LICENSES_INLINE)
+	set(DISPLAY_LICENSES_INLINE "0")
+endif()
+
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -114,9 +118,13 @@ add_custom_target(
 	COMMENT "Generating minimised JavaScript header"
 )
 
+set(DISPLAY_LICENSES_INLINE_ARGS)
+if(DISPLAY_LICENSES_INLINE)
+	set(DISPLAY_LICENSES_INLINE_ARGS "--display-licenses")
+endif()
 add_custom_target(
 	svg_hpp ALL
-	COMMAND ${PYTHON_EXECUTABLE} "${SRC_DIR}/html/svg/svggen.py" "${SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
+	COMMAND ${PYTHON_EXECUTABLE} "${DISPLAY_LICENSES_INLINE_ARGS}" "${SRC_DIR}/html/svg/svggen.py" "${SRC_DIR}/html/svg/svg.hpp" "${SRC_DIR}/html/svg/tabler-icons.txt" "${SRC_DIR}/html/svg/mine.txt"
 	BYPRODUCTS "${SRC_DIR}/html/svg.hpp"
 	COMMENT "Generating SVG icons header"
 )
