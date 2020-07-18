@@ -31,7 +31,6 @@ function $$$populate_f_table(path,params,post_data,page_n){
 		function(datas){
 			$$$get_file_ids = $$$get_selected_file_ids;
 			let s = "";
-			$$$file2post = {};
 			const [a,data,tags] = datas;
 			if(a==="0"){
 				if($$$dir_id==="0"){
@@ -54,7 +53,8 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
 					s += "<div class='td ftitle'>" + $$$escape_html_text(title) + "</div>";
-					s += "<div class='td db'>" + ext_db_n_post_ids + "</div>"; // 3rd column i.e. col[2]
+					s += "<div class='td db'>" + ext_db_n_post_ids.replace(/:[0-9]+/,'') + "</div>"; // 3rd column i.e. col[2]
+					// Ignore the post IDs that are sent alongside the DB IDs
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
 					s += "<div class='td' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
@@ -66,9 +66,6 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					s += "<div class='td likes' data-n=" + likes + ">" + $$$n2human(likes) + "</div>";
 					s += "<div class='td dislikes' data-n=" + dislikes + ">" + $$$n2human(dislikes) + "</div>";
 					s += "<div class='td fps' data-n=" + fps + ">" + fps + "</div>";
-					
-					// Populate file2post dictionary
-					$$$file2post[id] = ext_db_n_post_ids.split(":"); // database_ids, post_ids
 					
 				s += "</div>";
 			}

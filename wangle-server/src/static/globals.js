@@ -10,7 +10,6 @@ var $$$dir_name;
 var $$$device_id;
 var $$$mimetype;
 var $$$file_tags;
-var $$$file2post;
 
 // External database vars
 var $$$db_id;
