@@ -22,8 +22,8 @@ function add_post_to_db(){
 	$.ajax({
 		method: "POST",
 		url:"http://" + tagem_server + "/x/dl/reddit/p/" + permalink,
-		success: function(){ alert("Success")},
-		error:   function(){ alert("Error")}
+		success: function(){ alert("Success");},
+		error:   function(){ alert("Error");}
 	});
 }
 
