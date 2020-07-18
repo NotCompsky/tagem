@@ -101,11 +101,7 @@ function $$$view_user(_db_id, _user_id){
 				
 				$$$document_getElementById('n-followers').textContent = data[3] + ' followers';
 				
-				const tags = data[4];
-				if (tags === "")
-					$$$display_tags([], "tags", 'x/u');
-				else 
-					$$$display_tags(tags.split(","), "tags", 'x/u');
+				$$$display_tags($$$split_on_commas_but_make_empty_if_empty(data[4]), "tags", 'x/u');
 				
 				$$$user_name = data[0];
 				$$$set_profile_name($$$user_name);

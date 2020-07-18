@@ -146,7 +146,7 @@ function $$$add_child_tags(fn){
 	$$$ajax_POST_w_text_response(
 		"/t/c/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
-			const ls = $$$get_tag_ids().split(",");
+			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
 			$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), ls), '/a/t2p.json', function(){
 				if($$$get_tag_ids!==$$$get_this_tag_id)
 					// if not currently displaying the tag page
@@ -162,7 +162,7 @@ function $$$add_parent_tags(fn){
 	$$$ajax_POST_w_text_response(
 		"/t/p/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
 		function(){
-			const ls = $$$get_tag_ids().split(",");
+			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
 			$$$add_to_json_then('t2p', $$$zipsplitarr(ls, tagselect.val()), '/a/t2p.json', function(){
 				if($$$get_tag_ids!==$$$get_this_tag_id)
 					// if not currently displaying the tag page

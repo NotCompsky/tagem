@@ -94,10 +94,7 @@ function $$$sub_into(data, node, fn_name){
 	let s = "";
 	if (data instanceof Array)
 		data = Object.fromEntries(data.entries()); // Convert ["foo","bar"] -> {0:"foo", 1:"bar"}
-	const _s = node.textContent;
-	if(_s === "")
-		return;
-	for (var tagid of node.textContent.split(",")){
+	for (var tagid of $$$split_on_commas_but_make_empty_if_empty(node.textContent)){
 		s += $$$link_to_named_fn_w_param_id_w_human_name(fn_name,tagid,data[tagid]);
 	}
 	node.innerHTML = s;

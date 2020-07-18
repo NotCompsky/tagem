@@ -103,8 +103,8 @@ function $$$add_files_to_db(nodes){
 }
 
 function $$$merge_files(){
-	const master_file_ids = $$$get_selected_file_ids().split(",");
-	const dupl_file_ids   = $$$get_selected2_file_ids().split(",");
+	const master_file_ids = $$$split_on_commas_but_make_empty_if_empty($$$get_selected_file_ids());
+	const dupl_file_ids   = $$$split_on_commas_but_make_empty_if_empty($$$get_selected2_file_ids());
 	if(master_file_ids.length !== 1){
 		$$$alert("There must be exactly one master file (use left mouse button to select them)");
 		return;
@@ -419,18 +419,17 @@ function $$$view_file(_file_id_and_t){
 				$$$d = _d;
 				$$$file_name = name;
 				$$$file_title = (title==="")?$$$file_name:title;
-				if (ext_db_n_post_ids !== "")
-					$$$display_external_dbs(ext_db_n_post_ids.split(",").map(x => x.split(":")));
+				$$$display_external_dbs($$$split_on_commas_but_make_empty_if_empty(ext_db_n_post_ids).map(x => x.split(":")));
 				
 				let _vals = "";
-				const file2_values = file2_values_csv.split(",");
+				const file2_values = $$$split_on_commas_but_make_empty_if_empty(file2_values_csv);
 				for(var i=0, len=file2_values.length;  i<len;  ++i){
 					if(file2_values[i] !== "0")
 						_vals += $$$display_file2_var(f2[i], file2_values[i]);
 				}
 				$$$document_getElementById('values').innerHTML = _vals;
 				
-				$$$file_tags = (tag_ids==="") ? [] : tag_ids.split(",");
+				$$$file_tags = (tag_ids==="") ? [] : $$$split_on_commas_but_make_empty_if_empty(tag_ids);
 				$$$display_tags($$$file_tags, "tags", "$$$unlink_this_tag_from_this", "f");
 				
 				$$$mimetype = mime;
@@ -555,7 +554,7 @@ function $$$view_files_as_playlist(file_ids_csv){
 		$$$playlist_file_ids = undefined;
 		return;
 	}
-	$$$playlist_file_ids = file_ids_csv.split(",");
+	$$$playlist_file_ids = $$$split_on_commas__guaranteed_nonempty(file_ids_csv);
 	$$$document_getElementById('autoplay').checked = true;
 	for(var i=0; i<5; ++i)
 		$$$playlist_listeners[i] = $$$document_getElementById('view-'+$$$playlist_listeners_types[i]).addEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners_fns[i]);
