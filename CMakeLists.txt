@@ -39,9 +39,6 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}
 
 add_subdirectory(utils)
 add_subdirectory(caffe)
-if(BUILD_PACKAGES)
-    add_subdirectory(packaging)
-endif()
 
 #export(TARGETS tagem FILE "${PROJECT_BINARY_DIR}/tagemTargets.cmake")
 install(EXPORT tagemTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
