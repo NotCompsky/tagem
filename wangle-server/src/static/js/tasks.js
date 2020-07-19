@@ -9,7 +9,7 @@ function $$$view_tasks(){
 					<div class='task'>
 						<h3 class='task-name'>` + name + `</h3>
 						<p class='task-descr'>` + descr + `</p>
-						<a onclick='$$$toggle("task-content` + id + `")'>Content</a>
+						<a onclick='$$$toggle("task-content` + id + `")'>Content</a> // id <= []
 						<div id='task-content` + id + `' class='hidden task-content'></div>
 						<a onclick='$$$exec_task(` + id + `)'>Exec</a>
 					</div>`;

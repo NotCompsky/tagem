@@ -80,7 +80,7 @@ function $$$display_posts(_db_id, _user_id, _type){
 			return;
 		$$$populate_f_table('id', file_ids.join(","), null, 0);
 		for(let _ of ['f','f-action-btns','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn'])
-			$$$unhide(_);
+			$$$unhide(_); // _ <= ['f','f-action-btns','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']
 		$$$get_file_ids = $$$get_selected_file_ids;
 	});
 }
