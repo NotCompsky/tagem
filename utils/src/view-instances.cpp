@@ -10,8 +10,10 @@
 
 
 namespace _f {
-	constexpr static const compsky::asciify::flag::concat::Start start;
-	constexpr static const compsky::asciify::flag::concat::End end;
+	using namespace compsky::asciify::flag;
+	constexpr static concat::Start start;
+	constexpr static concat::End end;
+	constexpr static Zip2 zip2;
 }
 
 namespace _err {
@@ -100,8 +102,11 @@ int main(int argc,  const char** argv) {
         ./view-instances -r TAG1 TAG2 ... TAGN
       
     OPTIONS
-        -r
-            Descendant tags count as their heirarchical root tag
+        -d
+            Depth of descendant tags for boxes. NOT the maximum depth.
+            For instance, if the depth is 1, and the tags are 'Animal' and 'Vehicle', only boxes tagged 'Cat', 'Dog', 'Car' and 'Truck' will be used.
+            TODO: Descendant tags deeper than that count as their relevant ancestor tag. For instance, in the above example, a box tagged only 'Tabby Cat' will count as being tagged 'Cat'.
+            A depth of 0 - the default - only uses the root tag(s) themselves.
         -D [TAG]
             Ignore the following descendant tag of one of the specified tags
             NOTE: Does not ignore boxes tagged with this tag, but ensures that, if this subtag is the only subtag of a specified box, the box is not added.
@@ -134,9 +139,10 @@ int main(int argc,  const char** argv) {
 	MYSQL_RES* mysql_res;
 	MYSQL_ROW mysql_row;
     
-    bool root_tags = false;
+	unsigned depth = 0;
     std::vector<const char*> not_subtags;
 	std::vector<const char*> split_on_tags;
+	std::vector<const char*> root_tags;
     
     while (true){
 		++argv;
@@ -148,8 +154,8 @@ int main(int argc,  const char** argv) {
             break;
         
 		switch(arg[1]){
-			case 'r':
-				root_tags = true;
+			case 'd':
+				depth = atoi(*(++argv));
 				break;
 			case 'D':
 				not_subtags.push_back(*(++argv));
@@ -159,7 +165,6 @@ int main(int argc,  const char** argv) {
 				split_on_tags.push_back(*(++argv));
 				--argc;
 				break;
-				return _err::not_implemented;
 			case 'w': {
 				const size_t len = strlen(*(++argv));
 				memcpy(SAVE_FILES_TO, *argv, len);
@@ -170,65 +175,28 @@ int main(int argc,  const char** argv) {
 			default: break;
         }
     }
+	while(*argv != nullptr){
+		root_tags.push_back(*argv);
+		++argv;
+	}
     
     compsky::mysql::init(mysql_obj, mysql_auth, mysql_auth_sz, getenv("TAGEM_MYSQL_CFG"));
-    
-    
-    {
-    
-	if(argc == 0){
-		compsky::mysql::exec_buffer(mysql_obj, "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'foobar'\")");
-		compsky::mysql::exec_buffer(mysql_obj, "INSERT IGNORE INTO tmp_tagids (node) SELECT id FROM tag");
-	} else {
-		compsky::mysql::exec(mysql_obj, BUF, "CALL descendant_tags_id_rooted_from(\"tmp_tagids\", \"'", _f::start, "','", 3, argv, argc, _f::end, "'\")");
-	}
-	
-    if (not_subtags.size() != 0){
-        compsky::mysql::exec(
-			mysql_obj,
-			BUF,
-			"CALL descendant_tags_id_rooted_from(\"tmp", 'D', "tagids\", \"'",
-				
-			")"
-		);
-        
-        compsky::mysql::exec_buffer(mysql_obj, "DELETE FROM tmp_tagids WHERE node in (SELECT node FROM tmpDtagids)");
-    }
-    
-    }
-	
-	
-	
-	if (split_on_tags.size() != 0){
-		compsky::mysql::query(
-			mysql_obj,
-			mysql_res,
-			BUF,
-			"CALL descendant_tags_id__max_depth_1('tmp_split_on_tags', \"'",
-				_f::start, "','", 3, split_on_tags.data(), split_on_tags.size(), _f::end,
-			"'\");"
-		);
-	}
     
 	compsky::mysql::query(
 		mysql_obj,
 		mysql_res,
 		BUF,
-		"SELECT t.name, A.name, f.name, b.x, b.y, b.w, b.h "
-		"FROM file f, box b, box2tag b2t, tmp_tagids tt, tag t "
-		"LEFT JOIN ",
-		(split_on_tags.size() == 0) ?
-		"tag A ON FALSE ":
-		"("
-			"SELECT tmp.node, t.name "
-			"FROM tag t, tmp_split_on_tags tmp "
-			"WHERE tmp.root=t.id "
-		") A ON A.node=t.id ",
-		"WHERE b2t.box_id=b.id "
-		  "AND f.id=b.file_id "
-		  "AND t.id=b2t.tag_id "
-		  "AND tt.", (root_tags)?"node":"root", "=t.id "
-		"GROUP BY t.name, f.name, b.x, b.y, b.w, b.h"
+		"SELECT t.name, p.name, f.name, b.x, b.y, b.w, b.h "
+		"FROM tag p "
+		"JOIN tag2parent_tree t2pt ON t2pt.parent=p.id "
+		"JOIN tag t ON t.id=t2pt.id "
+		"JOIN box2tag b2t ON b2t.tag=t.id "
+		"JOIN box b ON b.id=b2t.box "
+		"JOIN file f ON f.id=b.file "
+		"WHERE p.name IN(\"", _f::zip2, root_tags.size(), "\",\"", root_tags, "\")"
+		  "AND p.name NOT IN(\"", _f::zip2, not_subtags.size(), "\",\"", not_subtags, "\")"
+		  "AND t2pt.depth=", depth, " "
+		"GROUP BY t.name, b.id"
 	);
     
     char* name;

@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS file2audio_hash (
 
 CREATE TABLE IF NOT EXISTS box (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    file_id BIGINT UNSIGNED NOT NULL,
+    file BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
     x DOUBLE NOT NULL,  -- As proportion of (image|frame) width
     y DOUBLE NOT NULL,
@@ -325,9 +325,9 @@ CREATE TABLE IF NOT EXISTS box (
 );
 
 CREATE TABLE IF NOT EXISTS box2tag (
-	box_id BIGINT UNSIGNED NOT NULL,
-	tag_id BIGINT UNSIGNED NOT NULL,
-	PRIMARY KEY (`box_id`, `tag_id`)
+	box BIGINT UNSIGNED NOT NULL,
+	tag BIGINT UNSIGNED NOT NULL,
+	PRIMARY KEY (box, tag)
 );
 
 
@@ -367,15 +367,15 @@ CREATE TABLE IF NOT EXISTS era2tag (
 
 CREATE TABLE IF NOT EXISTS relation (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    master_id BIGINT UNSIGNED NOT NULL,  -- ID of master box
-    slave_id BIGINT UNSIGNED NOT NULL,
+    master BIGINT UNSIGNED NOT NULL,  -- ID of master box
+    slave BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS relation2tag (
-    relation_id BIGINT UNSIGNED NOT NULL,
-    tag_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (`relation_id`, `tag_id`)
+    relation BIGINT UNSIGNED NOT NULL,
+    tag BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (relation, tag)
 );
 
 
