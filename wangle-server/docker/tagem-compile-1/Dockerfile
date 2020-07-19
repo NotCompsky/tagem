@@ -1,4 +1,4 @@
-FROM notcompsky/tagem-base:0.0.1
+FROM notcompsky/tagem-base
 ARG DEBIAN_FRONTEND=noninteractive
 # Compile-time env var to tell apt to avoid asking for inputs
 RUN apt-get update \

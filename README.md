@@ -46,7 +46,7 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 
 ## Docker
 
-    docker build -t notcompsky/tagem:0.0.1 --build-arg TAGEM_ROOT_DIR="$PWD" .
+    docker build -t notcompsky/tagem --build-arg TAGEM_ROOT_DIR="$PWD" .
     docker run --env TAGEM_MYSQL_CFG="$TAGEM_MYSQL_CFG" -p 80:80 -v /media:/media -v /home:/home -v /var/run/mysqld/:/var/run/mysqld/ tagem
 
 ## Non-Docker
