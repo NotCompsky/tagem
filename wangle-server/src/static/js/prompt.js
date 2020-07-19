@@ -6,9 +6,9 @@ function $$$prompt_from(s, ls){
 	}
 }
 
-function $$$get_int_with_prompt(s){
+function $$$get_int_with_prompt(S){
 	while(true){
-		const s = $$$prompt(s);
+		const s = $$$prompt(S);
 		if(s===null)
 			// User cancelled the prompt
 			return null;
