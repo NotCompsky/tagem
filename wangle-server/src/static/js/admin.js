@@ -4,7 +4,7 @@ function $$$toggle_admin_dashboard(){
 
 
 function $$$recursively_record_filesystem_dir_dialog(){
-	if($$$is_visible('record-fs-dir');){
+	if($$$is_visible('record-fs-dir')){
 		$$$hide('record-fs-dir');
 		$$$hide('tagselect-files');
 	} else {
