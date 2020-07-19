@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 
-from libtriegen import generate_list
+import libtriegen
 
 
 class BIterator:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 	dst:str = sys.argv[2]
 	
 	try:
-		if os.path.getmtime(dst) >= os.path.getmtime(src):
+		if os.path.getmtime(dst) >= max([os.path.getmtime(__file__), os.path.getmtime(libtriegen.__file__), os.path.getmtime(src)]):
 			exit(0)
 	except FileNotFoundError:
 		pass
@@ -72,4 +72,4 @@ if __name__ == '__main__':
 		if line.endswith(">"):
 			ls.append((line[:-1], get_return_value(gen)))
 	
-	open(dst,"w").write(generate_list(True, ls, 1))
+	open(dst,"w").write(libtriegen.generate_list(True, ls, 1))
