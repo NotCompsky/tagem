@@ -85,7 +85,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 )========="
 #define CREATE_SITEMAP_LINK(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a><br/>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_tasks "()", SVG_DB "Tasks")(MINIMISED_JS_DECL_view_dir"(prompt('/directory/path/'),1)","Filesystem Dir")(MINIMISED_JS_DECL_toggle"('help')",SVG_INFO_CIRCLE)(MINIMISED_JS_DECL_rotate_stylesheet"()",SVG_LIST)(MINIMISED_JS_DECL_view_text_editor"()",SVG_TEXT_EDITOR)(MINIMISED_JS_DECL_add_tags_dialog"()",SVG_TAG_PLUS)(MINIMISED_JS_DECL_add_files_dialog"()",SVG_NEW_FILE)(MINIMISED_JS_DECL_add_dirs_dialog"()",SVG_NEW_DIR)(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SITEMAP_LINK, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_view_tasks "()", SVG_DB "Tasks")(MINIMISED_JS_DECL_toggle_admin_dashboard "()", SVG_SETTINGS)(MINIMISED_JS_DECL_view_dir"(prompt('/directory/path/'),1)","Filesystem Dir")(MINIMISED_JS_DECL_toggle"('help')",SVG_INFO_CIRCLE)(MINIMISED_JS_DECL_rotate_stylesheet"()",SVG_LIST)(MINIMISED_JS_DECL_view_text_editor"()",SVG_TEXT_EDITOR)(MINIMISED_JS_DECL_add_tags_dialog"()",SVG_TAG_PLUS)(MINIMISED_JS_DECL_add_files_dialog"()",SVG_NEW_FILE)(MINIMISED_JS_DECL_add_dirs_dialog"()",SVG_NEW_DIR)(MINIMISED_JS_DECL_add_devices_dialog"()","+Devices")))
 R"=========(
       </div>
     </div>
@@ -167,6 +167,18 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 			"</td>"
 		"</tr>"
 	"</table>"
+"</div>"
+
+
+"<div id=\"admin-dashboard\" class=\"hidden\">"
+	"<a onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir_dialog "()\">" SVG_NEW_DIR "</a>"
+	
+	"<div id=\"record-fs-dir\" class=\"hidden\">"
+		"<h3>Recursively add all files in a directory to the database, up to a specified maximum depth</h3>"
+		"<button onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir "()\">Go (Opens Dialog)</button>"
+	"</div>"
+	
+	"<a onclick=\"" MINIMISED_JS_DECL_hide_node "(this.parentNode)\">" SVG_LOGOUT "</a>"
 "</div>"
 
 

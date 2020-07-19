@@ -187,6 +187,10 @@
 
 // Dimensions that aren't 100% sure to be common
 
+"#admin-dashboard a svg{"
+	"width:48px;"
+"}"
+
 "#qry{"
 	"font-size:24px;"
 "}"

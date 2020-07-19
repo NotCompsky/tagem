@@ -17,6 +17,7 @@
 #include "jsonify.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
+#include "fs.hpp"
 
 #include "get_cookies.hpp"
 #include "read_request.hpp"
@@ -746,15 +747,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		while (((e=readdir(dir)) != 0) and (count != 0)){
 			const char* const ename = e->d_name;
 			
-			if (ename == nullptr)
+			if (is_not_file_or_dir_of_interest(ename))
 				continue;
-			
-			if (ename[0] == '.'){
-				if (ename[1] == 0)
-					continue;
-				if (ename[1] == '.')
-					continue;
-			}
 			
 			if (e->d_type == DT_DIR){
 				continue;
@@ -2248,6 +2242,58 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		regenerate_device_json = true;
 		return false;
+	}
+	
+	std::string_view post__recursively_record_filesystem_dir(const char* s){
+		GET_USER_ID
+		GREYLIST_GUEST
+		
+		GET_NUMBER_NONZERO(unsigned, max_depth)
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		
+		skip_to_body(&s);
+		
+		this->asciify(s, '\0');
+		
+		if (unlikely(opendir(this->buf) == nullptr))
+			return _r::not_found;
+		
+		if (tag_ids_len != 0)
+			// Tag the root directory the client chose
+			this->add_file_or_dir_to_db('d', nullptr, user_id, tag_ids, tag_ids_len, this->buf, this->buf_indx(), 0, false);
+		
+		this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
+		// NOTE: if max_depth is 0, this wraps around to MAX_UNSIGNED. This is deliberate - it means there is (effectively) no limit.
+		
+		return _r::post_ok;
+	}
+	
+	void recursively_record_files_infilesystem(const UserIDIntType user_id,  const unsigned max_depth){
+		DIR* const dir = opendir(this->buf);
+		if (dir == nullptr)
+			return;
+		const size_t dir_len = strlen(this->buf);
+		struct dirent* e;
+		while (e=readdir(dir)){
+			const char* const ename = e->d_name;
+			
+			if (is_not_file_or_dir_of_interest(ename))
+				continue;
+			
+			--this->itr; // Overwrite trailing null byte
+			this->asciify(ename, '\0');
+			
+			if (e->d_type == DT_DIR){
+				if (max_depth != 0)
+					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
+			} else if (e->d_type == DT_REG){
+				// regular file
+				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx(), 0, false);
+			}
+			
+			this->itr = this->buf + dir_len;
+			*this->itr = 0;
+		}
 	}
 	
 	FunctionSuccessness add_file_or_dir_to_db(const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){

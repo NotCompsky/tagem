@@ -89,6 +89,9 @@ GET /S/f/>
 	return this->stream_file(++str)
 
 
+POST /record-local-dir/>
+	return this->post__recursively_record_filesystem_dir(++str)
+
 POST /t/thumb/>
 	return this->update_tag_thumbnail(++str)
 POST /D/add/>
