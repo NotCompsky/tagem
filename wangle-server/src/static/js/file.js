@@ -15,7 +15,8 @@ function $$$after_tagged_this_file(ids, tags){
 function $$$hide_all_views_except(except){
 	for(let type of ['img','video','audio','iframe','object','yt-player']){
 		if(type === except){
-			$$$unhide('view-'+type); // id <= ['view-img','view-video','view-audio','view-iframe','view-object','view-yt-player']
+			$$$unhide('view-'+type); // id <= []
+			// NOTE: We do not wish to automatically hide these views, to avoid hiding them upon returning to the file page
 			const node = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
 			if(node !== undefined)
 				node.removeAttribute('src');
