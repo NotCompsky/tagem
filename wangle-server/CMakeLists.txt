@@ -107,7 +107,7 @@ add_custom_target(
 	phpdateformatter_js ALL
 	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${phpdateformatter_js_fp}" https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js
 	BYPRODUCTS "${datetimepicker_js_fp}"
-	COMMENT "Downloading datetimepicker.js"
+	COMMENT "Downloading phpdateformatter.js"
 )
 
 set(datetimepicker_js_fp "${SRC_DIR}/static/js/3rd-party/datetimepicker.js")
