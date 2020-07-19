@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: notcompsky/tagem-compile-1:0.0.1
+      - image: notcompsky/tagem-compile-1
 
     steps:
       - checkout
@@ -19,4 +19,4 @@ jobs:
           command: 'git clone https://github.com/NotCompsky/tagem'
       - run:
           name: tagem - Build
-          command: 'mkdir tagem/build  &&  cd tagem/build  &&  cmake .. -Dproxygen_root_DIR=../../proxygen -DMAX_CACHE_AGE=0 -DCMAKE_BUILD_TYPE=Release  &&  make server'
+          command: 'mkdir tagem/build  &&  cd tagem/build  &&  cmake ../wangle-server -Dproxygen_root_DIR=../../proxygen -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so -DCMAKE_BUILD_TYPE=Release -Dwangle_DIR=/bob-the-builder/wangle/ -Dfolly_DIR=/bob-the-builder/folly/ -Dfizz_DIR=/bob-the-builder/fizz/  &&  make server'
