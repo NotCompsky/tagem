@@ -2974,7 +2974,16 @@ int main(int argc,  const char* const* argv){
 		}
 	}
 	
-	if (port_n == 0){
+	for (const char* const env_var : external_db_env_vars){
+		if (unlikely(getenv(env_var) == nullptr)){
+			fprintf(stderr, "ERROR: Environmental variable is not set: %s\n", env_var);
+			goto help;
+		}
+	}
+	
+	if (unlikely(port_n == 0)){
+		fprintf(stderr,  "ERROR: Port not set\n");
+		
 		help:
 		fprintf(
 			stderr,
@@ -3023,6 +3032,7 @@ int main(int argc,  const char* const* argv){
 	db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
+	printf("_r::external_db_json == %s\n", _r::external_db_json);
 	
 	UserIDIntType user_id;
 	uint64_t id;
