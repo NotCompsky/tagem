@@ -95,23 +95,20 @@ void view_img(const char* tag,  const char* root_tag_name,  const char* const fp
 }
 
 int main(int argc,  const char** argv) {
-    /*
-    USAGE
-      Non-rooted:
-        ./view-instances TAG1 TAG2 ... TAGN
-      Rooted:
-        ./view-instances -r TAG1 TAG2 ... TAGN
-      
-    OPTIONS
-        -d
-            Depth of descendant tags for boxes. NOT the maximum depth.
-            For instance, if the depth is 1, and the tags are 'Animal' and 'Vehicle', only boxes tagged 'Cat', 'Dog', 'Car' and 'Truck' will be used.
-            TODO: Descendant tags deeper than that count as their relevant ancestor tag. For instance, in the above example, a box tagged only 'Tabby Cat' will count as being tagged 'Cat'.
-            A depth of 0 - the default - only uses the root tag(s) themselves.
-        -D [TAG]
-            Ignore the following descendant tag of one of the specified tags
-            NOTE: Does not ignore boxes tagged with this tag, but ensures that, if this subtag is the only subtag of a specified box, the box is not added.
-            E.g. if we have three tags, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third boxes only.
+	constexpr static help_txt = R"=====(
+	USAGE
+		./tagem-instances [OPTIONS] -- TAG1 TAG2 ... TAGN
+		
+	OPTIONS
+		-d
+			Depth of descendant tags for boxes. NOT the maximum depth.
+			For instance, if the depth is 1, and the tags are 'Animal' and 'Vehicle', only boxes tagged 'Cat', 'Dog', 'Car' and 'Truck' will be used.
+			TODO: Descendant tags deeper than that count as their relevant ancestor tag. For instance, in the above example, a box tagged only 'Tabby Cat' will count as being tagged 'Cat'.
+			A depth of 0 - the default - only uses the root tag(s) themselves.
+		-D [TAG]
+			Ignore the following descendant tag of one of the specified tags
+			NOTE: Does not ignore boxes tagged with this tag, but ensures that, if this subtag is the only subtag of a specified box, the box is not added.
+			E.g. if we have three tags, one tagged "Oak", the other tagged "Pine", and another tagged both "Tree" and "Pine", with "Pine" and "Oak" inheriting from "Tree", and we run the command `./view-instances -D Oak Tree`, it would display the first and third boxes only.
 		-s [TAG]
 			Split on a tag.
 			For instance, if we split on 'Animal' and 'Image Type', we would end up with the directory structure
@@ -129,9 +126,9 @@ int main(int argc,  const char** argv) {
 					|-- Photograph
 					|-- Sketch
 			Can be specified multiple times.
-        -w [DIRECTORY]
-            Write cropped images to directory
-    */
+		-w [DIRECTORY]
+			Write cropped images to directory
+    )=====";
 	
 	constexpr static const size_t mysql_auth_sz = 512;
 	char mysql_auth[mysql_auth_sz];
@@ -151,7 +148,7 @@ int main(int argc,  const char** argv) {
 		if(argc == 0)
 			break;
         const char* arg = *argv;
-        if (arg[0] != '-'  ||  arg[2] != 0)
+        if (arg[0] == '-'  &&  arg[1] == '-'  &&  arg[2] == 0)
             break;
         
 		switch(arg[1]){
@@ -173,7 +170,9 @@ int main(int argc,  const char** argv) {
 				--argc;
 				break;
 			}
-			default: break;
+			default:
+				fprintf(stderr, "%s", help_txt);
+				return 1;
         }
     }
 	while(*argv != nullptr){
