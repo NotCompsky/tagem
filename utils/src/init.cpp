@@ -1,6 +1,6 @@
 #include <compsky/mysql/create_config.hpp>
 #include <cstdlib> // for malloc
-#include <string.h> // for strlen
+#include <string> // for char_traits
 
 
 namespace compsky {
@@ -18,7 +18,7 @@ int main(){
 		#include "procedures.sql"
 	;
 
-	void* dummy = malloc(strlen(sql) + 1024);
+	void* dummy = malloc(std::char_traits<char>::length(sql) + 1024);
 	if (dummy == nullptr)
 		return 1;
 
