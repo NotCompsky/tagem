@@ -138,11 +138,6 @@ int main(const int argc, const char** argv){
 	
 	
 	itr = buf;
-	compsky::asciify::asciify(
-		itr,
-		"INSERT INTO file (name) "
-		"VALUES "
-	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){
 		const char* const name = argv[j];
 		static char _buf[4096];
@@ -154,6 +149,7 @@ int main(const int argc, const char** argv){
 		);
 		insert_file_from_path(_buf);
 	}
+	
 	
 	itr = buf;
 	compsky::asciify::asciify(
