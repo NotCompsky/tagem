@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
+cmake_minimum_required(VERSION 3.7.0 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
 
 if( EXISTS "${CMAKE_BINARY_DIR}/CMakeLists.txt")
     message(FATAL_ERROR "Refusing to run in-source build.")
@@ -37,37 +37,11 @@ endforeach()
 # set up include-directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}")
 
-add_subdirectory(utils)
-add_subdirectory(caffe)
-
-#export(TARGETS tagem FILE "${PROJECT_BINARY_DIR}/tagemTargets.cmake")
-install(EXPORT tagemTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
-
-# Registers the build-tree with a global CMake-registry
-export(PACKAGE tagem)
-
-
-# Create the tagemConfig.cmake and tagemConfigVersion files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
-
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file(tagemConfig.cmake.in "${PROJECT_BINARY_DIR}/tagemConfig.cmake" @ONLY)
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${TAGEM_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file(tagemConfig.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tagemConfig.cmake" @ONLY)
-# ... for both
-configure_file(tagemConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/tagemConfigVersion.cmake" @ONLY)
-
-# Install the tagemConfig.cmake and tagemConfigVersion.cmake
-install(
-    FILES
-    "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tagemConfig.cmake"
-    "${PROJECT_BINARY_DIR}/tagemConfigVersion.cmake"
-    DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
-
-# Install the export set for use with the install-tree
-install(EXPORT tagemTargets DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+if(EXISTS utils)
+	add_subdirectory(utils)
+endif()
+if(EXISTS caffe)
+	add_subdirectory(caffe)
+endif()
 
 # END src: https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
