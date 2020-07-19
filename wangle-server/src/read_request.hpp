@@ -27,18 +27,6 @@ enum GetRangeHeaderResult {
 
 
 constexpr
-const char* skip_to_post_data(const char* s){
-	while(*(++s) != 0){
-		if (*s != '\n')
-			continue;
-		if (*(++s) == '\r')
-			if (*(++s) == '\n')
-				return s;
-	}
-	return nullptr;
-}
-
-constexpr
 GetRangeHeaderResult get_range(const char* str,  size_t& from,  size_t& to){
 	while(*(++str) != 0){ // NOTE: str is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id
 		if (*str != '\n')

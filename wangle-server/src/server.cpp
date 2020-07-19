@@ -95,11 +95,14 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
 		return _r::expect_100_continue;
 
-#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
+#define GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
 	BOOST_PP_IF(var_decl, const char* const,) var  = get_comma_separated_ints(&str_name, terminating_char); \
-	if (var == nullptr) \
-		return _r::not_found; \
 	BOOST_PP_IF(var_decl, const size_t,) var_length  = (uintptr_t)str_name - (uintptr_t)var;
+
+#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
+	GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
+	if (var == nullptr) \
+		return _r::not_found;
 
 #define GET_USER \
 	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
@@ -132,6 +135,10 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if (unlikely(name == 0)) \
 		return _r::not_found;
 
+#define SKIP_TO_BODY \
+	s = skip_to_body(s); \
+	if (unlikely(s == nullptr)) \
+		return _r::not_found;
 
 #define GET_FILE2_VAR_NAME(s) \
 	const char* const file2_var_name = s; \
@@ -520,9 +527,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view parse_qry(const char* s){
 		GET_USER_ID
-		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
+		SKIP_TO_BODY
 		
 		this->itr = this->buf;
 		if (sql_factory::parse_into(this->itr, s, connected_local_devices_str, user_id) != sql_factory::successness::ok)
@@ -689,9 +694,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 #ifndef NO_VIEW_DIR_FS
 		GET_USER_ID
 		GREYLIST_GUEST
-		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
+		SKIP_TO_BODY
 		
 		const char* const dir_path = s;
 		
@@ -1049,9 +1052,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		GREYLIST_GUEST
+		SKIP_TO_BODY
 		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
 		const char* const body = s;
 		
 		this->reset_buf_index();
@@ -1108,8 +1110,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
 			return _r::not_found;
 		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
+		SKIP_TO_BODY
 		
 		const char* const file_name = s;
 		const char* const b4_file_contents = skip_to(s, '\n');
@@ -1200,9 +1201,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_NUMBER_NONZERO(uint64_t, file_id)
 		GET_NUMBER_NONZERO(uint64_t, new_path__dir_id)
 		GET_USER_ID
-		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
+		SKIP_TO_BODY
 		
 		const char* const new_path__file_name = s;
 		
@@ -2245,20 +2244,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view post__recursively_record_filesystem_dir(const char* s){
+		GET_NUMBER(unsigned, max_depth)
+		GET_COMMA_SEPARATED_INTS__NULLABLE(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
 		GREYLIST_GUEST
+		SKIP_TO_BODY
 		
-		GET_NUMBER_NONZERO(unsigned, max_depth)
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
-		
-		skip_to_body(&s);
-		
+		this->reset_buf_index();
 		this->asciify(s, '\0');
 		
-		if (unlikely(opendir(this->buf) == nullptr))
-			return _r::not_found;
 		
-		if (tag_ids_len != 0)
+		DIR* const dir = opendir(this->buf);
+		if (unlikely(dir == nullptr))
+			return _r::not_found;
+		closedir(dir);
+		
+		if (tag_ids != nullptr)
 			// Tag the root directory the client chose
 			this->add_file_or_dir_to_db('d', nullptr, user_id, tag_ids, tag_ids_len, this->buf, this->buf_indx(), 0, false);
 		
@@ -2294,6 +2295,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			this->itr = this->buf + dir_len;
 			*this->itr = 0;
 		}
+		closedir(dir);
 	}
 	
 	FunctionSuccessness add_file_or_dir_to_db(const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){
@@ -2469,10 +2471,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* const user_headers = s;
 		
 		GET_USER_ID
-		
-		s = skip_to_post_data(s);
-		if (s == nullptr)
-			return _r::not_found;
+		SKIP_TO_BODY
+		--s;
 		
 		do {
 			++s; // Skip trailing newline
@@ -2593,9 +2593,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_NUMBER_NONZERO(uint64_t, f_id)
 		GET_USER_ID
 		GREYLIST_GUEST
-		
-		if (unlikely(skip_to_body(&s)))
-			return _r::not_found;
+		SKIP_TO_BODY
 		
 		this->mysql_exec(
 			"UPDATE file "
