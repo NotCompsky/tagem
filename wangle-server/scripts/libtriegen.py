@@ -8,11 +8,25 @@
 import re
 
 
-INDENT = "\t"
+INDENT:str = "\t"
+ZERO:str = "\0"
+ESCH:str = "\\0"
 
 
 def replace_indents(setval:str, k:int, indent:int):
 	return re.sub("(^|\n)\t", "\\1"+INDENT*(indent+2*k+2), setval) + "\n" + INDENT*(indent+2*k+2)
+
+
+def fdfadsfasdfsd(r:str, retval:str, indent:int):
+	output:str = ""
+	for k in range(i+1, len(r), 1):
+		output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
+		output += f"\n{INDENT*(indent+2*k+1)}case '{r[k]}':"
+	output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,len(r)-1,indent)};"
+	for k in range(j+1, len(r), 1)[::-1]:
+		output += f"\n{INDENT*(indent+2*k+2)}break;"
+		output += f"\n{INDENT*(indent+2*k)}}}"
+	return output
 
 
 def generate_list(startswith:bool, strings:list, indent:int) -> str:
@@ -31,10 +45,9 @@ def generate_list(startswith:bool, strings:list, indent:int) -> str:
 	r:str = ""
 	i:int = -1
 	j:int = 0
-	ZERO:str = "\0"
-	ESCH:str = "\\0"
 	
 	output:str = f"{INDENT*indent}switch({nextchar}){{"
+	retval:str = None
 	
 	for (s, setval) in sorted(strings):
 		if s == "":
@@ -51,29 +64,14 @@ def generate_list(startswith:bool, strings:list, indent:int) -> str:
 			j = 0
 			continue
 		
-		if (i == -1):
-			output += f"\n{INDENT*(indent+2*j+1)}case '{s[j]}':"
-		else:
-			for k in range(i+1, len(r), 1):
-				output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
-				output += f"\n{INDENT*(indent+2*k+1)}case '{r[k]}':"
-			output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,len(r)-1,indent)};"
-			for k in range(j+1, len(r), 1)[::-1]:
-				output += f"\n{INDENT*(indent+2*k+2)}break;"
-				output += f"\n{INDENT*(indent+2*k)}}}"
-			
-			output += f"\n{INDENT*(indent+2*j+1)}case '{s[j]}':"
-			
+		if (i != -1):
+			output += fdfadsfasdfsd(r, retval, indent)
+		output += f"\n{INDENT*(indent+2*j+1)}case '{s[j]}':"
+		
 		r = s
 		i = j
 		j = 0
 		retval = setval
-	for k in range(i+1, len(r), 1):
-		output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
-		output += f"\n{INDENT*(indent+2*k+1)}case '{r[k]}':"
-	output += f"\t// {r.replace(ZERO, ESCH)}\n{replace_indents(retval,len(r)-1,indent)};"
-	for k in range(0, len(r), 1)[::-1]:
-		output += f"\n{INDENT*(indent+2*k+2)}break;"
-		output += f"\n{INDENT*(indent+2*k)}}}"
+	output += fdfadsfasdfsd(r, retval, indent)
 	output = output.replace("case '\0':","case 0:")
 	return output
