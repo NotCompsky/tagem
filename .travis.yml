@@ -1,17 +1,15 @@
 language: c++
 
-matrix:
-  include:
-    - os: linux
-      dist: bionic
-      compiler: clang
-      env: BADGE=linux # To allow OS-wise badges - see https://github.com/travis-ci/travis-ci/issues/9579
+services:
+  - docker
+
+env:
+  - BADGE=linux
 
 before_install:
-  - if [ $TRAVIS_OS_NAME == linux ]; then  sudo apt update  &&  sudo apt install -y mariadb-client-10.1 mariadb-client-core-10.1 default-libmysqlclient-dev;  fi # libcompsky direct dependencies
-  - git clone https://github.com/NotCompsky/libcompsky  &&  mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake .. &&  sudo make install  &&  cd ../..
-  - if [ $TRAVIS_OS_NAME == linux ]; then  sudo apt install curl wget libcurl4-openssl-dev default-libmysqlclient-dev;  fi
-  - git clone https://github.com/facebook/proxygen  &&  cd proxygen/proxygen  &&  sed -i "s/setup_wangle$/setup_wangle; exit 0/g" build.sh  &&  ./build.sh --no-tests  &&  cd ../..
+  - docker pull notcompsky/tagem-compile-1:0.0.1
+  - sudo apt install -y --no-install-recommends libcurl4-openssl-dev
+  - git clone https://github.com/NotCompsky/libcompsky && mkdir libcompsky/build && cd libcompsky/build && cmake .. -DCMAKE_BUILD_TYPE=Release && make install
 
 script:
-  - mkdir tagem/build  &&  cd tagem/build  &&  cmake .. -Dproxygen_root_DIR=../../proxygen -DMAX_CACHE_AGE=0 -DCMAKE_BUILD_TYPE=Release  &&  make server
+  - git clone https://github.com/NotCompsky/tagem && mkdir tagem/build && cd tagem/build && cmake .. -DWHICH_MYSQL_CLIENT=mysqlclient -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so -DCMAKE_BUILD_TYPE=Release -Dwangle_DIR=/bob-the-builder/wangle/ -Dfolly_DIR=/bob-the-builder/folly/ -Dfizz_DIR=/bob-the-builder/fizz/ && make server
