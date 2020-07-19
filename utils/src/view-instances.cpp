@@ -14,6 +14,7 @@ namespace _f {
 	constexpr static concat::Start start;
 	constexpr static concat::End end;
 	constexpr static Zip2 zip2;
+	constexpr static guarantee::BetweenZeroAndOneInclusive between_0_1_incl;
 }
 
 namespace _err {
@@ -186,13 +187,14 @@ int main(int argc,  const char** argv) {
 		mysql_obj,
 		mysql_res,
 		BUF,
-		"SELECT t.name, p.name, f.name, b.x, b.y, b.w, b.h "
+		"SELECT t.name, p.name, CONCAT(d.full_path, f.name), b.x, b.y, b.w, b.h "
 		"FROM tag p "
 		"JOIN tag2parent_tree t2pt ON t2pt.parent=p.id "
 		"JOIN tag t ON t.id=t2pt.id "
 		"JOIN box2tag b2t ON b2t.tag=t.id "
 		"JOIN box b ON b.id=b2t.box "
 		"JOIN file f ON f.id=b.file "
+		"JOIN dir d ON d.id=f.dir "
 		"WHERE p.name IN(\"", _f::zip2, root_tags.size(), "\",\"", root_tags, "\")"
 		  "AND p.name NOT IN(\"", _f::zip2, not_subtags.size(), "\",\"", not_subtags, "\")"
 		  "AND t2pt.depth=", depth, " "
@@ -202,11 +204,9 @@ int main(int argc,  const char** argv) {
     char* name;
 	char* root_tag_name;
     char* fp;
-    
-    constexpr static const compsky::asciify::flag::guarantee::BetweenZeroAndOneInclusive f;
     double x, y, w, h;
 	int i = 0;
-	while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &root_tag_name, &fp, f, &x, f, &y, f, &w, f, &h)){
+	while(compsky::mysql::assign_next_row(mysql_res, &mysql_row, &name, &root_tag_name, &fp, _f::between_0_1_incl,  &x, _f::between_0_1_incl, &y, _f::between_0_1_incl, &w, _f::between_0_1_incl, &h)){
         view_img(name, root_tag_name, fp, x, y, w, h, ++i);
 	}
     
