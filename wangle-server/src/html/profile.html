@@ -170,12 +170,28 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 "</div>"
 
 
+#define CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
+	"<div id=\"" id "-container\" class=\"tagselect-container\">" \
+		"<select class=\"tagselect\" id=\"" id "\" multiple=\"multiple\"></select>"
+
+#define CREATE_TAG_SELECT_WO_BTN(id) \
+	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
+	"</div>"
+
+// elem = (id,text,fn)
+#define CREATE_TAG_SELECT(r, data, elem) \
+	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(BOOST_PP_TUPLE_ELEM(0, elem)) \
+		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+	"</div>"
+
+
 "<div id=\"admin-dashboard\" class=\"hidden\">"
 	"<a onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir_dialog "()\">" SVG_NEW_DIR "</a>"
 	
 	"<div id=\"record-fs-dir\" class=\"hidden\">"
 		"<h3>Recursively add all files in a directory to the database, up to a specified maximum depth</h3>"
-		"<button onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir "()\">Go (Opens Dialog)</button>"
+		CREATE_TAG_SELECT_WO_BTN("tagselect-record-fs-dir")
+		"<button onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir "()\">Go (Opens Prompts)</button>"
 	"</div>"
 	
 	"</br>"
@@ -271,12 +287,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	"</div>"
 "</div>"
 
-// elem = (id,text,fn)
-#define CREATE_TAG_SELECT(r, data, elem) \
-	"<div id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-container\" class=\"tagselect-container\">" \
-		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
-		"<select class=\"tagselect\" id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\" multiple=\"multiple\"></select>" \
-	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",MINIMISED_JS_DECL_add_parent_tags"()")("tagselect-self-c","Add Child Tags",MINIMISED_JS_DECL_add_child_tags"()")))
 
 "<div id=\"user-info\">"
@@ -345,14 +355,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 "<div id=\"descr\"></div>"
 
 "<div id=\"tagselect-era-container\" class=\"popup hidden\">"
-	CREATE_TAG_SELECT(_, _, ("tagselect-era", "Add Tags to Era", MINIMISED_JS_DECL_tag_era "()"))
+	CREATE_TAG_SELECT(_, _, ("tagselect-era", "Add to Era", MINIMISED_JS_DECL_tag_era "()"))
 	"<button onclick=\"" MINIMISED_JS_DECL_hide_tagselect_era "()\">Close</button>"
 "</div>"
 
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
-	("tagselect-eras", "Add Tags to Eras",  MINIMISED_JS_DECL_tag_stuff_then "('e'," MINIMISED_JS_DECL_get_era_ids  "(), '#tagselect-eras',"  MINIMISED_JS_DECL_era_tagger_fn  ")")
-	("tagselect-dirs", "Add Tags to Dirs",  MINIMISED_JS_DECL_tag_stuff_then "('d'," MINIMISED_JS_DECL_get_dir_ids  "(), '#tagselect-dirs',"  MINIMISED_JS_DECL_dir_tagger_fn  ")")
-	("tagselect-files","Add Tags to Files", MINIMISED_JS_DECL_tag_stuff_then "('f'," MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")
+	("tagselect-eras", "Add to Eras",  MINIMISED_JS_DECL_tag_stuff_then "('e'," MINIMISED_JS_DECL_get_era_ids  "(), '#tagselect-eras',"  MINIMISED_JS_DECL_era_tagger_fn  ")")
+	("tagselect-dirs", "Add to Dirs",  MINIMISED_JS_DECL_tag_stuff_then "('d'," MINIMISED_JS_DECL_get_dir_ids  "(), '#tagselect-dirs',"  MINIMISED_JS_DECL_dir_tagger_fn  ")")
+	("tagselect-files","Add to Files", MINIMISED_JS_DECL_tag_stuff_then "('f'," MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")
 ))
 
 "</div>"
