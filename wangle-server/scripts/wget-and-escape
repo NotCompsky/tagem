@@ -8,6 +8,8 @@ if [ -f "$dst" ]; then
 	exit 0
 fi
 
+mkdir -p "$(dirname "$dst")"
+
 echo 'R"=========(' > "$dst"
 curl "$url" >> "$dst"
 echo ')========="' >> "$dst"

@@ -229,6 +229,7 @@ if __name__ == "__main__":
 				fn_contents += process_fn_line(line)
 			human2minimised[human_name][3] = fn_contents
 	
+	print(list(set(ALL_HIDDEN_IDS)))
 	human2minimised["ALL_HIDDEN_IDS"][3] = "[" + ",".join(list(set(ALL_HIDDEN_IDS))).replace('"',"'") + "]"
 	
 	with open(args.dst, "w") as f:
