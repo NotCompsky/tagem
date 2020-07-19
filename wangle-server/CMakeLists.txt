@@ -57,6 +57,9 @@ set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 set(AUTO_SRC_DIR "${SRC_DIR}/auto-generated")
 set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
+file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
+# Creates directory during build system generation
+
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
 set_property(TARGET qry PROPERTY CXX_STANDARD 17)
 target_include_directories(qry PRIVATE "${COMPSKY_INCLUDE_DIRS}")
