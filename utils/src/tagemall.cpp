@@ -140,7 +140,7 @@ int main(const int argc, const char** argv){
 	itr = buf;
 	compsky::asciify::asciify(
 		itr,
-		"INSERT INTO _file (name) "
+		"INSERT INTO file (name) "
 		"VALUES "
 	);
 	for (auto j = file_offset;  j < file_offset + n_files;  ++j){

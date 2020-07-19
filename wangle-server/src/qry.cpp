@@ -152,22 +152,6 @@ const char tbl_arg_to_alias(const arg::ArgType arg){
 }
 
 static
-const char* tbl_full_name_of_base_tbl(const char tbl_alias){
-	switch(tbl_alias){
-		case 'e':
-			return "era";
-		case 'f':
-			return "_file";
-		case 'd':
-			return "_dir";
-		case 't':
-			return "_tag";
-		default:
-			abort();
-	}
-}
-
-static
 const char* attribute_field_name(const char* const attribute_name){
 	// NOTE: Thus far only used for many-to-many variables
 	// Compiler refuses to allow the switch operator
@@ -185,9 +169,9 @@ const char* get_tbl_name_of_join_in_ersatz_many_to_one(const char* const attribu
 			case 't':
 				return "file2tag";
 			case 'd':
-				return "_file";
+				return "file";
 			case 'D':
-				return "_dir";
+				return "dir";
 		}
 	//}
 }
@@ -276,7 +260,7 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 static
 const char* get_tbl_name_from_attr_name(const char* const attribute_name){
 	if ((attribute_name == attribute_name::PARENT) or (attribute_name == attribute_name::PARENTY))
-		return "_tag";
+		return "tag";
 	return attribute_name;
 }
 
@@ -609,7 +593,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					// 2nd example branch
 					where += "id";
 					where += " FROM ";
-					where += tbl_full_name_of_base_tbl(which_tbl); // e.g. "_file"
+					where += tbl_full_name(which_tbl); // e.g. "file"
 				}
 				where += " x JOIN ";
 				if (is_tree_tbl(arg_token_base)){
@@ -618,7 +602,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag"
 					where += " JOIN ";
 				}
-				where += tbl_full_name_of_base_tbl(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "_dir"
+				where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
 				where += " y ON y.id=";
 				if (is_tree_tbl(arg_token_base)){
 					where += "z.parent";
@@ -643,9 +627,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (is_inverted)
 					where += "NOT ";
 				if (which_tbl == 'f')
-					where += "IN (SELECT f.id FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.device IN(" + connected_local_devices_str + "))";
+					where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.device IN(" + connected_local_devices_str + "))";
 				else
-					where += "IN (SELECT id FROM _dir WHERE device IN(" + connected_local_devices_str + ")";
+					where += "IN (SELECT id FROM dir WHERE device IN(" + connected_local_devices_str + ")";
 				++n_args_since_operator;
 				break;
 				break;
@@ -779,7 +763,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += " IN(SELECT X.";
 					where += attribute_name;
 					where += " AS x\nFROM ";
-					where += tbl_full_name_of_base_tbl(which_tbl);
+					where += tbl_full_name(which_tbl);
 					where += " X\n";
 					where += join;
 					where += "WHERE ";
@@ -812,7 +796,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					derived_tbl += " AS x\n\t\tFROM file2";
 					derived_tbl += attribute_name;
 					derived_tbl += " f2_\n\t\tJOIN ";
-					derived_tbl += tbl_full_name_of_base_tbl(which_tbl);
+					derived_tbl += tbl_full_name(which_tbl);
 					derived_tbl += " X ON X.id=f2_.file\n\t\t";
 					derived_tbl += join;
 					derived_tbl += "\n\t\tWHERE ";
@@ -1003,7 +987,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 		itr,
 		"SELECT "
 			"X.id\n"
-		"FROM ", tbl_full_name_of_base_tbl(which_tbl), " X\n",
+		"FROM ", tbl_full_name(which_tbl), " X\n",
 		join.c_str(),
 		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id\n"
 		"WHERE ", where.c_str(), "\n"

@@ -5,7 +5,7 @@ delimiter $$
 CREATE PROCEDURE gen_tag2parent_tree()
 BEGIN
     TRUNCATE TABLE tag2parent_tree;
-    INSERT INTO tag2parent_tree (id, parent, depth) SELECT id, id, 0 FROM _tag;
+    INSERT INTO tag2parent_tree (id, parent, depth) SELECT id, id, 0 FROM tag;
     
     DROP TABLE IF EXISTS _tmp;
     CREATE TEMPORARY TABLE _tmp LIKE tag2parent_tree;
@@ -35,7 +35,7 @@ BEGIN
         INSERT INTO _tmp
         SELECT t2pt.id, d.parent, t2pt.depth+1
         FROM dir2parent_tree t2pt
-        JOIN _dir d ON d.id=t2pt.parent
+        JOIN dir d ON d.id=t2pt.parent
         WHERE d.parent IS NOT NULL
         ON DUPLICATE KEY UPDATE depth=LEAST(_tmp.depth, t2pt.depth+1);
         
@@ -59,7 +59,7 @@ delimiter $$
 CREATE PROCEDURE gen_dir2parent_tree()
 BEGIN
     TRUNCATE TABLE dir2parent_tree;
-    INSERT INTO dir2parent_tree (id, parent, depth) SELECT id, id, 0 FROM _dir;
+    INSERT INTO dir2parent_tree (id, parent, depth) SELECT id, id, 0 FROM dir;
     CALL fill_dir2parent_tree();
 END $$
 

@@ -84,8 +84,8 @@ void intercept_exit(int){
 			BUF,
 			"DELETE f2h "
 			"FROM file2", CURRENT_HASHING_METHOD, " f2h "
-			"JOIN _file f ON f.id=f2h.file "
-			"JOIN _dir d ON d.id=f.dir "
+			"JOIN file f ON f.id=f2h.file "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
@@ -105,8 +105,8 @@ void intercept_abort(int _signal){
 			"INSERT INTO hash_abortions__", CURRENT_HASHING_METHOD, " "
 			"(file)"
 			"SELECT f.id "
-			"FROM _file f "
-			"JOIN _dir d ON d.id=f.dir "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
@@ -184,7 +184,7 @@ struct ManyToMany {
 struct OneToOne {
 	constexpr
 	static
-	const char* const insert_pre_hash_name = "UPDATE _file SET ";
+	const char* const insert_pre_hash_name = "UPDATE file SET ";
 	constexpr
 	static
 	const char* const insert_post_hash_name = "=";
@@ -210,7 +210,7 @@ struct OneToOne {
 	const char* const filter_previously_completed_post = ",0)=0";
 	constexpr
 	static
-	const char* const delete_pre = "UPDATE _file SET ";
+	const char* const delete_pre = "UPDATE file SET ";
 	constexpr
 	static
 	const char* const delete_post = "=NULL WHERE id=";
@@ -716,9 +716,9 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 			"f.", (is_backup_tbl)?"file":"id", ",",
 			(is_backup_tbl)?"d.id":"0", ","
 			"CONCAT(d.full_path, f.name) "
-		"FROM ", (is_backup_tbl)?"file_backup":"_file", " f "
-		"JOIN _dir d ON d.id=f.dir "
-		"JOIN _device D ON D.id=d.device "
+		"FROM ", (is_backup_tbl)?"file_backup":"file", " f "
+		"JOIN dir d ON d.id=f.dir "
+		"JOIN device D ON D.id=d.device "
 		"WHERE TRUE "
 		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
 		  "AND ",

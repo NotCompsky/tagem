@@ -10,8 +10,8 @@
 		"JOIN dir2tag d2t ON d2t.dir=d2pt.parent " \
 		"UNION " \
 		"SELECT d.id, D2t.tag " \
-		"FROM _dir d " \
-		"JOIN _device D ON D.id=d.device " \
+		"FROM dir d " \
+		"JOIN device D ON D.id=d.device " \
 		"JOIN device2tag D2t ON D2t.device=D.id " \
 	")"
 
@@ -27,7 +27,7 @@
 			"FROM file2tag " \
 			"UNION " \
 			"SELECT f.id, d2t.tag " \
-			"FROM _file f " \
+			"FROM file f " \
 			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir" \
 		")f2t ON f2t.tag=t2pt.id " \
 		"WHERE u2ht.user="
@@ -50,7 +50,7 @@
 			"FROM era2tag " \
 			"UNION " \
 			"SELECT f.id, d2t.tag " \
-			"FROM _file f " \
+			"FROM file f " \
 			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir " \
 		")e2t ON e2t.tag=t2pt.id " \
 		"WHERE u2ht.user="

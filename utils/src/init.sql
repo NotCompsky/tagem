@@ -25,7 +25,7 @@ INSERT INTO protocol (id, name) VALUES
 (4, "youtube-dl")
 ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE IF NOT EXISTS _device (
+CREATE TABLE IF NOT EXISTS device (
 	-- Storage device - such as a hard drive, or a website (a remote storage device)
 	-- Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -37,20 +37,20 @@ CREATE TABLE IF NOT EXISTS _device (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
-INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
+INSERT INTO device (name,permissions,protocol,embed_pre,embed_post) VALUES
 ("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
 ("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>')
 ON DUPLICATE KEY UPDATE name=name;
 -- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
 
-INSERT INTO _device (name, protocol) VALUES
+INSERT INTO device (name, protocol) VALUES
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://github.com/", (SELECT id FROM protocol WHERE name="https://"))
 ON DUPLICATE KEY UPDATE protocol=protocol;
 
-CREATE TABLE IF NOT EXISTS _dir (
+CREATE TABLE IF NOT EXISTS dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	parent BIGINT UNSIGNED,
 	parent_not_null BIGINT AS (IFNULL(parent,0)), -- Allows foreign key checks to work
@@ -58,9 +58,9 @@ CREATE TABLE IF NOT EXISTS _dir (
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(255) NOT NULL,
 	full_path VARBINARY(4096) NOT NULL,
-	FOREIGN KEY (parent) REFERENCES _dir (id),
+	FOREIGN KEY (parent) REFERENCES dir (id),
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (device) REFERENCES _device (id),
+	FOREIGN KEY (device) REFERENCES device (id),
 	UNIQUE KEY (parent_not_null,name), -- Only one name if parent is NULL
 	--UNIQUE KEY (full_path), -- Field is too long to be a key
 	UNIQUE KEY (parent,name)
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS dir2parent_tree (
 	dir BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	depth INT UNSIGNED NOT NULL,
-	FOREIGN KEY (dir) REFERENCES _dir (id),
-	FOREIGN KEY (parent) REFERENCES _dir (id),
+	FOREIGN KEY (dir) REFERENCES dir (id),
+	FOREIGN KEY (parent) REFERENCES dir (id),
 	UNIQUE KEY (dir,parent)
 );
 
@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS dir2tag (
 	dir BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (dir) REFERENCES _dir (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (dir) REFERENCES dir (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (dir,tag)
 );
@@ -88,8 +88,8 @@ CREATE TABLE IF NOT EXISTS device2tag (
 	device BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (device) REFERENCES _device (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (device) REFERENCES device (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (device,tag)
 );
@@ -146,7 +146,7 @@ ON DUPLICATE KEY UPDATE mimetype=mimetype
 ;
 
 
-CREATE TABLE IF NOT EXISTS _file (
+CREATE TABLE IF NOT EXISTS file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	dir BIGINT UNSIGNED NOT NULL,
 	size BIGINT UNSIGNED,
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS _file (
 	title VARCHAR(100),
 	description VARCHAR(1000),
     UNIQUE KEY (dir, name),
-	FOREIGN KEY (dir) REFERENCES _file (id),
+	FOREIGN KEY (dir) REFERENCES file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
 	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
@@ -186,8 +186,8 @@ CREATE TABLE IF NOT EXISTS file_backup (
 	mimetype INT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	PRIMARY KEY (dir, name),
-	FOREIGN KEY (dir) REFERENCES _file (id),
-	FOREIGN KEY (file) REFERENCES _file (id),
+	FOREIGN KEY (dir) REFERENCES file (id),
+	FOREIGN KEY (file) REFERENCES file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
 	FOREIGN KEY (user) REFERENCES user (id)
 );
@@ -223,7 +223,7 @@ FROM user
 ON DUPLICATE KEY UPDATE user=user;
 
 
-CREATE TABLE IF NOT EXISTS _tag (
+CREATE TABLE IF NOT EXISTS tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	user INT UNSIGNED NOT NULL,
     name VARBINARY(128),
@@ -233,8 +233,8 @@ CREATE TABLE IF NOT EXISTS _tag (
 	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
 );
-INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!") ON DUPLICATE KEY UPDATE id=id;
-UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
+INSERT INTO tag (id,name) VALUES (0,"!!ROOT TAG!!") ON DUPLICATE KEY UPDATE id=id;
+UPDATE tag SET id=0 WHERE name="!!ROOT TAG!!";
 -- NOTE: Permissions are AND (each non-zero bit is another required permission)
 -- NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
@@ -242,8 +242,8 @@ CREATE TABLE IF NOT EXISTS tag2parent (
 	tag BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
-	FOREIGN KEY (tag) REFERENCES _tag (id),
-	FOREIGN KEY (parent) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
+	FOREIGN KEY (parent) REFERENCES tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (tag, parent)
 );
@@ -251,8 +251,8 @@ CREATE TABLE IF NOT EXISTS tag2parent_tree (
 	tag BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	depth INT UNSIGNED NOT NULL,
-	FOREIGN KEY (tag) REFERENCES _tag (id),
-	FOREIGN KEY (parent) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
+	FOREIGN KEY (parent) REFERENCES tag (id),
 	PRIMARY KEY (tag, parent)
 );
 
@@ -261,7 +261,7 @@ CREATE TABLE IF NOT EXISTS user2blacklist_tag (
 	user INT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
 	PRIMARY KEY (user,tag)
 );
 
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS user2hidden_tag (
 	tag BIGINT UNSIGNED NOT NULL,
 	max_depth INT UNSIGNED DEFAULT TRUE,
 	FOREIGN KEY (user) REFERENCES user (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
 	PRIMARY KEY (user,tag)
 );
 
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS file2tag (
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
 	FOREIGN KEY (file) REFERENCES file (id),
-	FOREIGN KEY (tag) REFERENCES _tag (id),
+	FOREIGN KEY (tag) REFERENCES tag (id),
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (file, tag)
 );
@@ -459,64 +459,9 @@ ON DUPLICATE KEY UPDATE id=id;
 CREATE TABLE IF NOT EXISTS file2thumbnail (
 	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
 	x VARBINARY(1024) NOT NULL,
-	FOREIGN KEY (file) REFERENCES _file (id)
+	FOREIGN KEY (file) REFERENCES file (id)
 );
--- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v=';
-
-
--- Row-level security for modern MySQL/MariaDB
--- Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
-CREATE TABLE IF NOT EXISTS permission (
-	id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
-	name VARCHAR(32) NOT NULL UNIQUE KEY
-);
-CREATE TABLE IF NOT EXISTS user2permissions (
-	user VARBINARY(32) NOT NULL PRIMARY KEY,
-	permissions BIGINT UNSIGNED NOT NULL
-);
-CREATE SQL SECURITY DEFINER
-VIEW tag
-AS
-	SELECT *
-	FROM _tag
-	WHERE id NOT IN (
-		SELECT t2pt.tag
-		FROM user u
-		JOIN user2blacklist_tag u2ht ON u2ht.user=u.id
-		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
-		WHERE u.name=SESSION_USER()
-	)
-;
-CREATE SQL SECURITY DEFINER
-VIEW file
-AS
-	SELECT *
-	FROM _file
-	WHERE id NOT IN (
-		SELECT f2t.file
-		FROM user u
-		JOIN user2blacklist_tag u2ht ON u2ht.user=u.id
-		JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag
-		JOIN file2tag f2t ON f2t.tag=t2pt.tag
-		WHERE u.name=SESSION_USER()
-	)
-;
-CREATE SQL SECURITY DEFINER
-VIEW dir
-AS
-	SELECT d.*
-	FROM _dir d
-	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
-	WHERE u2p.permissions & d.permissions = d.permissions
-;
-CREATE SQL SECURITY DEFINER
-VIEW device
-AS
-	SELECT d.*
-	FROM _device d
-	JOIN user2permissions u2p ON u2p.user=SESSION_USER()
-	WHERE u2p.permissions & d.permissions = d.permissions
-;
+-- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM file f JOIN dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v=';
 
 
 
@@ -533,7 +478,7 @@ CREATE TABLE IF NOT EXISTS file2post (
 	post BIGINT UNSIGNED NOT NULL,
 	db INT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, post, db),
-	FOREIGN KEY (file) REFERENCES _file (id),
+	FOREIGN KEY (file) REFERENCES file (id),
 	FOREIGN KEY (db) REFERENCES external_db (id)
 );
 

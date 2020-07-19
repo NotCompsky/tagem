@@ -156,9 +156,9 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"t.name," \
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
 		"IFNULL(A.n,0) " \
-	"FROM _tag t " \
+	"FROM tag t " \
 	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
-	"JOIN _tag p ON p.id=t2pt.parent " \
+	"JOIN tag p ON p.id=t2pt.parent " \
 	"LEFT JOIN(" \
 		"SELECT tag, COUNT(*) AS n " \
 		"FROM file2tag " \
@@ -510,7 +510,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
-		this->mysql_query("SELECt id FROM _dir WHERE id=", dir_id, " AND id NOT IN" USER_DISALLOWED_DIRS(user_id));
+		this->mysql_query("SELECt id FROM dir WHERE id=", dir_id, " AND id NOT IN" USER_DISALLOWED_DIRS(user_id));
 		const bool rc = (this->mysql_assign_next_row());
 		if (rc)
 			this->mysql_free_res();
@@ -585,7 +585,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query(
 			"SELECT name "
-			"FROM _file "
+			"FROM file "
 			"WHERE dir=", id
 			// WARNING: No security filter
 		);
@@ -616,7 +616,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_after_itr(
 			"SELECT name "
-			"FROM _dir "
+			"FROM dir "
 			"WHERE id=", id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
 		);
@@ -631,7 +631,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// List of all parent directories
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
-			"FROM _dir d "
+			"FROM dir d "
 			"JOIN dir2parent_tree dt ON dt.parent=d.id "
 			"WHERE dt.id=", id, " "
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
@@ -648,7 +648,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// List of all IMMEDIATE child directories
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.name "
-			"FROM _dir d "
+			"FROM dir d "
 			"WHERE d.parent=", id, " "
 			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
 			"ORDER BY name ASC"
@@ -709,13 +709,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// Determine if files exist in the database - if so, supply all the usual data
 		this->mysql_query(
 			"SELECT f.name "
-			"FROM _file f "
-			"JOIN _dir d ON d.id=f.dir "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
 			"UNION "
 			"SELECT f.name "
 			"FROM file_backup f "
-			"JOIN _dir d ON d.id=f.dir "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE d.name=\"", _f::esc, '"', dir_path, "\" "
 			// WARNING: No limits. Directories should aim to avoid having too many files in each (low thousands) to mitigate malicious requests
 		);
@@ -842,7 +842,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"f.mimetype,"
 				"IFNULL(f.description,\"\"),"
 				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
-			"FROM _file f "
+			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			JOIN_FILE_THUMBNAIL,
@@ -924,10 +924,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.full_path, d.device "
-			"FROM _dir d "
+			"FROM dir d "
 			"WHERE d.id IN("
 				"SELECT dir "
-				"FROM _file "
+				"FROM file "
 				"WHERE id=", id, " "
 				"UNION "
 				"SELECT dir "
@@ -950,7 +950,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT "
 				"DISTINCT t.id,"
 				"t.name "
-			"FROM _tag t "
+			"FROM tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
 			"JOIN era e ON e.id=e2t.era "
 			"WHERE e.file=", id, " "
@@ -1062,7 +1062,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->reset_buf_index();
 		this->asciify(
-			"INSERT INTO _file "
+			"INSERT INTO file "
 			"(user,dir,name)"
 			"VALUES"
 		);
@@ -1086,7 +1086,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec_buf();
 		
 		// Now return a map of name to ID
-		this->mysql_query("SELECT name, id FROM _file WHERE dir=", dir_id, " AND name IN(", body, ")");
+		this->mysql_query("SELECT name, id FROM file WHERE dir=", dir_id, " AND name IN(", body, ")");
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
@@ -1132,7 +1132,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query(
 			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
-			"FROM _dir d "
+			"FROM dir d "
 			"WHERE d.id=", dir_id
 		);
 		const char* path;
@@ -1161,7 +1161,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query(
 			"SELECT id "
-			"FROM _file "
+			"FROM file "
 			"WHERE dir=", dir_id, " "
 			  "AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
 		);
@@ -1178,7 +1178,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			 * Else if file not exist:       file is created on DB, and tagged
 			 */
 			this->mysql_exec(
-				"INSERT INTO _file "
+				"INSERT INTO file "
 				"(dir,user,mimetype,name)"
 				"VALUES(",
 					dir_id, ',',
@@ -1190,7 +1190,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			
 			this->mysql_query(
 				"SELECT id "
-				"FROM _file "
+				"FROM file "
 				"WHERE dir=", dir_id, " "
 				"AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
 			);
@@ -1216,14 +1216,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"INSERT INTO file_backup"
 			"(file,dir,name,mimetype,user)"
 			"SELECT id, dir, name, mimetype,", user_id, " "
-			"FROM _file "
+			"FROM file "
 			"WHERE id=", file_id, " "
 			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
 		);
 		// TODO: Catch duplicate key error. Should never happen.
 		
 		this->mysql_exec(
-			"UPDATE _file "
+			"UPDATE file "
 			"SET dir=", new_path__dir_id, ","
 				"name=\"", _f::esc, '"', new_path__file_name, "\""
 			"WHERE id=", file_id, " "
@@ -1261,7 +1261,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->reset_buf_index();
 		this->mysql_query(
 			"SELECT GROUP_CONCAT(f.id)"
-			"FROM _file f "
+			"FROM file f "
 			"JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f2p.post IN (", post_ids, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
@@ -1480,7 +1480,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
 				"0 "
-			"FROM _file f "
+			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
@@ -1519,7 +1519,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"e.start,"
 				"e.end "
 			"FROM era e "
-			"JOIN _file f ON f.id=e.file "
+			"JOIN file f ON f.id=e.file "
 			"LEFT JOIN("
 				"SELECT era, tag "
 				"FROM era2tag "
@@ -1556,7 +1556,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
 				"0 "
-			"FROM _file f "
+			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
@@ -1604,9 +1604,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"d.device,"
 				"IFNULL(GROUP_CONCAT(DISTINCT d2t.tag),\"\"),"
 				"COUNT(DISTINCT f.id)"
-			"FROM _dir d "
+			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
-			"JOIN _file f ON f.dir=d.id "
+			"JOIN file f ON f.dir=d.id "
 			"WHERE d.id IN (", _f::strlen, dir_ids, dir_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
@@ -1640,10 +1640,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	void qry_mysql_for_next_parent_dir(const UserIDIntType user_id,  const char* const fields,  const uint64_t child_dir_id,  Args... args){
-		// This function is to be used to traverse the _dir table from the deepest ancestor to the immediate parent
+		// This function is to be used to traverse the dir table from the deepest ancestor to the immediate parent
 		this->mysql_query(
 			"SELECT ", fields, " "
-			"FROM _dir "
+			"FROM dir "
 			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
 			  "AND parent", (child_dir_id==0)?" IS NULL AND 0=":"=", child_dir_id, " "
 			  "AND id NOT IN" USER_DISALLOWED_DIRS(user_id)
@@ -1664,14 +1664,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		
 		this->mysql_query2(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT id FROM _file WHERE dir=", id, ")")
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT id FROM file WHERE dir=", id, ")")
 		);
 		this->mysql_query_after_itr(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
 				"0 "
-			"FROM _file f "
+			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
@@ -1705,7 +1705,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
 				"0 "
-			"FROM _file f "
+			"FROM file f "
 			"JOIN file2", _f::strlen, file2_var_name, file2_var_name_len, " f2v ON f2v.file=f.id "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
@@ -1772,7 +1772,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->reset_buf_index();
 		this->asciify(
 			"SELECT id, ", (tbl_alias=='d')?"full_path ":"name ",
-			"FROM ", (tbl_alias=='d')?"_dir":"_tag", " "
+			"FROM ", (tbl_alias=='d')?"dir":"tag", " "
 			"WHERE ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
 			"AND id NOT IN"
 		);
@@ -1818,7 +1818,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (user_id != user_auth::SpecialUserID::guest){
 			this->mysql_query(
 				"SELECT id, name, protocol, embed_pre, embed_post "
-				"FROM _device "
+				"FROM device "
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES(user_id)
 			);
 			this->itr = this->buf;
@@ -1840,7 +1840,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			regenerate_device_json = false;
 			this->mysql_query_buf(
 				"SELECT id, name, protocol, embed_pre, embed_post "
-				"FROM _device "
+				"FROM device "
 				"WHERE id NOT IN" USER_DISALLOWED_DEVICES__COMPILE_TIME(GUEST_ID_STR)
 			);
 			this->init_json(
@@ -2004,9 +2004,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query(
 			"SELECT m.name, CONCAT(d.full_path, f", (dir_id==0)?"":"2", ".name) "
-			"FROM _file f ",
+			"FROM file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
-			"JOIN _dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
+			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
 			"WHERE f.id=", id, " "
 			  "AND ", (dir_id==0)?"0=":"f2.dir=", dir_id, " "
@@ -2092,7 +2092,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query(
 			"SELECT d.full_path "
-			"FROM _dir d "
+			"FROM dir d "
 			"WHERE d.id=", dir_id
 		); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		
@@ -2191,12 +2191,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
 		this->mysql_exec(
-			"INSERT INTO _tag "
+			"INSERT INTO tag "
 			"(name,user)"
 			"SELECT \"", _f::esc, '"', _f::strlen,  tag_name_len,  tag_name, "\",", user_id, " "
-			"FROM _tag "
+			"FROM tag "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM _tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\")"
+			"(SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\")"
 			  "AND id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			"LIMIT 1"
 		);
@@ -2204,8 +2204,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"INSERT INTO tag2parent "
 			"(id, parent, user)"
 			"SELECT t.id, p.id,", user_id, " "
-			"FROM _tag t "
-			"JOIN _tag p "
+			"FROM tag t "
+			"JOIN tag p "
 			"WHERE p.id IN (", _f::strlen, parent_ids, parent_ids_len, ") "
 			  "AND t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 			  "AND t.id NOT IN " USER_DISALLOWED_TAGS(user_id)
@@ -2217,11 +2217,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT * "
 			"FROM("
 				"SELECT id AS id, id AS parent, 0 AS depth "
-				"FROM _tag "
+				"FROM tag "
 				"WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 				"UNION "
 				"SELECT t.id, t2pt.parent, t2pt.depth+1 "
-				"FROM _tag t "
+				"FROM tag t "
 				"JOIN tag2parent_tree t2pt "
 				"WHERE t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
 				"AND t2pt.parent IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
@@ -2233,7 +2233,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	bool add_D_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len){
 		this->mysql_exec(
-			"INSERT INTO _device "
+			"INSERT INTO device "
 			"(protocol,name,user)"
 			"SELECT "
 				"id,"
@@ -2242,7 +2242,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM protocol "
 			"WHERE LEFT(\"", _f::esc, '"', _f::strlen,  url_len,  url,  "\",LENGTH(name))=name "
 			  "AND NOT EXISTS"
-				"(SELECT id FROM _device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+				"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
 			"ORDER BY LENGTH(name) DESC "
 			"LIMIT 1"
 		);
@@ -2286,7 +2286,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			}
 			// NOTE: The directory to add may not end in a slash. However, all its parent directories must. The following SQL will not insert the directory we wish to add, only insert all its ancestors.
 			this->mysql_exec(
-				"INSERT INTO _dir"
+				"INSERT INTO dir"
 				"(parent,device,user,full_path,name)"
 				"SELECT "
 					"id,"
@@ -2294,7 +2294,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					user_id, ","
 					"\"", _f::esc, '"', _f::strlen, url_len_up_until_next_step, url, "\","
 					"\"", _f::esc, '"', _f::strlen, url_len_of_next_step, url+offset, "\" "
-				"FROM _dir "
+				"FROM dir "
 				"WHERE id=", parent_dir_id, " "
 				// No need to check permissions, that has already been done in qry_mysql_for_next_parent_dir
 				"ON DUPLICATE KEY UPDATE device=VALUES(device)"
@@ -2310,7 +2310,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		// Add entry to primary table
 		if (which_tbl == 'd'){
 			this->mysql_exec(
-				"INSERT INTO _dir "
+				"INSERT INTO dir "
 				"(parent, device, user, full_path, name)"
 				"SELECT "
 					"id,",
@@ -2318,24 +2318,24 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					user_id, ","
 					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
 					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
-				"FROM _dir "
+				"FROM dir "
 				"WHERE id=", parent_dir_id
 				// NOTE: The user has been verified to have permission to access the parent directory.
 				// Guaranteed not to be a duplicate
 			);
 		} else /* == 'f' */ {
 			this->mysql_exec(
-				"INSERT INTO _file "
+				"INSERT INTO file "
 				"(dir, name, user, mimetype)"
 				"SELECT ",
 					parent_dir_id, ","
 					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\",",
 					user_id, ","
 					"IFNULL(mt.id,0)"
-				"FROM _file f "
+				"FROM file f "
 				"LEFT JOIN mimetype mt ON mt.name=\"", mimetype, "\" "
 				"WHERE NOT EXISTS"
-				"(SELECT id FROM _file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\")"
+				"(SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\")"
 				  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
 				"LIMIT 1"
 			);
@@ -2366,7 +2366,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				
 				if (mimetype[0]){
 					this->mysql_exec(
-						"UPDATE _file f "
+						"UPDATE file f "
 						"JOIN file_backup f2 ON f2.file=f.id "
 						"SET f.mimetype=f2.mimetype "
 						"WHERE f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
@@ -2383,8 +2383,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"INSERT INTO dir2tag "
 				"(dir, tag, user)"
 				"SELECT d.id, t.id,", user_id, " "
-				"FROM _dir d "
-				"JOIN _tag t "
+				"FROM dir d "
+				"JOIN tag t "
 				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
 				  "AND d.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND d.parent=", parent_dir_id, " "
@@ -2396,9 +2396,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"INSERT INTO file2tag "
 				"(file, tag, user)"
 				"SELECT f.id, t.id,", user_id, " "
-				"FROM _file f "
-				"JOIN _dir d ON d.id=f.dir "
-				"JOIN _tag t "
+				"FROM file f "
+				"JOIN dir d ON d.id=f.dir "
+				"JOIN tag t "
 				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
@@ -2483,7 +2483,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				era_start, 5, ',',
 				era_end, 5, ',',
 				user_id, " "
-			"FROM _file "
+			"FROM file "
 			"WHERE id=", file_id, " "
 			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
 		);
@@ -2517,7 +2517,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		BLACKLIST_GUEST
 		
 		this->mysql_exec(
-			"UPDATE _tag "
+			"UPDATE tag "
 			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
 			"WHERE id=", tag_id
 		);
@@ -2552,7 +2552,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::not_found;
 		
 		this->mysql_exec(
-			"UPDATE _file "
+			"UPDATE file "
 			"SET title=\"", _f::esc, '"', s, "\" "
 			"WHERE id=", f_id, " "
 			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
@@ -2577,10 +2577,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND dir IN (SELECT dir FROM file_backup WHERE file=", orig_f_id, ")");
 		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
-		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM _file f WHERE f.id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
+		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
 		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT post FROM file2post WHERE file=", orig_f_id, ") AND file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		this->mysql_exec("DELETE FROM _file WHERE id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		this->mysql_exec("DELETE FROM file WHERE id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
 		
 		return _r::post_ok;
 	}
@@ -2602,7 +2602,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
-		this->mysql_query("SELECT f.id, d.full_path, f.name FROM _file f JOIN _dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
+		this->mysql_query("SELECT f.id, d.full_path, f.name FROM file f JOIN dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
 		char orig_file_path[4096];
 		const char* file_id_str;
 		const char* orig_dir_name;
@@ -2648,7 +2648,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				file_name_pre, _f::esc, '"', file_name, file_name_post, ","
 				"IFNULL(mt.id,0),",
 				user_id, " "
-			"FROM _file f "
+			"FROM file f "
 			"LEFT JOIN ",
 				(is_mimetype_set)?"mimetype":"ext2mimetype",
 				" mt ON mt.name=SUBSTRING_INDEX(\"",
@@ -2669,8 +2669,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"DELETE t2p "
 			"FROM tag2parent t2p "
-			"JOIN _tag t ON t.id=t2p.id "
-			"JOIN _tag p ON p.id=t2p.parent "
+			"JOIN tag t ON t.id=t2p.id "
+			"JOIN tag p ON p.id=t2p.parent "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
@@ -2686,8 +2686,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"INSERT INTO tag2parent (id, parent, user) "
 			"SELECT t.id, p.id,", user_id, " "
-			"FROM _tag t "
-			"JOIN _tag p "
+			"FROM tag t "
+			"JOIN tag p "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
 			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
@@ -2698,8 +2698,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"INSERT INTO tag2parent_tree (id, parent, depth) "
 			"SELECT t.id, t2pt.parent, t2pt.depth+1 "
-			"FROM _tag t "
-			"JOIN _tag p "
+			"FROM tag t "
+			"JOIN tag p "
 			"JOIN tag2parent_tree t2pt ON t2pt.id=p.id "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
@@ -2771,8 +2771,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"INSERT INTO file2tag (tag, file, user) "
 			"SELECT t.id,f.id,", user_id, " "
-			"FROM _tag t "
-			"JOIN _file f "
+			"FROM tag t "
+			"JOIN file f "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND f.id IN (", file_ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
@@ -2786,7 +2786,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_exec(
 			"DELETE f2t "
 			"FROM file2tag f2t "
-			"JOIN _tag t ON t.id=f2t.tag "
+			"JOIN tag t ON t.id=f2t.tag "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND f2t.file IN (", file_ids_args..., ")"
 			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
@@ -2831,7 +2831,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT "
 				"e.id,"
 				"t.id "
-			"FROM _tag t "
+			"FROM tag t "
 			"JOIN era e "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND e.id IN (", _f::strlen, ids, ids_len, ")"
@@ -2869,7 +2869,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"INSERT INTO file2", _f::strlen, file2_var_name, file2_var_name_len, " "
 			"(file,x)"
 			"SELECT f.id,", value, " "
-			"FROM _file f "
+			"FROM file f "
 			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"ON DUPLICATE KEY UPDATE x=x"
@@ -3082,7 +3082,7 @@ int main(int argc,  const char* const* argv){
 		db_infos.at(0).mysql_obj,
 		res4,
 		"SELECT id, name "
-		"FROM _device "
+		"FROM device "
 		"WHERE name LIKE '/%'"
 	);
 	connected_local_devices.reserve(compsky::mysql::n_results<size_t>(res4));

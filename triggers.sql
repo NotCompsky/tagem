@@ -1,5 +1,5 @@
 CREATE TRIGGER honour_the_ancestors 
-AFTER INSERT ON _dir
+AFTER INSERT ON dir
 FOR EACH ROW
 	INSERT INTO dir2parent_tree
 	(id,parent,depth)

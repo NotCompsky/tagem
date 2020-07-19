@@ -291,7 +291,7 @@ int main(int argc, char** argv) {
 			"y,"
 			"w,"
 			"h "
-		"FROM _file "
+		"FROM file "
 		"JOIN("
 			"SELECT "
 				"file,"

@@ -112,7 +112,7 @@ void record_dir_from_filepath(const char* const _file_path,  Args... args){
 	
 	record_dir(prefix, args...);
 	
-	// WARNING: What happens if user tries to insert a directory which already exists in '_dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
+	// WARNING: What happens if user tries to insert a directory which already exists in 'dir', but which they do not have permission to view (thus not appearing in the 'dir' view)?
 }
 
 
