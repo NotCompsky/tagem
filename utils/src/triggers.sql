@@ -1,3 +1,4 @@
+R"=====(
 CREATE TRIGGER honour_the_ancestors 
 AFTER INSERT ON dir
 FOR EACH ROW
@@ -9,3 +10,4 @@ FOR EACH ROW
 	UNION
 	SELECT new.id, new.id, 0
 ;
+)====="

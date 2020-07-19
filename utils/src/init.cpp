@@ -14,6 +14,8 @@ namespace compsky {
 int main(){
 	constexpr static const char* sql =
 		#include "init.sql"
+		#include "triggers.sql"
+		#include "procedures.sql"
 	;
 
 	void* dummy = malloc(strlen(sql) + 1024);

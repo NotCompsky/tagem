@@ -1,3 +1,5 @@
+R"=====(
+
 DROP PROCEDURE IF EXISTS gen_tag2parent_tree;
 
 delimiter $$
@@ -64,3 +66,5 @@ BEGIN
 END $$
 
 delimiter ;
+
+)====="
