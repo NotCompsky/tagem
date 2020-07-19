@@ -3,14 +3,6 @@
 #include <string> // for char_traits
 
 
-namespace compsky {
-    namespace asciify {
-        char* BUF;
-        char* ITR;
-    }
-}
-
-
 int main(){
 	constexpr static const char* sql =
 		#include "init.sql"
