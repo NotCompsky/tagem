@@ -464,27 +464,6 @@ CREATE TABLE IF NOT EXISTS file2thumbnail (
 -- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM _file f JOIN _dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v=';
 
 
-
-CREATE TABLE IF NOT EXISTS settings (
-	name VARBINARY(128) NOT NULL,
-	filename_regexp VARCHAR(1024),
-	files_from VARCHAR(1024) NOT NULL,
-	start_from VARCHAR(1024) NOT NULL,
-	skip_tagged BOOLEAN NOT NULL,
-	skip_trans BOOLEAN NOT NULL,
-	skip_grey BOOLEAN NOT NULL,
-	stpetersburger INT UNSIGNED NOT NULL,
-	files_from_which INT UNSIGNED NOT NULL,
-	start_from_which INT UNSIGNED NOT NULL,
-	file_sz_min BIGINT UNSIGNED NOT NULL,
-	file_sz_max BIGINT UNSIGNED NOT NULL,
-	w_max INT UNSIGNED NOT NULL,
-	w_min INT UNSIGNED NOT NULL,
-	h_max INT UNSIGNED NOT NULL,
-	h_min INT UNSIGNED NOT NULL,
-	PRIMARY KEY (name)
-);
-
 -- Row-level security for modern MySQL/MariaDB
 -- Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
 CREATE TABLE IF NOT EXISTS permission (
