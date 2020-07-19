@@ -17,7 +17,7 @@ def replace_indents(setval:str, k:int, indent:int):
 	return re.sub("(^|\n)\t", "\\1"+INDENT*(indent+2*k+2), setval) + "\n" + INDENT*(indent+2*k+2)
 
 
-def fdfadsfasdfsd(r:str, retval:str, indent:int):
+def fdfadsfasdfsd(i:int, j:int, r:str, retval:str, indent:int, nextchar:str):
 	output:str = ""
 	for k in range(i+1, len(r), 1):
 		output += f"\n{INDENT*(indent+2*k)}switch({nextchar}){{"
@@ -65,13 +65,13 @@ def generate_list(startswith:bool, strings:list, indent:int) -> str:
 			continue
 		
 		if (i != -1):
-			output += fdfadsfasdfsd(r, retval, indent)
+			output += fdfadsfasdfsd(i, j, r, retval, indent, nextchar)
 		output += f"\n{INDENT*(indent+2*j+1)}case '{s[j]}':"
 		
 		r = s
 		i = j
 		j = 0
 		retval = setval
-	output += fdfadsfasdfsd(r, retval, indent)
+	output += fdfadsfasdfsd(i, j, r, retval, indent, nextchar)
 	output = output.replace("case '\0':","case 0:")
 	return output
