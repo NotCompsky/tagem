@@ -295,7 +295,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 	"<div id=\"" elem "select-container\">" \
 		"<select id=\"" elem "select\"></select>" \
 	"</div>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir")("device")("protocol"))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir"))
 
 #include "components/change-file-to-backup.html"
 
