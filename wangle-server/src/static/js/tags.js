@@ -232,3 +232,8 @@ function $$$view_tags(ls){
 	if(ls !== undefined)
 		$$$populate_t_id2name_table(ls);
 }
+
+
+function $$$add_tags_dialog(){
+	$$$hide_all_except(['tagselect-self-p-container','add-t-dialog']);
+}

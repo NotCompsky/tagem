@@ -1,5 +1,7 @@
 const $$$MAX_RESULTS_PER_PAGE = 100;
 
+const $$$YOUTUBE_DEVICE_ID = "1";
+
 var $$$currently_viewing_object_type;
 
 var $$$tag_id;

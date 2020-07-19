@@ -18,3 +18,7 @@ function $$$for_node_in_document_getElementsByClassName(s, fn){
 function $$$get_tbl_body(id){
 	return $$$document_getElementById(id).getElementsByClassName('tbody')[0];
 }
+
+function $$$focus(id){
+	$$$document_getElementById(id).focus();
+}

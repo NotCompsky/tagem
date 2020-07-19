@@ -3,6 +3,22 @@ function $$$view_db(id){
 	$$$view_qry('f x "' + $$$x[id] + '"');
 }
 
+function $$$display_external_db(id, name, post_id){
+	return "<a class='db-link' onclick='$$$view_post(" + id + ",\"" + post_id + "\")'>View post on " + name + "</a>"; // post_id is enclosed in quotes because Javascript uses doubles for integers and rounds big integers
+	// NOTE: No need to $$$escape_html_text(name), as name is already restricted due to SQL table name restrictions
+}
+function $$$display_external_dbs(db_and_post_ids){
+	let s = "";
+	for (var i = 0;  i < db_and_post_ids.length;  ++i){
+		s += $$$display_external_db(db_and_post_ids[i][0], $$$x[db_and_post_ids[i][0]], db_and_post_ids[i][1]) + "<br/>";
+	}
+	$$$document_getElementById("db-links").innerHTML = s;
+}
+
+function $$$get_external_db_id_from_name(s){
+	return Object.entries(x).filter(x => x[1]==s)[0][0];
+}
+
 function $$$display_cmnts(_db_id, ls){
 	// ls is an array of: [cmnt_id, parent_id, user_id, timestamp, cmnt_content], with parent_id==0 first (order by (parent_id=0) ASC)
 	let tree = {"0":["0",0,""]};
