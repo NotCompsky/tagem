@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 
 
-import re
 from libtriegen import generate_list
 
 
