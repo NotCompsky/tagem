@@ -1,3 +1,8 @@
+Platform | CI Status
+---------|----------
+OSX      | [![OSX Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=osx&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem)
+Linux    | [![Linux Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=linux&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem) [![CircleCI](https://circleci.com/gh/NotCompsky/tagem.svg?style=shield)](https://circleci.com/gh/NotCompsky/tagem)
+
 # Description
 
 Programs to rapidly categorise and access files, based on assignable attributes such as (heirarchical) tags, named variables, file sizes, hashes, and audio duration.
@@ -14,13 +19,18 @@ A neutered version of this app is hosted [here](https://notcompsky.github.io/tag
 
 # Installation
 
-## Dependencies
+## Docker Image
 
-### Server
+* Docker
+
+## Native
+
+### Dependencies
 
 * MySQL or MariaDB client
-    * I recommend libmariadb
-* All of the dependencies of Facebook's core C++ stack (gflags, glog, libsqlite3, etc.)
+    sudo apt install -y --no-install-recommends default-mysql-client default-libmysqlclient-dev
+* All of the dependencies of Facebook's core C++ web stack
+    sudo apt install -y --no-install-recommends libsodium23 libboost-context1.71.0 libevent-2.1-7 libdouble-conversion3 libunwind8 libgoogle-glog0v5 
 
 ## Installation
 
@@ -34,15 +44,22 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 
 # Development
 
-## Dependencies
+## Docker
 
-### Required
+    docker build -t notcompsky/tagem:0.0.1 --build-arg TAGEM_ROOT_DIR="$PWD" .
+    docker run --env TAGEM_MYSQL_CFG="$TAGEM_MYSQL_CFG" -p 80:80 -v /media:/media -v /home:/home -v /var/run/mysqld/:/var/run/mysqld/ tagem
+
+## Non-Docker
+
+### Dependencies
+
+#### Required
 
 * Facebook's core C++ web stack: [wangle](https://github.com/facebook/wangle), [folly](https://github.com/facebook/folly) and [fizz](https://github.com/facebookincubator/fizz). I recommend building all of these by building [Proxygen](https://github.com/facebook/proxygen), for ease of installation.
 * Python 3 interpreter
 * CMake
 
-### Optional
+#### Optional
 
 * FFMPEG/libAV
     * Used for assigning video statistics (such as duration, fps, width, height).
