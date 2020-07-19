@@ -1,6 +1,6 @@
 R"=====(
 
-CREATE TABLE user (
+CREATE TABLE IF NOT EXISTS user (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
@@ -9,10 +9,11 @@ INSERT INTO user
 VALUES
 (1,"Guest"), -- Necessary user (name does not matter)
 (2,"Admin"),
-(99,"Invalid");
-UPDATE user SET id=0 WHERE id=99;
+(99,"Invalid")
+ON DUPLICATE KEY UPDATE id=id;
+UPDATE user SET id=0 WHERE name="Invalid";
 
-CREATE TABLE protocol (
+CREATE TABLE IF NOT EXISTS protocol (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(16) NOT NULL UNIQUE KEY
 );
@@ -21,9 +22,10 @@ INSERT INTO protocol (id, name) VALUES
 (1, "file://"),
 (2, "http://"),
 (3, "https://"),
-(4, "youtube-dl");
+(4, "youtube-dl")
+ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE _device (
+CREATE TABLE IF NOT EXISTS _device (
 	-- Storage device - such as a hard drive, or a website (a remote storage device)
 	-- Name is the prefix - allowing 'youtube-dl' protocol for 'https://youtube.com/watch?v=' and 'https' protocol for 'https://youtube.com/user/' prefixes
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -37,16 +39,18 @@ CREATE TABLE _device (
 );
 INSERT INTO _device (name,permissions,protocol,embed_pre,embed_post) VALUES
 ("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
-("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>');
+("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>')
+ON DUPLICATE KEY UPDATE name=name;
 -- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
 
 INSERT INTO _device (name, protocol) VALUES
 ("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
 ("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
-("https://github.com/", (SELECT id FROM protocol WHERE name="https://"));
+("https://github.com/", (SELECT id FROM protocol WHERE name="https://"))
+ON DUPLICATE KEY UPDATE protocol=protocol;
 
-CREATE TABLE _dir (
+CREATE TABLE IF NOT EXISTS _dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	parent BIGINT UNSIGNED,
 	parent_not_null BIGINT AS (IFNULL(parent,0)), -- Allows foreign key checks to work
@@ -62,7 +66,7 @@ CREATE TABLE _dir (
 	UNIQUE KEY (parent,name)
 );
 
-CREATE TABLE dir2parent_tree (
+CREATE TABLE IF NOT EXISTS dir2parent_tree (
 	dir BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	depth INT UNSIGNED NOT NULL,
@@ -71,7 +75,7 @@ CREATE TABLE dir2parent_tree (
 	UNIQUE KEY (dir,parent)
 );
 
-CREATE TABLE dir2tag (
+CREATE TABLE IF NOT EXISTS dir2tag (
 	dir BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
@@ -80,7 +84,7 @@ CREATE TABLE dir2tag (
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (dir,tag)
 );
-CREATE TABLE device2tag (
+CREATE TABLE IF NOT EXISTS device2tag (
 	device BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
@@ -90,36 +94,36 @@ CREATE TABLE device2tag (
 	PRIMARY KEY (device,tag)
 );
 
-CREATE TABLE mimetype (
+CREATE TABLE IF NOT EXISTS mimetype (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(32) NOT NULL UNIQUE KEY
 );
 SET @i := -1;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"!!NONE!!");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/aac");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/bmp");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/css");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/csv");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/gif");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/html");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/jpeg");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"textjavascript");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"application/json");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/mpeg");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/mpeg");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/ogg");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/ogg");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/opus");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/png");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/tiff");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/plain");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/wav");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/webm");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/webm");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp");
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi");
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"!!NONE!!") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/aac") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/bmp") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/css") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/csv") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/gif") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/html") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/jpeg") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"textjavascript") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"application/json") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/mpeg") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/mpeg") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/ogg") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/ogg") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/opus") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/png") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/tiff") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/plain") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/wav") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/webm") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/webm") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp") ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi") ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE ext2mimetype (
+CREATE TABLE IF NOT EXISTS ext2mimetype (
 	name VARBINARY(10) NOT NULL PRIMARY KEY,
 	mimetype INT UNSIGNED NOT NULL,
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
@@ -142,7 +146,7 @@ ON DUPLICATE KEY UPDATE mimetype=mimetype
 ;
 
 
-CREATE TABLE _file (
+CREATE TABLE IF NOT EXISTS _file (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	dir BIGINT UNSIGNED NOT NULL,
 	size BIGINT UNSIGNED,
@@ -173,7 +177,7 @@ CREATE TABLE _file (
 -- Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
 
 
-CREATE TABLE file_backup (
+CREATE TABLE IF NOT EXISTS file_backup (
 	-- WARNING: Not sure how best to deal with the fact that some remote 'files' have different options, e.g. video format
 	-- NOTE: A backup might still be remote too. For instance, web.archive.org.
 	file BIGINT UNSIGNED NOT NULL,
@@ -189,7 +193,7 @@ CREATE TABLE file_backup (
 );
 
  
-CREATE TABLE file2 (
+CREATE TABLE IF NOT EXISTS file2 (
 	-- Stores the user-defined variable tables
 	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	min BIGINT NOT NULL,
@@ -203,9 +207,10 @@ CREATE TABLE file2 (
 INSERT INTO file2
 (id,min, max, conversion, name)
 VALUES
-(1,0, 100, 0, "Score");
+(1,0, 100, 0, "Score")
+ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE user2shown_file2 (
+CREATE TABLE IF NOT EXISTS user2shown_file2 (
 	user INT UNSIGNED NOT NULL,
 	file2 INT UNSIGNED NOT NULL,
 	FOREIGN KEY (file2) REFERENCES file2 (id),
@@ -215,10 +220,10 @@ INSERT INTO user2shown_file2
 (user,file2)
 SELECT id, 1
 FROM user
-;
+ON DUPLICATE KEY UPDATE user=user;
 
 
-CREATE TABLE _tag (
+CREATE TABLE IF NOT EXISTS _tag (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	user INT UNSIGNED NOT NULL,
     name VARBINARY(128),
@@ -228,12 +233,12 @@ CREATE TABLE _tag (
 	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
 );
-INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!");
+INSERT INTO _tag (id,name) VALUES (0,"!!ROOT TAG!!") ON DUPLICATE KEY UPDATE id=id;
 UPDATE _tag SET id=0 WHERE name="!!ROOT TAG!!";
 -- NOTE: Permissions are AND (each non-zero bit is another required permission)
 -- NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
 
-CREATE TABLE tag2parent (
+CREATE TABLE IF NOT EXISTS tag2parent (
 	tag BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
@@ -242,7 +247,7 @@ CREATE TABLE tag2parent (
 	FOREIGN KEY (user) REFERENCES user (id),
 	PRIMARY KEY (tag, parent)
 );
-CREATE TABLE tag2parent_tree (
+CREATE TABLE IF NOT EXISTS tag2parent_tree (
 	tag BIGINT UNSIGNED NOT NULL,
 	parent BIGINT UNSIGNED NOT NULL,
 	depth INT UNSIGNED NOT NULL,
@@ -251,7 +256,7 @@ CREATE TABLE tag2parent_tree (
 	PRIMARY KEY (tag, parent)
 );
 
-CREATE TABLE user2blacklist_tag (
+CREATE TABLE IF NOT EXISTS user2blacklist_tag (
 	-- Anything tagged with any of these tags are invisible to the user
 	user INT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
@@ -260,7 +265,7 @@ CREATE TABLE user2blacklist_tag (
 	PRIMARY KEY (user,tag)
 );
 
-CREATE TABLE user2hidden_tag (
+CREATE TABLE IF NOT EXISTS user2hidden_tag (
 	-- The tags are invisible to the user
 	-- Only stops tags from appearing to the client. Does not, for instance, filter out qry results.
 	user INT UNSIGNED NOT NULL,
@@ -272,7 +277,7 @@ CREATE TABLE user2hidden_tag (
 );
 
 
-CREATE TABLE file2tag (
+CREATE TABLE IF NOT EXISTS file2tag (
 	file BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
@@ -282,13 +287,13 @@ CREATE TABLE file2tag (
 	PRIMARY KEY (file, tag)
 );
 
-CREATE TABLE task (
+CREATE TABLE IF NOT EXISTS task (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	name VARBINARY(100) NOT NULL UNIQUE KEY,
 	description VARCHAR(10000) NOT NULL,
 	content VARCHAR(10000) NOT NULL
 );
-CREATE TABLE user2authorised_task (
+CREATE TABLE IF NOT EXISTS user2authorised_task (
 	user INT UNSIGNED NOT NULL,
 	task INT UNSIGNED NOT NULL,
 	FOREIGN KEY (user) REFERENCES user (id),
@@ -296,19 +301,19 @@ CREATE TABLE user2authorised_task (
 	PRIMARY KEY (user, task)
 );
 
-CREATE TABLE file2dct_hash (
+CREATE TABLE IF NOT EXISTS file2dct_hash (
 	file BIGINT UNSIGNED NOT NULL,
 	x BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, x)
 );
 
-CREATE TABLE file2audio_hash (
+CREATE TABLE IF NOT EXISTS file2audio_hash (
 	file BIGINT UNSIGNED NOT NULL,
 	x BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (file, x)
 );
 
-CREATE TABLE box (
+CREATE TABLE IF NOT EXISTS box (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     file_id BIGINT UNSIGNED NOT NULL,
     frame_n BIGINT UNSIGNED NOT NULL,
@@ -319,14 +324,14 @@ CREATE TABLE box (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE box2tag (
+CREATE TABLE IF NOT EXISTS box2tag (
 	box_id BIGINT UNSIGNED NOT NULL,
 	tag_id BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (`box_id`, `tag_id`)
 );
 
 
-CREATE TABLE method (
+CREATE TABLE IF NOT EXISTS method (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	name VARBINARY(128),
 	UNIQUE KEY (name),
@@ -337,9 +342,10 @@ INSERT IGNORE INTO method (name) VALUES
 ("wipe_subtitle"),
 ("skip"),
 ("menu"),
-("python_script");
+("python_script")
+ON DUPLICATE KEY UPDATE name=name;
 
-CREATE TABLE era (
+CREATE TABLE IF NOT EXISTS era (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	file BIGINT UNSIGNED NOT NULL,
 	start DOUBLE NOT NULL,
@@ -347,7 +353,7 @@ CREATE TABLE era (
 	UNIQUE KEY (file, start, end)
 );
 
-CREATE TABLE era2tag (
+CREATE TABLE IF NOT EXISTS era2tag (
 	era BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	PRIMARY KEY (era, tag)
@@ -359,14 +365,14 @@ CREATE TABLE era2tag (
 -- For instance, a man typing on a keyboard would be represented by (a box tagged "man") related to (a box tagged "keyboard") via (a relationship tagged "typing").
 -- relationtag2tag generates extra relationship tags based on the master and slave box tags. For instance, if the keyboard is a "mechanical" keyboard, it could generate another tag ("man typing on mechanical keyboard") for the relationship.
 
-CREATE TABLE relation (
+CREATE TABLE IF NOT EXISTS relation (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     master_id BIGINT UNSIGNED NOT NULL,  -- ID of master box
     slave_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (id)
 );
 
-CREATE TABLE relation2tag (
+CREATE TABLE IF NOT EXISTS relation2tag (
     relation_id BIGINT UNSIGNED NOT NULL,
     tag_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (`relation_id`, `tag_id`)
@@ -379,7 +385,7 @@ CREATE TABLE relation2tag (
 -- If a and b hold for a given relation (AND rather than OR - i.e. each tag ID in a must be present in the master box), then all tags of c are added to the master box, and all tags of d are added to the slave box.
 -- NOTE: 0 is a special 'tag ID'. No tags have an ID of 0. Instead, it means the same 'tag ID' as the triggering tags - effectively propagating the tags to the related box. For instance, (a "body part" box) related to (a "human" box) via a ("body part" relation) (where "human" is the master and "body part" the slave) would propagate the "human" tag to the "body part" box, if the 'res_slave' tag ID was 0. Another use of this may be in a relation designating two things as "identical".
 
-CREATE TABLE relation_add_box_tags__rules (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__rules (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	name VARBINARY(128) NOT NULL,
 	req_relation_operator INT UNSIGNED NOT NULL DEFAULT 0,
@@ -393,57 +399,64 @@ CREATE TABLE relation_add_box_tags__rules (
 	PRIMARY KEY (id)
 );
 
-CREATE TABLE relation_add_box_tags__req_relation_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__req_relation_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_box_tags__req_master_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__req_master_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_box_tags__req_slave_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__req_slave_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_box_tags__res_relation_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__res_relation_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_box_tags__res_master_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__res_master_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE relation_add_box_tags__res_slave_tags (
+CREATE TABLE IF NOT EXISTS relation_add_box_tags__res_slave_tags (
 	rule BIGINT UNSIGNED NOT NULL,
 	tag BIGINT UNSIGNED NOT NULL,
 	descendants_too BOOLEAN NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (rule, tag)
 );
 
-CREATE TABLE operators (
+CREATE TABLE IF NOT EXISTS operators (
 	id INT UNSIGNED NOT NULL,
 	string VARBINARY(16) NOT NULL,
 	UNIQUE KEY (string),
 	PRIMARY KEY (id)
 );
-INSERT INTO operators (id, string) VALUES (0,"AND"), (1,"OR"), (2,"XOR"), (3,"NOT");
+INSERT INTO operators
+(id, string)
+VALUES
+(0,"AND"),
+(1,"OR"),
+(2,"XOR"),
+(3,"NOT")
+ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE file2thumbnail (
+CREATE TABLE IF NOT EXISTS file2thumbnail (
 	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
 	x VARBINARY(1024) NOT NULL,
 	FOREIGN KEY (file) REFERENCES _file (id)
@@ -452,7 +465,7 @@ CREATE TABLE file2thumbnail (
 
 
 
-CREATE TABLE settings (
+CREATE TABLE IF NOT EXISTS settings (
 	name VARBINARY(128) NOT NULL,
 	filename_regexp VARCHAR(1024),
 	files_from VARCHAR(1024) NOT NULL,
@@ -474,11 +487,11 @@ CREATE TABLE settings (
 
 -- Row-level security for modern MySQL/MariaDB
 -- Based on: https://mariadb.com/resources/blog/protect-your-data-row-level-security-in-mariadb-10-0/
-CREATE TABLE permission (
+CREATE TABLE IF NOT EXISTS permission (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARCHAR(32) NOT NULL UNIQUE KEY
 );
-CREATE TABLE user2permissions (
+CREATE TABLE IF NOT EXISTS user2permissions (
 	user VARBINARY(32) NOT NULL PRIMARY KEY,
 	permissions BIGINT UNSIGNED NOT NULL
 );
@@ -528,12 +541,12 @@ AS
 
 
 
-CREATE TABLE external_db (
+CREATE TABLE IF NOT EXISTS external_db (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	name VARBINARY(32) NOT NULL UNIQUE KEY
 );
 
-CREATE TABLE file2post (
+CREATE TABLE IF NOT EXISTS file2post (
 	-- This links posts in EXTERNAL databases to files in this database
 	-- An external database cannot be assumed to have at most one post for a given file. For instance, Reddit posts have duplicates.
 	-- A given post may have multiple files.
@@ -545,7 +558,7 @@ CREATE TABLE file2post (
 	FOREIGN KEY (db) REFERENCES external_db (id)
 );
 
-ALTER TABLE file2post ADD INDEX (file);
+ALTER TABLE file2post ADD INDEX IF NOT EXISTS (file);
 -- Add an index for performance reasons - almost all queries we do will be joining on file ID, not post or db IDs.
 
 

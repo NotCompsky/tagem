@@ -40,4 +40,4 @@ RUN git clone https://github.com/facebook/wangle \
 	&& make \
 	&& make install
 
-RUN apt install -y --no-install-recommends default-mysql-client default-libmysqlclient-dev
+RUN apt install -y --no-install-recommends default-mysql-client default-libmysqlclient-dev libcurl4-openssl-dev
