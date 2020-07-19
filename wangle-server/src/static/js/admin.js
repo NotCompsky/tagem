@@ -1,5 +1,5 @@
 function $$$toggle_admin_dashboard(){
-	$$$toggle('admin-dashboard');
+	$$$hide_all_except(['record-fs-dir','tagselect-files']);
 }
 
 
