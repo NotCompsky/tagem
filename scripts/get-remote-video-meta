@@ -64,15 +64,15 @@ while read -r id url; do
 				dummy=1
 			else
 				uploader="\"Uploader: ${uploader:1:-1}\""
-				mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
-				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
+				mysql_exec "INSERT INTO tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
+				if mysql_exec "INSERT INTO tag2parent (tag,parent,user) SELECT t.id, p.id, 4 FROM tag t, tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE tag=tag"; then
 					echo "Tag \"Uploader\" does not exist" >&2
 					exit
 				fi
-				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $id, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
+				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $id, id, 4 FROM tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
 			fi
 			
-			mysql_exec "UPDATE _file SET w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin) WHERE id=$id"
+			mysql_exec "UPDATE file SET w=IFNULL(file.w,$w),h=IFNULL(file.h,$h),fps=IFNULL(file.fps,$fps),duration=IFNULL(file.duration,$duration),views=IFNULL(file.views,$views),likes=IFNULL(file.likes,$likes),dislikes=IFNULL(file.dislikes,$dislikes),title=IFNULL(file.title,LEFT($title,100)),description=IFNULL(file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,$t_origin) WHERE id=$id"
 			mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
 		done < <(
 			(
@@ -93,4 +93,4 @@ while read -r id url; do
 	done
 	
 	sleep 2
-done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT DISTINCT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM _file f JOIN _dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN _tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND f.views IS NULL" tagem)
+done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT DISTINCT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM file f JOIN dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND f.views IS NULL" tagem)
