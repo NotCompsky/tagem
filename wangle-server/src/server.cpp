@@ -1199,28 +1199,33 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, file_id)
-		GET_NUMBER_NONZERO(uint64_t, new_path__dir_id)
 		GET_USER_ID
 		SKIP_TO_BODY
 		
 		const char* const new_path__file_name = s;
 		
-		this->mysql_exec(
-			"INSERT INTO file_backup"
-			"(file,dir,name,mimetype,user)"
-			"SELECT id, dir, name, mimetype,", user_id, " "
-			"FROM file "
-			"WHERE id=", file_id, " "
-			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
+		uint64_t new_dir_id;
+		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false);
+		if (unlikely(rc != FunctionSuccessness::ok))
+			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
+		
+		this->mysql_query(
+			"SELECT id "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.name)+1)"
+			  "AND d.id=", new_dir_id
 		);
-		// TODO: Catch duplicate key error. Should never happen.
+		uint64_t new_file_id;
+		while(this->mysql_assign_next_row(&new_file_id));
+		
+		this->merge_files(user_id, new_file_id, file_id);
+		// NOTE: It might be that the new 'original source' is already in our database. If that is the case, that file is 'found' by add_file_or_dir_to_db__w_parent_dir_id, and that file is merged in the above step. Hence all the fiddling with file2tag etc. is necessary.
 		
 		this->mysql_exec(
 			"UPDATE file "
-			"SET dir=", new_path__dir_id, ","
-				"name=\"", _f::esc, '"', new_path__file_name, "\""
-			"WHERE id=", file_id, " "
-			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
+			"SET id=", file_id, " "
+			"WHERE id=", new_file_id
 		);
 		
 		return _r::post_ok;
@@ -2298,10 +2303,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		closedir(dir);
 	}
 	
-	FunctionSuccessness add_file_or_dir_to_db(const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){
+	template<typename... Args>
+	FunctionSuccessness add_file_or_dir_to_db(Args... args){
+		uint64_t dir_id;
+		return this->add_file_or_dir_to_db__w_parent_dir_id(dir_id, args...);
+	}
+	
+	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
-		uint64_t parent_dir_id = 0;
+		parent_dir_id = 0;
 		unsigned n_errors = 0;
 		while(true){
 			this->qry_mysql_for_next_parent_dir(user_id,  "id, LENGTH(name)",  parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
@@ -2605,6 +2616,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::post_ok;
 	}
 	
+	template<typename... Args>
+	void merge_files(const UserIDIntType user_id,  const uint64_t orig_f_id,  Args... dupl_f_ids_args){
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", dupl_f_ids_args..., ") AND tag IN (SELECT tag FROM file2tag WHERE file=", orig_f_id, ")");
+		this->mysql_exec("INSERT INTO file2tag (file,tag,user) SELECT ", orig_f_id, ", tag, user FROM file2tag f2t WHERE file IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY update file2tag.file=file2tag.file");
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", dupl_f_ids_args..., ")");
+		
+		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", dupl_f_ids_args..., ")");
+		
+		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", dupl_f_ids_args..., ") AND dir IN (SELECT dir FROM file_backup WHERE file=", orig_f_id, ")");
+		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", dupl_f_ids_args..., ")");
+		
+		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
+		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT post FROM file2post WHERE file=", orig_f_id, ") AND file IN(", dupl_f_ids_args..., ")");
+		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
+		this->mysql_exec("DELETE FROM file WHERE id IN (", dupl_f_ids_args..., ")");
+	}
+	
 	std::string_view post__merge_files(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, orig_f_id)
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dupl_f_ids, dupl_f_ids_len, s, ' ')
@@ -2612,19 +2640,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// TODO: Check user against user2whitelisted_action
 		
-		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND tag IN (SELECT tag FROM file2tag WHERE file=", orig_f_id, ")");
-		this->mysql_exec("INSERT INTO file2tag (file,tag,user) SELECT ", orig_f_id, ", tag, user FROM file2tag f2t WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY update file2tag.file=file2tag.file");
-		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		
-		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		
-		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") AND dir IN (SELECT dir FROM file_backup WHERE file=", orig_f_id, ")");
-		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		
-		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
-		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT post FROM file2post WHERE file=", orig_f_id, ") AND file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
-		this->mysql_exec("DELETE FROM file WHERE id IN (", _f::strlen, dupl_f_ids, dupl_f_ids_len, ")");
+		this->merge_files(user_id, orig_f_id, _f::strlen, dupl_f_ids, dupl_f_ids_len);
 		
 		return _r::post_ok;
 	}
@@ -3076,7 +3092,7 @@ int main(int argc,  const char* const* argv){
 	db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
-	printf("_r::external_db_json == %s\n", _r::external_db_json);
+	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
 	
 	UserIDIntType user_id;
 	uint64_t id;
