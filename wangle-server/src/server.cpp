@@ -1201,6 +1201,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	void swap_file_with_a_backup(const uint64_t file_id,  const uint64_t backup_dir_id,  Args... backup_file_name_args){
 		this->mysql_exec(
 			"UPDATE file f "
+			"JOIN dir d ON d.id=f.dir "
 			"JOIN file_backup f2 ON ("
 				    "f.id=", file_id, " "
 				"AND f2.file=f.id "
@@ -1245,10 +1246,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
 			  "AND d.id=", new_dir_id
 		);
-		uint64_t new_file_id;
+		uint64_t new_file_id = 0;
 		while(this->mysql_assign_next_row(&new_file_id));
 		
-		this->merge_files(user_id, new_file_id, file_id);
+		assert(new_file_id != 0);
+		
+		this->merge_files(user_id, file_id, new_file_id);
 		// NOTE: It might be that the new 'original source' is already in our database. If that is the case, that file is 'found' by add_file_or_dir_to_db__w_parent_dir_id, and that file is merged in the above step. Hence all the fiddling with file2tag etc. is necessary.
 		
 		this->swap_file_with_a_backup(
