@@ -36,6 +36,12 @@ A neutered version of this app is hosted [here](https://notcompsky.github.io/tag
 
 ## Configuration
 
+### Mandatory
+
+You must set up a MySQL/MariaDB database for this project, using the commands [here](utils/src/init.sql).
+
+
+
 ### Optional
 
 You'll probably want to add the [scripts](scripts/) directory to your `PATH` environmental variable, or perhaps just copy the scripts to `/usr/local/bin`.
@@ -47,7 +53,7 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 ## Docker
 
     docker build -t notcompsky/tagem --build-arg TAGEM_ROOT_DIR="$PWD" .
-    docker run --env TAGEM_MYSQL_CFG="$TAGEM_MYSQL_CFG" -p 80:80 -v /media:/media -v /home:/home -v /var/run/mysqld/:/var/run/mysqld/ tagem
+    docker run --env TAGEM_MYSQL_CFG="$TAGEM_MYSQL_CFG" -p 80:80 -v /media:/media -v /home:/home -v /var/run/mysqld/:/var/run/mysqld/ notcompsky/tagem
 
 ## Non-Docker
 
@@ -76,22 +82,4 @@ One design decision that has remained is the use of MySQL/MariaDB. SQLite3 is av
 
 # Background
 
-The project started as a Python CLI text file 'utility hub' for rapid tagging, deleting and moving of text files, as a kind of ersatz note-taking system.
-
-It merged with another Python project, a GUI utility for aiding the generation of computer vision datasets, using TKinter to allow the drawing and tagging of rectangles on images, using those rectangles to generate cropped subimages.
-
-The two databases were upgraded into a single hierarchical tagging database.
-
-To enable more control of the UI, I decided to move to Qt. This meant most code had to be rewritten, so I rewrote it all in C++.
-
-It became my music playlist creator - I had a pipeline (in this repo) to quickly copy all music/videos to my smartphone, and to generate and transfer playlist files recognised by VLC, with playlists specified by intersections of tags and scores.
-
-The server was developed because VLC on Android had an annoying issue which made playing all media files in a playlist as audio very difficult - the option to play a video file as audio had to either be accessed from the currently playing file's menu every time a new playlist was selected; and even if all media files were audio-only, VLC would attempt to play WEBMs as video first, which meant playlists would stop whenever a WEBM was encountered.
-
-I created the server in order to avoid those issues. I kept on adding features because HTML5 and modern Javascript make it surprisingly easy to.
-
-Some further features were transplants from yet more projects. For instance, the qry language is evolved from a shell script I used for querying large scraped databases. It was easier to write in C++ than in shell script - the biggest headache is now not trusting user input.
-
-Since qry was ported over, I integrated it with several other projects that had previously had their own tagging systems, such as two extremely simple scrapers for [Twitter](https://github.com/NotCompsky/scrape-twitter) and [Reddit](scripts/record-reddit-post).
-
-Going forwards, I expect [RScraper](https://github.com/NotCompsky/rscraper) will also be integrated into this project's tagging system.
+If you feel like there aren't enough blogs on the internet, [here's another](https://gist.github.com/NotCompsky/f1ab63fa2f191b156b9187b111449d20). It's a look at how this project evolved from some unlikely decisions, as I'm personally interested in how [the Butterfly Effect](https://en.wikipedia.org/wiki/Butterfly_effect) occurs in software development.
