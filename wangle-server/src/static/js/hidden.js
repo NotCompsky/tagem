@@ -64,8 +64,6 @@ function $$$hide_all_except(ids,classes){
 		'parents-container',
 		'children-container',
 		'dirselect-container',
-		'deviceselect-container',
-		'protocolselect-container',
 		'tagselect-files-container',
 		'tagselect-files-btn',
 		'tagselect-era-container',
