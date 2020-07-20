@@ -1201,11 +1201,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	void swap_file_with_a_backup(const uint64_t file_id,  const uint64_t backup_dir_id,  Args... backup_file_name_args){
 		this->mysql_exec(
 			"UPDATE file f "
-			"JOIN dir d ON d.id=f.dir "
+			"JOIN dir d2 ON d2.id=", backup_dir_id, " "
 			"JOIN file_backup f2 ON ("
 				    "f.id=", file_id, " "
 				"AND f2.file=f.id "
-				"AND f2.dir=", backup_dir_id, " "
+				"AND f2.dir=d2.id "
 				"AND f2.name=", backup_file_name_args..., " "
 			")"
 			"SET "
@@ -1257,7 +1257,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->swap_file_with_a_backup(
 			file_id,
 			new_dir_id,
-			"SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
+			"SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d2.full_path)+1)"
 		);
 		
 		return _r::post_ok;
