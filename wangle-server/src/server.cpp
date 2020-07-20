@@ -1210,7 +1210,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
 		
 		this->mysql_query(
-			"SELECT id "
+			"SELECT f.id "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
