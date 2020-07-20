@@ -81,6 +81,4 @@ Date Query
 
 Suppose you have a screenshot of a Twitter post. You can get the link to the original post - for instance, by using 'find-tweet' from https://github.com/NotCompsky/utils. You can then go to that file, click "Update src", and change the source to the Twitter post's URL. This will keep the screenshot as a 'backup' of the post.
 	`;
-	
-	!!!MACRO!!!ACTION_ON_DOCUMENT_LOAD
 }

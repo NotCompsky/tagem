@@ -82,6 +82,8 @@ function $$$when_data_loaded(){
 	});
 	
 	$('#file2-value-dt').datetimepicker();
+	
+	!!!MACRO!!!ACTION_ON_DOCUMENT_LOAD
 }
 
 function $$$refetch_all_jsons(){
