@@ -1213,7 +1213,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT id "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.name)+1)"
+			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
 			  "AND d.id=", new_dir_id
 		);
 		uint64_t new_file_id;
