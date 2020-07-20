@@ -1,13 +1,15 @@
-#ifdef PREPOPULATE_F_TBL
-	#define ACTION_ON_DOCUMENT_LOAD MINIMISED_JS_DECL_unhide "('f');"
-#elif defined(PREPOPULATE_F_TBL_FROM_IDS)
-	#define ACTION_ON_DOCUMENT_LOAD MINIMISED_JS_DECL_view_files "([" PREPOPULATE_F_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('f');"
+#if defined PREPOPULATE_F_TBL_FROM_IDS && defined PREPOPULATE_T_TBL_FROM_IDS
+	#define ACTION_ON_DOCUMENT_LOAD \
+		MINIMISED_JS_DECL_view_tags  "([" PREPOPULATE_T_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('t');" \
+		MINIMISED_JS_DECL_view_files "([" PREPOPULATE_F_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('f');"
+#elif defined PREPOPULATE_F_TBL_FROM_IDS
+	#define ACTION_ON_DOCUMENT_LOAD \
+		MINIMISED_JS_DECL_view_files "([" PREPOPULATE_F_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('f');"
+#elif defined PREPOPULATE_T_TBL_FROM_IDS
+	#define ACTION_ON_DOCUMENT_LOAD \
+		MINIMISED_JS_DECL_view_tags  "([" PREPOPULATE_T_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('t');"
 #else
-	#ifdef PREPOPULATE_T_TBL
-		#define ACTION_ON_DOCUMENT_LOAD MINIMISED_JS_DECL_unhide "('t');"
-	#else
-		#define ACTION_ON_DOCUMENT_LOAD
-	#endif
+	#define ACTION_ON_DOCUMENT_LOAD
 #endif
 
 #include <boost/preprocessor.hpp>
@@ -386,19 +388,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 
 #define COL_NAMES ("header","Thumb")("header","Name")("header","#Files")
 #define COL_FILTERS (0,"")(2,"regexp")(1,"12 - 34")
-#define TBL_IDENTIFIER t
 #define TBL_ID "t"
 #define TBL_NAME_COLS "[1]"
 #define TBL_TAGS_COLS "[]"
 #define IS_SELECTABLE
-#ifdef PREPOPULATE_T_TBL
-	#define TBL_PREPOPULATE
-#endif
 #include "components/tbl.html"
 
 #define COL_NAMES ("header","Name")("header","Device")("header","#Files")("header","Tags")
 #define COL_FILTERS (2,"regexp")(2,"regexp")(1,"12 - 34")(2,"regexp")
-#define TBL_IDENTIFIER d
 #define TBL_ID "d"
 #define TBL_NAME_COLS "[0,1]"
 #define TBL_TAGS_COLS "[]"
@@ -409,13 +406,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 #define IS_SELECTABLE
 #define COL_NAMES ("header","Thumb")("fname","Name")("ftitle","Title")("db","In Databases")("header","Tags")("header","Size (Range)")("header","Date Added")("header","Origin Date")("header","Duration")("header","Width")("header","Height")("views","Views")("likes","Likes")("dislikes","Dislikes")("fps","FPS")
 #define COL_FILTERS (0,"")(2,"regexp")(2,"regexp")(2,"regexp")(2,"regexp")(1,"12.3KB - 45.6MB")(1,"Date Query")(1,"Date Query")(1,"Time Query")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"12.3-45.6")
-#define TBL_IDENTIFIER f
 #define TBL_ID "f"
 #define TBL_NAME_COLS "[1,2]"
 #define TBL_TAGS_COLS "[4]"
-#ifdef PREPOPULATE_F_TBL
-	#define TBL_PREPOPULATE
-#endif
 #include "components/tbl.html"
 
 R"=========(

@@ -149,11 +149,8 @@ add_custom_target(
 	COMMENT "Generating SVG icons header"
 )
 
-if(PREPOPULATE_F_TBL)
-	target_compile_definitions(server PRIVATE PREPOPULATE_F_TBL=1)
-endif()
-if(PREPOPULATE_T_TBL)
-	target_compile_definitions(server PRIVATE PREPOPULATE_T_TBL=1)
+if(PREPOPULATE_T_TBL_FROM_IDS)
+	target_compile_definitions(server PRIVATE PREPOPULATE_T_TBL_FROM_IDS="\\\"${PREPOPULATE_T_TBL_FROM_IDS}\\\"")
 endif()
 if(PREPOPULATE_F_TBL_FROM_IDS)
 	# WARNING: An input value of "'0'" counts as false...

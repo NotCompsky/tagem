@@ -65,25 +65,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_NAMES))
 #undef COL_NAMES
 #undef CREATE_HIDE
 "</div>"
-"<div class=\"tbody\">"
-#ifdef TBL_PREPOPULATE
-	/* The following few lines are taken/adapted from https://docs.huihoo.com/doxygen/linux/kernel/3.7/compiler-gcc_8h_source.html
-	 * and are thus bound by the GPL-2.0 license: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/LICENSES/preferred/GPL-2.0
-	 * Macro names are preserved to indicate their origin.
-	 */
-	#define __gcc_header(x) #x
-	#define _gcc_header(x) __gcc_header(../prepopulate_##x.html)
-	#define gcc_header(x) _gcc_header(x)
-	#include gcc_header(TBL_IDENTIFIER)
-	#undef TBL_PREPOPULATE
-	#undef gcc_header
-	#undef _gcc_header
-	#undef __gcc_header
-#endif
-"</div>"
+"<div class=\"tbody\"></div>"
 "</div>"
 
 #undef TBL_ID
-#undef TBL_IDENTIFIER
 #undef TBL_NAME_COLS
 #undef TBL_TAGS_COLS
