@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS file (
 	fps FLOAT,
 	title VARCHAR(100),
 	description VARCHAR(1000),
+	status INT UNSIGNED NOT NULL DEFAULT 0, -- 0 is available, 1 is deleted, 2 is private
     UNIQUE KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),

@@ -93,4 +93,16 @@ while read -r id url; do
 	done
 	
 	sleep 2
-done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "SELECT DISTINCT f.id, CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$','')) FROM file f JOIN dir d ON d.id=f.dir LEFT JOIN file2tag f2t ON f2t.file=f.id LEFT JOIN tag t ON t.id=f2t.tag WHERE d.full_path REGEXP '^https://' AND d.full_path REGEXP '$regexp' AND f.views IS NULL" tagem)
+done < <(mysql "${tagem_auth[@]}" -r -s --disable-column-names -e "
+SELECT
+	DISTINCT f.id,
+	CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$',''))
+FROM file f
+JOIN dir d ON d.id=f.dir
+LEFT JOIN file2tag f2t ON f2t.file=f.id
+LEFT JOIN tag t ON t.id=f2t.tag
+WHERE d.full_path REGEXP '^https://'
+  AND d.full_path REGEXP '$regexp'
+  AND f.views IS NULL
+  AND f.status=0
+" tagem)
