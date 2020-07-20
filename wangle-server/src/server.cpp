@@ -1295,7 +1295,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN file2post f2p ON f2p.file=f.id "
 			"WHERE f2p.post IN (", post_ids, ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			"LIMIT 100"
+			"LIMIT " TABLE_LIMIT
 		);
 		mysql_free_result(_post_ids_res);
 		
@@ -1522,7 +1522,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  WHERE_HIDDEN_TAGS("f2t.tag")
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY f.id "
-			"LIMIT 100 "
+			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
 		
@@ -1565,7 +1565,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 			"GROUP BY e.id "
 			"ORDER BY FIELD(e.id,", _f::strlen, ids, ids_len, ")"
-			"LIMIT 100 "
+			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
 		
@@ -1595,7 +1595,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
 			"ORDER BY FIELD(f.id,", _f::strlen, file_ids, file_ids_len, ")"
-			"LIMIT 100 "
+			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
 		
@@ -1709,7 +1709,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
-			"LIMIT 100 "
+			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
 		
@@ -1744,7 +1744,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  FILE_TBL_USER_PERMISSION_FILTER(user->id)
 			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
-			"LIMIT 100 "
+			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 			// No need to impose a limit - this is very quick
 		);

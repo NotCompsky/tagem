@@ -42,6 +42,8 @@ endif()
 
 if(NOT WHICH_MYSQL_CLIENT)
 	set(WHICH_MYSQL_CLIENT mariadbclient)
+if(NOT TABLE_LIMIT)
+	set(TABLE_LIMIT "100")
 endif()
 
 find_package(fizz REQUIRED)
@@ -158,6 +160,7 @@ if(PREPOPULATE_F_TBL_FROM_IDS)
 	# Why so many escapes? Not sure, but it works.
 endif()
 
+target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\"")
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
 
 add_dependencies(server favicon auto__server_determine_response_hpp js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
