@@ -166,5 +166,5 @@ endif()
 target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\"")
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
 
-add_dependencies(server favicon auto__server_determine_response_hpp js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
+add_dependencies(server favicon auto__server_determine_response_hpp qry__process_arg__tokens qry__get_attribute_name__tokens js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)
