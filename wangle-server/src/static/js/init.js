@@ -41,6 +41,9 @@ function $$$load_page_from_a_hash_string(S){
 		case '?':
 			$$$view_qry(_x);
 			break;
+		default:
+			!!!MACRO!!!ACTION_ON_DOCUMENT_LOAD
+			; // In case the macro is empty
 	}
 }
 
@@ -82,8 +85,6 @@ function $$$when_data_loaded(){
 	});
 	
 	$('#file2-value-dt').datetimepicker();
-	
-	!!!MACRO!!!ACTION_ON_DOCUMENT_LOAD
 }
 
 function $$$refetch_all_jsons(){
