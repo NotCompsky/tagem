@@ -159,8 +159,12 @@ if __name__ == "__main__":
 		else:
 			fps.append(path)
 	
+	argline:str = f"// minjs.py args: {args.mangle} {args.srcs} {args.dst} {args.macro_name}"
+	
 	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(__file__)]+[os.path.getmtime(fp) for fp in fps]):
-		exit(0)
+		if open(args.dst).read().split("\n")[1] == argline:
+			# Do not run this script if all command line arguments were the same as this
+			exit(0)
 	
 	run(fps, True)
 	run(fps, False)
@@ -187,6 +191,7 @@ if __name__ == "__main__":
 	
 	with open(args.dst, "w") as f:
 		f.write("#pragma once\n")
+		f.write(f"{argline}\n")
 		for human_name, (var_type, minimised_name, parameters, value) in human2minimised.items():
 			f.write(f"#define MINIMISED_JS_DECL_{human_name} \"{minimised_name}\"\n")
 		f.write(f"#define MINIMISED_JS_{args.macro_name} \"")
