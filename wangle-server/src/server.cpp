@@ -1197,6 +1197,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::post_ok;
 	}
 	
+	template<typename... Args>
+	void swap_file_with_a_backup(const uint64_t file_id,  const uint64_t backup_dir_id,  Args... backup_file_name_args){
+		this->mysql_exec(
+			"UPDATE file f "
+			"JOIN file_backup f2 ON ("
+				    "f.id=", file_id, " "
+				"AND f2.file=f.id"
+				"AND f2.dir=", backup_dir_id, " "
+				"AND f2.name=", backup_file_name_args..., " "
+			")"
+			"SET "
+				// Dummy actions to set temporary variables
+				"f.dir=@dir:=f.dir,"
+				"f.name=@name:=f.name,"
+				"f.mimetype=@mimetype:=f.mimetype,"
+				"f.user=@user:=f.user,"
+				
+				"f.dir=f2.dir,"
+				"f.name=f2.name,"
+				"f.mimetype=f2.mimetype,"
+				"f.user=f2.user,"
+				
+				"f2.dir=@dir,"
+				"f2.name=@name,"
+				"f2.mimetype=@mimetype,"
+				"f2.user=@user"
+		);
+	}
+	
 	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, file_id)
 		GET_USER_ID
@@ -1222,10 +1251,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->merge_files(user_id, new_file_id, file_id);
 		// NOTE: It might be that the new 'original source' is already in our database. If that is the case, that file is 'found' by add_file_or_dir_to_db__w_parent_dir_id, and that file is merged in the above step. Hence all the fiddling with file2tag etc. is necessary.
 		
-		this->mysql_exec(
-			"UPDATE file "
-			"SET id=", file_id, " "
-			"WHERE id=", new_file_id
+		this->swap_file_with_a_backup(
+			file_id,
+			new_dir_id,
+			"SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
 		);
 		
 		return _r::post_ok;
