@@ -155,6 +155,11 @@ endif()
 if(PREPOPULATE_T_TBL)
 	target_compile_definitions(server PRIVATE PREPOPULATE_T_TBL=1)
 endif()
+if(PREPOPULATE_F_TBL_FROM_IDS)
+	# WARNING: An input value of "'0'" counts as false...
+	target_compile_definitions(server PRIVATE PREPOPULATE_F_TBL_FROM_IDS="\\\"${PREPOPULATE_F_TBL_FROM_IDS}\\\"")
+	# Why so many escapes? Not sure, but it works.
+endif()
 
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
 
