@@ -109,7 +109,7 @@ def get_next_minimised_name(orig_name:str):
 	get_next_minimised_name.i += 1
 	if name in get_next_minimised_name.reserved_names:
 		return get_next_minimised_name(orig_name)
-	return name
+	return "$" + name # Temporary prefix to avoid name clashes. This will be removed when this script is able to parse functions recursively, because at that point this script will understand namespaces
 get_next_minimised_name.i = 0
 get_next_minimised_name.alphabet_1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_"
 get_next_minimised_name.alphabet_2 = get_next_minimised_name.alphabet_1 + "0123456789"
