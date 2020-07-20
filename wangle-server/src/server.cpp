@@ -1203,7 +1203,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"UPDATE file f "
 			"JOIN file_backup f2 ON ("
 				    "f.id=", file_id, " "
-				"AND f2.file=f.id"
+				"AND f2.file=f.id "
 				"AND f2.dir=", backup_dir_id, " "
 				"AND f2.name=", backup_file_name_args..., " "
 			")"
