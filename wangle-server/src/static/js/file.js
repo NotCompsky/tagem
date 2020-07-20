@@ -15,7 +15,7 @@ function $$$after_tagged_this_file(ids, tags){
 function $$$hide_all_views_except(except){
 	for(let type of ['img','video','audio','iframe','object','yt-player']){
 		if(type === except){
-			$$$unhide('view-'+type); // id <= ['view-img','view-video','view-audio','view-iframe','view-object','view-yt-player']
+			$$$unhide('view-'+type);
 			const node = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
 			if(node !== undefined)
 				node.removeAttribute('src');
@@ -25,6 +25,8 @@ function $$$hide_all_views_except(except){
 		if (type === 'yt-player')
 			$$$try_to_pause_yt_video(); // Not using stopVideo, as that might leave the player in the ENDED state, which might be problematic for playlist cycling.
 	}
+	if(except !== null)
+		$$$unhide('view-'+except);
 }
 function $$$set_file_view_src(type, src, _mimetype){
 	$$$hide_all_views_except(type);

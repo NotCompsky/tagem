@@ -16,9 +16,6 @@ cmnt_noncapture:str = "(?:[\s]+//[^\"']+)?"
 mangle_name:str = "(\$\$\$)?"
 MANGLE_NAMES:bool = False
 
-# Variables that are used to generate JavaScript constants:
-ALL_HIDDEN_IDS:list = []
-
 
 def set_human2minimised(human_name:str, val:list,  fp:str,  line:str):
 	x:list = human2minimised.get(human_name)
@@ -40,41 +37,6 @@ def escape_line(line:str):
 
 
 def process_fn_line(line:str):
-	global ALL_HIDDEN_IDS
-	if re.search("[$]{3}(?:hide_all_except|unhide|toggle|IDS_TO_REGULARLY_HIDE)\(", line) is not None:
-		# Add all IDs that are unhidden via this method to a set, which is used within the method itself to hide all other elements
-		m = re.search((
-			"[$]{3}"
-			"(?:hide_all_except|unhide|toggle)"
-			"\(\[?"
-				"([['\"A-Za-z0-9_, -]*)"
-			"[\])]"), line
-		)
-		
-		orig_line:str = line
-		
-		ls:list = None
-		if m is not None:
-			ls = re.findall("[^,]+", m.group(1).replace(" ",""))
-			if re.search("['\"]", "".join(ls)) is None and len(ls) != 0:
-				m = None
-				ls = None
-		if m is None:
-			regexp:str = " // [A-Za-z0-9_]+ <= \[([^]]*)\]$"
-			m = re.search(regexp, line)
-			line = re.sub(regexp, "", line)
-		if ls is None:
-			if m is None:
-				print(line)
-				raise ValueError(f"Hider function called with indirect array argument - the array of possible entries (i.e. the superset) of the array must be listed in a function to the right of this function call, e.g.:\n$$$hide_all_except(ls) // ls <= ['foo','bar']")
-			ls = re.findall("[^,]+", m.group(1))
-		if "//" in orig_line:
-			print(orig_line)
-			print("Final ls:", ls)
-		
-		ALL_HIDDEN_IDS += ls
-	
-	
 	# Replace var/fn names
 	line = re.sub(f"\$\$\$({valid_var_names})", lambda x: get_human2minimised(x.group(1)), line)
 	
@@ -126,13 +88,11 @@ def is_empty_line(line:str):
 
 
 def run(fps:list, is_populating_reserved_names:bool):
-	global ALL_HIDDEN_IDS
 	for fp in fps:
 		gen = (line for line in open(fp).read().split("\n"))
 		for line in gen:
 			if is_empty_line(line):
 				continue
-			
 			if line.startswith("const "):
 				m = re.search(f"^const {mangle_name}({valid_var_names}) *= *([^;]+);{cmnt_noncapture}$", line)
 				# I know JS allows MANY more characters than this - even many kawaii faces are valid variable names - but it's unreasonable
@@ -202,12 +162,8 @@ if __name__ == "__main__":
 	if os.path.isfile(args.dst) and os.path.getmtime(args.dst) > max([os.path.getmtime(__file__)]+[os.path.getmtime(fp) for fp in fps]):
 		exit(0)
 	
-	ALL_HIDDEN_IDS_minimised_name:str = get_next_minimised_name("ALL_HIDDEN_IDS")
-	
 	run(fps, True)
 	run(fps, False)
-	
-	human2minimised["ALL_HIDDEN_IDS"] = ["const", ALL_HIDDEN_IDS_minimised_name, None, None]
 	
 	# Parse function contents
 	for human_name, (var_name, minimised_name, parameters, value) in human2minimised.items():
@@ -228,9 +184,6 @@ if __name__ == "__main__":
 					is_part_of_multiline_str = True
 				fn_contents += process_fn_line(line)
 			human2minimised[human_name][3] = fn_contents
-	
-	print(list(set(ALL_HIDDEN_IDS)))
-	human2minimised["ALL_HIDDEN_IDS"][3] = "[" + ",".join(list(set(ALL_HIDDEN_IDS))).replace('"',"'") + "]"
 	
 	with open(args.dst, "w") as f:
 		f.write("#pragma once\n")

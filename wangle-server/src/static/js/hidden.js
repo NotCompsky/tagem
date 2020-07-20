@@ -41,9 +41,48 @@ function $$$hide_all_except(ids,classes){
 		$$$playlist_file_ids = undefined; // Destroy playlist
 	$$$document_getElementById('profile-img').removeAttribute('onclick');
 	$$$hide_class('help');
-	for(const id of $$$ALL_HIDDEN_IDS){
+	for(const id of [
+		'text-editor',
+		'add-f-backup-toggle-container',
+		'add-f-backup',
+		'f',
+		'd',
+		't',
+		'merge-files-btn',
+		'backup-files-btn',
+		'view-as-playlist-btn',
+		'tasks-container',
+		'file-info',
+		'next-f-in-playlist',
+		'user-info',
+		'post-container',
+		'file2-container',
+		'file2',
+		'descr',
+		'values-container',
+		'tags-container',
+		'parents-container',
+		'children-container',
+		'dirselect-container',
+		'deviceselect-container',
+		'protocolselect-container',
+		'tagselect-files-container',
+		'tagselect-files-btn',
+		'tagselect-era-container',
+		'tagselect-eras-container',
+		'tagselect-dirs-container',
+		'tagselect-self-p-container',
+		'tagselect-self-p-btn',
+		'tagselect-self-c-container',
+		'tagselect-self-c-btn',
+		'add-t-dialog',
+		'add-f-dialog',
+		'add-d-dialog',
+		'add-D-dialog',
+		'orig-src-dialog'
+	]){
 		if(ids.includes(id))
-			$$$unhide(id); // id <= []
+			$$$unhide(id);
 		else 
 			$$$hide(id);
 	}

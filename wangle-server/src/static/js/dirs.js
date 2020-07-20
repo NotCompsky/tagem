@@ -20,7 +20,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 		ls.push('backup-files-btn');
 		ls.push('view-as-playlist-btn');
 	}
-	$$$hide_all_except(ls); // ls <= ['f','f-action-btns','tags-container','parents-container','children-container','tagselect-dirs-container','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']
+	$$$hide_all_except(ls);
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$dir_tagger_fn = $$$after_tagged_this_dir;
