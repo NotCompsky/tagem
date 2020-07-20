@@ -12,6 +12,12 @@
 	#define ACTION_ON_DOCUMENT_LOAD
 #endif
 
+
+#ifndef SELECT2_URL_ENDPOINT
+	#define SELECT2_URL_ENDPOINT "\"" SERVER_ROOT_URL "/a/select2/regex/\"+var_name"
+#endif
+
+
 #include <boost/preprocessor.hpp>
 #include "../auto-generated/js.hpp"
 #include "../auto-generated/svg.hpp"

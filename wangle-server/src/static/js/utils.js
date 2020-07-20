@@ -36,7 +36,8 @@ function $$$init_selects__ajax(var_name){
 		minimumInputLength:1,
 		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
 		ajax:{
-			url: "!!!MACRO!!!SERVER_ROOT_URL/a/select2/regex/" + var_name,
+			url: !!!MACRO!!!SELECT2_URL_ENDPOINT,
+			// Basically "!!!MACRO!!!SERVER_ROOT_URL/a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.
 			dataType:"json",
 			data:function(params){
 				return ($$$use_regex) ? {'q': params.term} : {'q': RegExp.escape(params.term)}
