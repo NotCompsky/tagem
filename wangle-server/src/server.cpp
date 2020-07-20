@@ -2952,6 +2952,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 #		include "auto-generated/auto__server-determine-response.hpp"
 		return _r::not_found;
 	}
+	
+	void asciify_request_address_info(const std::string_view msg){
+		this->reset_buf_index();
+		for(size_t i = 0;  i < msg.size()  &&  msg.data()[i] != '\n'; ++i){
+			this->asciify(msg.data()[i]);
+		}
+		*this->itr = 0;
+	}
   public:
 	RTaggerHandler()
 	{
@@ -2965,16 +2973,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 		void read(Context* ctx,  const std::string_view msg) override {
-			this->reset_buf_index();
-			for(size_t i = 0;  i < msg.size()  &&  msg.data()[i] != '\n'; ++i){
-				this->asciify(msg.data()[i]);
-			}
-			*this->itr = 0;
+			this->asciify_request_address_info(msg);
 			const std::string client_addr = ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
 			std::cout << client_addr << '\t' << this->buf << std::endl;
 			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg.data()) : _r::banned_client;
-			if (unlikely(v == _r::not_found))
+			if (unlikely(v == _r::not_found)){
+				this->asciify_request_address_info(msg);
+				fprintf(stderr, "!!!WARNING!!! Nation-state cyber attack detected! IP %s has been BANNED for attempting to HACK at path %s\n", client_addr.c_str(), this->buf);
 				banned_client_addrs.push_back(client_addr);
+			}
 			write(ctx, v);
 			close(ctx);
 		}
