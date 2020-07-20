@@ -166,7 +166,7 @@ function $$$assign_value_to_file(){
 			select.val("").change(); // Deselect all
 			input.value = "";
 			if($$$is_visible('values'))
-				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[0][var_indx], value);
+				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[var_indx][1][0], value);
 		}
 	);
 }
@@ -263,7 +263,7 @@ function $$$view_file(_file_id_and_t){
 				const file2_values = $$$split_on_commas_but_make_empty_if_empty(file2_values_csv);
 				for(var i=0, len=file2_values.length;  i<len;  ++i){
 					if(file2_values[i] !== "0")
-						_vals += $$$display_file2_var(f2[i], file2_values[i]);
+						_vals += $$$display_file2_var($$$f2_as_array[i][1][0], file2_values[i]);
 				}
 				$$$document_getElementById('values').innerHTML = _vals;
 				
