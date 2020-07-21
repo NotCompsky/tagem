@@ -601,7 +601,7 @@ struct Options {
 
 
 constexpr
-bool check_regex(const nullptr_t regex,  const char* const file_name,  const size_t file_name_len){
+bool check_regex(const std::nullptr_t regex,  const char* const file_name,  const size_t file_name_len){
 	return true;
 }
 
@@ -688,7 +688,7 @@ void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  c
 
 
 template<typename FileType,  typename RelationType>
-void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
+void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const std::nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
 	hash_all_from_dir(dirpath, recursive, nullptr, file_type_flag, hash_name, which_relation);
 }
 

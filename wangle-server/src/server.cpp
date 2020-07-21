@@ -442,7 +442,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	
 	template<typename... Args>
-	char* get_itr_from_buf(nullptr_t,  const char* const _headers,  Args... args){
+	char* get_itr_from_buf(std::nullptr_t,  const char* const _headers,  Args... args){
 		size_t sz = 0; // NOTE: If there is a free(): corrupted chunk error, it is probably because strlens has calculated the wrong size for the container.
 		
 		sz += std::char_traits<char>::length(_headers);
@@ -460,7 +460,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	char* get_itr_from_buf(char** buf,  const char* const,  Args...){
 		return *buf;
 	}
-	void set_buf_to_itr(nullptr_t, char*){}
+	void set_buf_to_itr(std::nullptr_t, char*){}
 	void set_buf_to_itr(char** buf,  char* itr){
 		*buf = itr;
 	}
