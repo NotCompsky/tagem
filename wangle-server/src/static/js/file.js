@@ -148,8 +148,8 @@ function $$$display_file2_var(name, value){
 }
 function $$$assign_value_to_file(){
 	const select = $('#file2-select');
-	const var_indx = select.val();
-	if(var_indx.length === 0)
+	const f2_id = select.val();
+	if(f2_id === "")
 		return;
 	const _file_ids = $$$get_file_ids();
 	if(_file_ids==="")
@@ -161,12 +161,12 @@ function $$$assign_value_to_file(){
 	if(input.type === "datetime-local")
 		value = $$$dt2timestamp(value);
 	$$$ajax_POST_w_text_response(
-		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[0][var_indx],
+		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[f2_id][0],
 		function(){
 			select.val("").change(); // Deselect all
 			input.value = "";
 			if($$$is_visible('values'))
-				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[var_indx][1][0], value);
+				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[f2_id][0], value);
 		}
 	);
 }

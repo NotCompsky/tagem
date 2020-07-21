@@ -113,7 +113,7 @@ function $$$display_tag(id, name, thumb, fn_name, alias){
 function $$$display_tags_from_url(url,node_id,fn_name,alias){
 	$$$ajax_data_w_JSON_response(
 		"GET",
-		"!!!MACRO!!!SERVER_ROOT_URL"+s,
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/"+url,
 		null,
 		function(data){
 			let s = "";
@@ -129,7 +129,7 @@ function $$$display_tags(tag_ids, node_id, fn_name, alias){
 		$$$document_getElementById(node_id).innerHTML = "";
 		return;
 	}
-	$$$display_tags_from_url("/a/t/id/"+tag_ids.join(","),node_id,fn_name,alias);
+	$$$display_tags_from_url("id/"+tag_ids.join(","),node_id,fn_name,alias);
 }
 function $$$display_tags_add(tags, node_id, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file
@@ -138,8 +138,8 @@ function $$$display_tags_add(tags, node_id, fn_name, alias){
 }
 function $$$display_parent_tags(_tag_id){
 	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-	? $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
-	: "/a/t/p/"+_tag_id
+	? "id/" + $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
+	: "p/"+_tag_id
 	;
 	if(url==="")
 		return;
@@ -147,8 +147,8 @@ function $$$display_parent_tags(_tag_id){
 }
 function $$$display_child_tags(_tag_id){
 	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-	? $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
-	: "/a/t/c/"+_tag_id
+	? "id/" + $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
+	: "c/"+_tag_id
 	;
 	if(url==="")
 		return;
