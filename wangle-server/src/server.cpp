@@ -2712,7 +2712,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
 			
-			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", this->file_path, "\",LENGTH(d.name)+1)", user_id, mimetype);
+			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", this->file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
 			// WARNING: The above will crash if there is no such extension in ext2mimetype
 			// This is deliberate, to tell me to add it to the DB.
 		}
@@ -2741,6 +2741,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"IFNULL(mt.id,0),",
 				user_id, " "
 			"FROM file f "
+			"JOIN dir d ON d.id=", backup_dir, " "
 			"LEFT JOIN ",
 				(is_mimetype_set)?"mimetype":"ext2mimetype",
 				" mt ON mt.name=SUBSTRING_INDEX(\"",
