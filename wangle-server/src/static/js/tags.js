@@ -110,14 +110,10 @@ function $$$display_tag(id, name, thumb, fn_name, alias){
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">-</button>"
 		+ "</div>";
 }
-function $$$display_tags(tag_ids, node_id, fn_name, alias){
-	if(tag_ids.length===0){
-		$$$document_getElementById(node_id).innerHTML = "";
-		return;
-	}
+function $$$display_tags_from_url(url,node_id,fn_name,alias){
 	$$$ajax_data_w_JSON_response(
 		"GET",
-		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+tag_ids.join(","),
+		"!!!MACRO!!!SERVER_ROOT_URL"+s,
 		null,
 		function(data){
 			let s = "";
@@ -128,16 +124,35 @@ function $$$display_tags(tag_ids, node_id, fn_name, alias){
 		}
 	);
 }
+function $$$display_tags(tag_ids, node_id, fn_name, alias){
+	if(tag_ids.length===0){
+		$$$document_getElementById(node_id).innerHTML = "";
+		return;
+	}
+	$$$display_tags_from_url("/a/t/id/"+tag_ids.join(","),node_id,fn_name,alias);
+}
 function $$$display_tags_add(tags, node_id, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file
 	const arr = tags.map(x => $$$display_tag(x.id, x.text, null, null, fn_name, alias));
 	$$$document_getElementById(node_id).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]), 'parents', "$$$unlink_this_parent_tag_from_this_tag");
+	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
+	? $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
+	: "/a/t/p/"+_tag_id
+	;
+	if(url==="")
+		return;
+	$$$display_tags_from_url(url,"parents","$$$unlink_this_parent_tag_from_this_tag");
 }
 function $$$display_child_tags(_tag_id){
-	$$$display_tags($$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]), 'children', "$$$unlink_this_child_tag_from_this_tag");
+	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
+	? $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
+	: "/a/t/c/"+_tag_id
+	;
+	if(url==="")
+		return;
+	$$$display_tags_from_url(url,"children","$$$unlink_this_parent_tag_from_this_tag");
 }
 
 // Functions used in HTML

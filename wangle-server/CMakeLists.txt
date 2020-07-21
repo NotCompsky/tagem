@@ -48,6 +48,12 @@ if(NOT WHICH_MYSQL_CLIENT)
 	set(WHICH_MYSQL_CLIENT mysqlclient)
 endif()
 
+if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
+	set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
+else()
+	set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "true")
+endif()
+
 find_package(fizz REQUIRED)
 find_package(Threads REQUIRED)
 find_package(folly REQUIRED)
@@ -165,8 +171,10 @@ endif()
 
 target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\"")
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\"")
+target_compile_definitions(server PRIVATE "GET_PARENT_AND_CHILD_TAGS_FROM_IDS=\"${GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE}\"")
 if(SELECT2_URL_ENDPOINT)
 	target_compile_definitions(server PRIVATE "SELECT2_URL_ENDPOINT=\"${SELECT2_URL_ENDPOINT}\"")
+	# WARNING: This string must not contain a semi-colon, because CMake interprets that as delineating an array
 endif()
 
 add_dependencies(server favicon auto__server_determine_response_hpp qry__process_arg__tokens qry__get_attribute_name__tokens js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
