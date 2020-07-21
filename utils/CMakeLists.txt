@@ -29,10 +29,6 @@ else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")
 endif()
 
-add_executable(tagemall src/tagemall.cpp)
-target_link_libraries(tagemall PRIVATE compsky_asciify compsky_mysql)
-target_compile_definitions(tagemall PRIVATE ${MY_DEFINES})
-
 add_executable(tagem-init src/init.cpp)
 target_include_directories(tagem-init PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-init compsky_mysql_create_config compsky_asciify)
@@ -55,7 +51,7 @@ target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets avformat avcodec avutil)
 
 install(
-    TARGETS tagem-instances tagemall tagem-init
+    TARGETS tagem-instances tagem-hash tagem-init
     EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
