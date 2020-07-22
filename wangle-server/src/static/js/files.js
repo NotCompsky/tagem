@@ -51,11 +51,11 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					s += "<div class='td ftitle'>" + $$$escape_html_text(title) + "</div>";
 					s += "<div class='td db'>" + ext_db_n_post_ids.replace(/:[0-9]+/,'') + "</div>"; // 3rd column i.e. col[2]
 					// Ignore the post IDs that are sent alongside the DB IDs
-					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
-					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
+					s += "<div class='td tags'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
+					s += "<div class='td file_size' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
 					s += "<div class='td dateadded' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
-					s += "<div class='td' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
-					s += "<div class='td' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
+					s += "<div class='td date_origin' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
+					s += "<div class='td duration' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
 					s += "<div class='td w' data-n=" + w + ">" + w + "</div>";
 					s += "<div class='td h' data-n=" + h + ">" + h + "</div>";
 					s += "<div class='td views' data-n=" + views + ">" + $$$n2human(views) + "</div>";

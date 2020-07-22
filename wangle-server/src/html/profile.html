@@ -182,7 +182,12 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		CREATE_USER_SETTINGS_OPTION("Time to sleep after media error", "sleep_after_media_err", MINIMISED_JS_DECL_set_sleep_after_media_err)
 		
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("thumbnail")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("fname")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("ftitle")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("dateadded")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("date_origin")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("file_size")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("duration")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("w")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("h")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("views")
@@ -433,13 +438,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	("fname","Name",2,"regexp") \
 	("ftitle","Title",2,"regexp") \
 	("db","In Databases",2,"regexp") \
-	("","Tags",2,"regexp") \
-	("","Size (Range)",1,"12.3KB - 45.6MB") \
+	("tags","Tags",2,"regexp") \
+	("file_size","Size (Range)",1,"12.3KB - 45.6MB") \
 	("dateadded","Date Added",1,"Date Query") \
-	("","Origin Date",1,"Date Query") \
-	("","Duration",1,"Time Query") \
-	("","Width",1,"123-456") \
-	("","Height",1,"123-456") \
+	("date_origin","Origin Date",1,"Date Query") \
+	("duration","Duration",1,"Time Query") \
+	("w","Width",1,"123-456") \
+	("h","Height",1,"123-456") \
 	("views","Views",1,"123-456") \
 	("likes","Likes",1,"123-456") \
 	("dislikes","Dislikes",1,"123-456") \

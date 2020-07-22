@@ -11,13 +11,13 @@
 		"<div class=\"td " BOOST_PP_TUPLE_ELEM(0, elem) "\">" \
 			"<input type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(3, elem) "\"/>" \
 		"</div>", \
-		"<div class=\"td\"></div>" \
+		"<div class=\"td " BOOST_PP_TUPLE_ELEM(0, elem) "\"></div>" \
 	)
 #define CREATE_SORT(r, data, elem) \
 	BOOST_PP_IF( \
 		BOOST_PP_TUPLE_ELEM(2, elem), \
 		"<div class=\"td sort " BOOST_PP_TUPLE_ELEM(0, elem) "\"><a>Sort</a></div>", \
-		"<div class=\"td\"></div>" \
+		"<div class=\"td "      BOOST_PP_TUPLE_ELEM(0, elem) "\"></div>" \
 	)
 #define CREATE_HIDE(r, data, tpl) \
 	"<div class=\"td hide " BOOST_PP_TUPLE_ELEM(0, tpl) "\"><a>Hide</a></div>"

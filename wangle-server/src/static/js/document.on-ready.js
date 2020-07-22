@@ -21,7 +21,13 @@ function $$$on_document_ready(){
 	
 	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_cookie__bool("use_regex",false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('thumbnail',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fname',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('ftitle',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('tags',false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dateadded',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('date_origin',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('file_size',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('duration',false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('w',true);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('h',true);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('views',true);

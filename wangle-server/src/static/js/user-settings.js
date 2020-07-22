@@ -47,8 +47,8 @@ function $$$set_tbl_f_hide_col(s){
 }
 
 function $$$apply_f_tbl_col_hides(){
-	for(let s of ["thumbnail","dateadded","w","h","views","likes","dislikes","fps"]){
+	for(let s of ["thumbnail","fname","ftitle","tags","dateadded","date_origin","file_size","duration","w","h","views","likes","dislikes","fps"]){
 		const b = $$$get_cookie("tbl_f_hide_col_"+s);
-		$$$for_node_in_document_getElementsByClassName_1args(s,$$$set_node_visibility,!b);
+		$$$for_node_in_document_getElementsByClassName_1args(s,$$$set_node_visibility,!(b==="1"));
 	}
 }
