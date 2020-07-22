@@ -72,6 +72,14 @@ Credits
 		MouseTrap: https://github.com/ccampbell/mousetrap
 			For intercepting key events
 
+Keyboard Shortcuts
+	b        Toggle the 'add backup file' dialog
+	e        Add era vertex (start or end)
+	m        Merge selected files
+	p        View selected files as a playlist
+	q        Make a qry
+	v        Toggle the 'add file2 variable to file' dialog
+
 Date Query
 	USAGE
 		[DATE]
