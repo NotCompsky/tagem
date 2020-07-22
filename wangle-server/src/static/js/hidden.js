@@ -87,6 +87,7 @@ function $$$hide_all_except(ids,classes){
 			$$$hide(id);
 	}
 	for(const c of [
+		'repeatness',
 		'file-meta'
 	]){
 		if((classes===undefined)||(!classes.includes(c)))

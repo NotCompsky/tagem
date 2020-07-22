@@ -51,7 +51,7 @@ function $$$view_eras(ls){
 function $$$create_era_info_row(era){
 	const [id,start,end,era_tag_ids] = era;
 	let _s = "";
-	_s += "<tr class='tr' data-id='" + id + "'>";
+	_s += "<tr class='tr' data-id='" + id + "' data-start='" + start + "' data-end='" + end + "'>";
 		_s += "<td class='td'>" + id + "</td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
@@ -78,4 +78,13 @@ function $$$get_era_ids(){
 			ids += "," + node.dataset.id
 	}
 	return ids.substr(1);
+}
+
+function $$$get_file_id_and_selected_era_start_and_ends_csv(){
+	const fid = $$$get_file_id(false);
+	let csv = "";
+	for(let node of $$$get_tbl_body('eras-info').getElementsByClassName('selected1')){
+		csv += "," + fid + "@" + node.dataset.start + "-" + node.dataset.end;
+	}
+	return (csv==="") ? fid : csv.substr(1);
 }

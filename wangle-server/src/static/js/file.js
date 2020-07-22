@@ -2,8 +2,8 @@ var $$$active_media = null;
 var $$$file_title;
 
 
-function $$$get_file_id(){
-	return $$$file_id;
+function $$$get_file_id(and_era){
+	return (and_era) ? $$$get_file_id_and_selected_era_start_and_ends_csv() : $$$file_id;
 }
 
 function $$$after_tagged_this_file(ids, tags){
@@ -187,6 +187,7 @@ function $$$view_file__hides(){
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','tagselect-eras-container','descr'],['file-meta']);
 	if($$$is_playlist_running())
 		$$$unhide('next-f-in-playlist');
+	$$$unhide_playlist_repeatness_node();
 }
 
 function $$$next_video_when_it_reaches(){

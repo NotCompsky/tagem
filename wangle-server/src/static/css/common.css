@@ -199,6 +199,10 @@
 
 // Dimensions that aren't 100% sure to be common
 
+".repeatness svg{"
+	"width:24px;"
+"}"
+
 "#admin-dashboard a svg{"
 	"width:48px;"
 "}"
