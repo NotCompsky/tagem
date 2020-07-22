@@ -1,3 +1,18 @@
+function $$$get_and_set_default_user_setting_tofrom_cookie__bool(key,_default,fn){
+	let b = $$$get_cookie(key);
+	if(b === undefined)
+		b = _default;
+	$$$set_bool_tbl_entry(key,b);
+	if(fn!==undefined)
+		fn(key,b);
+	return b;
+}
+
+function $$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col(key,_default){
+	$$$get_and_set_default_user_setting_tofrom_cookie__bool("tbl_f_hide_col_"+key,_default,$$$set_tbl_f_hide_col);
+}
+
+
 function $$$set_user_setting_as(key,val){
 	$$$set_cookie(key,val,3600);
 	$$$document_getElementById('setting-'+key).textContent = val
@@ -13,13 +28,19 @@ function $$$set_sleep_after_media_err(){
 	$$$set_user_setting_as('sleep_after_media_err',n,3600);
 }
 
-function $$$set_use_regex_tbl_entry(b){
-	$$$document_getElementById('setting-use_regex').textContent = ($$$use_regex)?"1":"0";
+function $$$set_bool_tbl_entry(id,b){
+	$$$set_cookie(id, (b)?'1':'0', 3600);
+	$$$document_getElementById('setting-'+id).textContent = (b)?"1":"0";
 }
 
 function $$$set_use_regex(){
 	const b = $$$confirm("Use RegEx?\nSay no if you don't know what they are");
 	$$$use_regex = (b===true);
-	$$$set_cookie('use_regex', ($$$use_regex)?'1':'0', 3600);
-	$$$set_use_regex_tbl_entry();
+	$$$set_bool_tbl_entry('use_regex',$$$use_regex);
+}
+
+function $$$set_tbl_f_hide_col(s){
+	const b = $$$confirm("Hide the "+s+" column on the file table?");
+	$$$set_bool_tbl_entry("tbl_f_hide_col_"+s,b);
+	$$$for_node_in_document_getElementsByClassName_1args(s,$$$set_node_visibility,!b);
 }

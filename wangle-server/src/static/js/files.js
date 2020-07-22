@@ -43,8 +43,8 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					era = "@" + era_start + "-" + era_end;
 				}
 				s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
-					s += '<div class="td" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
-						s += '<img class="thumb" src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
+					s += '<div class="td thumb" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
+						s += '<img src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
 					s += '</div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
 					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
@@ -53,7 +53,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					// Ignore the post IDs that are sent alongside the DB IDs
 					s += "<div class='td'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
 					s += "<div class='td' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
-					s += "<div class='td' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
+					s += "<div class='td dateadded' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
 					s += "<div class='td' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
 					s += "<div class='td' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
 					s += "<div class='td w' data-n=" + w + ">" + w + "</div>";

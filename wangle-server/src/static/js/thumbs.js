@@ -1,6 +1,9 @@
 function $$$apply_thumbnail_width(){
 	const n = $$$get_cookie("w");
-	for(let e of $$$document_getElementsByClassName('thumb')){
+	for(let x of $$$document_getElementsByClassName('thumb')){
+		const e = x.getElementsByTagName("img")[0];
+		if(e===undefined)
+			continue;
 		e.style.width = n+"px";
 		e.style.maxHeight = n+"px";
 	}

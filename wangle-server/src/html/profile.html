@@ -152,16 +152,20 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	"</div>"
 
 
-#define CREATE_USER_SETTINGS_OPTION(descr, id, fn) \
+#define CREATE_USER_SETTINGS_OPTION1(descr, id, fn, data_id) \
 	"<tr>" \
 		"<td>" descr "</td>" \
 		"<td>" \
 			"<p id=\"setting-" id "\"></p>" \
 		"</td>" \
 		"<td>" \
-			"<a onclick=\"" fn "()\">" SVG_EDIT "</a>" \
+			"<a data-id=\"" data_id "\" onclick=\"" fn "(this.dataset.id)\">" SVG_EDIT "</a>" \
 		"</td>" \
 	"</tr>"
+#define CREATE_USER_SETTINGS_OPTION(descr, id, fn) \
+	CREATE_USER_SETTINGS_OPTION1(descr, id, fn, "0")
+#define CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL(name) \
+	CREATE_USER_SETTINGS_OPTION1("File Table: Hide " name " column?", "tbl_f_hide_col_" name, MINIMISED_JS_DECL_set_tbl_f_hide_col, name)
 
 "<div id=\"my-settings\" class=\"hidden\">"
 	"<table>"
@@ -172,6 +176,15 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 		CREATE_USER_SETTINGS_OPTION("Use RegEx?", "use_regex", MINIMISED_JS_DECL_set_use_regex)
 		CREATE_USER_SETTINGS_OPTION("Time to sleep while viewing inanimate media", "sleep_on_inanimate_media", MINIMISED_JS_DECL_set_sleep_on_inanimate_media)
 		CREATE_USER_SETTINGS_OPTION("Time to sleep after media error", "sleep_after_media_err", MINIMISED_JS_DECL_set_sleep_after_media_err)
+		
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("thumbnail")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("dateadded")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("w")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("h")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("views")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("likes")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("dislikes")
+		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("fps")
 	"</table>"
 "</div>"
 
@@ -388,16 +401,21 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"<p class=\"selected2\">Secondary</p> is used only to select duplicates of the primary file for merging"
 "</div>"
 
-#define COL_NAMES ("header","Thumb")("header","Name")("header","#Files")
-#define COL_FILTERS (0,"")(2,"regexp")(1,"12 - 34")
+#define COLS \
+	("thumb","Thumb",0,"") \
+	("","Name",2,"regexp") \
+	("","#Files",1,"12 - 34")
 #define TBL_ID "t"
 #define TBL_NAME_COLS "[1]"
 #define TBL_TAGS_COLS "[]"
 #define IS_SELECTABLE
 #include "components/tbl.html"
 
-#define COL_NAMES ("header","Name")("header","Device")("header","#Files")("header","Tags")
-#define COL_FILTERS (2,"regexp")(2,"regexp")(1,"12 - 34")(2,"regexp")
+#define COLS \
+	("","Name",2,"regexp") \
+	("","Device",2,"regexp") \
+	("","#Files",1,"12 - 34") \
+	("","Tags",2,"regexp")
 #define TBL_ID "d"
 #define TBL_NAME_COLS "[0,1]"
 #define TBL_TAGS_COLS "[]"
@@ -406,10 +424,24 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 
 #define ACTION_BTNS ("",MINIMISED_JS_DECL_prompt_thumb_w"()","Thumb Size")("select-all",MINIMISED_JS_DECL_select_rows "('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all",MINIMISED_JS_DECL_deselect_rows "('#f .tbody .tr', 1);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 2);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 3);","Deselect All")("merge-files",MINIMISED_JS_DECL_merge_files"()","Merge Files")("backup-files",MINIMISED_JS_DECL_toggle_file_add_backup_dialog"()","Backup")("add-file2",MINIMISED_JS_DECL_toggle"('file2-container')","Add/Update Value")("view-as-playlist",MINIMISED_JS_DECL_view_files_as_playlist"()","View as Playlist")
 #define IS_SELECTABLE
-#define COL_NAMES ("header","Thumb")("fname","Name")("ftitle","Title")("db","In Databases")("header","Tags")("header","Size (Range)")("header","Date Added")("header","Origin Date")("header","Duration")("header","Width")("header","Height")("views","Views")("likes","Likes")("dislikes","Dislikes")("fps","FPS")
-#define COL_FILTERS (0,"")(2,"regexp")(2,"regexp")(2,"regexp")(2,"regexp")(1,"12.3KB - 45.6MB")(1,"Date Query")(1,"Date Query")(1,"Time Query")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"123-456")(1,"12.3-45.6")
+#define COLS \
+	("thumb","Thumb",0,"") \
+	("fname","Name",2,"regexp") \
+	("ftitle","Title",2,"regexp") \
+	("db","In Databases",2,"regexp") \
+	("","Tags",2,"regexp") \
+	("","Size (Range)",1,"12.3KB - 45.6MB") \
+	("dateadded","Date Added",1,"Date Query") \
+	("","Origin Date",1,"Date Query") \
+	("","Duration",1,"Time Query") \
+	("","Width",1,"123-456") \
+	("","Height",1,"123-456") \
+	("views","Views",1,"123-456") \
+	("likes","Likes",1,"123-456") \
+	("dislikes","Dislikes",1,"123-456") \
+	("fps","FPS",1,"12.3-45.6")
 #define TBL_ID "f"
-#define TBL_NAME_COLS "[1,2]"
+#define TBL_NAME_COLS "[1,2,3]"
 #define TBL_TAGS_COLS "[4]"
 #include "components/tbl.html"
 

@@ -2,25 +2,25 @@
 	"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(1, elem) "\">" BOOST_PP_TUPLE_ELEM(2, elem) "</button>" \
 
 #define CREATE_HEADER(r, data, tpl) \
-	"<div class=\"td " BOOST_PP_TUPLE_ELEM(0, tpl) "\">" \
+	"<div class=\"td header " BOOST_PP_TUPLE_ELEM(0, tpl) "\">" \
 		BOOST_PP_TUPLE_ELEM(1, tpl) \
 	"</div>"
-#define CREATE_FILTER(r, data, placeholder) \
+#define CREATE_FILTER(r, data, elem) \
 	BOOST_PP_IF( \
-		BOOST_PP_SUB(BOOST_PP_TUPLE_ELEM(0, placeholder), 1), /* 0 for 0 and 1; 1 for 2 */ \
-		"<div class=\"td\">" \
-			"<input type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(1, placeholder) "\"/>" \
+		BOOST_PP_SUB(BOOST_PP_TUPLE_ELEM(2, elem), 1), /* 0 for 0 and 1; 1 for 2 */ \
+		"<div class=\"td " BOOST_PP_TUPLE_ELEM(0, elem) "\">" \
+			"<input type=\"text\" placeholder=\"" BOOST_PP_TUPLE_ELEM(3, elem) "\"/>" \
 		"</div>", \
 		"<div class=\"td\"></div>" \
 	)
-#define CREATE_SORT(r, data, is_sortable) \
+#define CREATE_SORT(r, data, elem) \
 	BOOST_PP_IF( \
-		BOOST_PP_TUPLE_ELEM(0, is_sortable), \
-		"<div class=\"td sort\"><a>Sort</a></div>", \
+		BOOST_PP_TUPLE_ELEM(2, elem), \
+		"<div class=\"td sort " BOOST_PP_TUPLE_ELEM(0, elem) "\"><a>Sort</a></div>", \
 		"<div class=\"td\"></div>" \
 	)
-#define CREATE_HIDE(r, data, _) \
-	"<div class=\"td hide\"><a>Hide</a></div>"
+#define CREATE_HIDE(r, data, tpl) \
+	"<div class=\"td hide " BOOST_PP_TUPLE_ELEM(0, tpl) "\"><a>Hide</a></div>"
 
 "<div class=\"table\" id=\"" TBL_ID "\">"
 
@@ -43,26 +43,25 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_ACTION_BTN, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(ACTION_
 "<div class=\"thead\">"
 	// Name row
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_NAMES))
+BOOST_PP_SEQ_FOR_EACH(CREATE_HEADER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COLS))
 #undef CREATE_HEADER
 	"</div>"
 
 	// Filter row
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_FILTER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
+BOOST_PP_SEQ_FOR_EACH(CREATE_FILTER, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COLS))
 #undef CREATE_FILTER
 	"</div>"
 
 	// Sort row
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SORT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_FILTERS))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SORT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COLS))
 	"</div>"
 #undef CREATE_SORT
-#undef COL_FILTERS
 	"<div class=\"tr\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COL_NAMES))
+BOOST_PP_SEQ_FOR_EACH(CREATE_HIDE, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(COLS))
 	"</div>"
-#undef COL_NAMES
+#undef COLS
 #undef CREATE_HIDE
 "</div>"
 "<div class=\"tbody\"></div>"

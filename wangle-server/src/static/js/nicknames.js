@@ -10,10 +10,12 @@ const $$$prompt = prompt;
 const $$$window = window;
 const $$$parseInt = parseInt;
 
-function $$$for_node_in_document_getElementsByClassName(s, fn){
+function $$$for_node_in_document_getElementsByClassName_1args(s,fn,x){
 	for(let e of $$$document_getElementsByClassName(s))
-		fn(e);
+		fn(e,x);
 }
+const $$$for_node_in_document_getElementsByClassName = $$$for_node_in_document_getElementsByClassName_1args;
+// Because why not? JS just ignores all the extra arguments.
 
 function $$$get_tbl_body(id){
 	return $$$document_getElementById(id).getElementsByClassName('tbody')[0];

@@ -1,3 +1,7 @@
+function $$$node_exists_w_id(s){
+	return ($$$document_getElementById(s)!==null);
+}
+
 function $$$sleep(ms){
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
