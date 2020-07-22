@@ -141,7 +141,7 @@ function $$$display_parent_tags(_tag_id){
 	? "id/" + $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
 	: "p/"+_tag_id
 	;
-	if(url==="")
+	if(url==="id/")
 		return;
 	$$$display_tags_from_url(url,"parents","$$$unlink_this_parent_tag_from_this_tag");
 }
@@ -150,7 +150,7 @@ function $$$display_child_tags(_tag_id){
 	? "id/" + $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
 	: "c/"+_tag_id
 	;
-	if(url==="")
+	if(url==="id/")
 		return;
 	$$$display_tags_from_url(url,"children","$$$unlink_this_parent_tag_from_this_tag");
 }
