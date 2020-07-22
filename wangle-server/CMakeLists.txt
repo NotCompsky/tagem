@@ -21,31 +21,18 @@ else()
 	message(WARNING "You might want to define -Dproxygen_root_DIR=/path/to/proxygen/root for ease - defines proxygen_cmake_DIR, wangle_DIR, folly_DIR and fizz_DIR")
 endif()
 
-if(NOT MANGLE_JS_NAMES)
+option(MANGLE_JS_NAMES "Minimise the names of JavaScript functions and variables" OFF)
+option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
+set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
+set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
+set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
+set(WHICH_MYSQL_CLIENT "mysqlclient" CACHE STRING "Which MySQL or MariaDB client to use")
+
+if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "")
 	message(STATUS "Not mangling JavaScript names. Set -DMANGLE_JS_NAMES=1 to mangle names")
 else()
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
-endif()
-
-if(NOT MAX_CACHE_AGE)
-	set(MAX_CACHE_AGE "0")
-endif()
-
-if(NOT DISPLAY_LICENSES_INLINE)
-	set(DISPLAY_LICENSES_INLINE "0")
-endif()
-
-if(NOT SERVER_ROOT_URL)
-	set(SERVER_ROOT_URL "")
-endif()
-
-if(NOT TABLE_LIMIT)
-	set(TABLE_LIMIT "100")
-endif()
-
-if(NOT WHICH_MYSQL_CLIENT)
-	set(WHICH_MYSQL_CLIENT mysqlclient)
 endif()
 
 if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
