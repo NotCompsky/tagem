@@ -115,6 +115,13 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 			case 'video':
 				$$$play('video', src, _mimetype_str);
 				break;
+			case 'text':
+				$$$ajax_GET_w_text_response(src,function(data){
+					const x = $$$document_getElementById('text-edit');
+					x.innerText = data;
+					$$$unhide_node(x);
+				});
+				break;
 			case '':
 				// If no slash in the mimetype (probably "!!NONE!!")
 				$$$set_file_view_src('iframe', src, null);

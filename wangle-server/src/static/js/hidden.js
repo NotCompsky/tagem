@@ -44,6 +44,7 @@ function $$$hide_all_except(ids,classes){
 	for(const id of [
 		'admin-dashboard',
 		'text-editor',
+		'text-edit',
 		'add-f-backup-toggle-container',
 		'add-f-backup',
 		'f',

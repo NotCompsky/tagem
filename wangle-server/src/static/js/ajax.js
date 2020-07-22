@@ -56,6 +56,10 @@ function $$$ajax_GET_w_JSON_response(url,fn){
 	$$$ajax_w_JSON_response("GET",url,fn);
 }
 
+function $$$ajax_GET_w_text_response(url,fn){
+	$$$ajax("GET","text",url,fn);
+}
+
 function $$$ajax_POST_w_text_response(url,fn){
 	$$$ajax("POST","text",url,fn);
 }
