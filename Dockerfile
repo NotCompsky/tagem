@@ -11,6 +11,7 @@ RUN git clone https://github.com/NotCompsky/libcompsky \
 	&& make install
 COPY wangle-server /tagem/wangle-server
 COPY include /tagem/include
+RUN chmod +x /tagem/wangle-server/scripts/*
 RUN apt-get install -y --no-install-recommends libcurl4-openssl-dev
 RUN mkdir /tagem/build \
 	&& cd /tagem/build \
@@ -19,6 +20,13 @@ RUN mkdir /tagem/build \
 
 FROM notcompsky/tagem-base
 COPY --from=compile-2 /tagem/build/server /server
-COPY scripts /scripts
+RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
+	&& rm -rf \
+		/var/lib/apt/lists/* /var/cache/apt/lists/* \
+		/usr/sbin/* \
+		/usr/lib/x86_64-linux-gnu/*.a \
+		/usr/include/* \
+		/usr/share/doc/*
+
 EXPOSE 80
 CMD [ "/server", "p", "80", "d", "/scripts/view-remote-dir" ]

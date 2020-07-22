@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.7)
 
 # If you have installed Proxygen, you can use
 # cmake -Dproxygen_root_DIR=/path/to/proxygen/root/dir
