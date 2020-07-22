@@ -20,12 +20,9 @@ function $$$on_document_ready(){
 	$$$switch_stylesheet(css);
 	
 	$$$use_regex = $$$get_cookie("use_regex");
-	if($$$use_regex !== undefined){
-		$$$use_regex = ($$$use_regex === "1");
-		$$$set_use_regex_tbl_entry();
-	}else{
-		$$$set_use_regex();
-	}
+	if($$$use_regex===undefined)
+		$$$use_regex="0";
+	$$$set_use_regex_tbl_entry();
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
 		const val2 = $$$get_cookie(key);
