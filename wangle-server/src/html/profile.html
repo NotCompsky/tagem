@@ -152,39 +152,26 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 	"</div>"
 
 
+#define CREATE_USER_SETTINGS_OPTION(descr, id, fn) \
+	"<tr>" \
+		"<td>" descr "</td>" \
+		"<td>" \
+			"<p id=\"setting-" id "\"></p>" \
+		"</td>" \
+		"<td>" \
+			"<a onclick=\"" fn "()\">" SVG_EDIT "</a>" \
+		"</td>" \
+	"</tr>"
+
 "<div id=\"my-settings\" class=\"hidden\">"
 	"<table>"
 		"<tr>"
 			"<th>Setting</th>"
 			"<th>Value</th>"
 		"</tr>"
-		"<tr>"
-			"<td>Use RegEx?</td>"
-			"<td>"
-				"<p id=\"setting-use_regex\"></p>"
-			"</td>"
-			"<td>"
-				"<a onclick=\"" MINIMISED_JS_DECL_set_use_regex "()\">" SVG_EDIT "</a>"
-			"</td>"
-		"</tr>"
-		"<tr>"
-			"<td>Time to sleep after media error</td>"
-			"<td>"
-				"<p id=\"setting-sleep_after_media_err\"></p>"
-			"</td>"
-			"<td>"
-				"<a onclick=\"" MINIMISED_JS_DECL_set_use_regex "()\">" SVG_EDIT "</a>"
-			"</td>"
-		"</tr>"
-		"<tr>"
-			"<td>Time to sleep while viewing inanimate media</td>"
-			"<td>"
-				"<p id=\"setting-sleep_on_inanimate_media\"></p>"
-			"</td>"
-			"<td>"
-				"<a onclick=\"" MINIMISED_JS_DECL_set_use_regex "()\">" SVG_EDIT "</a>"
-			"</td>"
-		"</tr>"
+		CREATE_USER_SETTINGS_OPTION("Use RegEx?", "use_regex", MINIMISED_JS_DECL_set_use_regex)
+		CREATE_USER_SETTINGS_OPTION("Time to sleep while viewing inanimate media", "sleep_on_inanimate_media", MINIMISED_JS_DECL_set_sleep_on_inanimate_media)
+		CREATE_USER_SETTINGS_OPTION("Time to sleep after media error", "sleep_after_media_err", MINIMISED_JS_DECL_set_sleep_after_media_err)
 	"</table>"
 "</div>"
 
