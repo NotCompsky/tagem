@@ -19,15 +19,15 @@ function $$$on_document_ready(){
 		css = $$$stylesheet_opts[0];
 	$$$switch_stylesheet(css);
 	
-	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_cookie__bool("use_regex","0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('thumbnail',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dateadded',"1");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('w',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('h',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('views',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('likes',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dislikes',"0");
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fps',"1");
+	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_cookie__bool("use_regex",false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('thumbnail',false);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dateadded',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('w',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('h',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('views',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('likes',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dislikes',true);
+	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fps',true);
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
 		const val2 = $$$get_cookie(key);

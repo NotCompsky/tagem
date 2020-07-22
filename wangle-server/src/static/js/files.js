@@ -43,7 +43,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 					era = "@" + era_start + "-" + era_end;
 				}
 				s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
-					s += '<div class="td thumb" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
+					s += '<div class="td thumbnail" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
 						s += '<img src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
 					s += '</div>';
 					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
@@ -71,7 +71,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 			$$$column_id2name('x', "f", '$$$view_db', 3);
 			$$$column_id2name(tags,"f", '$$$view_tag', 4);
 			
-			$$$apply_thumbnail_width();
+			$$$apply_f_tbl_col_hides();
 		}
 	);
 }

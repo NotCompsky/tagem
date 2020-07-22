@@ -50,7 +50,6 @@ function $$$populate_t_id2name_table(arr){
 				s += "</div>";
 			}
 			$$$get_tbl_body('t').innerHTML = s;
-			$$$apply_thumbnail_width();
 		}
 	);
 }

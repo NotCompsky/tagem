@@ -1,16 +1,10 @@
-function $$$apply_thumbnail_width(){
-	const n = $$$get_cookie("w");
-	for(let x of $$$document_getElementsByClassName('thumb')){
-		const e = x.getElementsByTagName("img")[0];
-		if(e===undefined)
-			continue;
-		e.style.width = n+"px";
-		e.style.maxHeight = n+"px";
-	}
-}
 function $$$set_thumbnail_width(n){
 	$$$set_cookie("w", n, 3600);
-	$$$apply_thumbnail_width();
+	$$$document_getElementById('css-thumb-sz').remove();
+	const x = $$$document.createElement('style');
+	x.id = 'css-thumb-sz';
+	x.innerHTML='.thumbnail img{max-width:'+n+'px; max-height:'+n+'px;}';
+	$$$document.head.appendChild(x);
 }
 function $$$prompt_thumb_w(){
 	$$$set_thumbnail_width(parseInt($$$prompt("Width")));

@@ -44,6 +44,10 @@
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
 "<head>"
+	"<style id=\"css-thumb-sz\">"
+		".thumbnail img{max-width:\"256px\"; max-height:\"256px\";}"
+		// This stylesheet exists only to set the thumbnail dimensions dynamically though JavaScript
+	"</style>"
 	"<meta charset=\"utf-8\"/>"
 	#include "components/jquery.html"
 	#include "components/select2.html"
@@ -402,7 +406,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 "</div>"
 
 #define COLS \
-	("thumb","Thumb",0,"") \
+	("thumbnail","Thumb",0,"") \
 	("","Name",2,"regexp") \
 	("","#Files",1,"12 - 34")
 #define TBL_ID "t"
@@ -425,7 +429,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 #define ACTION_BTNS ("",MINIMISED_JS_DECL_prompt_thumb_w"()","Thumb Size")("select-all",MINIMISED_JS_DECL_select_rows "('#f .tbody .tr:not(.hidden)')","Select All")("deselect-all",MINIMISED_JS_DECL_deselect_rows "('#f .tbody .tr', 1);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 2);"MINIMISED_JS_DECL_deselect_rows"('#f .tbody .tr', 3);","Deselect All")("merge-files",MINIMISED_JS_DECL_merge_files"()","Merge Files")("backup-files",MINIMISED_JS_DECL_toggle_file_add_backup_dialog"()","Backup")("add-file2",MINIMISED_JS_DECL_toggle"('file2-container')","Add/Update Value")("view-as-playlist",MINIMISED_JS_DECL_view_files_as_playlist"()","View as Playlist")
 #define IS_SELECTABLE
 #define COLS \
-	("thumb","Thumb",0,"") \
+	("thumbnail","Thumb",0,"") \
 	("fname","Name",2,"regexp") \
 	("ftitle","Title",2,"regexp") \
 	("db","In Databases",2,"regexp") \
