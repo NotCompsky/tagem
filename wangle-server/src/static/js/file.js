@@ -88,6 +88,10 @@ function $$$next_video_from_yt_video(){
 		$$$try_to_pause_yt_video();
 }
 
+function $$$remove_playlist_event_listener(x,e,fn){
+	x.removeEventListener(e,fn);
+}
+
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	const [_dir_name, _device_id] = $$$d[(_dir_id === "") ? $$$dir_id : _dir_id];
 	if(_device_id === $$$YOUTUBE_DEVICE_ID){
@@ -121,7 +125,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 		
 		if(!$$$is_playlist_running()){
 			for(var i=0; i<5; ++i)
-				$$$document_getElementById('view-'+$$$playlist_listeners_types[i]).removeEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
+				$$$remove_playlist_event_listener($$$document_getElementById('view-'+$$$playlist_listeners_types[i]), $$$playlist_listeners_eventnames[i], $$$playlist_listeners[i]);
 		}
 	} else {
 		$$$set_file_view_src('iframe', embed_pre+_file_name+$$$D[_device_id][3], null);
