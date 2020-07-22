@@ -76,7 +76,13 @@ target_include_directories(qry PRIVATE "${COMPSKY_INCLUDE_DIRS}")
 target_compile_definitions(qry PRIVATE DEBUG)
 
 add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/FrameDecoder.cpp" "${SRC_DIR}/qry.cpp")
-set_property(TARGET server PROPERTY CXX_STANDARD 17)
+set_target_properties(
+	server
+	PROPERTIES
+		CXX_STANDARD 17
+		INTERPROCEDURAL_OPTIMIZATION TRUE
+		LINK_FLAGS_RELEASE -s
+)
 target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(server PRIVATE "${WHICH_MYSQL_CLIENT}" wangle::wangle curl)
 # NOTE: I should be able to simply link compsky_mysql, and have that - as an INTERFACE library - link to mysqlclient or mariadbclient, whichever is installed. However, CMake doesn't agree, and I have a limit to how much CMake I can stand without getting paid.
