@@ -169,6 +169,9 @@ add_custom_target(
 if(PREPOPULATE_T_TBL_FROM_IDS)
 	target_compile_definitions(server PRIVATE PREPOPULATE_T_TBL_FROM_IDS="\\\"${PREPOPULATE_T_TBL_FROM_IDS}\\\"")
 endif()
+if(PREPOPULATE_D_TBL_FROM_IDS)
+	target_compile_definitions(server PRIVATE PREPOPULATE_D_TBL_FROM_IDS="\\\"${PREPOPULATE_D_TBL_FROM_IDS}\\\"")
+endif()
 if(PREPOPULATE_F_TBL_FROM_IDS)
 	# WARNING: An input value of "'0'" counts as false...
 	target_compile_definitions(server PRIVATE PREPOPULATE_F_TBL_FROM_IDS="\\\"${PREPOPULATE_F_TBL_FROM_IDS}\\\"")
