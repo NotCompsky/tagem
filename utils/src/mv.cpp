@@ -18,34 +18,10 @@ namespace _err {
 }
 
 
-// Command Line Options
-bool STRIP_TO_FILENAMES = false;
-const char* PREFIX = nullptr;
-size_t PREFIX_LEN;
-
-
 namespace _mysql {
 	MYSQL* obj;
 	constexpr static const size_t auth_sz = 512;
 	char auth[auth_sz];
-}
-
-
-char OUTPUT_FILENAME[4096];
-const char* OUTPUT_ROOT_DIR;
-size_t OUTPUT_ROOT_DIR_LEN;
-const char* FILE_EXT;
-size_t FILE_EXT_LEN;
-
-
-const char* jump_to_filename(const char* fp){
-	const char* s = fp;
-	while(*fp != 0){
-		if (*fp == '/')
-			s = fp + 1;
-		++fp;
-	}
-	return s;
 }
 
 
