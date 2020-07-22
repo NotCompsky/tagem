@@ -1,5 +1,6 @@
 #include "extract-audio.hpp" // for extract_audio
 #include "../../media/src/rule.hpp"
+#include "qry.hpp"
 #include <compsky/mysql/query.hpp>
 #include <stdio.h> // for fprintf
 #include <unistd.h> // for execv
@@ -79,9 +80,7 @@ void process_rule(InlistFilterRules& r,  const char* const rule_name,  const cha
 	static MYSQL_ROW  row;
 	QProcess files_from_bash;
 	
-	size_t out_name_len = strlen(out_name);
-	memcpy(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN,  out_name,  out_name_len);
-	memcpy(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN + out_name_len,  FILE_EXT,  FILE_EXT_LEN + 1);
+	compsky::asciify::asciify(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN,  out_name,  FILE_EXT,  '\0');
 	
 	if (unlikely(r.load(rule_name) == 0)){
 		fprintf(stderr,  "No such rule: %s\n",  rule_name);
