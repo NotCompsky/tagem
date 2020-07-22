@@ -99,6 +99,13 @@
 	"font-weight:bold;"
 "}"
 
+".time{"
+	"color:#05f;"
+"}"
+".date{"
+	"color:#0af;"
+"}"
+
 
 /* Use CSS to display field names without affecting the HTML (which would make sorting the table more complicated) */
 ".w{"
