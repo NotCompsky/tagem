@@ -26,6 +26,9 @@ fi
 if [ "$TRY_AGAIN_FROM" = "" ]; then
 	TRY_AGAIN_FROM='^$'
 fi
+if [ "$CONDITION" = "" ]; then
+	CONDITION="f.views IS NULL"
+fi
 
 
 while read -r id url; do
@@ -72,7 +75,7 @@ while read -r id url; do
 				mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $id, id, 4 FROM tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
 			fi
 			
-			mysql_exec "UPDATE file SET w=IFNULL(file.w,$w),h=IFNULL(file.h,$h),fps=IFNULL(file.fps,$fps),duration=IFNULL(file.duration,$duration),views=IFNULL(file.views,$views),likes=IFNULL(file.likes,$likes),dislikes=IFNULL(file.dislikes,$dislikes),title=IFNULL(file.title,LEFT($title,100)),description=IFNULL(file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,$t_origin) WHERE id=$id"
+			mysql_exec "UPDATE file SET w=IFNULL(file.w,$w),h=IFNULL(file.h,$h),fps=IFNULL(file.fps,$fps),duration=IFNULL(file.duration,$duration),views=IFNULL(file.views,$views),likes=IFNULL(file.likes,$likes),dislikes=IFNULL(file.dislikes,$dislikes),title=IFNULL(file.title,LEFT($title,100)),description=LEFT($descr,1000),t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,$t_origin) WHERE id=$id"
 			mysql_exec "INSERT INTO file2thumbnail (file,x) VALUES ($id,$thumbnail) ON DUPLICATE KEY UPDATE file=file"
 		done < <(
 			(
@@ -103,6 +106,6 @@ LEFT JOIN file2tag f2t ON f2t.file=f.id
 LEFT JOIN tag t ON t.id=f2t.tag
 WHERE d.full_path REGEXP '^https://'
   AND d.full_path REGEXP '$regexp'
-  AND f.views IS NULL
   AND f.status=0
+  AND $CONDITION
 " tagem)
