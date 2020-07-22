@@ -1,7 +1,7 @@
 var $$$is_editing_existing_file = false; // Either we are creating a new file, or editing the file given by file_id
 
 function $$$view_text_editor(){
-	$$$hide_all_except(['text-editor','dirselect-container','tagselect-files-container']);
+	$$$hide_all_except(['text-editor','text-edit','dirselect-container','tagselect-files-container']);
 }
 
 function $$$text_editor_save(){
