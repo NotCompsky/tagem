@@ -141,7 +141,7 @@
 "}"
 
 
-".thumbnail:hover{"
+".thumbnail img:hover{"
 	"cursor:pointer;"
 	"outline:1px dashed red;"
 	"outline-offset:-1px;"
