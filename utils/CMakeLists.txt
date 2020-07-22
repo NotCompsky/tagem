@@ -5,26 +5,27 @@ find_package(Compsky REQUIRED COMPONENTS asciify mysql)
 set(CMAKE_AUTOMOC ON)
 
 
-set(MY_DEFINES "")
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # e.g. cmake .. -DCMAKE_BUILD_TYPE=Debug
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
-        set(MY_DEFINES "${MY_DEFINES};DEBUG")
-    endif()
-else()
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
-
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
 
 if(OpenCV_FOUND)
     add_executable(tagem-instances src/view-instances.cpp)
+	set_target_properties(
+		tagem-instances
+		PROPERTIES
+			CXX_STANDARD 11
+			INTERPROCEDURAL_OPTIMIZATION TRUE
+			LINK_FLAGS_RELEASE -s
+	)
     target_include_directories(tagem-instances PRIVATE ${OpenCV_INCLUDE_DIRS})
     target_link_libraries(tagem-instances PRIVATE compsky_asciify compsky_mysql opencv_core opencv_imgcodecs opencv_highgui)
     target_compile_definitions(tagem-instances PRIVATE ${MY_DEFINES})
+    
+	install(
+		TARGETS tagem-instances
+		EXPORT tagemTargets
+		RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+			COMPONENT bin
+	)
 else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")
 endif()
@@ -37,7 +38,6 @@ set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 if ("${CIMG_H_DIR} " STREQUAL " ")
 	message(FATAL_ERROR "Please set CIMG_H_DIR to the directory containing CImg.h (for instance, underneath the third_party of pHash, if you built that from source.")
 endif()
-set(CMAKE_CXX_STANDARD 17)
 add_executable(tagem-hash src/hash.cpp)
 target_include_directories(tagem-hash PRIVATE ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
 target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec boost_regex Qt5::Widgets)
@@ -50,8 +50,16 @@ add_executable(tagem-mk-playlist src/mk_playlist.cpp)
 target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
 target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets avformat avcodec avutil)
 
+set_target_properties(
+	tagem-hash tagem-init
+	PROPERTIES
+		CXX_STANDARD 17
+		INTERPROCEDURAL_OPTIMIZATION TRUE
+		LINK_FLAGS_RELEASE -s
+)
+
 install(
-    TARGETS tagem-instances tagem-hash tagem-init
+    TARGETS tagem-hash tagem-init
     EXPORT tagemTargets
     RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
         COMPONENT bin
