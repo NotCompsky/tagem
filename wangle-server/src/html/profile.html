@@ -240,15 +240,23 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMIS
 "</div>"
 
 #define TOGGLEABLE_DIV_PRE(id) \
-	"<a onclick=\"" MINIMISED_JS_DECL_toggle "('" #id "')\">Show " #id "</a>" \
-	"<div id=\"" #id "\" class=\"hidden help\"><p>" \
-		#include HTML_INCLUDER(id) \
+	"<a onclick=\"" MINIMISED_JS_DECL_toggle "('" id "')\">Show " id "</a>" \
+	"<div id=\"" id "\" class=\"hidden help\"><p>"
+#define TOGGLEABLE_DIV_POST \
 	"</p></div>"
 "<div id=\"help\" class=\"help\">"
-	TOGGLEABLE_DIV_PRE(credits)
-	TOGGLEABLE_DIV_PRE(filter-syntax.html)
-	TOGGLEABLE_DIV_PRE(keyboard-shortcuts)
-	TOGGLEABLE_DIV_PRE(examples)
+	TOGGLEABLE_DIV_PRE("credits")
+		#include "credits.html"
+	TOGGLEABLE_DIV_POST
+	TOGGLEABLE_DIV_PRE("filter-syntax.html")
+		#include "filter-syntax.html"
+	TOGGLEABLE_DIV_POST
+	TOGGLEABLE_DIV_PRE("keyboard-shortcuts")
+		#include "keyboard-shortcuts.html"
+	TOGGLEABLE_DIV_POST
+	TOGGLEABLE_DIV_PRE("examples")
+		#include "examples.html"
+	TOGGLEABLE_DIV_POST
 "</div>"
 
 "<div id=\"tasks-container\">"
