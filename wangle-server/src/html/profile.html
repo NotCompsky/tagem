@@ -49,6 +49,9 @@
 		".thumbnail img{max-width:256px; max-height:256px;}"
 	"</style>"
 	"<meta charset=\"utf-8\"/>"
+	
+	"<link rel=\"icon\" href=\"data:image/svg+xml," SVG_FAVICON__URI_ESCAPED "\" type=\"image/svg+xml\"/>"
+	
 	#include "components/jquery.html"
 	#include "components/select2.html"
 	
@@ -139,7 +142,7 @@ R"=========(
         <div class="profile-avatar">
 )========="
 		"<div id=\"profile-img\">"
-			"<img id=\"profile-img-etc\" src=\"/favicon.ico\"/>"
+			"<img id=\"profile-img-etc\" src=\"data:image/svg+xml," SVG_FAVICON__URI_ESCAPED "\"/>"
 			"<div id=\"profile-img-qry\" class=\"hidden\">" SVG_SEARCH "</div>"
 			"<div id=\"profile-img-d\"   class=\"hidden\""  SVG_DIR    "</div>"
 		"</div>"
@@ -151,7 +154,7 @@ R"=========(
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
 		"<div id=\"profile-menu\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')",SVG_TRIANGLE_LEFT)(MINIMISED_JS_DECL_view_dir"()",SVG_DIR)(MINIMISED_JS_DECL_view_dirs "()", SVG_DIRS)(MINIMISED_JS_DECL_view_tag"()",SVG_TAG)(MINIMISED_JS_DECL_view_tags"()",SVG_TAGS)(MINIMISED_JS_DECL_view_file"()",SVG_FILE)(MINIMISED_JS_DECL_view_files"()",SVG_FILES)(MINIMISED_JS_DECL_toggle"('right-side')",SVG_TRIANGLE_RIGHT)))
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')",SVG_TRIANGLE_LEFT)(MINIMISED_JS_DECL_view_dir"()",SVG_DIR)(MINIMISED_JS_DECL_view_dirs "()", SVG_DIRS)(MINIMISED_JS_DECL_view_tag"()",SVG_TAG)(MINIMISED_JS_DECL_view_tags"()",SVG_TAGS)(MINIMISED_JS_DECL_play_current_files_as_playlist_if_not_already "()",SVG_REPEAT)(MINIMISED_JS_DECL_view_file"()",SVG_FILE)(MINIMISED_JS_DECL_view_files"()",SVG_FILES)(MINIMISED_JS_DECL_toggle"('right-side')",SVG_TRIANGLE_RIGHT)))
 		"</div>"
 	"</div>"
 
@@ -357,6 +360,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 
 "<div id=\"add-f-backup\" class=\"hidden\">"
 	"<input id=\"add-f-backup-url\" placeholder=\"Use this URL instead...\"/>"
+	"You may wish to use a different URL to download the file, if you wish to still link the web page that links to the file. For instance, the link to the file itself may be temporary."
 	ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
 	"<a onclick=\"" MINIMISED_JS_DECL_backup_files "()\">Send backup request</a>"
 "</div>"

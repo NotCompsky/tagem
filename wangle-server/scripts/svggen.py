@@ -24,7 +24,7 @@ def parse_lines(text_only:bool, text_too:bool, display_licences:bool, ls:list):
 			if text_only or text_too:
 				icon += m.group(2)
 			icon = re.sub("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ', icon) # Necessary to render as img.src
-			icons[icon_name] = '"' + (license if display_licences else "") + icon.replace("\\","\\\\").replace('"','\\"') + '"'
+			icons[icon_name] = (license if display_licences else "") + icon
 			continue
 		if license == "":
 			license = "<!--The following icon is subject to the following license:"
@@ -32,7 +32,7 @@ def parse_lines(text_only:bool, text_too:bool, display_licences:bool, ls:list):
 				line = next(lines)
 				if line == "":
 					break
-				license += "\\n" + line.replace('"', '\\"')
+				license += "\n" + line
 			license += "-->"
 			continue
 	return icons
@@ -41,6 +41,7 @@ def parse_lines(text_only:bool, text_too:bool, display_licences:bool, ls:list):
 if __name__ == "__main__":
 	import argparse
 	import os
+	from urllib.parse import quote as urlescape
 	
 	parser = argparse.ArgumentParser()
 	parser.add_argument("dst", help="C++ header file destination path")
@@ -57,4 +58,6 @@ if __name__ == "__main__":
 	with open(args.dst, "w") as f:
 		for fp in args.srcs:
 			for key, value in parse_lines(args.text_only, args.text_too, args.display_licences, open(fp).read().split("\n")).items():
-				f.write(f"#define SVG_{key} {value}\n")
+				escaped_value:str = value.replace("\\","\\\\").replace('"','\\"').replace("\n","\\n")
+				f.write(f"""#define SVG_{key} "{escaped_value}"\n""")
+				f.write(f"""#define SVG_{key}__URI_ESCAPED "{urlescape(value)}"\n""")

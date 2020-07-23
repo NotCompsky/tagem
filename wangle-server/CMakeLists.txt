@@ -79,13 +79,6 @@ endif()
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
 
 add_custom_target(
-	favicon ALL
-	COMMAND "${SCRIPTS_DIR}/build-imgs" "${SRC_DIR}/static/img/favicon.ico" "${AUTO_SRC_DIR}/favicon.hpp"
-	BYPRODUCTS "${AUTO_SRC_DIR}/favicon.hpp"
-	COMMENT "Generating favicon header"
-)
-
-add_custom_target(
 	auto__server_determine_response_hpp ALL
 	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
 	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/server-endpoints.txt" "${AUTO_SRC_DIR}/auto__server-determine-response.hpp"
@@ -173,5 +166,5 @@ if(SELECT2_URL_ENDPOINT)
 	# WARNING: This string must not contain a semi-colon, because CMake interprets that as delineating an array
 endif()
 
-add_dependencies(server favicon auto__server_determine_response_hpp qry__process_arg__tokens qry__get_attribute_name__tokens js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
+add_dependencies(server auto__server_determine_response_hpp qry__process_arg__tokens qry__get_attribute_name__tokens js_hpp svg_hpp phpdateformatter_js datetimepicker_js datetimepicker_css)
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)

@@ -68,22 +68,7 @@ GET /a/x/p/l/>
 GET /i/f/>
 	return this->file_thumbnail(++str)
 GET /favicon.ico >
-	return
-		std::string_view(
-			HEADER__RETURN_CODE__OK
-			HEADER__CONTENT_TYPE__ICO
-			CACHE_CONTROL_HEADER
-			"Content-Length: 318\\n"
-			"\\n"
-			#include "favicon.hpp"
-			, std::char_traits<char>::length(
-				HEADER__RETURN_CODE__OK
-				HEADER__CONTENT_TYPE__ICO
-				CACHE_CONTROL_HEADER
-				"Content-Length: 318\\n"
-				"\\n"
-			) + 318
-		)
+	return _r::invalid_file
 
 GET /S/f/>
 	return this->stream_file(++str)
