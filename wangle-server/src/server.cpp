@@ -664,11 +664,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(',');
 		
 		// List of all parent directories
-		this->dirs_given_ids(this->itr, user_id, 0, "SELECT parent FROM dir2parent_tree WHERE id=", id, nullptr, "JOIN dir2parent_tree d2pt ON d2pt.id=d.id AND d2pt.parent=", id, nullptr, "d2pt.depth DESC");
+		this->dirs_given_ids(this->itr, user_id, 0, std::make_tuple("JOIN dir2parent_tree d2pt ON d2pt.id=d.id AND d2pt.parent=", id), std::make_tuple("d2pt.depth DESC"), "SELECT parent FROM dir2parent_tree WHERE id=", id);
 		this->asciify(',');
 		
 		// List of all IMMEDIATE child directories
-		this->dirs_given_ids(this->itr, user_id, 0, "SELECT id FROM dir WHERE parent=", id, nullptr, nullptr, "d.name");
+		this->dirs_given_ids(this->itr, user_id, 0, std::make_tuple(), std::make_tuple("d.name"), "SELECT id FROM dir WHERE parent=", id);
 		this->asciify(',');
 		
 		this->tags_given_ids(this->itr, 0, "SELECT tag FROM dir2tag WHERE dir=", id);
@@ -1620,11 +1620,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... IDsArgs,  typename... JoinArgs,  typename... OrderArgs>
-	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,    IDsArgs... ids_args,  std::nullptr_t,  JoinArgs... join_args,  std::nullptr_t,  OrderArgs... order_args){
+	void dirs_given_ids(
+		char*& itr,
+		const UserIDIntType user_id,
+		const unsigned page_n,
+		std::tuple<JoinArgs...> join_args,
+		std::tuple<OrderArgs...> order_args,
+		OrderArgs... ids_args
+	){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
-		this->mysql_query_after_itr(
+		
+		
+		char* itr_before_qry = this->itr;
+		this->asciify(
 			"SELECT "
 				"d.id,"
 				"d.name,"
@@ -1633,17 +1643,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"COUNT(DISTINCT f.id)"
 			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
-			"JOIN file f ON f.dir=d.id ",
-			join_args...,
+			"JOIN file f ON f.dir=d.id "
+		);
+		std::apply(this->asciify, join_args...);
+		this->asciify(
 			"WHERE d.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY d.id "
-			"ORDER BY ", order_args...,
+			"ORDER BY "
+		);
+		std::apply(this->asciify, order_args...);
+		this->asciify(
 			"ORDER BY FIELD(d.id,", ids_args..., ")"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
+		this->mysql_query_buf_db_by_id(db_infos.at(0),  itr_before_qry,  (uintptr_t)this->itr - (uintptr_t)itr_before_qry);
+		this->itr = itr_before_qry;
+		
 		
 		this->begin_json_response(itr);
 		compsky::asciify::asciify(itr, '[');
@@ -1675,7 +1693,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->eras_w_file_infos_given_ids(this->itr, user_id, 0, ids_args...);
 				break;
 			case 'd':
-				this->dirs_given_ids (this->itr, user_id, 0, ids_args..., nullptr, nullptr, "FIELD(d.id,", ids_args..., ")");
+				this->dirs_given_ids (this->itr, user_id, 0, std::make_tuple(), std::make_tuple("FIELD(d.id,", ids_args..., ")"), ids_args...);
 				break;
 			case 't':
 				this->tags_given_ids (this->itr, user_id, 0, ids_args...);
