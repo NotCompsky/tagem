@@ -521,9 +521,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->set_buf_to_itr(stacked_itr, itr);
 	}
 	
+	void begin_json_response(char*& itr){
+		compsky::asciify::asciify(itr, _r::json_init);
+	}
+	
 	void begin_json_response(){
 		this->reset_buf_index();
-		this->asciify(_r::json_init);
+		this->begin_json_response(this->itr);
 	}
 	
 	template<typename... Args>
@@ -1022,26 +1026,31 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename ArrOrDict>
-	void asciify_tags_arr_or_dict(const ArrOrDict f_arr_or_dict){
+	void asciify_tags_arr_or_dict(char*& itr,  const ArrOrDict f_arr_or_dict){
 		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
-		this->asciify(_r::opener_symbol(f_arr_or_dict));
+		compsky::asciify::asciify(itr, _r::opener_symbol(f_arr_or_dict));
 		this->asciify_json_response_rows(
-			this->itr,
+			itr,
 			f_arr_or_dict,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
 			_r::flag::quote_and_escape, // thumb,
 			_r::flag::no_quote // count
 		);
-		this->asciify(_r::closer_symbol(f_arr_or_dict));
+		compsky::asciify::asciify(itr, _r::closer_symbol(f_arr_or_dict));
 		std::swap(this->res, this->res2);
 	}
 	
-	void asciify_file_info(){
-		this->begin_json_response();
-		this->asciify("[\"0\",");
+	template<typename ArrOrDict>
+	void asciify_tags_arr_or_dict(const ArrOrDict f_arr_or_dict){
+		return this->asciify_tags_arr_or_dict(this->itr, f_arr_or_dict);
+	}
+	
+	void asciify_file_info(char*& itr){
+		this->begin_json_response(itr);
+		compsky::asciify::asciify(itr, "[\"0\",");
 		this->init_json_rows(
-			this->itr,
+			itr,
 			_r::flag::arr,
 			_r::flag::quote_no_escape, // md5_hex thumbnail
 			_r::flag::quote_no_escape, // file_id
@@ -1062,10 +1071,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::no_quote, // era start
 			_r::flag::no_quote // era end
 		);
-		this->asciify(',');
-		this->asciify_tags_arr_or_dict(_r::flag::dict);
-		this->asciify("]");
-		*this->itr = 0;
+		compsky::asciify::asciify(itr, ',');
+		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
+		compsky::asciify::asciify(itr, "]");
+		*itr = 0;
+	}
+	
+	void asciify_file_info(){
+		this->asciify_file_info(this->itr);
 	}
 	
 	std::string_view post__record_files(const char* s){
@@ -1569,7 +1582,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
-	std::string_view eras_w_file_infos_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args..., ")")
 		);
@@ -1599,12 +1612,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
-		this->asciify_file_info();
-		return this->get_buf_as_string_view();
+		this->asciify_file_info(itr);
 	}
 	
 	template<typename... Args>
-	std::string_view files_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+	void files_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(", ids_args..., ")")
 		);
@@ -1626,28 +1638,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
-		this->asciify_file_info();
-		
-		return this->get_buf_as_string_view();
+		this->asciify_file_info(itr);
 	}
 	
 	template<typename... Args>
-	std::string_view tags_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+	void tags_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("", ids_args..., "")
 			"ORDER BY FIELD(t.id,", ids_args..., ")"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
-		this->reset_buf_index();
-		this->begin_json_response();
-		this->asciify_tags_arr_or_dict(_r::flag::arr);
-		
-		return this->get_buf_as_string_view();
+		this->begin_json_response(itr);
+		this->asciify_tags_arr_or_dict(itr, _r::flag::arr);
 	}
 	
 	template<typename... Args>
-	std::string_view dirs_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
@@ -1670,12 +1677,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
-		this->reset_buf_index();
-		this->begin_json_response();
-		this->asciify('[');
+		this->begin_json_response(itr);
+		compsky::asciify::asciify(itr, '[');
 		
 		this->init_json_rows(
-			this->itr,
+			itr,
 			_r::flag::arr,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
@@ -1683,28 +1689,34 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			_r::flag::quote_no_escape, // tag IDs
 			_r::flag::no_quote // count
 		);
-		this->asciify(',');
+		compsky::asciify::asciify(itr, ',');
 		
-		this->asciify_tags_arr_or_dict(_r::flag::dict);
+		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
 		
-		this->asciify(']');
-		*this->itr = 0;
-		
-		return this->get_buf_as_string_view();
+		compsky::asciify::asciify(itr, ']');
 	}
 	
 	template<typename... Args>
 	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		this->reset_buf_index();
 		switch(tbl_alias){
 			case 'f':
-				return this->files_given_ids(user_id, 0, ids_args...);
-			case 'd':
-				return this->tags_given_ids (user_id, 0, ids_args...);
+				this->files_given_ids(this->itr, user_id, 0, ids_args...);
+				break;
 			case 'e':
-				return this->eras_w_file_infos_given_ids(user_id, 0, ids_args...);
+				this->eras_w_file_infos_given_ids(this->itr, user_id, 0, ids_args...);
+				break;
+			case 'd':
+				this->dirs_given_ids (this->itr, user_id, 0, ids_args...);
+				break;
+			case 't':
+				this->tags_given_ids (this->itr, user_id, 0, ids_args...);
+				break;
 			default:
 				abort();
 		}
+		*itr = 0;
+		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
