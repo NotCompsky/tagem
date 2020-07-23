@@ -9,8 +9,16 @@ RUN git clone https://github.com/NotCompsky/libcompsky \
 	&& cd libcompsky/build \
 	&& cmake .. -DCMAKE_BUILD_TYPE=Release \
 	&& make install
-COPY wangle-server /tagem/wangle-server
-COPY include /tagem/include
+COPY . /tagem
+RUN mkdir /tagem/build \
+	&& mkdir /tagem/build/server \
+	&& mkdir /tagem/build/utils \
+	&& cd /tagem/build/utils \
+	&& cmake /tagem/utils \
+	&& make \
+	&& cd /tagem/build/server \
+	&& cmake /tagem/wangle-server \
+	&& make \
 RUN chmod +x /tagem/wangle-server/scripts/*
 RUN apt-get install -y --no-install-recommends libcurl4-openssl-dev
 RUN mkdir /tagem/build \
@@ -19,7 +27,8 @@ RUN mkdir /tagem/build \
 	&& make server
 
 FROM notcompsky/tagem-base
-COPY --from=compile-2 /tagem/build/server /server
+COPY --from=compile-2 /tagem/build/server/server /tagem-server
+COPY --from=compile-2 /tagem/build/utils/tagem-init /tagem-init
 RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
 	&& rm -rf \
 		/var/lib/apt/lists/* /var/cache/apt/lists/* \
@@ -29,4 +38,11 @@ RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
 		/usr/share/doc/*
 
 EXPOSE 80
-CMD [ "/server", "p", "80", "d", "/scripts/view-remote-dir" ]
+CMD if [ "$TAGEM_MYSQL_CFG" = "" ]; then \
+		if [ -f /tagem-auth.cfg ]; then \
+			TAGEM_MYSQL_CFG=/tagem-auth.cfg \
+		else \
+			/tagem-init \
+		fi \
+	fi \
+	&& /tagem-server p 80
