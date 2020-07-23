@@ -404,6 +404,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(args...);
 		this->mysql_exec_using_buf();
 	}
+	
+	template<typename... Args>
+	void mysql_exec_after_itr(Args... args){
+		char* const itr_init = this->itr;
+		this->asciify(args...);
+		this->mysql_exec_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->itr = itr_init;
+	}
 
 	
 	template<typename... Args>
@@ -1671,7 +1679,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	template<typename... Args>
 	void qry_mysql_for_next_parent_dir(const UserIDIntType user_id,  const char* const fields,  const uint64_t child_dir_id,  Args... args){
 		// This function is to be used to traverse the dir table from the deepest ancestor to the immediate parent
-		this->mysql_query(
+		this->mysql_query_after_itr(
 			"SELECT ", fields, " "
 			"FROM dir "
 			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
@@ -2310,6 +2318,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		DIR* const dir = opendir(this->buf);
 		if (dir == nullptr)
 			return;
+		if (this->itr[-2]  !=  '/'){
+			// The character before the terminating null byte
+			this->itr[-1] = '/';
+			this->itr[0] = '\0';
+			++this->itr;
+		}
 		const size_t dir_len = strlen(this->buf);
 		struct dirent* e;
 		while (e=readdir(dir)){
@@ -2329,7 +2343,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx(), 0, false);
 			}
 			
-			this->itr = this->buf + dir_len;
+			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
 			*this->itr = 0;
 		}
 		closedir(dir);
@@ -2376,7 +2390,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				break;
 			}
 			// NOTE: The directory to add may not end in a slash. However, all its parent directories must. The following SQL will not insert the directory we wish to add, only insert all its ancestors.
-			this->mysql_exec(
+			this->mysql_exec_after_itr(
 				"INSERT INTO dir"
 				"(parent,device,user,full_path,name)"
 				"SELECT "
@@ -2400,7 +2414,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// Add entry to primary table
 		if (which_tbl == 'd'){
-			this->mysql_exec(
+			this->mysql_exec_after_itr(
 				"INSERT INTO dir "
 				"(parent, device, user, full_path, name)"
 				"SELECT "
@@ -2415,7 +2429,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				// Guaranteed not to be a duplicate
 			);
 		} else /* == 'f' */ {
-			this->mysql_exec(
+			this->mysql_exec_after_itr(
 				"INSERT INTO file "
 				"(dir, name, user, mimetype)"
 				"SELECT ",
@@ -2456,7 +2470,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
 				
 				if (mimetype[0]){
-					this->mysql_exec(
+					this->mysql_exec_after_itr(
 						"UPDATE file f "
 						"JOIN file_backup f2 ON f2.file=f.id "
 						"SET f.mimetype=f2.mimetype "
@@ -2470,7 +2484,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// Add tags
 		if (which_tbl == 'd'){
-			this->mysql_exec(
+			this->mysql_exec_after_itr(
 				"INSERT INTO dir2tag "
 				"(dir, tag, user)"
 				"SELECT d.id, t.id,", user_id, " "
@@ -2483,14 +2497,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"ON DUPLICATE KEY UPDATE dir=dir"
 			);
 		} else /* if (which_tbl == 'f') */ {
-			this->mysql_exec(
+			this->mysql_exec_after_itr(
 				"INSERT INTO file2tag "
 				"(file, tag, user)"
 				"SELECT f.id, t.id,", user_id, " "
 				"FROM file f "
 				"JOIN dir d ON d.id=f.dir "
 				"JOIN tag t "
-				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
+				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ")"
+				  "AND t.id != 0 "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
 				DIR_TBL_USER_PERMISSION_FILTER(user_id)
