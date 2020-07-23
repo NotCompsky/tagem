@@ -289,13 +289,12 @@ function $$$view_file(_file_id_and_t){
 				$$$set_t_origin(t_origin);
 				
 				let _s = $$$create__view_dir_and_filename_w_filename_playable("",$$$mimetype,name);
+				for(const [dir,fname,mime] of backups){
+					_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
+				}
 				if ($$$autoplay()){
 					$$$display_this_file('',$$$mimetype);
 					$$$skip_to_era(_t);
-				} else {
-					for(const [dir,fname,mime] of backups){
-						_s += $$$create__view_dir_and_filename_w_filename_playable(dir,mime,fname);
-					}
 				}
 				$$$document_getElementById("view-btns").innerHTML = _s;
 				$$$view_file__hides();
