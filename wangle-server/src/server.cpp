@@ -664,49 +664,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(',');
 		
 		// List of all parent directories
-		this->mysql_query_after_itr(
-			"SELECT d.id, d.name "
-			"FROM dir d "
-			"JOIN dir2parent_tree dt ON dt.parent=d.id "
-			"WHERE dt.id=", id, " "
-			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
-			"ORDER BY depth DESC"
-		);
-		this->init_json_rows(
-			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // id_str
-			_r::flag::quote_and_escape // name
-		);
+		this->dirs_given_ids(this->itr, user_id, 0, "SELECT parent FROM dir2parent_tree WHERE id=", id, nullptr, "JOIN dir2parent_tree d2pt ON d2pt.id=d.id AND d2pt.parent=", id, nullptr, "d2pt.depth DESC");
 		this->asciify(',');
 		
 		// List of all IMMEDIATE child directories
-		this->mysql_query_after_itr(
-			"SELECT d.id, d.name "
-			"FROM dir d "
-			"WHERE d.parent=", id, " "
-			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
-			"ORDER BY name ASC"
-		);
-		this->init_json_rows(
-			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // id_str
-			_r::flag::quote_and_escape // name
-		);
+		this->dirs_given_ids(this->itr, user_id, 0, "SELECT id FROM dir WHERE parent=", id, nullptr, nullptr, "d.name");
 		this->asciify(',');
 		
-		this->mysql_query_after_itr(
-			"SELECT tag "
-			"FROM dir2tag "
-			"WHERE dir=", id
-			// No tags are blacklisted, otherwise the directory would have been rejected above
-		);
-		this->init_json_rows(
-			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape // tag id
-		);
+		this->tags_given_ids(this->itr, 0, "SELECT tag FROM dir2tag WHERE dir=", id);
+		// No tags are blacklisted, otherwise the directory would have been rejected above
 		
 		this->asciify(']');
 		*this->itr = 0;
@@ -1653,8 +1619,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify_tags_arr_or_dict(itr, _r::flag::arr);
 	}
 	
-	template<typename... Args>
-	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+	template<typename... IDsArgs,  typename... JoinArgs,  typename... OrderArgs>
+	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,    IDsArgs... ids_args,  std::nullptr_t,  JoinArgs... join_args,  std::nullptr_t,  OrderArgs... order_args){
 		this->mysql_query2_after_itr(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
@@ -1667,11 +1633,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"COUNT(DISTINCT f.id)"
 			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
-			"JOIN file f ON f.dir=d.id "
+			"JOIN file f ON f.dir=d.id ",
+			join_args...,
 			"WHERE d.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY d.id "
+			"ORDER BY ", order_args...,
 			"ORDER BY FIELD(d.id,", ids_args..., ")"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
@@ -1698,7 +1666,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->reset_buf_index();
+		char* const itr_init = this->itr;
 		switch(tbl_alias){
 			case 'f':
 				this->files_given_ids(this->itr, user_id, 0, ids_args...);
@@ -1707,7 +1675,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->eras_w_file_infos_given_ids(this->itr, user_id, 0, ids_args...);
 				break;
 			case 'd':
-				this->dirs_given_ids (this->itr, user_id, 0, ids_args...);
+				this->dirs_given_ids (this->itr, user_id, 0, ids_args..., nullptr, nullptr, "FIELD(d.id,", ids_args..., ")");
 				break;
 			case 't':
 				this->tags_given_ids (this->itr, user_id, 0, ids_args...);
@@ -1715,8 +1683,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			default:
 				abort();
 		}
-		*itr = 0;
-		return this->get_buf_as_string_view();
+		*this->itr = 0;
+		return std::string_view(itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
 	}
 	
 	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
