@@ -11,7 +11,7 @@ function $$$playlist_listener(){
 	if((!$$$is_playlist_running())||$$$playlist_repeat_mode===0)
 		return;
 	$$$yt_player.jump_to_t = undefined;
-	if($$$playlist_repeat_mode!==1)
+	if($$$playlist_repeat_mode!==2)
 		// Rotate the playlist
 		$$$playlist_file_ids.push($$$playlist_file_ids.shift());
 	$$$view_file($$$playlist_file_ids[0]);
