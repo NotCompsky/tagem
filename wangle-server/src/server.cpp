@@ -1648,12 +1648,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN file f ON f.dir=d.id ",
-			join_args_tpl...,
+			join_args_tpl..., " "
 			"WHERE d.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY d.id "
-			"ORDER BY ", order_args_tpl...,
+			"ORDER BY ", order_args_tpl..., " "
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
