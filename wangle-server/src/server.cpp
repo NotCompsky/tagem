@@ -664,14 +664,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(',');
 		
 		// List of all parent directories
-		this->dirs_given_ids(this->itr, user_id, 0, std::make_tuple("JOIN dir2parent_tree d2pt ON d2pt.id=d.id AND d2pt.parent=", id), std::make_tuple("d2pt.depth DESC"), "SELECT parent FROM dir2parent_tree WHERE id=", id);
+		std::tuple<const char*, unsigned> tpl1 {"JOIN dir2parent_tree d2pt ON d2pt.id=d.id AND d2pt.parent=", id};
+		std::tuple<const char*> tpl2 {"d2pt.depth DESC"};
+		this->dirs_given_ids(this->itr, user_id, 0, tpl1, tpl2, "SELECT parent FROM dir2parent_tree WHERE id=", id);
 		this->asciify(',');
 		
 		// List of all IMMEDIATE child directories
-		this->dirs_given_ids(this->itr, user_id, 0, std::make_tuple(), std::make_tuple("d.name"), "SELECT id FROM dir WHERE parent=", id);
+		std::tuple<> empty_tpl {};
+		std::tuple<const char*> tpl4 {"d.name"};
+		this->dirs_given_ids(this->itr, user_id, 0, empty_tpl, tpl4, "SELECT id FROM dir WHERE parent=", id);
 		this->asciify(',');
 		
-		this->tags_given_ids(this->itr, 0, "SELECT tag FROM dir2tag WHERE dir=", id);
+		this->tags_given_ids(this->itr, user_id, 0, "SELECT tag FROM dir2tag WHERE dir=", id);
 		// No tags are blacklisted, otherwise the directory would have been rejected above
 		
 		this->asciify(']');
@@ -1624,8 +1628,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		char*& itr,
 		const UserIDIntType user_id,
 		const unsigned page_n,
-		std::tuple<JoinArgs...> join_args,
-		std::tuple<OrderArgs...> order_args,
+		std::tuple<JoinArgs...> join_args_tpl,
+		std::tuple<OrderArgs...> order_args_tpl,
 		OrderArgs... ids_args
 	){
 		this->mysql_query2_after_itr(
@@ -1633,8 +1637,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 		
 		
-		char* itr_before_qry = this->itr;
-		this->asciify(
+		char* _itr = this->itr;
+		compsky::asciify::asciify(
+			_itr,
 			"SELECT "
 				"d.id,"
 				"d.name,"
@@ -1645,22 +1650,30 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN file f ON f.dir=d.id "
 		);
-		std::apply(this->asciify, join_args...);
-		this->asciify(
+		std::apply(
+			[&_itr](JoinArgs const&... args_from_tpl){
+				compsky::asciify::asciify(_itr, args_from_tpl...);
+			}, join_args_tpl
+		);
+		compsky::asciify::asciify(
+			_itr, 
 			"WHERE d.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY d.id "
 			"ORDER BY "
 		);
-		std::apply(this->asciify, order_args...);
-		this->asciify(
-			"ORDER BY FIELD(d.id,", ids_args..., ")"
+		std::apply(
+			[&_itr](JoinArgs const&... args_from_tpl){
+				compsky::asciify::asciify(_itr, args_from_tpl...);
+			}, order_args_tpl
+		);
+		compsky::asciify::asciify(
+			_itr, 
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
-		this->mysql_query_buf_db_by_id(db_infos.at(0),  itr_before_qry,  (uintptr_t)this->itr - (uintptr_t)itr_before_qry);
-		this->itr = itr_before_qry;
+		this->mysql_query_buf_db_by_id(db_infos.at(0),  this->itr,  (uintptr_t)_itr - (uintptr_t)this->itr);
 		
 		
 		this->begin_json_response(itr);
@@ -1693,7 +1706,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->eras_w_file_infos_given_ids(this->itr, user_id, 0, ids_args...);
 				break;
 			case 'd':
-				this->dirs_given_ids (this->itr, user_id, 0, std::make_tuple(), std::make_tuple("FIELD(d.id,", ids_args..., ")"), ids_args...);
+				std::tuple<> empty_tpl {};
+				std::tuple<const char*, Args..., const char*> tpl {"FIELD(d.id,", ids_args..., ")"};
+				this->dirs_given_ids (this->itr, user_id, 0, empty_tpl, tpl, ids_args...);
 				break;
 			case 't':
 				this->tags_given_ids (this->itr, user_id, 0, ids_args...);
