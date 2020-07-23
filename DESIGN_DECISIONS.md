@@ -1,0 +1,5 @@
+This project has evolved along a very jagged path. Many design decisions made in the past have had to be significantly altered.
+
+A core part of this project is the use of [libcompsky](https://github.com/NotCompsky/libcompsky) for string concatenation and using MySQL. It is this project that is largely driving the development of libcompsky; even [rather bizarre uses]() can be [easily integrated into that library](https://github.com/NotCompsky/libcompsky/blob/5da03a9743cfecc5ff9b594c25f67e1aa5b4071c/include/compsky/mysql/alternating_qry.hpp)'s template metaprogramming.
+
+One design decision that has remained is the use of MySQL/MariaDB. SQLite3 is avoided because I believe allowing multiple concurrent connections to the database will continue to be useful. However, sticking to MySQL itself is only because I have not seen significant reason to migrate; however, the decision to support older versions of MySQL is deliberate, to support the surprisingly outdated Google Cloud Compute Engine instances.
