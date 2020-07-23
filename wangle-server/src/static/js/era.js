@@ -32,19 +32,8 @@ function $$$hide_tagselect_era(){
 	$$$hide('tagselect-era-container');
 }
 
-function $$$view_eras(ls){
+function $$$setup_page_for_e_tbl(){
 	$$$hide_all_except(['f','view-as-playlist-btn']);
-	
-	if (ls === undefined)
-		$$$unset_window_location_hash();
-	else{
-		if (ls.length === 0){
-			$$$get_tbl_body("f").innerHTML = "";
-		}else{
-			$$$populate_f_table('e/id',ls.join(","),null,0);
-		}
-	}
-	
 	$$$set_profile_name("Eras");
 }
 

@@ -11,6 +11,56 @@ function $$$next_page(tbl_id,direction){
 	}
 }
 
+function $$$display_f_tbl(datas){
+	$$$get_file_ids = $$$get_selected_file_ids;
+	let s = "";
+	const [a,data,tags] = datas;
+	if(a==="0"){
+		if($$$dir_id==="0"){
+			$$$alert("ERROR: Directory ID has not been set.");
+		}
+	}else{
+		$$$dir_id=a;
+	}
+	for (let [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, era_start, era_end] of data){
+		let era = "";
+		if(era_end!==0){
+			// era_end should be >= era_start, so era_end===0 implies era_start===0 too
+			duration = era_end - era_start;
+			era = "@" + era_start + "-" + era_end;
+		}
+		s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
+			s += '<div class="td thumbnail" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
+				s += '<img src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
+			s += '</div>';
+			//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
+			s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
+			s += "<div class='td ftitle'>" + $$$escape_html_text(title) + "</div>";
+			s += "<div class='td db'>" + ext_db_n_post_ids.replace(/:[0-9]+/,'') + "</div>"; // 3rd column i.e. col[2]
+			// Ignore the post IDs that are sent alongside the DB IDs
+			s += "<div class='td tags'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
+			s += "<div class='td file_size' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
+			s += "<div class='td dateadded' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
+			s += "<div class='td date_origin' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
+			s += "<div class='td duration' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
+			s += "<div class='td w' data-n=" + w + ">" + w + "</div>";
+			s += "<div class='td h' data-n=" + h + ">" + h + "</div>";
+			s += "<div class='td views' data-n=" + views + ">" + $$$n2human(views) + "</div>";
+			s += "<div class='td likes' data-n=" + likes + ">" + $$$n2human(likes) + "</div>";
+			s += "<div class='td dislikes' data-n=" + dislikes + ">" + $$$n2human(dislikes) + "</div>";
+			s += "<div class='td fps' data-n=" + fps + ">" + fps + "</div>";
+			
+		s += "</div>";
+	}
+	$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
+	$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
+	$$$get_tbl_body("f").innerHTML = s;
+	$$$column_id2name('x', "f", '$$$view_db', 3);
+	$$$column_id2name(tags,"f", '$$$view_tag', 4);
+	
+	$$$apply_f_tbl_col_hides();
+}
+
 function $$$populate_f_table(path,params,post_data,page_n){
 	$$$file_qry_page_n=parseInt(page_n);
 	if((params!==null)&&(post_data!==null))
@@ -24,55 +74,7 @@ function $$$populate_f_table(path,params,post_data,page_n){
 		($$$file_qry_post_data===null)?"GET":"POST",
 		"!!!MACRO!!!SERVER_ROOT_URL/a/f/"+$$$file_qry_url+'/'+$$$file_qry_page_n+(($$$file_qry_url_paramsythings===null)?"":("/"+$$$file_qry_url_paramsythings)),
 		$$$file_qry_post_data,
-		function(datas){
-			$$$get_file_ids = $$$get_selected_file_ids;
-			let s = "";
-			const [a,data,tags] = datas;
-			if(a==="0"){
-				if($$$dir_id==="0"){
-					$$$alert("ERROR: Directory ID has not been set.");
-				}
-			}else{
-				$$$dir_id=a;
-			}
-			for (let [thumb, id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, era_start, era_end] of data){
-				let era = "";
-				if(era_end!==0){
-					// era_end should be >= era_start, so era_end===0 implies era_start===0 too
-					duration = era_end - era_start;
-					era = "@" + era_start + "-" + era_end;
-				}
-				s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
-					s += '<div class="td thumbnail" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
-						s += '<img src="' + thumb + '" onerror="$$$set_src_to_file_svg(this)"></img>';
-					s += '</div>';
-					//"s += "<td><a href='/d#" + ls[1] + "'>" + ls[2] + "</a></td>"; // Dir  ID and name
-					s += "<div class='td fname'>" + $$$escape_html_text(name) + "</div>"; // File ID and name
-					s += "<div class='td ftitle'>" + $$$escape_html_text(title) + "</div>";
-					s += "<div class='td db'>" + ext_db_n_post_ids.replace(/:[0-9]+/,'') + "</div>"; // 3rd column i.e. col[2]
-					// Ignore the post IDs that are sent alongside the DB IDs
-					s += "<div class='td tags'>" + tag_ids + "</div>"; // 4th column i.e. col[3]
-					s += "<div class='td file_size' data-n=" + sz + ">" + $$$bytes2human(parseInt(sz)) + "</div>"; // 5th column i.e. col[4]
-					s += "<div class='td dateadded' data-n=" + t_added_to_db + ">" + $$$timestamp2dt(t_added_to_db) + "</div>";
-					s += "<div class='td date_origin' data-n=" + t_origin + ">" + $$$timestamp2dt(t_origin) + "</div>";
-					s += "<div class='td duration' data-n=" + duration + ">" + $$$t2human(duration) + "</div>";
-					s += "<div class='td w' data-n=" + w + ">" + w + "</div>";
-					s += "<div class='td h' data-n=" + h + ">" + h + "</div>";
-					s += "<div class='td views' data-n=" + views + ">" + $$$n2human(views) + "</div>";
-					s += "<div class='td likes' data-n=" + likes + ">" + $$$n2human(likes) + "</div>";
-					s += "<div class='td dislikes' data-n=" + dislikes + ">" + $$$n2human(dislikes) + "</div>";
-					s += "<div class='td fps' data-n=" + fps + ">" + fps + "</div>";
-					
-				s += "</div>";
-			}
-			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
-			$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
-			$$$get_tbl_body("f").innerHTML = s;
-			$$$column_id2name('x', "f", '$$$view_db', 3);
-			$$$column_id2name(tags,"f", '$$$view_tag', 4);
-			
-			$$$apply_f_tbl_col_hides();
-		}
+		$$$display_f_tbl
 	);
 }
 
@@ -150,29 +152,26 @@ function $$$view_files_by_value(var_name){
 	$$$set_profile_name('Files assigned ' + var_name);
 }
 
-function $$$view_files(ls){
+function $$$setup_page_for_f_tbl(){
 	$$$hide_all_except(['f','tagselect-files-container','tagselect-files-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$get_file_ids = $$$get_selected_file_ids;
 	
-	if (ls === undefined)
-		$$$unset_window_location_hash();
-	else{
-		if (ls.length === 0){
-			$$$get_tbl_body("f").innerHTML = "";
-		}else{
-			$$$populate_f_table('id',ls.join(","),null,0);
-		}
-	}
-	
 	$$$set_profile_name("Files");
 }
 
 function $$$toggle_file_add_backup_dialog(){
-	$$$toggle('dirselect-container');
-	$$$toggle('add-f-backup');
+	if($$$is_visible('add-f-backup')){
+		$$$hide('backup-toggle-container');
+		$$$hide('add-f-dialog');
+	} else {
+		$$$unhide('backup-toggle-container');
+		$$$unhide('add-f-dialog');
+		$$$hide('add-f-backup-url');
+	}
 }
+
 function $$$backup_files(){
 	const file_ids = $$$get_file_ids(); // CSV string
 	if(file_ids.length === ""){

@@ -26,6 +26,23 @@ function $$$after_tagged_selected_stuff(alias, ids, tags, col){
 	}
 }
 
+function $$$display_t_tbl(data){
+	$$$unhide('tagselect-self-p');
+	let s = "";
+	for (const [id, name, thumb, size] of data){
+		s += "<div class='tr' data-id=\"" + id + "\">";
+			s += "<div class='td thumb' onclick='$$$view_tag(\"" + id + "\",0)'>";
+				s += "<img class='thumb' src='" + thumb + "' onerror='$$$set_src_to_tag_svg(this)'/>";
+			s += "</div>";
+			s += "<div class='td'>";
+				s += $$$escape_html_text(name);
+			s += "</div>";
+			s += "<div class='td dir-size'>" + size + "</div>";
+		s += "</div>";
+	}
+	$$$get_tbl_body('t').innerHTML = s;
+}
+
 function $$$populate_t_id2name_table(arr){
 	if (arr.length===0){
 		$$$get_tbl_body('t').innerHTML = "";
@@ -35,22 +52,7 @@ function $$$populate_t_id2name_table(arr){
 		"GET",
 		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+arr.join(","),
 		null,
-		function(data){
-			$$$unhide('tagselect-self-p');
-			let s = "";
-			for (const [id, name, thumb, size] of data){
-				s += "<div class='tr' data-id=\"" + id + "\">";
-					s += "<div class='td thumb' onclick='$$$view_tag(\"" + id + "\",0)'>";
-						s += "<img class='thumb' src='" + thumb + "' onerror='$$$set_src_to_tag_svg(this)'/>";
-					s += "</div>";
-					s += "<div class='td'>";
-						s += $$$escape_html_text(name);
-					s += "</div>";
-					s += "<div class='td dir-size'>" + size + "</div>";
-				s += "</div>";
-			}
-			$$$get_tbl_body('t').innerHTML = s;
-		}
+		$$$display_t_tbl
 	);
 }
 
@@ -239,12 +241,10 @@ function $$$view_tag(_tag_id,page){
 	$$$display_parent_tags($$$tag_id);
 	$$$display_child_tags($$$tag_id);
 }
-function $$$view_tags(ls){
+function $$$setup_page_for_t_tbl(){
 	$$$hide_all_except(['t','f-action-btns','tagselect-self-p-container','tagselect-self-p-btn']);
 	$$$unset_window_location_hash();
 	$$$get_tag_ids = $$$get_selected_tag_ids;
-	if(ls !== undefined)
-		$$$populate_t_id2name_table(ls);
 }
 
 

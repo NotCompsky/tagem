@@ -71,36 +71,29 @@ function $$$after_tagged_selected_dirs(ids, tags){
 	$$$after_tagged_selected_stuff('d',ids,tags,3);
 }
 
-function $$$view_dirs(ls){
+function $$$display_d_tbl(data){
+	let s = "";
+	$$$get_dir_ids = $$$get_selected_dir_ids;
+	for (const [id, name, device, tag_ids, size] of data[0]){
+		s += "<div class='tr' data-id='" + id + "'>";
+			s += "<div class='td'>";
+				s += "<a onclick='$$$view_dir(this.parentNode.parentNode.dataset.id,0)'>" + $$$escape_html_text(name) + "</a>";
+			s += "</div>";
+			s += "<div class='td'>";
+				s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";
+			s += "</div>";
+			s += "<div class='td dir-size'>" + size + "</div>";
+			s += "<div class='td'>" + tag_ids + "</div>";
+		s += "</div>";
+	}
+	tbl.innerHTML = s;
+	$$$column_id2name(data[1],"d",'$$$view_tag', 3);
+}
+
+function $$$setup_page_for_d_tbl(){
 	$$$hide_all_except(['d']);
 	$$$dir_tagger_fn = $$$after_tagged_selected_dirs;
 	$$$get_dir_ids = $$$get_selected_dir_ids;
-		const tbl = $$$document_getElementById('d').getElementsByClassName('tbody')[0];
-	if (ls.length===0){
-		tbl.innerHTML = "";
-	}else{
-		$$$ajax_GET_w_JSON_response(
-			"!!!MACRO!!!SERVER_ROOT_URL/a/d/id/"+ls.join(","),
-			function(data){
-				let s = "";
-				$$$get_dir_ids = $$$get_selected_dir_ids;
-				for (const [id, name, device, tag_ids, size] of data[0]){
-					s += "<div class='tr' data-id='" + id + "'>";
-						s += "<div class='td'>";
-							s += "<a onclick='$$$view_dir(this.parentNode.parentNode.dataset.id,0)'>" + $$$escape_html_text(name) + "</a>";
-						s += "</div>";
-						s += "<div class='td'>";
-							s += "<a onclick='$$$view_device(" + device + ")'>Device</a>";
-						s += "</div>";
-						s += "<div class='td dir-size'>" + size + "</div>";
-						s += "<div class='td'>" + tag_ids + "</div>";
-					s += "</div>";
-				}
-				tbl.innerHTML = s;
-				$$$column_id2name(data[1],"d",'$$$view_tag', 3);
-			}
-		);
-	}
 }
 
 function $$$add_dirs_dialog(){

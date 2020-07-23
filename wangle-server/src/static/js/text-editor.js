@@ -30,8 +30,9 @@ function $$$text_editor_save(){
 	}
 	const _dir_name = dir_inp.textContent;
 	if(!_dir_name.startsWith("/")){
-		$$$alert("Directory must be local");
-		return;
+		const b = $$$confirm("Directory is not local.\nThe contents will be saved into the description field.\nStill continue?");
+		if(b!==true)
+			return;
 	}
 	$$$ajax_POST_data_w_text_response_generic_success(
 		"/f/save/"+(($$$is_editing_existing_file)?$$$file_id:0)+"/"+_dir_id+"/"+tag_ids.join(","),

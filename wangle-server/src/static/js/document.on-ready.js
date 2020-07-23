@@ -55,46 +55,4 @@ function $$$on_document_ready(){
 		node.addEventListener('focusout', $$$add_key_intercepts);
 	}
 	$$$add_key_intercepts();
-	
-	$$$document_getElementById('help-text').innerText = `
-Credits
-	The layout of this site's HTML is based on 'Responsive Social Platform' by Aysenur Turk: https://codepen.io/TurkAysenur/details/RwWKYMO
-	Almost all SVG icons are sourced or derived from tabler-icons by Paweł Kuna: https://github.com/tabler/tabler-icons
-		The exceptions are the two triangle icons by myself, and the search icon by Aysenur Turk
-	JavaScript libraries used:
-		JQuery
-		datetimepicker: https://github.com/xdan/datetimepicker
-			For the date-time picker dialog
-		PHP-Date-Formatter by Kartik Visweswaran: https://github.com/kartik-v/php-date-formatter
-			A dependency of datetimepicker
-		Select2: https://github.com/select2/select2
-			For fancier dropdown menus
-		MouseTrap: https://github.com/ccampbell/mousetrap
-			For intercepting key events
-
-Keyboard Shortcuts
-	b        Toggle the 'add backup file' dialog
-	e        Add era vertex (start or end)
-	m        Merge selected files
-	p        View selected files as a playlist
-	q        Make a qry
-	v        Toggle the 'add file2 variable to file' dialog
-
-Date Query
-	USAGE
-		[DATE]
-		[DATE] - [DATE]
-			Second date should be the largest
-	DATE
-		yyyy
-		yyyy/mm
-		yyyy/mm/dd
-	EXAMPLES
-		2020
-		2020/03
-		2018-2020
-		2016/05-2020/06
-
-Suppose you have a screenshot of a Twitter post. You can get the link to the original post - for instance, by using 'find-tweet' from https://github.com/NotCompsky/utils. You can then go to that file, click "Update src", and change the source to the Twitter post's URL. This will keep the screenshot as a 'backup' of the post.
-	`;
 }

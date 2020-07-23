@@ -6,10 +6,10 @@ function $$$view_qry(s){
 		return $$$unhide_qry_help();
 	$$$ajax_POST_data_w_JSON_response_and_err("/q/", s+" ", function(data){
 		switch(s[0]){
-			case 'e': $$$view_eras(data); break;
-			case 'f': $$$view_files(data); break;
-			case 'd': $$$view_dirs(data.map(x => x.toString()));  break;
-			case 't': $$$view_tags(data.map(x => x.toString()));  break;
+			case 'e': $$$display_f_tbl(data); $$$setup_page_for_e_tbl(); break;
+			case 'f': $$$display_f_tbl(data); $$$setup_page_for_f_tbl(); break;
+			case 'd': $$$display_d_tbl(data); $$$setup_page_for_d_tbl(); break;
+			case 't': $$$display_t_tbl(data); $$$setup_page_for_t_tbl(); break;
 		}
 		$$$set_window_location_hash('?'+s);
 		$$$set_profile_name('?'+s);

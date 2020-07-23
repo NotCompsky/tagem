@@ -399,6 +399,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
+	void mysql_query2_after_itr(Args... args){
+		char* const itr_init = this->itr;
+		this->asciify(args...);
+		this->mysql_query_buf_db_by_id2(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->itr = itr_init;
+	}
+	
+	template<typename... Args>
 	void mysql_exec(Args... args){
 		this->reset_buf_index();
 		this->asciify(args...);
@@ -538,14 +546,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		SKIP_TO_BODY
 		
 		this->itr = this->buf;
+		const char tbl_alias = s[0];
 		if (sql_factory::parse_into(this->itr, s, connected_local_devices_str, user_id) != sql_factory::successness::ok)
 			return _r::post_not_necessarily_malicious_but_invalid;
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
+		this->reset_buf_index();
+		const char* id = nullptr;
+		while(this->mysql_assign_next_row(&id))
+			this->asciify(id, ',');
 		
-		this->write_json_list_response_into_buf(_r::flag::quote_no_escape);
+		if (id == nullptr)
+			// No results
+			return _r::EMPTY_JSON_LIST;
 		
-		return this->get_buf_as_string_view();
+		this->itr[-1] = 0; // Overwrite trailing comma
+		
+		return this->X_given_ids(tbl_alias, user_id, 0, this->buf);
 	}
 	
 	std::string_view file_thumbnail(const char* md5hex){
@@ -1551,13 +1568,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view eras_w_file_infos_given_ids(const char* s){
-		GET_PAGE_N('/')
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, ' ')
-		GET_USER_ID
-		
-		this->mysql_query2(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM era WHERE id IN(", _f::strlen, ids, ids_len, "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", _f::strlen, ids, ids_len, ")")
+	template<typename... Args>
+	std::string_view eras_w_file_infos_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		this->mysql_query2_after_itr(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args..., ")")
 		);
 		this->mysql_query_after_itr(
 			"SELECT "
@@ -1569,7 +1583,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN("
 				"SELECT era, tag "
 				"FROM era2tag "
-				"WHERE era IN(", _f::strlen, ids, ids_len, ")"
+				"WHERE era IN(", ids_args..., ")"
 				"UNION "
 				"SELECT e.id, f2t.tag "
 				"FROM file2tag f2t "
@@ -1577,10 +1591,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			")f2t ON f2t.era=e.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE e.id IN (", _f::strlen, ids, ids_len, ")"
+			"WHERE e.id IN (", ids_args..., ")"
 			  "AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 			"GROUP BY e.id "
-			"ORDER BY FIELD(e.id,", _f::strlen, ids, ids_len, ")"
+			"ORDER BY FIELD(e.id,", ids_args..., ")"
 			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
@@ -1589,13 +1603,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view files_given_ids(const char* s){
-		GET_PAGE_N('/')
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, ' ')
-		GET_USER_ID
-		
-		this->mysql_query2(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(", _f::strlen, file_ids, file_ids_len, ")")
+	template<typename... Args>
+	std::string_view files_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		this->mysql_query2_after_itr(
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(", ids_args..., ")")
 		);
 		this->mysql_query_after_itr(
 			"SELECT "
@@ -1606,11 +1617,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			"WHERE f.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  WHERE_HIDDEN_TAGS("f2t.tag")
 			"GROUP BY f.id "
-			"ORDER BY FIELD(f.id,", _f::strlen, file_ids, file_ids_len, ")"
+			"ORDER BY FIELD(f.id,", ids_args..., ")"
 			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
 		);
@@ -1620,14 +1631,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view tags_given_ids(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
-		GET_USER_ID
-		
-		this->mysql_query2(
-			TAGS_INFOS("", _f::strlen, tag_ids, tag_ids_len, "")
-			"ORDER BY FIELD(t.id,", _f::strlen, tag_ids, tag_ids_len, ")"
-			// WARNING: No limit
+	template<typename... Args>
+	std::string_view tags_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		this->mysql_query2_after_itr(
+			TAGS_INFOS("", ids_args..., "")
+			"ORDER BY FIELD(t.id,", ids_args..., ")"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		this->reset_buf_index();
 		this->begin_json_response();
@@ -1636,14 +1646,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view dirs_given_ids(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, ' ')
-		GET_USER_ID
-		
-		this->mysql_query2(
-			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", _f::strlen, dir_ids, dir_ids_len, ")")
+	template<typename... Args>
+	std::string_view dirs_given_ids(const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		this->mysql_query2_after_itr(
+			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
-		this->mysql_query(
+		this->mysql_query_after_itr(
 			"SELECT "
 				"d.id,"
 				"d.name,"
@@ -1653,12 +1661,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN file f ON f.dir=d.id "
-			"WHERE d.id IN (", _f::strlen, dir_ids, dir_ids_len, ")"
+			"WHERE d.id IN (", ids_args..., ")"
 			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
 			"GROUP BY d.id "
-			"ORDER BY FIELD(d.id,", _f::strlen, dir_ids, dir_ids_len, ")"
-			// WARNING: No limit
+			"ORDER BY FIELD(d.id,", ids_args..., ")"
+			"LIMIT 100 "
+			"OFFSET ", 100*page_n
 		);
 		
 		this->reset_buf_index();
@@ -1682,6 +1691,27 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		*this->itr = 0;
 		
 		return this->get_buf_as_string_view();
+	}
+	
+	template<typename... Args>
+	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		switch(tbl_alias){
+			case 'f':
+				return this->files_given_ids(user_id, 0, ids_args...);
+			case 'd':
+				return this->tags_given_ids (user_id, 0, ids_args...);
+			case 'e':
+				return this->eras_w_file_infos_given_ids(user_id, 0, ids_args...);
+			default:
+				abort();
+		}
+	}
+	
+	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
+		GET_PAGE_N('/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, ' ')
+		GET_USER_ID
+		return this->X_given_ids(tbl_alias, user_id, page_n);
 	}
 	
 	template<typename... Args>
