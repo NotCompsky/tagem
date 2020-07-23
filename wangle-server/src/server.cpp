@@ -1102,11 +1102,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view post__save_file(const char* s){
+	std::string_view post__create_file(const char* s){
 		uint64_t file_id = a2n<uint64_t>(&s);
 		if(*s != '/')
 			return _r::not_found;
 		++s;
+		const bool is_local_dir = is_local_file_or_dir(s);
 		const uint64_t dir_id  = a2n<uint64_t>(&s);
 		if(*s != '/')
 			return _r::not_found;
@@ -1133,34 +1134,39 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// Update an existing file
 			return _r::not_implemented_yet;
 		
-		this->mysql_query(
-			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
-			"FROM dir d "
-			"WHERE d.id=", dir_id
-		);
-		const char* path;
-		if(unlikely(not this->mysql_assign_next_row(&path)))
-			// Invalid dir_id
-			return _r::not_found;
+		if (is_local_dir){
+			// If the directory is non-local, the body of the request is set as the description rather than saved to a file.
+			// This is designed to store small snippets - code snippets, quotes, etc.
 		
-		FILE* f = fopen(path, "rb");
-		if(unlikely(f != nullptr)){
-			fclose(f);
+			this->mysql_query(
+				"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
+				"FROM dir d "
+				"WHERE d.id=", dir_id
+			);
+			const char* path;
+			if(unlikely(not this->mysql_assign_next_row(&path)))
+				// Invalid dir_id
+				return _r::not_found;
+			
+			FILE* f = fopen(path, "rb");
+			if(unlikely(f != nullptr)){
+				fclose(f);
+				this->mysql_free_res();
+				return 
+					HEADER__RETURN_CODE__SERVER_ERR
+					"\n"
+					"File already exists"
+				;
+			}
+			
+			f = fopen(path, "wb");
+			printf("Creating file: %s\n", path);
 			this->mysql_free_res();
-			return 
-				HEADER__RETURN_CODE__SERVER_ERR
-				"\n"
-				"File already exists"
-			;
+			if(unlikely(f == nullptr))
+				return _r::server_error;
+			fwrite(file_contents, 1, strlen(file_contents), f);
+			fclose(f);
 		}
-		
-		f = fopen(path, "wb");
-		printf("Creating file: %s\n", path);
-		this->mysql_free_res();
-		if(unlikely(f == nullptr))
-			return _r::server_error;
-		fwrite(file_contents, 1, strlen(file_contents), f);
-		fclose(f);
 		
 		this->mysql_query(
 			"SELECT id "
@@ -1172,7 +1178,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (file_id != 0){
 			fprintf(stderr, "Warning: File existed in DB but not on FS\n");
 		} else {
-			const unsigned mimetype_id = 17; // "text/plain"
+			const unsigned mimetype_id = (is_local_dir) ? 17 : 0; // "text/plain"
+			const char* const description = (is_local_dir) ? "" : file_contents;
 			
 			/*
 			 * WARNING: Probably violates law of least surprise.
@@ -1182,12 +1189,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			 */
 			this->mysql_exec(
 				"INSERT INTO file "
-				"(dir,user,mimetype,name)"
+				"(dir,user,mimetype,name,description)"
 				"VALUES(",
 					dir_id, ',',
 					user_id, ',',
 					mimetype_id, ',',
-					'"', _f::esc, '"', _f::strlen, file_name_length, file_name, '"',
+					'"', _f::esc, '"', _f::strlen, file_name_length, file_name, '"', ',',
+					'"', _f::esc, '"', description, '"',
 				")"
 			);
 			
