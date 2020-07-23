@@ -43,7 +43,7 @@ function $$$view_files_as_playlist(file_ids_csv){
 		return;
 	}
 	$$$playlist_file_ids = $$$split_on_commas__guaranteed_nonempty(file_ids_csv);
-	$$$playlist_repeat_mode = ($$$playlist_file_ids.length===1)?1:0;
+	$$$playlist_repeat_mode = ($$$playlist_file_ids.length===1)?2:1;
 	$$$document_getElementById('autoplay').checked = true;
 	for(var i=0; i<5; ++i)
 		$$$playlist_listeners[i] = $$$document_getElementById('view-'+$$$playlist_listeners_types[i]).addEventListener($$$playlist_listeners_eventnames[i], $$$playlist_listeners_fns[i]);
