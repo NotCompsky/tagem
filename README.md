@@ -37,7 +37,13 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 
 # Development
 
+## Back End
+
 See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
+
+## Front End
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [FRONTEND.md](FRONTEND.md).
 
 # Background
 

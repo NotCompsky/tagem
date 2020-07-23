@@ -30,6 +30,8 @@ Minimise the dependencies added to the project (without sacrificing features), a
 
 For instance, do not use the `{fmt}` aka `std::fmt` library, use [libcompsky](https://github.com/NotCompsky/libcompsky)::asciify, unless the latter cannot do what is desired (in which case you should file a feature request under that project).
 
+Try to use readable JavaScript, not complex one-liners. This is partly because the code generator parser has a limited range of syntax it recognises.
+
 ### Code Style
 
 It's hard to describe hard-and-fast rules for code linting, just try to copy that of the files you are modifying. If adding new files, copy the coding style in [server.cpp](wangle-server/src/server.cpp).
@@ -44,6 +46,8 @@ In particular:
 * Names should be descriptive. Yes I study maths, no I don't think that names should all be single characters. If something takes hundreds of characters to describe, so be it.
 * C++ source code should have the `cpp` extension.
 * C++ header files should have the `hpp` extension.
+
+JavaScript files pass through a code generator, that extracts function names as macros, pastes in macro values, and places everything on a single line in a C++ header file. The parser for this was written by me, so naturally it is not a full JavaScript parser, it has a very limited idea of what is acceptable syntax.
 
 # Legal Stuff
 
