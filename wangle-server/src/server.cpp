@@ -1047,7 +1047,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	void asciify_file_info(char*& itr){
-		this->begin_json_response(itr);
 		compsky::asciify::asciify(itr, "[\"0\",");
 		this->init_json_rows(
 			itr,
@@ -1572,6 +1571,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
+		this->begin_json_response();
 		this->asciify_file_info();
 		
 #ifdef n_cached
@@ -1649,7 +1649,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
-		this->begin_json_response(itr);
 		this->asciify_tags_arr_or_dict(itr, _r::flag::arr);
 	}
 	
@@ -1677,7 +1676,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
-		this->begin_json_response(itr);
 		compsky::asciify::asciify(itr, '[');
 		
 		this->init_json_rows(
@@ -1698,7 +1696,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->reset_buf_index();
+		char* const itr_init = this->itr;
+		this->begin_json_response();
 		switch(tbl_alias){
 			case 'f':
 				this->files_given_ids(this->itr, user_id, 0, ids_args...);
@@ -1715,15 +1714,15 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			default:
 				abort();
 		}
-		*itr = 0;
-		return this->get_buf_as_string_view();
+		*this->itr = 0;
+		return std::string_view(itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
 	}
 	
 	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
 		GET_PAGE_N('/')
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, ' ')
 		GET_USER_ID
-		return this->X_given_ids(tbl_alias, user_id, page_n);
+		return this->X_given_ids(tbl_alias, user_id, page_n, _f::strlen, ids, ids_len);
 	}
 	
 	template<typename... Args>
@@ -1771,6 +1770,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"OFFSET ", 100*page_n
 		);
 		
+		this->begin_json_response();
 		this->asciify_file_info();
 		
 #ifdef n_cached
@@ -1807,6 +1807,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// No need to impose a limit - this is very quick
 		);
 		
+		this->begin_json_response();
 		this->asciify_file_info();
 		
 		return this->get_buf_as_string_view();

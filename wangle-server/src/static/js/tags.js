@@ -50,7 +50,7 @@ function $$$populate_t_id2name_table(arr){
 	}
 	$$$ajax_data_w_JSON_response(
 		"GET",
-		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+arr.join(","),
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/0/"+arr.join(","),
 		null,
 		$$$display_t_tbl
 	);
@@ -112,7 +112,7 @@ function $$$display_tag(id, name, thumb, fn_name, alias){
 		+ "</div>";
 }
 function $$$display_tags_from_url(url,node_id,fn_name,alias){
-	if(url==="id/"){
+	if(url==="id/0/"){
 		$$$document_getElementById(node_id).innerHTML = "";
 		return;
 	}
@@ -134,7 +134,7 @@ function $$$display_tags(tag_ids, node_id, fn_name, alias){
 		$$$document_getElementById(node_id).innerHTML = "";
 		return;
 	}
-	$$$display_tags_from_url("id/"+tag_ids.join(","),node_id,fn_name,alias);
+	$$$display_tags_from_url("id/0/"+tag_ids.join(","),node_id,fn_name,alias);
 }
 function $$$display_tags_add(tags, node_id, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file
@@ -143,14 +143,14 @@ function $$$display_tags_add(tags, node_id, fn_name, alias){
 }
 function $$$display_parent_tags(_tag_id){
 	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-	? "id/" + $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
+	? "id/0/" + $$$t2p.filter(x => (x[0] == _tag_id)).map(x => x[1]).join(",")
 	: "p/"+_tag_id
 	;
 	$$$display_tags_from_url(url,"parents","$$$unlink_this_parent_tag_from_this_tag");
 }
 function $$$display_child_tags(_tag_id){
 	const url = (!!!MACRO!!!GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-	? "id/" + $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
+	? "id/0/" + $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
 	: "c/"+_tag_id
 	;
 	$$$display_tags_from_url(url,"children","$$$unlink_this_parent_tag_from_this_tag");
@@ -229,7 +229,7 @@ function $$$view_tag(_tag_id,page){
 	}
 	
 	$$$ajax_GET_w_JSON_response(
-		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/"+$$$tag_id,
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/0/"+$$$tag_id,
 		function(data){
 			const [id, name,thumb,size] = data[0];
 			$$$set_profile_name(name);
