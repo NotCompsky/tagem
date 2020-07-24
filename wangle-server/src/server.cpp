@@ -1546,53 +1546,35 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		
-		this->mysql_query2(
-			TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2tag WHERE tag=", id, ")")
-			// NOTE: #dkgja No idea why this is necessary. But otherwise MySQL returns only a single row. Alternatively, a temporary table could be used, as it is only subqueries acting weird.
-		);
-		this->mysql_query_after_itr(
-			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.id")
-				"0,"
-				"0 "
-			"FROM file f "
-			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE f.id IN ("
-				"SELECT file "
-				"FROM file2tag "
-				"WHERE tag=", id,
-			")"
-			  WHERE_HIDDEN_TAGS("f2t.tag")
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			"GROUP BY f.id "
-			"LIMIT " TABLE_LIMIT " "
-			"OFFSET ", 100*page_n
-		);
-		
-		this->begin_json_response();
-		this->asciify_file_info();
-		
-#ifdef n_cached
-		this->add_buf_to_cache(cached_stuff::files_given_tag, id);
-#endif
-		
-		return this->get_buf_as_string_view();
+		return
+			JoinArgsWrapper<>
+			::WhereArgsWrapper<const char*, uint64_t, const char*>
+			::OrderArgsWrapper<const char*>
+			::files_given_X__string_view(
+				this,
+				user_id,
+				page_n,
+				"0,0",
+				"f.id",
+				// No JoinArgs
+				"AND f.id IN(SELECT file FROM file2tag WHERE tag=", id, ")",
+				"ORDER BY NULL",
+				"SELECT DISTINCT id FROM file WHERE dir=", id
+			);
 	}
 	
 	template<typename... Args>
 	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2_after_itr(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args..., ")")
-		);
-		this->mysql_query_after_itr(
-			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.id")
-				"e.start,"
-				"e.end "
-			"FROM era e "
-			"JOIN file f ON f.id=e.file "
+		JoinArgsWrapper<const char*, Args..., const char*>
+		::template WhereArgsWrapper<const char*, Args..., const char*>
+		::template OrderArgsWrapper<const char*, Args..., const char*>
+		::files_given_X(
+			this,
+			user_id,
+			page_n,
+			"e.start,e.end",
+			"e.id",
+			"JOIN era e ON e.file=f.id "
 			"LEFT JOIN("
 				"SELECT era, tag "
 				"FROM era2tag "
@@ -1601,41 +1583,28 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"SELECT e.id, f2t.tag "
 				"FROM file2tag f2t "
 				"JOIN era e ON e.file=f2t.file"
-			")f2t ON f2t.era=e.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE e.id IN (", ids_args..., ")"
-			  "AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
-			"GROUP BY e.id "
-			"ORDER BY FIELD(e.id,", ids_args..., ")"
-			"LIMIT " TABLE_LIMIT " "
-			"OFFSET ", 100*page_n
+			")f2t ON f2t.era=e.id",
+			"AND e.id IN(", ids_args..., ")",
+			"ORDER BY FIELD(e.id,", ids_args..., ")",
+			"SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args...
 		);
-		
-		this->asciify_file_info(itr);
 	}
 	
 	template<typename... Args>
 	void files_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2_after_itr(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(", ids_args..., ")")
-		);
-		this->mysql_query_after_itr(
-			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.id")
-				"0,"
-				"0 "
-			"FROM file f "
-			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE f.id IN (", ids_args..., ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  WHERE_HIDDEN_TAGS("f2t.tag")
-			"GROUP BY f.id "
-			"ORDER BY FIELD(f.id,", ids_args..., ")"
-			"LIMIT " TABLE_LIMIT " "
-			"OFFSET ", 100*page_n
+		JoinArgsWrapper<>
+		::WhereArgsWrapper<const char*, Args..., const char*>
+		::template OrderArgsWrapper<const char*, Args..., const char*>
+		::files_given_X(
+			this,
+			user_id,
+			page_n,
+			"0,0",
+			"f.id",
+			// No JoinArgs
+			"AND f.id IN(", ids_args..., ")",
+			"ORDER BY FIELD(f.id,", ids_args..., ")",
+			ids_args...
 		);
 		
 		this->asciify_file_info(itr);
@@ -1739,6 +1708,63 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		);
 	}
 	
+	template<typename... JoinArgs>
+	struct JoinArgsWrapper {
+		template<typename... WhereArgs>
+		struct WhereArgsWrapper {
+			template<typename... OrderArgs>
+			struct OrderArgsWrapper {
+				template<typename... FileIDsArgs>
+				static
+				void files_given_X(
+					RTaggerHandler* thees,
+					const UserIDIntType user_id,
+					const unsigned page_n,
+					const char* const select_fields,
+					const char* const group_by,
+					JoinArgs... join_args,
+					WhereArgs... where_args,
+					OrderArgs... order_args,
+					FileIDsArgs... file_ids_args
+				){
+					thees->mysql_query2(
+						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
+					);
+					thees->mysql_query_after_itr(
+						"SELECT "
+							FILE_OVERVIEW_FIELDS("f.id"),
+							select_fields, " "
+						"FROM file f "
+						"LEFT JOIN file2tag f2t ON f2t.file=f.id "
+						JOIN_FILE_THUMBNAIL
+						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
+						join_args...,
+						"WHERE TRUE "
+						FILE_TBL_USER_PERMISSION_FILTER(user_id)
+						WHERE_HIDDEN_TAGS("f2t.tag"),
+						where_args..., " "
+						"GROUP BY f.id ",
+						order_args..., " "
+						"LIMIT " TABLE_LIMIT " "
+						"OFFSET ", 100*page_n
+					);
+					
+					thees->begin_json_response();
+					thees->asciify_file_info();
+				}
+				
+				template<typename... Args>
+				static
+				std::string_view files_given_X__string_view(RTaggerHandler* thees,  Args... args){
+					files_given_X(thees, args...);
+					thees->begin_json_response();
+					thees->asciify_file_info();
+					return thees->get_buf_as_string_view();
+				}
+			};
+		};
+	};
+	
 	std::string_view files_given_dir(const char* s){
 		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
@@ -1750,34 +1776,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_USER_ID
 		
-		this->mysql_query2(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT id FROM file WHERE dir=", id, ")")
-		);
-		this->mysql_query_after_itr(
-			"SELECT "
-				FILE_OVERVIEW_FIELDS("f.id")
-				"0,"
-				"0 "
-			"FROM file f "
-			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
-			JOIN_FILE_THUMBNAIL
-			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"WHERE f.dir=", id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  WHERE_HIDDEN_TAGS("f2t.tag")
-			"GROUP BY f.id "
-			"LIMIT " TABLE_LIMIT " "
-			"OFFSET ", 100*page_n
-		);
-		
-		this->begin_json_response();
-		this->asciify_file_info();
-		
-#ifdef n_cached
-		this->add_buf_to_cache(cached_stuff::files_given_dir, id);
-#endif
-		
-		return this->get_buf_as_string_view();
+		return
+			JoinArgsWrapper<>
+			::WhereArgsWrapper<const char*, uint64_t>
+			::OrderArgsWrapper<const char*>
+			::files_given_X__string_view(
+				this,
+				user_id,
+				page_n,
+				"0,0",
+				"f.id",
+				// No JoinArgs
+				"AND f.dir=", id,
+				"ORDER BY NULL",
+				"SELECT DISTINCT id FROM file WHERE dir=", id
+			);
 	}
 	
 	std::string_view files_given_value(const char* s){
