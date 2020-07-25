@@ -16,7 +16,8 @@ COPY caffe /tagem/caffe
 COPY include /tagem/include
 COPY scripts /tagem/scripts
 # cimg-dev pulls in about a billion dependencies, so we'll just clone the repository to get the headers
-RUN cd /tagem \
+RUN apt install -y --no-install-recommends libavformat-dev libavcodec-dev \
+	&& cd /tagem \
 	&& git clone https://github.com/dtschump/CImg \
 	&& mkdir /tagem/build \
 	&& mkdir /tagem/build/server \
