@@ -182,6 +182,9 @@
 ".profile-avatar{"
 	"pointer-events:none;" // Ensure it doesn't block profile-menu buttons
 "}"
+".profile-avatar *{"
+	"pointer-events:all;" // Do not inherit from parent
+"}"
 
 "#right-side{"
 	"max-height:100vh;"

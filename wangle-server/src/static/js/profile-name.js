@@ -9,11 +9,11 @@ function $$$edit_title_path(){
 function $$$edit_title(){
 	// Basically edit_name() for tags, directories, etc.
 	// Only edit_title() for files in reality, as the file names are not for human parsing
-	const s = $$$prompt("New title");
-	if((s==="")||(s===null))
-		return;
 	const url = $$$edit_title_path();
 	if(url===null)
+		return;
+	const s = $$$prompt("New title");
+	if((s==="")||(s===null))
 		return;
 	$$$ajax_POST_data_w_text_response(
 		url+$$$file_id,
