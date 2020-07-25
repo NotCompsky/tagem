@@ -169,11 +169,13 @@ function $$$setup_page_for_f_tbl(){
 
 function $$$toggle_file_add_backup_dialog(){
 	if($$$is_visible('add-f-backup')){
-		$$$hide('backup-toggle-container');
-		$$$hide('add-f-dialog');
+		$$$hide('add-f-backup-toggle-container');
+		$$$hide('add-f-backup');
+		$$$hide('dirselect-container');
 	} else {
-		$$$unhide('backup-toggle-container');
-		$$$unhide('add-f-dialog');
+		$$$unhide('add-f-backup-toggle-container');
+		$$$unhide('add-f-backup');
+		$$$unhide('dirselect-container');
 		$$$hide('add-f-backup-url');
 	}
 }
