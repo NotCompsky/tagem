@@ -1247,7 +1247,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->add_tags_to_files(
 			user_id,
 			tag_ids, tag_ids_len,
-			"AND f.id=", file_id, FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			"AND f.id=", file_id, " " FILE_TBL_USER_PERMISSION_FILTER(user_id)
 		);
 		
 		return _r::post_ok;
@@ -2317,7 +2317,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
 		tag_parentisation(
+			this,
 			user_id,
+			false,
 			_f::strlen, parent_ids, parent_ids_len,
 			"SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len, tag_name, "\""
 		);
@@ -2851,17 +2853,18 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		regenerate_tag2parent_json = true;
 	}
 	
-	template<typename... ParentIDs>
+	template<typename... ParentIDsArgs>
 	struct ParentIDs {
-		template<typename... ChildIDs>
+		template<typename... ChildIDsArgs>
 		static
 		void tag_parentisation(
+			RTaggerHandler* thees,
 			const UserIDIntType user_id,
 			const bool update_descendants,
-			ParentIDs... parent_ids_args,
-			ChildIDs... child_ids_args
+			ParentIDsArgs... parent_ids_args,
+			ChildIDsArgs... child_ids_args
 		){
-			this->mysql_exec(
+			thees->mysql_exec(
 				"INSERT INTO tag2parent (id, parent, user) "
 				"SELECT t.id, p.id,", user_id, " "
 				"FROM tag t "
@@ -2873,7 +2876,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"ON DUPLICATE KEY UPDATE parent=parent"
 			);
 			
-			this->mysql_exec(
+			thees->mysql_exec(
 				"INSERT INTO tag2parent_tree (id, parent, depth)"
 				"SELECT * "
 				"FROM("
@@ -2893,7 +2896,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			);
 			
 			if (update_descendants){
-				this->mysql_exec(
+				thees->mysql_exec(
 					"INSERT INTO tag2parent_tree (id, parent, depth) "
 					"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
 					"FROM tag2parent_tree t2pt "
@@ -2916,7 +2919,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
 		tag_parentisation(
+			this,
 			user_id,
+			true,
 			_f::strlen, parent_ids, parent_ids_len,
 			_f::strlen, child_ids,  child_ids_len
 		);
@@ -2941,7 +2946,14 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
 		GET_USER_ID
 		
-		this->tag_parentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
+		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
+		tag_parentisation(
+			this,
+			user_id,
+			true,
+			_f::strlen, child_ids, child_ids_len,
+			_f::strlen, tag_ids, tag_ids_len
+		);
 		
 		return _r::post_ok;
 	}
@@ -2966,8 +2978,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM tag t "
 			"JOIN file f "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-			  where_args...
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  where_args...,
 			"ON DUPLICATE KEY UPDATE file=file"
 		);
 	}
