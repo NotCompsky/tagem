@@ -17,3 +17,7 @@ One design decision that has remained is the use of MySQL/MariaDB.
 SQLite has thus far been avoided because I believe allowing multiple concurrent connections to the database will continue to be useful - however, the goal is eventually to ship this server as a single binary, and that will probably utilise SQLite due to it being easy to embed. SQLite will probably never be the main DB engine, however, because allowing for simultaneous connections from multiple processes is always going to be important - this isn't just a web server, the design is meant to allow for writing to the database from multiple machines running various utilities (be they perceptual hashes of video files, object recognition on image files, sentiment analysis on linked web pages - the latter two being utilities that don't exist yet, just to be clear).
 
 Sticking to MySQL itself - rather than PostgreSQL, for instance - is only because I have not seen significant reason to migrate. However, the decision to support *older* versions of the DB engine is deliberate, to support the surprisingly outdated Google Cloud Compute Engine instances.
+
+# Documentation
+
+Code generation is not included because I have rarely found auto-generated documentation actually useful - it is almost always *what* documentation rather than *why* documentation. If other developers feel like it would be useful for this project, I would be happy to accept pull requests for auto-documentation.

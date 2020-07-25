@@ -3,7 +3,7 @@ Platform | CI Status
 OSX      | [![OSX Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=osx&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem)
 Linux    | [![Linux Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=linux&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem) [![CircleCI](https://circleci.com/gh/NotCompsky/tagem.svg?style=shield)](https://circleci.com/gh/NotCompsky/tagem)
 
-[![Lines of Code](https://tokei.rs/b1/github/NotCompsky/tagem)](/NotCompsky/tagem/graphs/code-frequency)
+[![Lines of Code](https://tokei.rs/b1/github/NotCompsky/tagem?category=code)](https://api.codetabs.com/v1/loc?github=NotCompsky/tagem)
 
 [![Docker Image Size](https://img.shields.io/docker/image-size/notcompsky/tagem?label=Docker%20image%20size)](https://hub.docker.com/repository/docker/notcompsky/tagem/tags)
 [![Docker Pulls](https://img.shields.io/docker/pulls/notcompsky/tagem)](https://hub.docker.com/repository/docker/notcompsky/tagem)
