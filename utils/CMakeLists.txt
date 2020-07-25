@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR) # CONTRIBUTIONS WELCOME: Tests of previous/future versions which work or not
-find_package(Qt5Widgets REQUIRED) # Just the version I know works
 find_package(OpenCV COMPONENTS core imgcodecs highgui)
 find_package(Compsky REQUIRED COMPONENTS asciify mysql)
 set(CMAKE_AUTOMOC ON)
@@ -40,11 +39,11 @@ if ("${CIMG_H_DIR} " STREQUAL " ")
 endif()
 add_executable(tagem-hash src/hash.cpp)
 target_include_directories(tagem-hash PRIVATE ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
-target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec boost_regex Qt5::Widgets)
+target_link_libraries(tagem-hash pHash compsky_mysql compsky_asciify ssl crypto avformat avcodec boost_regex)
 
 add_executable(tagem-mk-playlist src/mk_playlist.cpp)
 target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
-target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify Qt5::Widgets avformat avcodec avutil)
+target_link_libraries(tagem-mk-playlist compsky_mysql compsky_asciify avformat avcodec avutil)
 
 set_target_properties(
 	tagem-hash tagem-init
