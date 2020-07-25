@@ -87,7 +87,6 @@ function $$$display_d_tbl(data){
 		s += "</div>";
 	}
 	$$$get_tbl_body("d").innerHTML = s;
-	$$$column_id2name(data[1],"d",'$$$view_tag', 3);
 }
 
 function $$$setup_page_for_d_tbl(){
