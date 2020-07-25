@@ -1244,7 +1244,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			while(this->mysql_assign_next_row(&file_id));
 		}
 		
-		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, file_id);
+		this->add_tags_to_files(
+			user_id,
+			tag_ids, tag_ids_len,
+			"AND f.id=", file_id, FILE_TBL_USER_PERMISSION_FILTER(user_id)
+		);
 		
 		return _r::post_ok;
 	}
@@ -2547,19 +2551,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"ON DUPLICATE KEY UPDATE dir=dir"
 			);
 		} else /* if (which_tbl == 'f') */ {
-			this->mysql_exec_after_itr(
-				"INSERT INTO file2tag "
-				"(file, tag, user)"
-				"SELECT f.id, t.id,", user_id, " "
-				"FROM file f "
-				"JOIN dir d ON d.id=f.dir "
-				"JOIN tag t "
-				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ")"
+			this->add_tags_to_files(
+				user_id,
+				tag_ids, tag_ids_len,
 				  "AND t.id != 0 "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
 				DIR_TBL_USER_PERMISSION_FILTER(user_id)
-				"ON DUPLICATE KEY UPDATE file=file"
 			);
 		}
 		
@@ -2947,16 +2945,16 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
-	void add_tags_to_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... file_ids_args){
+	void add_tags_to_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
 		this->mysql_exec(
-			"INSERT INTO file2tag (tag, file, user) "
+			"INSERT INTO file2tag"
+			"(tag, file, user)"
 			"SELECT t.id,f.id,", user_id, " "
 			"FROM tag t "
 			"JOIN file f "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND f.id IN (", file_ids_args..., ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
 			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
+			  where_args...
 			"ON DUPLICATE KEY UPDATE file=file"
 		);
 	}
