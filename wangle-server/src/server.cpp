@@ -2640,20 +2640,33 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND id NOT IN" USER_DISALLOWED_FILES(user_id)
 		);
 		
-		this->mysql_exec(
-			"INSERT INTO era2tag"
-			"(era,tag)"
-			"SELECT e.id, t.id "
-			"FROM "
-				"era e,"
-				"tag t "
-			"WHERE e.file=",  file_id, " "
+		this->add_tag_to_era(
+			user_id,
+			tag_ids, tag_ids_len,
+			  "AND e.file=",  file_id, " "
 			  "AND e.start=", era_start, 5, " "
-			  "AND e.end=",   era_end, 5, " "
-			  "AND t.id IN(", _f::strlen, tag_ids, tag_ids_len, ")"
+			  "AND e.end=",   era_end, 5
 		);
 		
 		return _r::post_ok;
+	}
+	
+	template<typename... Args>
+	void add_tag_to_era(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
+		this->mysql_exec(
+			"INSERT INTO era2tag"
+			"(era, tag)"
+			"SELECT "
+				"e.id,"
+				"t.id "
+			"FROM tag t "
+			"JOIN era e "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  where_args..., " "
+			"ON DUPLICATE KEY UPDATE era=era"
+		);
 	}
 	
 	std::string_view update_tag_thumbnail(const char* s){
@@ -3003,20 +3016,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		BLACKLIST_GUEST
 		
-		this->mysql_exec(
-			"INSERT INTO era2tag"
-			"(era, tag)"
-			"SELECT "
-				"e.id,"
-				"t.id "
-			"FROM tag t "
-			"JOIN era e "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND e.id IN (", _f::strlen, ids, ids_len, ")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
-			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
-			"ON DUPLICATE KEY UPDATE era=era"
-		);
+		this->add_tag_to_era(user_id, tag_ids, tag_ids_len, "AND e.id IN(", _f::strlen, ids, ids_len, ")");
 		
 		return _r::post_ok;
 	}
