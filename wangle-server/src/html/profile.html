@@ -154,7 +154,17 @@ R"=========(
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
 		"<div id=\"profile-menu\">"
-BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ((MINIMISED_JS_DECL_toggle"('left-side')",SVG_TRIANGLE_LEFT)(MINIMISED_JS_DECL_view_dir"()",SVG_DIR)(MINIMISED_JS_DECL_view_dirs "()", SVG_DIRS)(MINIMISED_JS_DECL_view_tag"()",SVG_TAG)(MINIMISED_JS_DECL_view_tags"()",SVG_TAGS)(MINIMISED_JS_DECL_play_current_files_as_playlist_if_not_already "()",SVG_REPEAT)(MINIMISED_JS_DECL_view_file"()",SVG_FILE)(MINIMISED_JS_DECL_view_files"()",SVG_FILES)(MINIMISED_JS_DECL_toggle"('right-side')",SVG_TRIANGLE_RIGHT)))
+BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
+	(MINIMISED_JS_DECL_toggle "('left-side')", SVG_TRIANGLE_LEFT)\
+	(MINIMISED_JS_DECL_view_dir "()", SVG_DIR)\
+	(MINIMISED_JS_DECL_setup_page_for_d_tbl "()", SVG_DIRS)\
+	(MINIMISED_JS_DECL_view_tag "()", SVG_TAG)\
+	(MINIMISED_JS_DECL_setup_page_for_t_tbl "()", SVG_TAGS)\
+	(MINIMISED_JS_DECL_play_current_files_as_playlist_if_not_already "()", SVG_REPEAT)\
+	(MINIMISED_JS_DECL_view_file "()", SVG_FILE)\
+	(MINIMISED_JS_DECL_setup_page_for_f_tbl "()", SVG_FILES)\
+	(MINIMISED_JS_DECL_toggle "('right-side')", SVG_TRIANGLE_RIGHT)
+))
 		"</div>"
 	"</div>"
 
