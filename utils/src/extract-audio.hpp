@@ -1,7 +1,7 @@
 // All code is copied from my "utils" repository's extract-audio.cpp
 // TODO: Deduplicate - compile extract-audio
 // Missing nice GCC features, such as designated initialisation, which would have allowed for easily mapping the AV_CODEC_ID_* enums to strings (rather than only being some unknown number at runtime)
-
+//    #define MAP_ENUM(name) [ name ] = #name
 
 extern "C" {
 # include <libavformat/avformat.h>
@@ -9,9 +9,6 @@ extern "C" {
 }
 #include <cstring>
 #include <sys/stat.h>
-
-
-#define MAP_ENUM(name) [ name ] = #name
 
 
 enum {
