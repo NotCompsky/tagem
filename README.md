@@ -3,13 +3,18 @@ Platform | CI Status
 OSX      | [![OSX Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=osx&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem)
 Linux    | [![Linux Build Status](http://badges.herokuapp.com/travis/NotCompsky/tagem?env=BADGE=linux&label=build&branch=master)](https://travis-ci.org/NotCompsky/tagem) [![CircleCI](https://circleci.com/gh/NotCompsky/tagem.svg?style=shield)](https://circleci.com/gh/NotCompsky/tagem)
 
+[![Lines of Code](https://tokei.rs/b1/github/NotCompsky/tagem)](/NotCompsky/tagem/graphs/code-frequency)
+
 [![Docker Image Size](https://img.shields.io/docker/image-size/notcompsky/tagem?label=Docker%20image%20size)](https://hub.docker.com/repository/docker/notcompsky/tagem/tags)
 [![Docker Pulls](https://img.shields.io/docker/pulls/notcompsky/tagem)](https://hub.docker.com/repository/docker/notcompsky/tagem)
-[![License](https://img.shields.io/github/license/NotCompsky/tagem)](LICENSE)
 [![Docker Stars](https://img.shields.io/docker/stars/notcompsky/tagem)](https://hub.docker.com/repository/docker/notcompsky/tagem)
-[![Latest Release](https://img.shields.io/github/v/release/NotCompsky/tagem)](releases)
-[![Commit Activity](https://img.shields.io/github/commit-activity/w/NotCompsky/tagem)](graphs/commit-activity)
-[![Contributers](https://img.shields.io/github/contributors/NotCompsky/tagem)](graphs/contributors)
+
+[![Latest Release](https://img.shields.io/github/v/release/NotCompsky/tagem)](/NotCompsky/tagem/releases)
+[![Commit Activity](https://img.shields.io/github/commit-activity/w/NotCompsky/tagem)](/NotCompsky/tagem/graphs/commit-activity)
+
+[![License](https://img.shields.io/github/license/NotCompsky/tagem)](LICENSE)
+[![Contributers](https://img.shields.io/github/contributors/NotCompsky/tagem)](/NotCompsky/tagem/graphs/contributors)
+
 [![Discord Chat](https://img.shields.io/discord/736649679575580814)](https://discord.gg/DnD7RJA)
 
 
