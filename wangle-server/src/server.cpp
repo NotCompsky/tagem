@@ -1559,7 +1559,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				// No JoinArgs
 				"AND f.id IN(SELECT file FROM file2tag WHERE tag=", id, ")",
 				"ORDER BY NULL",
-				"SELECT DISTINCT id FROM file WHERE dir=", id
+				"SELECT DISTINCT file FROM file2tag WHERE tag=", id
 			);
 	}
 	
@@ -1666,7 +1666,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	template<typename... Args>
 	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		char* const itr_init = this->itr;
-		this->begin_json_response();
+		this->begin_json_response(this->itr);
 		switch(tbl_alias){
 			case 'f':
 				this->files_given_ids(this->itr, user_id, 0, ids_args...);
@@ -1727,7 +1727,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					OrderArgs... order_args,
 					FileIDsArgs... file_ids_args
 				){
-					thees->mysql_query2(
+					thees->mysql_query2_after_itr(
 						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
 					);
 					thees->mysql_query_after_itr(
@@ -1748,16 +1748,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 						"LIMIT " TABLE_LIMIT " "
 						"OFFSET ", 100*page_n
 					);
-					
-					thees->begin_json_response();
-					thees->asciify_file_info();
 				}
 				
 				template<typename... Args>
 				static
 				std::string_view files_given_X__string_view(RTaggerHandler* thees,  Args... args){
-					files_given_X(thees, args...);
 					thees->begin_json_response();
+					files_given_X(thees, args...);
 					thees->asciify_file_info();
 					return thees->get_buf_as_string_view();
 				}
