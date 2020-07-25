@@ -5,6 +5,7 @@ find_package(Compsky REQUIRED)
 
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
 option(TAGEM_HASH "Build the tagem-hash utility" OFF)
+set(WHICH_MYSQL_CLIENT "mysqlclient" CACHE STRING "Which MySQL or MariaDB client to use")
 
 set(TGTS)
 set(CXX17_TGTS tagem-init)
@@ -30,7 +31,7 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_executable(tagem-init src/init.cpp)
 target_include_directories(tagem-init PRIVATE ${COMPSKY_INCLUDE_DIRS})
-target_link_libraries(tagem-init compsky_mysql_create_config)
+target_link_libraries(tagem-init compsky_mysql_create_config "${WHICH_MYSQL_CLIENT}")
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 if(TAGEM_HASH)
