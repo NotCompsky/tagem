@@ -23,7 +23,7 @@ get_cmnts(){
 }
 
 
-declare -i limit=1000
+declare -i limit=100
 for url in "$@"; do
 	sleep 2
 	
