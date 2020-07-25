@@ -9,16 +9,20 @@ RUN git clone https://github.com/NotCompsky/libcompsky \
 	&& cd libcompsky/build \
 	&& cmake -DCMAKE_BUILD_TYPE=Release .. \
 	&& make install
-COPY wangle-server /tagem
-COPY utils /tagem
-COPY caffe /tagem
-COPY include /tagem
-COPY scripts /tagem
-RUN mkdir /tagem/build \
-	;  mkdir /tagem/build/server \
-	;  mkdir /tagem/build/utils \
-	;  cd /tagem/build/utils \
-	&& cmake -DCMAKE_BUILD_TYPE=Release /tagem/utils \
+WORKDIR /tagem
+COPY wangle-server /tagem/wangle-server
+COPY utils /tagem/utils
+COPY caffe /tagem/caffe
+COPY include /tagem/include
+COPY scripts /tagem/scripts
+# cimg-dev pulls in about a billion dependencies, so we'll just clone the repository to get the headers
+RUN cd /tagem \
+	&& git clone https://github.com/dtschump/CImg \
+	&& mkdir /tagem/build \
+	&& mkdir /tagem/build/server \
+	&& mkdir /tagem/build/utils \
+	&& cd /tagem/build/utils \
+	&& cmake -DCMAKE_BUILD_TYPE=Release -DCIMG_H_DIR=/tagem/CImg /tagem/utils \
 	&& make \
 	&& cd /tagem/build/server \
 	&& cmake /tagem/wangle-server \

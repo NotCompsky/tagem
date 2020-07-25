@@ -34,6 +34,8 @@ target_link_libraries(tagem-init compsky_mysql_create_config)
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 if ("${CIMG_H_DIR} " STREQUAL " ")
+	find_package(CImg REQUIRED)
+	set(CIMG_H_DIR "${CImg_INCLUDE_DIR}")
 	message(FATAL_ERROR "Please set CIMG_H_DIR to the directory containing CImg.h (for instance, underneath the third_party of pHash, if you built that from source.")
 endif()
 add_executable(tagem-hash src/hash.cpp)
