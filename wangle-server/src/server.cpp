@@ -2979,7 +2979,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"JOIN file f "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
-			  where_args...,
+			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE file=file"
 		);
 	}
@@ -3041,7 +3041,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		BLACKLIST_GUEST
 		
-		this->add_tags_to_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
+		this->add_tags_to_files(
+			user_id,
+			tag_ids, tag_ids_len,
+			"AND f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
+		);
 		
 		return _r::post_ok;
 	}
