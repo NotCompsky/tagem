@@ -2559,7 +2559,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				  "AND t.id != 0 "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
-				DIR_TBL_USER_PERMISSION_FILTER(user_id)
+				  "AND f.dir NOT IN(" USER_DISALLOWED_DIRS(user_id) ")"
 			);
 		}
 		
