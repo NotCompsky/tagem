@@ -1,14 +1,3 @@
-function $$$obj_type2parent_type(obj_type){
-	switch(obj_type){
-		case 'f':
-			return 'd';
-		case 'd':
-			return 'D';
-		case 'D':
-			return 'P';
-	}
-}
-
 function $$$nickname2fullname(obj_type){
 	switch(obj_type){
 		case 'f':
@@ -26,7 +15,6 @@ function $$$nickname2fullname(obj_type){
 
 function $$$add_to_db(obj_type){
 	const queue = $$$document_getElementById('add-'+obj_type+'-queue');
-	const parent_type = $$$obj_type2parent_type(obj_type);
 	
 	if(obj_type==='t'){
 		const tag_names = [];
@@ -97,8 +85,6 @@ function $$$add_to_db__append(obj_type){
 		$$$alert("Enter a tag or URL");
 		return;
 	}
-	const parent_type = $$$obj_type2parent_type(obj_type);
-	
 	$$$document_getElementById('add-' + obj_type + '-queue').innerText += "\n" + x;
 	inp.value = "";
 }
