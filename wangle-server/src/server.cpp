@@ -2310,34 +2310,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			  "AND id NOT IN" USER_DISALLOWED_TAGS(user_id)
 			"LIMIT 1"
 		);
-		this->mysql_exec(
-			"INSERT INTO tag2parent "
-			"(id, parent, user)"
-			"SELECT t.id, p.id,", user_id, " "
-			"FROM tag t "
-			"JOIN tag p "
-			"WHERE p.id IN (", _f::strlen, parent_ids, parent_ids_len, ") "
-			  "AND t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
-			  "AND t.id NOT IN " USER_DISALLOWED_TAGS(user_id)
-			  "AND p.id NOT IN " USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE parent=parent"
-		);
-		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (id, parent, depth) "
-			"SELECT * "
-			"FROM("
-				"SELECT id AS id, id AS parent, 0 AS depth "
-				"FROM tag "
-				"WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
-				"UNION "
-				"SELECT t.id, t2pt.parent, t2pt.depth+1 "
-				"FROM tag t "
-				"JOIN tag2parent_tree t2pt "
-				"WHERE t.name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\" "
-				"AND t2pt.parent IN (", _f::strlen, parent_ids, parent_ids_len,   ")"
-				"AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			")A "
-			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
+		
+		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
+		tag_parentisation(
+			user_id,
+			_f::strlen, parent_ids, parent_ids_len,
+			"SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len, tag_name, "\""
 		);
 	}
 	
@@ -2862,53 +2840,75 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		regenerate_tag2parent_json = true;
 	}
 	
-	void tag_parentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
-		this->mysql_exec(
-			"INSERT INTO tag2parent (id, parent, user) "
-			"SELECT t.id, p.id,", user_id, " "
-			"FROM tag t "
-			"JOIN tag p "
-			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
-			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
-			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE parent=parent"
-		);
-		
-		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (id, parent, depth) "
-			"SELECT t.id, t2pt.parent, t2pt.depth+1 "
-			"FROM tag t "
-			"JOIN tag p "
-			"JOIN tag2parent_tree t2pt ON t2pt.id=p.id "
-			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
-			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
-			  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
-		);
-		
-		// Update all descendant tags
-		this->mysql_exec(
-			"INSERT INTO tag2parent_tree (id, parent, depth) "
-			"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
-			"FROM tag2parent_tree t2pt "
-			"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
-			"WHERE t2pt.id IN (", _f::strlen, tag_ids, tag_ids_len, ")"
-			  "AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
-			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
-		);
-		
-		regenerate_tag2parent_json = true;
-	}
+	template<typename... ParentIDs>
+	struct ParentIDs {
+		template<typename... ChildIDs>
+		static
+		void tag_parentisation(
+			const UserIDIntType user_id,
+			const bool update_descendants,
+			ParentIDs... parent_ids_args,
+			ChildIDs... child_ids_args
+		){
+			this->mysql_exec(
+				"INSERT INTO tag2parent (id, parent, user) "
+				"SELECT t.id, p.id,", user_id, " "
+				"FROM tag t "
+				"JOIN tag p "
+				"WHERE t.id IN (", child_ids_args..., ")"
+				  "AND p.id IN (", parent_ids_args...,   ")"
+				  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				  "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				"ON DUPLICATE KEY UPDATE parent=parent"
+			);
+			
+			this->mysql_exec(
+				"INSERT INTO tag2parent_tree (id, parent, depth)"
+				"SELECT * "
+				"FROM("
+					"SELECT id AS id, id AS parent, 0 AS depth "
+					"FROM tag "
+					"WHERE id IN(", child_ids_args..., ")"
+					"UNION "
+					"SELECT t.id, t2pt.parent, t2pt.depth+1 "
+					"FROM tag t "
+					"JOIN tag2parent_tree t2pt "
+					"WHERE t.id IN(", child_ids_args..., ")"
+					  "AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+					  "AND t2pt.parent IN (", parent_ids_args...,   ")"
+					  "AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+				")A "
+				"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
+			);
+			
+			if (update_descendants){
+				this->mysql_exec(
+					"INSERT INTO tag2parent_tree (id, parent, depth) "
+					"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
+					"FROM tag2parent_tree t2pt "
+					"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
+					"WHERE t2pt.id IN (", parent_ids_args..., ")"
+					  "AND t2pt.id NOT IN" USER_DISALLOWED_TAGS(user_id)
+					"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
+				);
+			}
+			
+			regenerate_tag2parent_json = true;
+		}
+	};
 	
 	std::string_view post__add_parents_to_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, '/')
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
 		GET_USER_ID
 		
-		this->tag_parentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
+		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
+		tag_parentisation(
+			user_id,
+			_f::strlen, parent_ids, parent_ids_len,
+			_f::strlen, child_ids,  child_ids_len
+		);
 		
 		return _r::post_ok;
 	}
