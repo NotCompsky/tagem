@@ -10,6 +10,7 @@ Linux    | [![Linux Build Status](http://badges.herokuapp.com/travis/NotCompsky/
 [![Latest Release](https://img.shields.io/github/v/release/NotCompsky/tagem)](releases)
 [![Commit Activity](https://img.shields.io/github/commit-activity/w/NotCompsky/tagem)](graphs/commit-activity)
 [![Contributers](https://img.shields.io/github/contributors/NotCompsky/tagem)](graphs/contributors)
+[![Discord Chat](https://img.shields.io/discord/736649679575580814)](https://discord.gg/DnD7RJA)
 
 
 # Description
@@ -48,11 +49,11 @@ The [Reddit userscript](browser-extensions/userscripts/reddit.js) can be added t
 
 ## Back End
 
-See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
+See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md), and [ROADMAP.md](ROADMAP.md).
 
 ## Front End
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [FRONTEND.md](FRONTEND.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [FRONTEND.md](FRONTEND.md), and [ROADMAP.md](ROADMAP.md).
 
 # Background
 
