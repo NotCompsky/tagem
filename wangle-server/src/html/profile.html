@@ -1,20 +1,20 @@
 #ifdef PREPOPULATE_D_TBL_FROM_IDS
 	#define PREPOPULATE1 \
-		MINIMISED_JS_DECL_view_dirs  "([" PREPOPULATE_D_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('d');"
+		MINIMISED_JS_DECL_display_d_tbl "([" PREPOPULATE_D_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_setup_page_for_d_tbl "();"
 #else
 	#define PREPOPULATE1
 #endif
 
 #ifdef PREPOPULATE_T_TBL_FROM_IDS
 	#define PREPOPULATE2 \
-		MINIMISED_JS_DECL_view_tags  "([" PREPOPULATE_T_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('t');"
+		MINIMISED_JS_DECL_display_t_tbl "([" PREPOPULATE_T_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_setup_page_for_t_tbl "();"
 #else
 	#define PREPOPULATE2
 #endif
 
 #ifdef PREPOPULATE_F_TBL_FROM_IDS
 	#define PREPOPULATE3 \
-		MINIMISED_JS_DECL_view_files "([" PREPOPULATE_F_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_unhide "('f');"
+		MINIMISED_JS_DECL_display_f_tbl "([" PREPOPULATE_F_TBL_FROM_IDS "]);" MINIMISED_JS_DECL_setup_page_for_f_tbl "();"
 #else
 	#define PREPOPULATE3
 #endif
