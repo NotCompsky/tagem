@@ -247,6 +247,13 @@ function $$$setup_page_for_t_tbl(){
 	$$$get_tag_ids = $$$get_selected_tag_ids;
 }
 
+function $$$view_tags(ids){
+	$$$ajax_GET_w_JSON_response(
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/0/"+ids.join(","),
+		$$$display_t_tbl
+	);
+}
+
 
 function $$$add_tags_dialog(){
 	$$$hide_all_except(['tagselect-self-p-container','add-t-dialog']);

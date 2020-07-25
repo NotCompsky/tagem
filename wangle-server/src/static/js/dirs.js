@@ -89,6 +89,13 @@ function $$$display_d_tbl(data){
 	$$$get_tbl_body("d").innerHTML = s;
 }
 
+function $$$view_dirs(ids){
+	$$$ajax_GET_w_JSON_response(
+		"!!!MACRO!!!SERVER_ROOT_URL/a/d/id/0/"+ids.join(","),
+		$$$display_d_tbl
+	);
+}
+
 function $$$setup_page_for_d_tbl(){
 	$$$hide_all_except(['d']);
 	$$$dir_tagger_fn = $$$after_tagged_selected_dirs;

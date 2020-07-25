@@ -78,6 +78,10 @@ function $$$populate_f_table(path,params,post_data,page_n){
 	);
 }
 
+function $$$view_files(ids){
+	$$$populate_f_table("id",ids.join(","),null,0);
+}
+
 function $$$add_files_to_db(nodes){
 	if($$$dir_id===0){
 		$$$alert("Cannot add files to DB unless their directory ID is set");
