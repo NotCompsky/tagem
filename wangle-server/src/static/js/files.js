@@ -14,7 +14,7 @@ function $$$next_page(tbl_id,direction){
 function $$$display_f_tbl(datas){
 	$$$get_file_ids = $$$get_selected_file_ids;
 	let s = "";
-	const [a,data,tags] = datas;
+	const [a,data,tags] = (datas.length!==0)?datas:["0",[],{}];
 	if(a==="0"){
 		if($$$dir_id==="0"){
 			$$$alert("ERROR: Directory ID has not been set.");
