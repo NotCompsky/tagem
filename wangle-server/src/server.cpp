@@ -151,6 +151,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		return _r::not_found;
 
 
+#define WHERE_HIDDEN_TAGS__GUEST(tag_id_field) \
+	"AND " tag_id_field " NOT IN(" \
+		"SELECT id " \
+		"FROM tag2parent_tree t2pt " \
+		"JOIN user2hidden_tag u2ht ON u2ht.user=" GUEST_ID_STR " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth " \
+	")"
+
 #define WHERE_HIDDEN_TAGS(tag_id_field) \
 	"AND " tag_id_field " NOT IN(" \
 		"SELECT id " \
@@ -165,7 +172,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
 		"IFNULL(A.n,0) " \
 	"FROM tag t " \
-	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
+// 	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
 	"JOIN tag p ON p.id=t2pt.parent " \
 	"LEFT JOIN(" \
 		"SELECT tag, COUNT(*) AS n " \
@@ -2040,6 +2047,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM tag2parent "
 				"WHERE id NOT IN" USER_DISALLOWED_TAGS(user_id)
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS(user_id)
+				  WHERE_HIDDEN_TAGS("id")
+				  WHERE_HIDDEN_TAGS("parent")
 			);
 			this->itr = this->buf;
 			this->init_json(
@@ -2060,6 +2069,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"FROM tag2parent "
 				"WHERE id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
 				  "AND parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
+				  WHERE_HIDDEN_TAGS__GUEST("id")
+				  WHERE_HIDDEN_TAGS__GUEST("parent")
 			);
 			this->init_json(
 				nullptr,
