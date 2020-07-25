@@ -7,21 +7,24 @@ FROM notcompsky/tagem-compile-1 AS compile-2
 RUN git clone https://github.com/NotCompsky/libcompsky \
 	&& mkdir libcompsky/build \
 	&& cd libcompsky/build \
-	&& cmake .. -DCMAKE_BUILD_TYPE=Release \
+	&& cmake -DCMAKE_BUILD_TYPE=Release .. \
 	&& make install
-COPY . /tagem
+COPY wangle-server /tagem
+COPY utils /tagem
+COPY caffe /tagem
+COPY include /tagem
+COPY scripts /tagem
 RUN mkdir /tagem/build \
-	&& mkdir /tagem/build/server \
-	&& mkdir /tagem/build/utils \
-	&& cd /tagem/build/utils \
-	&& cmake /tagem/utils \
+	;  mkdir /tagem/build/server \
+	;  mkdir /tagem/build/utils \
+	;  cd /tagem/build/utils \
+	&& cmake -DCMAKE_BUILD_TYPE=Release /tagem/utils \
 	&& make \
 	&& cd /tagem/build/server \
 	&& cmake /tagem/wangle-server \
 	&& make \
-RUN chmod +x /tagem/wangle-server/scripts/*
-RUN apt-get install -y --no-install-recommends libcurl4-openssl-dev
-RUN mkdir /tagem/build \
+	&& chmod +x /tagem/wangle-server/scripts/* \
+	&& apt-get install -y --no-install-recommends libcurl4-openssl-dev \
 	&& cd /tagem/build \
 	&& cmake /tagem/wangle-server -DWHICH_MYSQL_CLIENT=mysqlclient -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so -DCMAKE_BUILD_TYPE=Release -Dwangle_DIR=/bob-the-builder/wangle/ -Dfolly_DIR=/bob-the-builder/folly/ -Dfizz_DIR=/bob-the-builder/fizz/ \
 	&& make server
@@ -40,7 +43,7 @@ RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
 EXPOSE 80
 CMD if [ "$TAGEM_MYSQL_CFG" = "" ]; then \
 		if [ -f /tagem-auth.cfg ]; then \
-			TAGEM_MYSQL_CFG=/tagem-auth.cfg \
+			export TAGEM_MYSQL_CFG=/tagem-auth.cfg \
 		else \
 			/tagem-init \
 		fi \
