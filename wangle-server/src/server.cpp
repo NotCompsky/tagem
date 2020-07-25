@@ -198,8 +198,8 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define TAGS_INFOS__WTH_DUMMY_WHERE_THING(...) \
 	/* See NOTE #dkgja */ \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
-	"AND t.id>0 " \
 	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	"AND t.id>0 " \
 	"GROUP BY t.id "
 
 
