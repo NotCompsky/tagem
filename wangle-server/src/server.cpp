@@ -172,7 +172,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) DESC LIMIT 1)," \
 		"IFNULL(A.n,0) " \
 	"FROM tag t " \
-// 	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
+ 	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
 	"JOIN tag p ON p.id=t2pt.parent " \
 	"LEFT JOIN(" \
 		"SELECT tag, COUNT(*) AS n " \
