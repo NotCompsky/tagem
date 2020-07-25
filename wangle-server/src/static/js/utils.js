@@ -10,7 +10,8 @@ function $$$init_selects(var_name){
 	let s = "";
 	const col = $$$tbl2namecol[var_name];
 	$($$$tbl2selector[var_name]).select2({
-		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
+		placeholder: $$$nickname2fullname(var_name) + (($$$use_regex)?" regexp":""),
+		allowClear:true,
 		ajax:{
 			transport: function (params, success, failure){
 				let arr = Object.entries($$$window[var_name]); // WARNING: I don't see why there aren't scope issues
@@ -38,7 +39,8 @@ function $$$init_selects__ajax(var_name){
 	const col = $$$tbl2namecol[var_name];
 	$($$$tbl2selector[var_name]).select2({
 		minimumInputLength:1,
-		placeholder: $$$nickname2fullname[var_name] + ($$$use_regex)?" regexp":"",
+		placeholder: $$$nickname2fullname(var_name) + (($$$use_regex)?" regexp":""),
+		allowClear:true,
 		ajax:{
 			url: !!!MACRO!!!SELECT2_URL_ENDPOINT,
 			// Basically "!!!MACRO!!!SERVER_ROOT_URL/a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.

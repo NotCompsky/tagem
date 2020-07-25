@@ -19,6 +19,8 @@ function $$$nickname2fullname(obj_type){
 			return 'device';
 		case 'P':
 			return 'protocol';
+		case 't':
+			return 'tag';
 	}
 }
 
