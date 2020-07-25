@@ -86,7 +86,7 @@ function $$$display_d_tbl(data){
 			s += "<div class='td'>" + tag_ids + "</div>";
 		s += "</div>";
 	}
-	tbl.innerHTML = s;
+	$$$get_tbl_body("d").innerHTML = s;
 	$$$column_id2name(data[1],"d",'$$$view_tag', 3);
 }
 
