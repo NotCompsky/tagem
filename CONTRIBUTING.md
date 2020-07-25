@@ -22,13 +22,21 @@ Plain text logs are preferred to screenshots.
 
 ### Maintainability
 
+#### Deduplication
+
 Deduplicate code where possible. Compile-time deduplication (preferably through metaprogramming, although short macros are also usually acceptable) is preferred when there is a risk of significant runtime performance degredation.
 
 In particular, if you need to extract information from a string in a particular way, for instance counting the number of instances of a character in that string, prefer to create a separate function for that in a utils header file, and call that function where it is needed.
 
+In the commit history you'll notice a lot of instances of "Tidy: Deduplicate code", where there is no net loss in lines of code. In fact, some of these appear to make the code *more complex*. Many of these commits are specifically deduplicating SQL code, introducing a slight overhead (in terms of compile-time and reading comprehension) of C++ templates in order to increase the maintainability of the SQL code (which is more important, as it has by far the biggest performance implications and is not checked by the compiler).
+
+#### Dependencies
+
 Minimise the dependencies added to the project (without sacrificing features), although dependencies added to the developer pipeline probably are't a big deal.
 
 For instance, do not use the `{fmt}` aka `std::fmt` library, use [libcompsky](https://github.com/NotCompsky/libcompsky)::asciify, unless the latter cannot do what is desired (in which case you should file a feature request under that project).
+
+#### Readability
 
 Try to use readable JavaScript, not complex one-liners. This is partly because the code generator parser has a limited range of syntax it recognises.
 
