@@ -1,8 +1,10 @@
-# Docker Installation on Single Machine
+# Docker Installation
 
 ## Description
 
-This sets up both the web server and the MySQL server on a docker container on the machine these commands are being executed on.
+This sets up both the web server on a docker container on the machine these commands are being executed on.
+
+Note that the docker image does not also host the MySQL/MariaDB server, as the web server updates far more frequently than the database.
 
 ## Installation
 
@@ -15,38 +17,7 @@ The first time the server is run, a utility will run which requires some manual 
 The options you should use are:
 
 * Absolute path to save the config file to: `/tagem-auth.cfg`
-* Host: `localhost`
-* Socket file path: `/var/run/mysqld/mysqld.sock`
-* Username: **This option is up to you**
-* Password: **This option is up to you**
-* Database name: `tagem`
-* MySQL Server port number: **Leave blank**
-* MySQL admin username: `root`
-* MySQL admin password: **Leave blank**
-
-## Run
-
-    docker run -p 80:80 [[OPTIONS]] notcompsky/tagem
-
-where `[[OPTIONS]]` is a list of directories you want the server to be able to access, e.g. `-v /path/to/directory`
-
-
-# Docker Installation using Remote Database
-
-This sets up the web server on a docker container on a different machine to the database.
-
-## Installation
-
-Same as for the [Basic Docker Installation](#Docker%20Installation%20on%20Single%20Machine)
-
-## Configuration
-
-The first time the server is run, a utility will run which requires some manual input to set up the MySQL server.
-
-The options you should use are:
-
-* Absolute path to save the config file to: `/tagem-auth.cfg`
-* Host: **Domain name or IP address of the MySQL/MariaDB server machine**
+* Host: **Domain name or IP address of the MySQL/MariaDB server machine. Even if the MySQL server is on the same machine as the docker container, it will NOT be localhost unless you run the docker container with `--network="host"` - instead, it would be the loopback address.**
 * Socket file path: **Leave blank**
 * Username: **This option is up to you**
 * Password: **This option is up to you**
