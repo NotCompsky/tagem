@@ -27,7 +27,9 @@ function $$$display_f_tbl(datas){
 		if(era_end!==0){
 			// era_end should be >= era_start, so era_end===0 implies era_start===0 too
 			duration = era_end - era_start;
-			era = "@" + era_start + "-" + era_end;
+			era = "@" + era_start;
+			if (era_end !== 0)
+				era += "-" + era_end;
 		}
 		s += "<div class='tr' data-id='" + id + "' data-era='" + era + "'>";
 			s += '<div class="td thumbnail" onclick="$$$view_file(this.parentNode.dataset.id+this.parentNode.dataset.era)">';
