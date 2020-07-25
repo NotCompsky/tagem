@@ -31,7 +31,11 @@ At this point, the configuration file has been writte, but the database has not 
 
 ## Run
 
-Same as for the [Basic Docker Installation](#Docker%20Installation%20on%20Single%20Machine)
+	docker run -p 80:80 [[OPTIONS]] notcompsky/tagem
+
+where `[[OPTIONS]]` is a list of directories you want the server to be able to access, e.g. `-v /path/to/directory`
+
+**The first time it is run, the `--interactive` option should be used**.
 
 
 # Bare Metal Install with Shared Libraries
