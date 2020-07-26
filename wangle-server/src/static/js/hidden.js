@@ -45,6 +45,7 @@ function $$$hide_all_except(ids,classes){
 		'admin-dashboard',
 		'text-editor',
 		'text-edit',
+		'add-f-backup-ytdl-container',
 		'add-f-backup-toggle-container',
 		'add-f-backup',
 		'f',
