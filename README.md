@@ -1,4 +1,4 @@
-<img src="favicon.svg" align="right"/>
+<img src="https://user-images.githubusercontent.com/30552567/88488637-77c22180-cf86-11ea-955a-484d6ca08b27.png" align="right"/>
 
 # tagem
 
