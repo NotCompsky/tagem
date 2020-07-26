@@ -8,35 +8,11 @@ CREATE TABLE IF NOT EXISTS user (
 	exec_unsafe_tasks BOOLEAN NOT NULL DEFAULT FALSE,
 	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
-INSERT INTO user
-(id,name)
-VALUES
-(1,"Guest"), -- Necessary user (name does not matter)
-(2,"Admin"),
-(99,"Invalid")
-ON DUPLICATE KEY UPDATE id=id;
-UPDATE user SET id=0 WHERE name="Invalid";
-
-UPDATE user
-SET
-	exec_safe_sql_cmds=TRUE,
-	exec_unsafe_sql_cmds=TRUE,
-	exec_safe_tasks=TRUE,
-	exec_unsafe_tasks=TRUE
-WHERE name="Admin"
-;
 
 CREATE TABLE IF NOT EXISTS protocol (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(16) NOT NULL UNIQUE KEY
 );
-INSERT INTO protocol (id, name) VALUES
-(0, "NONE!"),
-(1, "file://"),
-(2, "http://"),
-(3, "https://"),
-(4, "youtube-dl")
-ON DUPLICATE KEY UPDATE id=id;
 
 CREATE TABLE IF NOT EXISTS device (
 	-- Storage device - such as a hard drive, or a website (a remote storage device)
@@ -50,18 +26,7 @@ CREATE TABLE IF NOT EXISTS device (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (protocol) REFERENCES protocol (id)
 );
-INSERT INTO device (name,permissions,protocol,embed_pre,embed_post) VALUES
-("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
-("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>')
-ON DUPLICATE KEY UPDATE name=name;
--- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
 
-INSERT INTO device (name, protocol) VALUES
-("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
-("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
-("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
-("https://github.com/", (SELECT id FROM protocol WHERE name="https://"))
-ON DUPLICATE KEY UPDATE protocol=protocol;
 
 CREATE TABLE IF NOT EXISTS dir (
 	id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -111,52 +76,13 @@ CREATE TABLE IF NOT EXISTS mimetype (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
 	name VARBINARY(32) NOT NULL UNIQUE KEY
 );
-SET @i := -1;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"!!NONE!!") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/aac") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/bmp") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/css") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/csv") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/gif") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/html") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/jpeg") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"textjavascript") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"application/json") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/mpeg") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/mpeg") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/ogg") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/ogg") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/opus") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/png") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/tiff") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"text/plain") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/wav") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"audio/webm") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/webm") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"image/webp") ON DUPLICATE KEY UPDATE id=id;
-INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi") ON DUPLICATE KEY UPDATE id=id;
+
 
 CREATE TABLE IF NOT EXISTS ext2mimetype (
 	name VARBINARY(10) NOT NULL PRIMARY KEY,
 	mimetype INT UNSIGNED NOT NULL,
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id)
 );
-INSERT INTO ext2mimetype
-(ext,mimetype)
-SELECT REGEXP_REPLACE(SUBSTRING_INDEX(name, '/', -1), '^x-', ''), id
-FROM mimetype
-WHERE SUBSTRING_INDEX(name, '/', -1) NOT IN ("plain","mpeg","webm","javascript","!!NONE!!","quicktime","x-ms-asf")
-  AND name NOT IN ("video/ogg")
-UNION
-SELECT "mp4", id FROM mimetype WHERE name='video/mpeg'
-UNION
-SELECT "mp3", id FROM mimetype WHERE name='audio/mpeg'
-UNION
-SELECT "jpg", id FROM mimetype WHERE name='image/jpeg'
-UNION
-SELECT "webm", id FROM mimetype WHERE name='video/webm'
-ON DUPLICATE KEY UPDATE mimetype=mimetype
-;
 
 
 CREATE TABLE IF NOT EXISTS file (
@@ -188,8 +114,6 @@ CREATE TABLE IF NOT EXISTS file (
     PRIMARY KEY (id)
 );
 
--- Can get dir name from full file path: SELECT SUBSTR(name, 1, LENGTH(name) - LOCATE('/',REVERSE(name))) FROM file
-
 
 CREATE TABLE IF NOT EXISTS file_backup (
 	-- WARNING: Not sure how best to deal with the fact that some remote 'files' have different options, e.g. video format
@@ -218,11 +142,7 @@ CREATE TABLE IF NOT EXISTS file2 (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
-INSERT INTO file2
-(id,min, max, conversion, name)
-VALUES
-(1,0, 100, 0, "Score")
-ON DUPLICATE KEY UPDATE id=id;
+
 
 CREATE TABLE IF NOT EXISTS user2shown_file2 (
 	user INT UNSIGNED NOT NULL,
@@ -230,11 +150,6 @@ CREATE TABLE IF NOT EXISTS user2shown_file2 (
 	FOREIGN KEY (file2) REFERENCES file2 (id),
 	PRIMARY KEY (user,file2)
 );
-INSERT INTO user2shown_file2
-(user,file2)
-SELECT id, 1
-FROM user
-ON DUPLICATE KEY UPDATE user=user;
 
 
 CREATE TABLE IF NOT EXISTS tag (
@@ -247,10 +162,7 @@ CREATE TABLE IF NOT EXISTS tag (
 	FOREIGN KEY (user) REFERENCES user (id),
     PRIMARY KEY (id)
 );
-INSERT INTO tag (id,name) VALUES (0,"!!ROOT TAG!!") ON DUPLICATE KEY UPDATE id=id;
-UPDATE tag SET id=0 WHERE name="!!ROOT TAG!!";
--- NOTE: Permissions are AND (each non-zero bit is another required permission)
--- NOTE: A permission of 0 allows everyone to see, since the permission mask is applied as if(f.permission & u.permission == f.permission)
+
 
 CREATE TABLE IF NOT EXISTS tag2parent (
 	tag BIGINT UNSIGNED NOT NULL,
@@ -288,6 +200,15 @@ CREATE TABLE IF NOT EXISTS user2hidden_tag (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (tag) REFERENCES tag (id),
 	PRIMARY KEY (user,tag)
+);
+
+
+CREATE TABLE IF NOT EXISTS user2whitelist_file (
+	file BIGINT UNSIGNED NOT NULL,
+	user INT UNSIGNED NOT NULL,
+	FOREIGN KEY (user) REFERENCES user (id),
+	FOREIGN KEY (file) REFERENCES file (id),
+	PRIMARY KEY (file, user)
 );
 
 
@@ -344,13 +265,7 @@ CREATE TABLE IF NOT EXISTS method (
 	UNIQUE KEY (name),
 	PRIMARY KEY (id)
 );
-INSERT IGNORE INTO method (name) VALUES
-("next_subtitle"),
-("wipe_subtitle"),
-("skip"),
-("menu"),
-("python_script")
-ON DUPLICATE KEY UPDATE name=name;
+
 
 CREATE TABLE IF NOT EXISTS era (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -454,14 +369,6 @@ CREATE TABLE IF NOT EXISTS operators (
 	UNIQUE KEY (string),
 	PRIMARY KEY (id)
 );
-INSERT INTO operators
-(id, string)
-VALUES
-(0,"AND"),
-(1,"OR"),
-(2,"XOR"),
-(3,"NOT")
-ON DUPLICATE KEY UPDATE id=id;
 
 CREATE TABLE IF NOT EXISTS file2thumbnail (
 	file BIGINT UNSIGNED NOT NULL PRIMARY KEY,
