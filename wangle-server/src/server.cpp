@@ -564,6 +564,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view parse_qry(const char* s){
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_qry")
 		SKIP_TO_BODY
 		
 		this->itr = this->buf;
@@ -635,11 +636,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view get_all_file_names_given_dir_id(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
 		
+		// TODO: Add user permissions filter
+		
 		this->mysql_query(
 			"SELECT name "
 			"FROM file "
 			"WHERE dir=", id
-			// WARNING: No security filter
 		);
 		
 		this->begin_json_response();
@@ -1101,7 +1103,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		CHECK_FOR_EXPECT_100_CONTINUE_HEADER
 		
 		GET_USER_ID
-		GREYLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("add_files")
 		SKIP_TO_BODY
 		
 		const char* const body = s;
@@ -1157,6 +1159,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("create_files")
 		
 		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
 			return _r::not_found;
@@ -1292,6 +1295,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view replace_file_path_and_set_old_path_as_backup(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, file_id)
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		SKIP_TO_BODY
 		
 		const char* const new_path__file_name = s;
@@ -1476,6 +1480,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view external_post_info(const char* s){
 		// Data comes in two parts: data excluding comments, and then comments
+		
+		// TODO: Restrict with user permissions
 		
 		GET_DB_INFO
 		++s;
@@ -2134,6 +2140,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			return _r::not_found;
 		
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("stream_files")
 		
 		this->mysql_query(
 			"SELECT m.name, CONCAT(d.full_path, f", (dir_id==0)?"":"2", ".name) "
@@ -2367,7 +2374,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_NUMBER(unsigned, max_depth)
 		GET_COMMA_SEPARATED_INTS__NULLABLE(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
-		GREYLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("record_local_fs")
 		SKIP_TO_BODY
 		
 		this->reset_buf_index();
@@ -2640,8 +2647,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip slash
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
-		
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("add_eras")
+		
+		// NOTE: The permission "link_tags" is deliberately not needed, as I think it can be useful to allow the creation of new eras with tags, while restricting more heavily the editing of existing tags.
 		
 		this->mysql_exec(
 			"INSERT INTO era"
@@ -2727,7 +2736,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view post__set_file_title(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, f_id)
 		GET_USER_ID
-		GREYLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_names")
 		SKIP_TO_BODY
 		
 		this->mysql_exec(
@@ -2761,8 +2770,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_NUMBER_NONZERO(uint64_t, orig_f_id)
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dupl_f_ids, dupl_f_ids_len, s, ' ')
 		GET_USER_ID
-		
-		// TODO: Check user against user2whitelisted_action
+		GREYLIST_USERS_WITHOUT_PERMISSION("merge_files")
 		
 		this->merge_files(user_id, orig_f_id, _f::strlen, dupl_f_ids, dupl_f_ids_len);
 		
@@ -2773,6 +2781,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
+		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		
 		--s; // Do not skip slash, as it is skipped by the following macro
 		const bool is_ytdl = (IS_STR_EQL(s, 5, "ytdl/"));
@@ -2930,6 +2939,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
 		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
 		tag_parentisation(
@@ -2948,6 +2958,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
 		this->tag_antiparentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
 		
@@ -2959,6 +2970,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
 		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
 		tag_parentisation(
@@ -2977,6 +2989,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
 		this->tag_antiparentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
 		
@@ -3030,8 +3043,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
-		
-		BLACKLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("unlink_tags")
 		
 		this->mysql_query(
 			"SELECT id "
@@ -3054,8 +3066,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
-		
-		BLACKLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
 		this->add_tag_to_era(user_id, tag_ids, tag_ids_len, "AND e.id IN(", _f::strlen, ids, ids_len, ")");
 		
@@ -3067,8 +3078,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
-		
-		BLACKLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
 		this->add_tags_to_dirs(
 			user_id,
@@ -3084,8 +3094,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
-		
-		BLACKLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
 		this->add_tags_to_files(
 			user_id,

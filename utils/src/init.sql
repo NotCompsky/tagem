@@ -2,10 +2,23 @@ R"=====(
 
 CREATE TABLE IF NOT EXISTS user (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	stream_files BOOLEAN NOT NULL DEFAULT FALSE,
+	exec_qry BOOLEAN NOT NULL DEFAULT FALSE,
 	exec_safe_sql_cmds BOOLEAN NOT NULL DEFAULT FALSE,
 	exec_unsafe_sql_cmds BOOLEAN NOT NULL DEFAULT FALSE,
 	exec_safe_tasks BOOLEAN NOT NULL DEFAULT FALSE,
 	exec_unsafe_tasks BOOLEAN NOT NULL DEFAULT FALSE,
+	edit_tasks BOOLEAN NOT NULL DEFAULT FALSE,
+	link_tags BOOLEAN NOT NULL DEFAULT FALSE,
+	unlink_tags BOOLEAN NOT NULL DEFAULT FALSE,
+	edit_tags BOOLEAN NOT NULL DEFAULT FALSE,
+	merge_files BOOLEAN NOT NULL DEFAULT FALSE,
+	backup_files BOOLEAN NOT NULL DEFAULT FALSE,
+	add_files BOOLEAN NOT NULL DEFAULT FALSE,
+	create_files BOOLEAN NOT NULL DEFAULT FALSE, -- NOTE: Distinct from add_files - this permission allows the user to create their own files, rather than have the server register and/or download files from an URL.
+	edit_names BOOLEAN NOT NULL DEFAULT FALSE,
+	add_eras BOOLEAN NOT NULL DEFAULT FALSE,
+	record_local_fs BOOLEAN NOT NULL DEFAULT FALSE,
 	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
 
