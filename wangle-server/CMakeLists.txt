@@ -71,7 +71,7 @@ set_target_properties(
 		LINK_FLAGS_RELEASE -s
 )
 target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
-target_link_libraries(server PRIVATE "${WHICH_MYSQL_CLIENT}" wangle::wangle curl)
+target_link_libraries(server PRIVATE "${WHICH_MYSQL_CLIENT}" wangle::wangle curl ffmpegthumbnailer)
 # NOTE: I should be able to simply link compsky_mysql, and have that - as an INTERFACE library - link to mysqlclient or mariadbclient, whichever is installed. However, CMake doesn't agree, and I have a limit to how much CMake I can stand without getting paid.
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")

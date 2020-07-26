@@ -210,6 +210,11 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</div>"
 
 
+
+"<div class=\"colour-picker\"></div>"
+
+
+
 "<div id=\"admin-dashboard\" class=\"hidden\">"
 	"<a onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir_dialog "()\">" SVG_NEW_DIR "</a>"
 	
@@ -218,8 +223,11 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		CREATE_TAG_SELECT_WO_BTN("tagselect-record-fs-dir")
 		"<button onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir "()\">Go (Opens Prompts)</button>"
 	"</div>"
-	
 	"</br>"
+	
+	"<a onclick=\"" MINIMISED_JS_DECL_generate_thumbs "()\">Generate thumbnails</a>"
+	"</br>"
+	
 	"<a onclick=\"" MINIMISED_JS_DECL_hide_node "(this.parentNode)\">" SVG_LOGOUT "</a>"
 "</div>"
 
@@ -501,7 +509,8 @@ R"=========(
 "<script src=\"https://code.jquery.com/jquery-3.5.0.min.js\"></script>"
 "<script src=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js\"></script>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
-"<script type=\"text/javascript\">" 
+"<script src=\"https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js\"></script>"
+"<script type=\"text/javascript\">"
 	MINIMISED_JS_ALL
 	
 	"window.addEventListener('popstate',  e => " MINIMISED_JS_DECL_load_page_from_a_hash_string "(e.state));"

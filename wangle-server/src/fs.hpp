@@ -12,3 +12,11 @@ bool is_not_file_or_dir_of_interest(const char* const name){
 		)
 	);
 }
+
+bool file_exists(const char* const path){
+	FILE* const f = fopen(path, "rb");
+	if (f == nullptr)
+		return false;
+	fclose(f);
+	return true;
+}

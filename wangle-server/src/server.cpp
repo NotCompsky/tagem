@@ -18,7 +18,7 @@
 #include "proc.hpp"
 #include "curl_utils.hpp"
 #include "fs.hpp"
-
+#include "../../utils/src/thumbnailer.hpp"
 #include "get_cookies.hpp"
 #include "read_request.hpp"
 
@@ -201,6 +201,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	WHERE_TAGS_INFOS(__VA_ARGS__) \
 	"AND t.id>0 " \
 	"GROUP BY t.id "
+
+#define GREYLIST_USERS_WITHOUT_PERMISSION(field_name) \
+	this->mysql_query("SELECT id FROM user WHERE id=", user_id, " AND " field_name); \
+	bool has_permission = false; \
+	while(this->mysql_assign_next_row(&has_permission)); \
+	if (not has_permission) \
+		return _r::unauthorised;
 
 
 typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
@@ -802,11 +809,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			
 			--count;
 			
-			MD5_CTX md5_ctx;
-			MD5_Init(&md5_ctx);
-			compsky::asciify::asciify(this->file_path, "file://", _f::esc_spaces_and_non_ascii, dir_path, _f::esc_spaces_and_non_ascii, ename, '\0');
-			MD5_Update(&md5_ctx, this->file_path, strlen(this->file_path));
-			MD5_Final(hash.data(), &md5_ctx);
+			this->md5_hash_local_file(hash.data(), dir_path, ename);
 			
 			compsky::asciify::asciify(this->file_path, dir_path, ename, '\0');
 			
@@ -3093,6 +3096,64 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			this->asciify(msg.data()[i]);
 		}
 		*this->itr = 0;
+	}
+	
+	void md5_hash(uint8_t* const hash,  const char* const string,  const size_t string_len){
+		MD5_CTX md5_ctx;
+		MD5_Init(&md5_ctx);
+		MD5_Update(&md5_ctx, string, string_len);
+		MD5_Final(hash, &md5_ctx);
+	}
+	
+	void md5_hash(uint8_t* const hash,  const char* const string){
+		this->md5_hash(hash, string, strlen(string));
+	}
+	
+	void md5_hash_local_file(uint8_t* const hash,  const char* const dir,  const char* const file){
+		compsky::asciify::asciify(this->file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file, '\0');
+		this->md5_hash(hash, this->file_path);
+	}
+	
+	std::string_view generate_thumbnails(const char* s){
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
+		
+		char* const thumbnail_filepath = this->itr;
+		this->asciify(CACHE_DIR);
+		char* const thumbnail_filename = this->itr;
+		for (const uint64_t device : connected_local_devices){
+			this->mysql_query_after_itr(
+				"SELECT "
+					"f.id,"
+					"d.full_path,"
+					"f.name "
+				"FROM file f "
+				"JOIN dir d ON d.id=f.dir "
+				"JOIN mimetype mt ON mt.id=f.mimetype "
+				"WHERE device=", device, " "
+				  "AND mt.name REGEXP '^(image|video)/'"
+			);
+			const char* fid;
+			const char* dir;
+			const char* file;
+			while(this->mysql_assign_next_row(&fid, &dir, &file)){
+				std::array<uint8_t, 16> hash;
+				this->md5_hash_local_file(hash.data(), dir, file);
+				char* thumbnail_filename_itr = thumbnail_filename;
+				compsky::asciify::asciify(thumbnail_filename_itr, _f::lower_case, _f::hex, hash, ".png", '\0');
+				if (file_exists(thumbnail_filepath))
+					continue;
+				compsky::asciify::asciify(this->file_path, dir, file, '\0');
+				try {
+					generate_thumbnail(this->file_path, thumbnail_filepath);
+					printf("Generated thumbnail\n\tFile: %s\n\tThumb: %s\n", this->file_path, thumbnail_filepath);
+				} catch(std::exception& e){
+					fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError:%s\n",  input_path,  e.what());
+				}
+			}
+		}
+		
+		return _r::post_ok; // NOTE: this is likely to have timed out already on the client's side
 	}
   public:
 	RTaggerHandler()

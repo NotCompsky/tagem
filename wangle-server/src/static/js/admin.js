@@ -26,3 +26,7 @@ function $$$recursively_record_filesystem_dir(){
 		}
 	);
 }
+
+function $$$generate_thumbs(){
+	$$$ajax_POST_w_text_response_generic_success("/gen-thumbs/");
+}
