@@ -1755,7 +1755,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 						"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 						JOIN_FILE_THUMBNAIL
 						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
-						join_args...,
+						join_args..., " "
 						"WHERE TRUE "
 						FILE_TBL_USER_PERMISSION_FILTER(user_id)
 						WHERE_HIDDEN_TAGS("f2t.tag"),
