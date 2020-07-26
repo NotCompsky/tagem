@@ -35,6 +35,9 @@ function $$$on_document_ready(){
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dislikes',true);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fps',true);
 	
+	$$$set_css_colour("fg",$$$get_cookie("css_colour_fg"));
+	$$$set_css_colour("bg",$$$get_cookie("css_colour_bg"));
+	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
 		const val2 = $$$get_cookie(key);
 		$$$set_user_setting_as(key,((val2===undefined)?val:val2));
@@ -55,4 +58,7 @@ function $$$on_document_ready(){
 		node.addEventListener('focusout', $$$add_key_intercepts);
 	}
 	$$$add_key_intercepts();
+	
+	for(node of $$$document_getElementsByClassName('css-colour-picker'))
+		node.addEventListener("change",$$$on_css_colour_picker_change);
 }

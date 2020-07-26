@@ -16,13 +16,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 body {
   font-family: "Source Sans Pro", sans-serif;
-  background-color: #373e57;
+  background-color:#000;
   color: #ccc8db;
 }
 
 #content{
   left:0px;
-  background-color: #151728;
   display: flex;
   max-width:100%;
   height:100%;
@@ -35,13 +34,11 @@ body {
   border-right: 1px solid #272a3a;
   display: flex;
   flex-direction: column;
-  background-color: #151728;
   overflow: auto;
 }
 
 #right-side {
   width: 280px;
-  background-color: #151728;
   display: flex;
   flex-direction: column;
 }
@@ -146,7 +143,6 @@ body {
 
 #qry-bar{
   height: 60px;
-  background-color: #151728;
   z-index: 3;
   position: relative;
 }
@@ -168,7 +164,6 @@ body {
 #main-container{
   flex-grow: 1;
   overflow: auto;
-  background-color: #24273b;
 }
 
 #profile{
@@ -180,7 +175,6 @@ body {
   position: absolute;
   bottom: 0;
   padding-left:190px;
-  background: #151728;
   width: 100%;
 }
 
@@ -212,11 +206,6 @@ body {
   color: #fff;
   font-weight: 600;
   -webkit-text-stroke:1px black;
-}
-
-.box {
-  background-color: #151728;
-  border-radius: 4px;
 }
 
 .user {
@@ -264,7 +253,6 @@ body {
   align-items: center;
   position: sticky;
   top: 0;
-  background-color: #151728;
   z-index: 3;
   flex-shrink: 0;
 }

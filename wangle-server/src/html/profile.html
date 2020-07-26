@@ -47,6 +47,8 @@
 	"<style>"
 		// This stylesheet exists only to set the thumbnail dimensions dynamically though JavaScript
 		".thumbnail img{max-width:256px; max-height:256px;}"
+		".fg{background-color:#2A3845;}"
+		".bg{background-color:#08141F;}"
 	"</style>"
 	"<meta charset=\"utf-8\"/>"
 	
@@ -73,12 +75,13 @@
 		#include "../static/css/table_as_table.css"
 	"</style>"
 	"<link href=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css\" rel=\"stylesheet\" />"
+	"<link href=\"https://bgrins.github.com/spectrum/spectrum.css\" rel=\"stylesheet\"/>"
 "</head>"
 "<body>"
 
 R"=========(
-<div id="content">
-  <div id="left-side">
+<div id="content" class="bg">
+  <div id="left-side" class="bg">
     <div class="side-wrapper">
       <div class="side-title">SITEMAP</div>
       <div class="side-menu">
@@ -117,10 +120,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     </a>
   </div>
   <div class="main">
-    <div id="qry-bar">
+    <div id="qry-bar" class="bg">
       <input id="qry" type="text" placeholder="Search"/>
     </div>
-    <div id="main-container">
+    <div id="main-container" class="fg">
       <div id="profile">
         <div class="profile-avatar">
 )========="
@@ -136,7 +139,7 @@ R"=========(
 #define CREATE_MENU_ITEM(r, data, elem) \
 	"<a onclick=\"" BOOST_PP_TUPLE_ELEM(0, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</a>"
 
-		"<div id=\"profile-menu\">"
+		"<div id=\"profile-menu\" class=\"bg\">"
 BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	(MINIMISED_JS_DECL_toggle "('left-side')", SVG_TRIANGLE_LEFT)\
 	(MINIMISED_JS_DECL_view_dir "()", SVG_DIR)\
@@ -167,6 +170,14 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 #define CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL(name) \
 	CREATE_USER_SETTINGS_OPTION1("File Table: Hide " name " column?", "tbl_f_hide_col_" name, MINIMISED_JS_DECL_set_tbl_f_hide_col, name)
 
+#define CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER(name) \
+	"<tr>" \
+		"<td>" name "</td>" \
+		"<td>" \
+			"<input type=\"color\" class=\"css-colour-picker\" data-for=\"" name "\"/>"
+		"</td>" \
+	"</tr>"
+
 "<div id=\"my-settings\" class=\"hidden\">"
 	"<table>"
 		"<tr>"
@@ -191,6 +202,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("likes")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("dislikes")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("fps")
+		
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("fg")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("bg")
 	"</table>"
 "</div>"
 
@@ -208,11 +222,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(BOOST_PP_TUPLE_ELEM(0, elem)) \
 		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
 	"</div>"
-
-
-
-"<div class=\"colour-picker\"></div>"
-
 
 
 "<div id=\"admin-dashboard\" class=\"hidden\">"
@@ -482,8 +491,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 R"=========(
     </div>
   </div>
-  <div id="right-side">
-    <div class="account">
+  <div id="right-side" class="bg">
+    <div class="account bg">
       <span class="account-user"><p id="username"></p>
 )========="
 		SVG_USER
@@ -509,7 +518,7 @@ R"=========(
 "<script src=\"https://code.jquery.com/jquery-3.5.0.min.js\"></script>"
 "<script src=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js\"></script>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
-"<script src=\"https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js\"></script>"
+"<script src=\"https://bgrins.github.com/spectrum/spectrum.js\"></script>"
 "<script type=\"text/javascript\">"
 	MINIMISED_JS_ALL
 	

@@ -45,6 +45,9 @@
 # include <openssl/md5.h>
 #endif
 
+#define cimg_display 0
+#include <CImg.h>
+
 /*
  * The following initial contents of YTDL_FORMAT are copyright TheFrenchGhostys (https://gitlab.com/TheFrenchGhosty)
  * Modified content from https://gitlab.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
@@ -3126,7 +3129,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"SELECT "
 					"f.id,"
 					"d.full_path,"
-					"f.name "
+					"f.name,"
+					"(mt.name REGEXP '^video/')"
 				"FROM file f "
 				"JOIN dir d ON d.id=f.dir "
 				"JOIN mimetype mt ON mt.id=f.mimetype "
@@ -3136,20 +3140,61 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			const char* fid;
 			const char* dir;
 			const char* file;
-			while(this->mysql_assign_next_row(&fid, &dir, &file)){
+			bool is_video;
+			while(this->mysql_assign_next_row(&fid, &dir, &file, &is_video)){
 				std::array<uint8_t, 16> hash;
 				this->md5_hash_local_file(hash.data(), dir, file);
 				char* thumbnail_filename_itr = thumbnail_filename;
 				compsky::asciify::asciify(thumbnail_filename_itr, _f::lower_case, _f::hex, hash, ".png", '\0');
+				
+				char* const _buf = thumbnail_filename_itr;
+				compsky::asciify::asciify(thumbnail_filename_itr,
+					"UPDATE file "
+					"SET md5_of_path=\""
+				);
+				for (auto i = 0;  i < 16;  ++i){
+					char c = static_cast<char>(hash.at(i));
+					if ((c == 0) or (c == '\\') or (c == '"'))
+						compsky::asciify::asciify(thumbnail_filename_itr, '\\');
+					if (c == 0)
+						c = '0';
+					compsky::asciify::asciify(thumbnail_filename_itr, c);
+				}
+				compsky::asciify::asciify(thumbnail_filename_itr, "\" WHERE id=", fid);
+				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
+				
 				if (file_exists(thumbnail_filepath))
 					continue;
 				compsky::asciify::asciify(this->file_path, dir, file, '\0');
-				try {
-					generate_thumbnail(this->file_path, thumbnail_filepath);
-					printf("Generated thumbnail\n\tFile: %s\n\tThumb: %s\n", this->file_path, thumbnail_filepath);
-				} catch(std::exception& e){
-					fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError:%s\n",  input_path,  e.what());
+				
+				if (is_video){
+					try {
+						generate_thumbnail(this->file_path, thumbnail_filepath);
+						printf("Generated video thumbnail: %s\n", this->file_path, thumbnail_filepath);
+					} catch(std::exception& e){
+						fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError:%s\n",  this->file_path,  e.what());
+					}
+					continue;
 				}
+				
+				static cimg_library::CImg<unsigned char> img; // WARNING: Might get errors with other kinds of colour spaces
+				try {
+					img.load(this->file_path);
+				} catch(std::exception& e){
+					fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError: %s\n",  this->file_path,  e.what());
+					continue;
+				}
+				const unsigned int w = (img.width() >= img.height())
+					? 256
+					: ((img.width() * 256) / img.height())
+				;
+				const unsigned int h = (img.width() >= img.height())
+					? ((img.height() * 256) / img.width())
+					: 256
+				;
+				img.resize(w, h);
+				img.save(thumbnail_filepath);
+				printf("Generated image thumbnail: %s\n", thumbnail_filepath);
 			}
 		}
 		
