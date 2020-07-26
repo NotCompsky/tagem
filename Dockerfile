@@ -3,13 +3,10 @@
 
 FROM notcompsky/tagem-compile-1 AS compile-2
 WORKDIR /tagem
-COPY wangle-server /tagem/wangle-server
-COPY utils /tagem/utils
-COPY caffe /tagem/caffe
-COPY include /tagem/include
-COPY scripts /tagem/scripts
+COPY wangle-server utils caffe include scripts /tagem/
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
-RUN git clone https://github.com/NotCompsky/libcompsky \
+RUN apt install -y --no-install-recommends libffmpegthumbnailer-dev cimg-dev \
+	&& git clone https://github.com/NotCompsky/libcompsky \
 	&& mkdir libcompsky/build \
 	&& cd libcompsky/build \
 	&& cmake -DCMAKE_BUILD_TYPE=Release .. \
