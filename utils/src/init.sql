@@ -2,6 +2,10 @@ R"=====(
 
 CREATE TABLE IF NOT EXISTS user (
 	id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	exec_safe_sql_cmds BOOLEAN NOT NULL DEFAULT FALSE,
+	exec_unsafe_sql_cmds BOOLEAN NOT NULL DEFAULT FALSE,
+	exec_safe_tasks BOOLEAN NOT NULL DEFAULT FALSE,
+	exec_unsafe_tasks BOOLEAN NOT NULL DEFAULT FALSE,
 	name VARBINARY(100) NOT NULL UNIQUE KEY
 );
 INSERT INTO user
@@ -12,6 +16,15 @@ VALUES
 (99,"Invalid")
 ON DUPLICATE KEY UPDATE id=id;
 UPDATE user SET id=0 WHERE name="Invalid";
+
+UPDATE user
+SET
+	exec_safe_sql_cmds=TRUE,
+	exec_unsafe_sql_cmds=TRUE,
+	exec_safe_tasks=TRUE,
+	exec_unsafe_tasks=TRUE
+WHERE name="Admin"
+;
 
 CREATE TABLE IF NOT EXISTS protocol (
 	id INT UNSIGNED NOT NULL PRIMARY KEY,
