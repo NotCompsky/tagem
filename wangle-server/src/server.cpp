@@ -2051,11 +2051,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view get_protocol_json(const char* s){
-		this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
-		
 		std::unique_lock lock(_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
+			this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
 			this->init_json(
 				nullptr,
 				_r::flag::dict,
