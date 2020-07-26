@@ -147,3 +147,5 @@ GET /a/select2/regex/t?q=>
 
 GET /users >
 	return this->get_user_json(++str)
+POST /user/permission/>
+	return this->post__update_user_permission(++str)

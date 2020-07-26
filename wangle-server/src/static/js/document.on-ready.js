@@ -8,6 +8,7 @@ function $$$on_document_ready(){
 	$$$init_selects__ajax('d');
 	$$$init_selects__ajax('t');
 	$$$init_selects('$$$users_dict');
+	$($$$document.body).on("change","#select-user-for-edit",$$$load_user_for_edit);
 	
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
 	let node = document.createElement('script');

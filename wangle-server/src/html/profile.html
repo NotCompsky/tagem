@@ -246,12 +246,42 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 			"<div class=\"thead\">"
 				"<div class=\"tr\">"
 					"<div class=\"td th\">"
-						Permission
+						"Permission"
 					"</div>"
 					"<div class=\"td th\">"
-						Granted?
+						"Granted?"
 					"</div>"
 				"</div>"
+			"</div>"
+			"<div class=\"tbody\">"
+			#define CREATE_USER_PERMISSIONS_TBL_ROW(data, _, permission_name) \
+				"<div class='tr'>" \
+					"<div class='td'>" permission_name "</div>" \
+					"<div class='td'></div>" \
+					"<div class='td'><a onclick=\"" MINIMISED_JS_DECL_edit_permission_value "(this)\">" SVG_EDIT "</a></div>" \
+				"</div>"
+			BOOST_PP_SEQ_FOR_EACH(
+				CREATE_USER_PERMISSIONS_TBL_ROW,
+				_,
+				("stream_files")
+				("exec_qry")
+				("exec_safe_sql_cmds")
+				("exec_unsafe_sql_cmds")
+				("exec_safe_tasks")
+				("exec_unsafe_tasks")
+				("edit_tasks")
+				("link_tags")
+				("unlink_tags")
+				("edit_tags")
+				("merge_files")
+				("backup_files")
+				("add_files")
+				("create_files")
+				("edit_names")
+				("add_eras")
+				("record_local_fs")
+				("edit_users")
+			)
 			"</div>"
 		"</div>"
 	"</div>"

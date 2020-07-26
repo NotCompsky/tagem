@@ -2068,60 +2068,65 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view get_user_json(const char* s){
+		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
 		
 		this->mysql_query_buf(
 			"SELECT "
 				"id,"
 				"name,"
-				"stream_files,"
-				"exec_qry,"
-				"exec_safe_sql_cmds,"
-				"exec_unsafe_sql_cmds,"
-				"exec_safe_tasks,"
-				"exec_unsafe_tasks,"
-				"edit_tasks,"
-				"link_tags,"
-				"unlink_tags,"
-				"edit_tags,"
-				"merge_files,"
-				"backup_files,"
-				"add_files,"
-				"create_files,"
-				"edit_names,"
-				"add_eras,"
-				"record_local_fs,"
-				"edit_users "
+				"CONCAT_WS("
+					"\",\","
+					"stream_files,"
+					"exec_qry,"
+					"exec_safe_sql_cmds,"
+					"exec_unsafe_sql_cmds,"
+					"exec_safe_tasks,"
+					"exec_unsafe_tasks,"
+					"edit_tasks,"
+					"link_tags,"
+					"unlink_tags,"
+					"edit_tags,"
+					"merge_files,"
+					"backup_files,"
+					"add_files,"
+					"create_files,"
+					"edit_names,"
+					"add_eras,"
+					"record_local_fs,"
+					"edit_users"
+				")"
 			"FROM user"
 		);
 		this->reset_buf_index();
-		this->begin_json_response(this->itr);
 		this->init_json(
 			&this->itr,
 			_r::flag::dict,
 			nullptr,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote,
-			_r::flag::no_quote
+			_r::flag::quote_no_escape // boolean permission values as integer CSV
 		);
-		return _r::protocol_json;
+		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view post__update_user_permission(const char* s){
+		GET_NUMBER(bool,editing_user_of_id)
+		GET_NUMBER(bool,new_value)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
+		SKIP_TO_BODY
+		
+		const char* const field_name = s;
+		// WARNING: field_name is not verified
+		
+		this->mysql_exec(
+			"UPDATE user "
+			"SET ", field_name, "=", new_value?'1':'0', " "
+			"WHERE id=", editing_user_of_id
+		);
+		
+		return _r::post_ok;
 	}
 	
 	std::string_view get_tag2parent_json(const char* s){
@@ -2837,7 +2842,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
-		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		
 		--s; // Do not skip slash, as it is skipped by the following macro
 		const bool is_ytdl = (IS_STR_EQL(s, 5, "ytdl/"));
@@ -2848,6 +2852,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const char* const user_headers = s;
 		
 		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
