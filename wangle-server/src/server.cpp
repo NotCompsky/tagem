@@ -1605,6 +1605,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"ORDER BY FIELD(e.id,", ids_args..., ")",
 			"SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args...
 		);
+		
+		this->asciify_file_info(itr);
 	}
 	
 	template<typename... Args>
