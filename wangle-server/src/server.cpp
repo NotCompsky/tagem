@@ -2028,6 +2028,22 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::post_ok;
 	}
 	
+	std::string_view edit_task(const char* s){
+		const unsigned task_id = a2n<unsigned>(s);
+		
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tasks")
+		SKIP_TO_BODY
+		
+		this->mysql_query(
+			"UPDATE task "
+			"SET content=\"", _f::esc, '"', s, "\" "
+			"WHERE id=", task_id
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view get_protocol_json(const char* s){
 		this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
 		
