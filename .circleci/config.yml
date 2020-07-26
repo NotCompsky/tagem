@@ -10,7 +10,10 @@ jobs:
 
       - run:
           name: apt install extras
-          command: apt install -y --no-install-recommends libffmpegthumbnailer-dev cimg-dev
+          command: apt install -y --no-install-recommends libffmpegthumbnailer-dev
+      = run:
+          name: Get CImg header without installing dependencies, because the dependencies are broken
+          command: curl -s https://raw.githubusercontent.com/dtschump/CImg/master/CImg.h > /usr/include
 
 
       - run:
