@@ -94,6 +94,8 @@ function $$$remove_playlist_event_listener(x,e,fn){
 
 function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	const [_dir_name, _device_id] = $$$d[(_dir_id === "") ? $$$dir_id : _dir_id];
+	$$$unhide_class('file-era');
+	$$$unhide('tagselect-eras-container');
 	if(_device_id === $$$YOUTUBE_DEVICE_ID){
 		$$$active_media = $$$yt_player;
 		return $$$view_yt_video(_file_name);
@@ -184,7 +186,11 @@ function $$$assign_value_to_file(){
 
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','tagselect-eras-container','descr'],['file-meta']);
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','descr'],['file-meta']);
+	if($$$autoplay())
+		$$$unhide('tagselect-eras-container');
+	else
+		$$$hide_class('file-era');
 	if($$$is_playlist_running())
 		$$$unhide('next-f-in-playlist');
 	$$$unhide_playlist_repeatness_node();

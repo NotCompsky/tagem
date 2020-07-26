@@ -298,7 +298,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</div>"
 	
 	"<br/>"
-	"<button id=\"add-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
+	"<button id=\"add-era\" class=\"file-era\" onclick=\"" MINIMISED_JS_DECL_set_era_vertex "()\">+Era</button>"
 	ADD_TOGGLE("autoplay","Autoplay")
 	"<button id=\"next-f-in-playlist\" onclick=\"" MINIMISED_JS_DECL_playlist_listener "()\">Next</button>"
 	"<a class=\"repeatness\" onclick=\"" MINIMISED_JS_DECL_playlist_repeat_all  "()\">" SVG_REPEAT_NONE "</a>"
@@ -391,7 +391,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE__ADD_TO_DB__DIALOG, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ
 	"<a onclick=\"" MINIMISED_JS_DECL_backup_files "()\">Send backup request</a>"
 "</div>"
 
-"<table id=\"eras-info\" class=\"file-meta\">"
+"<table id=\"eras-info\" class=\"file-era file-meta\">"
 	"<thead>"
 		"<tr>"
 			"<th>ID</th>"
