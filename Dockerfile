@@ -6,14 +6,12 @@ WORKDIR /tagem
 COPY . /tagem
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
 RUN apt install -y --no-install-recommends libffmpegthumbnailer-dev \
-	&& curl -s https://raw.githubusercontent.com/dtschump/CImg/master/CImg.h > /usr/include \
+	&& curl -s https://raw.githubusercontent.com/dtschump/CImg/master/CImg.h > /usr/include/CImg.h \
 	&& git clone https://github.com/NotCompsky/libcompsky \
 	&& mkdir libcompsky/build \
 	&& cd libcompsky/build \
 	&& cmake -DCMAKE_BUILD_TYPE=Release .. \
 	&& make install \
-	&& make \
-	&& cd /tagem \
 	&& rm -rf /tagem/build \
 	;  mkdir /tagem/build \
 	&& mkdir /tagem/build/webserver \
