@@ -17,11 +17,11 @@ function $$$set_era_vertex(){
 function $$$tag_era(){
 	if(($$$era_start===null)||($$$era_end===null))
 		return $$$alert("Error: era_start==="+era_start+" and era_end==="+era_end);
-	const _tag_ids = $('#tagselect-era').val().join(",");
+	const tags = $('#tagselect-era').select2('data');
 	$$$ajax_POST_w_text_response(
-		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+_tag_ids,
+		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+tags.map(x => x.id).join(","),
 		function(){
-			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([0,$$$era_start,$$$era_end,_tag_ids]);
+			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([0,$$$era_start,$$$era_end,tags.map(x => "<a onclick='$$$view_tag(\'" + x.id + "\')'>" + x.text + "</a>")]);
 			$$$hide_tagselect_era();
 		}
 	);
