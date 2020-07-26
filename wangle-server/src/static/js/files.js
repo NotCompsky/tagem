@@ -167,16 +167,25 @@ function $$$setup_page_for_f_tbl(){
 	$$$set_profile_name("Files");
 }
 
+function $$$toggle_dl_locally(){
+	const b = $$$document_getElementById('add-f-backup-toggle').checked;
+	for(let x of ['dirselect-container','add-f-backup-ytdl']){
+		$$$set_visibility(x,b);
+	}
+	$$$document_getElementById('add-f-backup-ytdl').checked = false;
+}
+
 function $$$toggle_file_add_backup_dialog(){
+	$$$document_getElementById('add-f-backup-toggle').checked = false;
+	$('#dirselect').val(null).trigger("change");
+	$$$hide('add-f-backup-ytdl');
 	if($$$is_visible('add-f-backup')){
 		$$$hide('add-f-backup-toggle-container');
 		$$$hide('add-f-backup');
-		$$$hide('dirselect-container');
 	} else {
 		$$$unhide('add-f-backup-toggle-container');
 		$$$unhide('add-f-backup');
-		$$$unhide('dirselect-container');
-		$$$hide('add-f-backup-url');
+		$$$unhide('add-f-backup-url');
 	}
 }
 
