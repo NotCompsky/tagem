@@ -1976,13 +1976,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	std::string_view get_exec_json(const char* s){
 		GET_USER_ID
-		GREYLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_unsafe_tasks")
 		
 		this->mysql_query(
-			"SELECT t.id, t.name, t.description, t.content "
-			"FROM task t "
-			"JOIN user2authorised_task u2t ON u2t.task=t.id "
-			"WHERE u2t.user=", user_id
+			"SELECT id, name, description, content "
+			"FROM task"
 		);
 		this->itr = this->buf;
 		this->init_json(
@@ -2001,14 +1999,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		const unsigned task_id = a2n<unsigned>(s);
 		
 		GET_USER_ID
-		BLACKLIST_GUEST
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_unsafe_tasks")
 		
 		this->mysql_query(
-			"SELECT t.content "
-			"FROM task t "
-			"JOIN user2authorised_task u2t ON u2t.task=t.id "
-			"WHERE t.id=", task_id, " "
-			  "AND u2t.user=", user_id
+			"SELECT content "
+			"FROM task "
+			"WHERE id=", task_id
 		);
 		const char* content = nullptr;
 		this->mysql_assign_next_row(&content);
