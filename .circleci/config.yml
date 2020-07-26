@@ -7,6 +7,12 @@ jobs:
     steps:
       - checkout
 
+
+      - run:
+          name: apt install extras
+          command: apt install -y --no-install-recommends libffmpegthumbnailer-dev cimg-dev
+
+
       - run:
           name: libcompsky - Download
           command: 'git clone https://github.com/NotCompsky/libcompsky'
