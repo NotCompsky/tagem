@@ -1564,7 +1564,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		
 		return
-			JoinArgsWrapper<>
+			JoinArgsWrapper<const char*>
 			::WhereArgsWrapper<const char*, uint64_t, const char*>
 			::OrderArgsWrapper<const char*>
 			::files_given_X__string_view(
@@ -1573,7 +1573,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				page_n,
 				"0,0",
 				"f.id",
-				// No JoinArgs
+				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 				"AND f.id IN(SELECT file FROM file2tag WHERE tag=", id, ")",
 				"ORDER BY NULL",
 				"SELECT DISTINCT file FROM file2tag WHERE tag=", id
@@ -1609,7 +1609,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	
 	template<typename... Args>
 	void files_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		JoinArgsWrapper<>
+		JoinArgsWrapper<const char*>
 		::WhereArgsWrapper<const char*, Args..., const char*>
 		::template OrderArgsWrapper<const char*, Args..., const char*>
 		::files_given_X(
@@ -1618,7 +1618,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			page_n,
 			"0,0",
 			"f.id",
-			// No JoinArgs
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 			"AND f.id IN(", ids_args..., ")",
 			"ORDER BY FIELD(f.id,", ids_args..., ")",
 			ids_args...
@@ -1752,7 +1752,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 							FILE_OVERVIEW_FIELDS("f.id"),
 							select_fields, " "
 						"FROM file f "
-						"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 						JOIN_FILE_THUMBNAIL
 						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
 						join_args..., " "
@@ -1791,7 +1790,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		
 		return
-			JoinArgsWrapper<>
+			JoinArgsWrapper<const char*>
 			::WhereArgsWrapper<const char*, uint64_t>
 			::OrderArgsWrapper<const char*>
 			::files_given_X__string_view(
@@ -1800,7 +1799,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				page_n,
 				"0,0",
 				"f.id",
-				// No JoinArgs
+				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 				"AND f.dir=", id,
 				"ORDER BY NULL",
 				"SELECT DISTINCT id FROM file WHERE dir=", id
