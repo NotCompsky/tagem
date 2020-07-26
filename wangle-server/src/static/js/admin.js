@@ -1,6 +1,10 @@
 function $$$toggle_admin_dashboard(){
-	if($$$logged_in())
-		$$$hide_all_except(['admin-dashboard']);
+	if(!$$$logged_in())
+		return;
+	$$$hide_all_except(['admin-dashboard']);
+	$$$ajax_GET_w_json_rexponse("/users",function(data){
+		$$$users_dict = data;
+	});
 }
 
 
@@ -29,4 +33,13 @@ function $$$recursively_record_filesystem_dir(){
 
 function $$$generate_thumbs(){
 	$$$ajax_POST_w_text_response_generic_success("/gen-thumbs/");
+}
+
+function $$$toggle_edit_user_permissions_tbl(user_id){
+	if($$$is_visible('edit-user-permissions')){
+		$$$hide('edit-user-permissions');
+		return;
+	}
+	$$$document_getElementById("edit-user-permissions-username").innerText = $$$users_dict[user_id];
+	$$$unhide('edit-user-permissions');
 }

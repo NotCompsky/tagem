@@ -2067,6 +2067,63 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::protocol_json;
 	}
 	
+	std::string_view get_user_json(const char* s){
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
+		
+		this->mysql_query_buf(
+			"SELECT "
+				"id,"
+				"name,"
+				"stream_files,"
+				"exec_qry,"
+				"exec_safe_sql_cmds,"
+				"exec_unsafe_sql_cmds,"
+				"exec_safe_tasks,"
+				"exec_unsafe_tasks,"
+				"edit_tasks,"
+				"link_tags,"
+				"unlink_tags,"
+				"edit_tags,"
+				"merge_files,"
+				"backup_files,"
+				"add_files,"
+				"create_files,"
+				"edit_names,"
+				"add_eras,"
+				"record_local_fs,"
+				"edit_users "
+			"FROM user"
+		);
+		this->reset_buf_index();
+		this->begin_json_response(this->itr);
+		this->init_json(
+			&this->itr,
+			_r::flag::dict,
+			nullptr,
+			_r::flag::quote_no_escape, // id,
+			_r::flag::quote_and_escape, // name,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote,
+			_r::flag::no_quote
+		);
+		return _r::protocol_json;
+	}
+	
 	std::string_view get_tag2parent_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){

@@ -18,7 +18,7 @@ function $$$view_tasks(){
 			}
 			$$$document_getElementById('tasks').innerHTML = _s;
 			for(const [id,name,descr,content] of data){
-				$$$document_getElementById('task-content'+id).textContent = content;
+				$$$document_getElementById('task-content'+id).innerText = content;
 			}
 		},
 		error:$$$alert_requires_login
@@ -30,5 +30,6 @@ function $$$exec_task(task_id){
 }
 
 function $$$edit_task(task_id){
-	$$$ajax_POST_data_w_text_response_generic_success("/task/edit/"+task_id,$$$document_getElementById('task-content'+task_id).textContent);
+	$$$ajax_POST_data_w_text_response_generic_success("/task/edit/"+task_id,$$$document_getElementById('task-content'+task_id).innerText);
+	// WARNING: textContent is not used because it ignores line breaks!
 }

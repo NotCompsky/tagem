@@ -7,6 +7,7 @@ function $$$on_document_ready(){
 	$$$refetch_all_jsons();
 	$$$init_selects__ajax('d');
 	$$$init_selects__ajax('t');
+	$$$init_selects('$$$users_dict');
 	
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
 	let node = document.createElement('script');

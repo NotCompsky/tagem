@@ -26,6 +26,7 @@ SET
 	create_files=TRUE,
 	edit_names=TRUE,
 	add_eras=TRUE,
-	record_local_fs=TRUE
+	record_local_fs=TRUE,
+	edit_users=TRUE
 WHERE name="Admin"
 ;
