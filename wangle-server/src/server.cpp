@@ -2547,17 +2547,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		// Add tags
 		if (which_tbl == 'd'){
-			this->mysql_exec_after_itr(
-				"INSERT INTO dir2tag "
-				"(dir, tag, user)"
-				"SELECT d.id, t.id,", user_id, " "
-				"FROM dir d "
-				"JOIN tag t "
-				"WHERE t.id IN (",  _f::strlen, tag_ids, tag_ids_len, ") "
+			this->add_tags_to_dirs(
+				user_id,
+				tag_ids, tag_ids_len,
 				  "AND d.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND d.parent=", parent_dir_id, " "
 				DIR_TBL_USER_PERMISSION_FILTER(user_id)
-				"ON DUPLICATE KEY UPDATE dir=dir"
 			);
 		} else /* if (which_tbl == 'f') */ {
 			this->add_tags_to_files(
@@ -2977,6 +2972,21 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	template<typename... Args>
+	void add_tags_to_dirs(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
+		this->mysql_exec(
+			"INSERT INTO dir2tag"
+			"(tag, dir, user)"
+			"SELECT t.id,d.id,", user_id, " "
+			"FROM tag t "
+			"JOIN dir d "
+			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  where_args..., " "
+			"ON DUPLICATE KEY UPDATE dir=dir"
+		);
+	}
+	
+	template<typename... Args>
 	void add_tags_to_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
 		this->mysql_exec(
 			"INSERT INTO file2tag"
@@ -3036,6 +3046,23 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		BLACKLIST_GUEST
 		
 		this->add_tag_to_era(user_id, tag_ids, tag_ids_len, "AND e.id IN(", _f::strlen, ids, ids_len, ")");
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__add_tags_to_dirs(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, '/')
+		++s; // Skip trailing slash
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_USER_ID
+		
+		BLACKLIST_GUEST
+		
+		this->add_tags_to_dirs(
+			user_id,
+			tag_ids, tag_ids_len,
+			"AND d.id IN(", _f::strlen, dir_ids, dir_ids_len, ")"
+		);
 		
 		return _r::post_ok;
 	}
