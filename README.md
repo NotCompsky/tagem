@@ -48,7 +48,7 @@
 
 ## Description
 
-Programs to rapidly categorise and access files, based on assignable attributes such as (heirarchical) tags, named variables, file sizes, hashes, and audio duration.
+A single page application, with associated command-line utilities, for the rapid categorising and accessing of files, based on assignable attributes such as (heirarchical) tags, named variables, file sizes, hashes, and audio duration.
 
 ## Demonstration
 
@@ -92,4 +92,4 @@ If you feel like there aren't enough blogs on the internet, [here's another](htt
 
 # License
 
-This code is [licensed under GPL-3](LICENSE).
+This code is licensed only under [the GPL-3 license](LICENSE).
