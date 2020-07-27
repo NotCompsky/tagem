@@ -13,38 +13,7 @@
 	<a href="https://discord.gg/DnD7RJA"><img src="https://img.shields.io/discord/736649679575580814"></a>
 </p>
 
-<p align="center" style="overflow:hidden;">
-	<div style="display:flex; overflow:auto;">
-		<img src="https://user-images.githubusercontent.com/30552567/88522680-a1af2e80-cfee-11ea-8301-0148374a2ddd.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488234-c7531e00-cf83-11ea-98ef-59b158392fb7.png" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488304-40527580-cf84-11ea-8e5b-8f077c13420c.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488306-40eb0c00-cf84-11ea-85a0-23902d67a3a7.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488307-4183a280-cf84-11ea-8770-dabc7dae9756.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488308-4183a280-cf84-11ea-885c-18c7652e7697.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488309-421c3900-cf84-11ea-8b8b-38d9a2b842da.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488177-8bb85400-cf83-11ea-9621-1564859653f6.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488189-98d54300-cf83-11ea-9391-34c8e8629d06.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488185-983cac80-cf83-11ea-8548-3e5d4fd8a6ff.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488191-996dd980-cf83-11ea-8bc1-79b4128819e5.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488190-996dd980-cf83-11ea-8997-406711f82bff.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488207-9e328d80-cf83-11ea-8b2d-379b4c7cd861.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488206-9e328d80-cf83-11ea-979a-b4a537bacf22.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488205-9d99f700-cf83-11ea-9e18-0d9684a4e455.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488203-9d016080-cf83-11ea-8b92-b2ffb5f23465.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488201-9d016080-cf83-11ea-93bf-a941a074536f.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488200-9c68ca00-cf83-11ea-8283-1eaafdcaf51d.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488199-9c68ca00-cf83-11ea-9c4a-93d3f17383d8.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488198-9bd03380-cf83-11ea-9e76-36dc02b38427.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488197-9b379d00-cf83-11ea-898c-ec5f4b99602a.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488196-9b379d00-cf83-11ea-949c-ddf45e9b40c5.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488195-9a9f0680-cf83-11ea-8172-b73788ae830f.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488194-9a9f0680-cf83-11ea-86e0-26045172be72.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488193-9a067000-cf83-11ea-8672-b964b7c2718f.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488184-97a41600-cf83-11ea-8d80-d02abf8aab22.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88488514-8956f980-cf85-11ea-879e-6be51b9452eb.jpg" style="flex-shrink:0;"/>
-		<img src="https://user-images.githubusercontent.com/30552567/88495546-26c82280-cfb2-11ea-9daa-3e07439c5974.jpg" style="flex-shrink:0;"/>
-	</div>
-</p>
+![screenshot](https://user-images.githubusercontent.com/30552567/88522680-a1af2e80-cfee-11ea-8301-0148374a2ddd.jpg)
 
 ## Description
 
