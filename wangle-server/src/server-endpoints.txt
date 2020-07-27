@@ -147,6 +147,8 @@ GET /a/select2/regex/t?q=>
 
 GET /users >
 	return this->get_user_json(++str)
+POST /user/+>
+	return this->post__add_user(++str)
 POST /user/permission/>
 	return this->post__update_user_permission(++str)
 POST /user/bl/t-/>

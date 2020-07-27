@@ -95,3 +95,10 @@ function $$$add_new_user_tag_blacklist_rule(){
 		$('#tagselect-useredit').val(null).trigger('change');
 	});
 }
+
+function $$$add_user(){
+	const name = $$$prompt("User name");
+	if((name===null)||(name===""))
+		return;
+	$$$ajax_POST_data_w_text_response_generic_success("/user/+",name);
+}

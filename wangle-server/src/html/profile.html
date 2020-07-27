@@ -242,6 +242,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	
 	CREATE_TAG_SELECT_WO_BTN("tagselect-useredit")
 	
+	"<a onclick=\"" MINIMISED_JS_DECL_add_user "()\">" SVG_NEW_USER "</a>"
+	
 	"<a onclick=\"" MINIMISED_JS_DECL_toggle_edit_user_thing "('edit-user-permissions')\">Edit User Permissions Table</a>"
 	"<div id=\"edit-user-permissions\" class=\"hidden\">"
 		"<div id=\"edit-user-permissions-tbl\" class=\"table\">"

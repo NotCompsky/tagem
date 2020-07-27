@@ -2127,6 +2127,25 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return this->get_buf_as_string_view();
 	}
 	
+	std::string_view post__add_user(const char* s){
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
+		SKIP_TO_BODY
+		
+		const char* const username = s;
+		
+		this->mysql_exec(
+			"INSERT INTO user"
+			"(name)"
+			"VALUES(",
+				_f::esc, '"', username,
+			")"
+			"ON DUPLICATE KEY UPDATE id=id"
+		);
+		
+		return _r::post_ok;
+	}
+	
 	std::string_view post__update_user_permission(const char* s){
 		GET_NUMBER(unsigned,editing_user_of_id)
 		GET_NUMBER(bool,new_value)
