@@ -87,15 +87,19 @@ You'll probably want to add the [scripts](scripts/) directory to your `PATH` env
 
 The [Reddit userscript](wangle-server/client/userscripts/reddit.js) can be added the usual way you add userscripts.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md).
+
 ## Development
 
 ### Back End
 
-See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md), and [ROADMAP.md](ROADMAP.md).
+See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 
 ### Front End
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [FRONTEND.md](FRONTEND.md), and [ROADMAP.md](ROADMAP.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), and [FRONTEND.md](FRONTEND.md).
 
 ## Background
 
