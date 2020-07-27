@@ -56,6 +56,10 @@
 ![add-file](https://user-images.githubusercontent.com/30552567/88488194-9a9f0680-cf83-11ea-86e0-26045172be72.jpg)
 ![add-file2](https://user-images.githubusercontent.com/30552567/88488193-9a067000-cf83-11ea-8672-b964b7c2718f.jpg)
 
+# Qry
+
+Documentation is included in the web server build. E.g. [on the demo](https://notcompsky.github.io/tagem-eg/#?foobar).
+
 # Admin Tasks
 
 ![admin-dashboard1](https://user-images.githubusercontent.com/30552567/88488184-97a41600-cf83-11ea-8d80-d02abf8aab22.jpg)

@@ -23,14 +23,11 @@ Linux    | [![Linux Build Status](http://badges.herokuapp.com/travis/NotCompsky/
 
 [![Discord Chat](https://img.shields.io/discord/736649679575580814)](https://discord.gg/DnD7RJA)
 
+![screenshot](https://user-images.githubusercontent.com/30552567/88522680-a1af2e80-cfee-11ea-8301-0148374a2ddd.jpg)
 
 ## Description
 
 Programs to rapidly categorise and access files, based on assignable attributes such as (heirarchical) tags, named variables, file sizes, hashes, and audio duration.
-
-## Status
-
-In active development.
 
 ## Demonstration
 
@@ -70,3 +67,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [FRONTEND.md](FRONTEND.md), and [ROADMAP
 ## Background
 
 If you feel like there aren't enough blogs on the internet, [here's another](https://gist.github.com/NotCompsky/f1ab63fa2f191b156b9187b111449d20). It's a look at how this project evolved from some unlikely decisions, as I'm personally interested in how [the Butterfly Effect](https://en.wikipedia.org/wiki/Butterfly_effect) occurs in software development.
+
+# License
+
+This code is [licensed under GPL-3](LICENSE).
