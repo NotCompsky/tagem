@@ -6,7 +6,7 @@
 <p align="center">
 	<a href="LICENSE"><img src="https://img.shields.io/github/license/NotCompsky/tagem"/></a>
 	<a href="https://github.com/notcompsky/tagem/releases"><img src="https://img.shields.io/github/v/release/NotCompsky/tagem"/></a>
-	<a href="https://hub.docker.com/repository/docker/notcompsky/tagem/tags"><img src="https://img.shields.io/docker/image-size/notcompsky/tagem?label=Docker%20image%20size"/></a>
+	<a href="https://hub.docker.com/repository/docker/notcompsky/tagem/tags"><img src="https://img.shields.io/docker/image-size/notcompsky/tagem?label=Docker%20image"/></a>
 	<a href="https://circleci.com/gh/NotCompsky/tagem"><img src="https://circleci.com/gh/NotCompsky/tagem.svg?style=shield"/></a>
 	<a href="https://github.com/notcompsky/tagem/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/w/NotCompsky/tagem"/>
 	<a href="https://github.com/notcompsky/tagem/graphs/contributors"><img src="https://img.shields.io/github/contributors/NotCompsky/tagem"></a>
