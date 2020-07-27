@@ -10,7 +10,7 @@
 	<a href="https://circleci.com/gh/NotCompsky/tagem"><img src="https://circleci.com/gh/NotCompsky/tagem.svg?style=shield"/></a>
 	<a href="https://github.com/notcompsky/tagem/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/w/NotCompsky/tagem"/>
 	<a href="https://github.com/notcompsky/tagem/graphs/contributors"><img src="https://img.shields.io/github/contributors/NotCompsky/tagem"></a>
-	<a href="https://discord.gg/DnD7RJA"><img src="https://img.shields.io/discord/736649679575580814"></a>
+	<a href="https://discord.gg/DnD7RJA"><img src="https://img.shields.io/discord/736649679575580814?label=Discord"></a>
 </p>
 
 ![screenshot](https://user-images.githubusercontent.com/30552567/88522680-a1af2e80-cfee-11ea-8301-0148374a2ddd.jpg)
