@@ -89,7 +89,7 @@ The [Reddit userscript](wangle-server/client/userscripts/reddit.js) can be added
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md).
+See [the list of officially planned features](https://github.com/NotCompsky/tagem/issues/2).
 
 ## Development
 
