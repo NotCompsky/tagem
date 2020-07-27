@@ -19,6 +19,48 @@
 
 A single page application, with associated command-line utilities, for the rapid categorising and accessing of files, based on assignable attributes such as (heirarchical) tags, named variables, file sizes, hashes, and audio duration.
 
+## Features
+
+* **Hashing** of local files.
+  * Hashes include MD5, SHA256, and DCT (visual hashing of images and video).
+  * These hashes can be used in `qry` to facilitate fast manual de-duplication.
+  * Hashing of remote files is planned.
+* **Text editor**
+  * More of a text *creator* atm, as editing existing files is currently restricted.
+* Ordering, filtering etc. of results in the tables on the page.
+* **qry**: A simple query language that allows for short and human-friendly queries that automatically translate to complex SQL queries
+  * Combine ANDs and ORs (intersections and unions) of many different filters (for attributes like size, views, likes, tags; hashes in common with other files; etc).
+  * It can search for all types of things, not just files but also the [tags themselves](https://user-images.githubusercontent.com/30552567/86843555-a000e380-c09e-11ea-9a0d-5a5e4ae38261.png).
+  * See [the full documentation](https://notcompsky.github.io/tagem-eg/#?foobar).
+* **Heirarchical tags**
+  * Any tag can have any number of parent tags and any number of child tags.
+* **Everything can be tagged**
+  * Eras, files, directories, devices, and even tags themselves (as parent tags)
+  * For instance, the directory `https://www.youtube.com/watch?v-` could be tagged `Video`, and that tag will be applied to all files within.
+* **Support for remote files**
+  * Remote files are as accessible as local files (except for some sites that tell the browser not to display them within iframes - though there's a relatively simple workaround for that).
+  * You can add files from the server's attached storage devices, and also from remote websites (including an option for downloading with youtube-dl). Local copies of remote files are treated as backups, and are listed on the remote file's page.
+  * With the `view filesystem` option, this means that - provided the server has access to a script written for the specific website - a website's contents could be easily viewable in the table view.
+* **Eras**
+  * Tagged time intervals of audio and video files.
+  * These can be searched for, and used in playlists interchangeably with files themselves.
+* **Playlists**
+  * Playlists can be created on the fly out of any selection of files and/or eras (in any combination).
+* **Support for other databases**
+  * Files can be associated with *posts* from other databases, so long as those databases follow a strict structure.
+  * For instance, a Reddit post could be scraped, and associated with the URL of the linked article, as [here](https://notcompsky.github.io/tagem-eg/#f1726349)
+  * Each external database can, if it includes the necessary tables, display a lot more information than just the comments under a post, even listing all the posts (translated to our files) that a single user has commented on.
+  * [An example script for scraping Reddit posts](scripts/record-reddit-post) is included in this project
+* **Tag thumbnails**
+  * These thumbnails are inherited from their parents, unless the child has a thumbnail of its own.
+* **file2 values**
+  * Files can be assigned arbitrary values, currently integers and datetimes.
+  * For instance, you could have a `Score` attribute for each user to assign to files.
+* **Extensive permissions system**
+  * Different users can be assigned different blocklists of tags, and will not be able to view any era/file/directory/device with such a tag, or a descendant of such a tag.
+  * Different users can have different allowed actions, such as viewing files, editing tags, creating eras, assigning tags, and adding files.
+  * A big caveat here is that **the login system is currently only a placeholder** - it does not yet even ask for a password.
+
 ## Demonstration
 
 A neutered version of this app is hosted [here](https://notcompsky.github.io/tagem-eg/). GitHub does not allow it to be interactive, so most features are disabled - it is basically just a demonstration of the front-end.
@@ -59,6 +101,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [FRONTEND.md](FRONTEND.md), and [ROADMAP
 
 If you feel like there aren't enough blogs on the internet, [here's another](https://gist.github.com/NotCompsky/f1ab63fa2f191b156b9187b111449d20). It's a look at how this project evolved from some unlikely decisions, as I'm personally interested in how [the Butterfly Effect](https://en.wikipedia.org/wiki/Butterfly_effect) occurs in software development.
 
-# License
+## FAQ
+
+### What files does it support?
+
+Obviously it should support the viewing of any kind of file that your browser does. Practically, detecting the file type can be a bit of an issue - it is fully accurate for files it downloads, it's pretty good for videos and audio, but if you rename a PNG file to a JPEG there's no current way it will be able to tell it's actually a PNG.
+
+## License
 
 This code is licensed only under [the GPL-3 license](LICENSE).
