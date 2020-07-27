@@ -1,5 +1,6 @@
--- NOTE: This account is entirely optional.
+// NOTE: This account is entirely optional.
 
+R"=====(
 
 INSERT INTO user
 (id,name)
@@ -30,3 +31,5 @@ SET
 	edit_users=TRUE
 WHERE name="Admin"
 ;
+
+)====="

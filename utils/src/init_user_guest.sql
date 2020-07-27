@@ -1,4 +1,6 @@
--- WARNING: The Guest account must exist. It is the default account for non-logged-in users. It's ID must be 1 - however, its name is arbitrary.
+// WARNING: The Guest account must exist. It is the default account for non-logged-in users. Its ID must be 1 - however, its name is arbitrary.
+
+R"=====(
 
 INSERT INTO user
 (id,name)
@@ -12,3 +14,5 @@ INSERT INTO user2shown_file2
 SELECT id, 1
 FROM user
 ON DUPLICATE KEY UPDATE user=user;
+
+)====="
