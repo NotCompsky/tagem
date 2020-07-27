@@ -1,11 +1,22 @@
+/*
+Copyright 2020 Adam Gray
+This file is part of the tagem program.
+The tagem program is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published by the
+Free Software Foundation version 3 of the License.
+The tagem program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+This copyright notice should be included in any copy or substantial copy of the tagem source code.
+The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
+*/
 #include "extract-audio.hpp" // for extract_audio
-#include "../../media/src/rule.hpp"
 #include "qry.hpp"
 #include <compsky/mysql/query.hpp>
 #include <stdio.h> // for fprintf
 #include <unistd.h> // for execv
 #include <sys/wait.h>
-#include <QProcess>
+#include "../../wangle-server/src/proc.hpp"
 
 
 namespace _err {
@@ -78,7 +89,7 @@ void copy_filename(const char* from,  char* to){
 void process_rule(InlistFilterRules& r,  const char* const rule_name,  const char* const out_name){
 	static MYSQL_RES* res = nullptr;
 	static MYSQL_ROW  row;
-	QProcess files_from_bash;
+	// TODO
 	
 	compsky::asciify::asciify(OUTPUT_FILENAME + OUTPUT_ROOT_DIR_LEN,  out_name,  FILE_EXT,  '\0');
 	

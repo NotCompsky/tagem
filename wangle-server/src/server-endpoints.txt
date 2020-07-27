@@ -145,7 +145,7 @@ GET /a/select2/regex/d?q=>
 GET /a/select2/regex/t?q=>
 	return this->select2_regex('t', ++str)
 
-GET /users >
+GET /a/users.json >
 	return this->get_user_json(++str)
 POST /user/+>
 	return this->post__add_user(++str)
