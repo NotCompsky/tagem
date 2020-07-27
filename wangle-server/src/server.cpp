@@ -2096,7 +2096,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					"record_local_fs,"
 					"edit_users"
 				")"
-			"FROM user"
+			"FROM user "
+			"WHERE id != 0"
 		);
 		this->reset_buf_index();
 		this->init_json(
