@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+
 '''
 Copyright 2020 Adam Gray
 This file is part of the tagem program.
@@ -10,8 +14,6 @@ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more de
 This copyright notice should be included in any copy or substantial copy of the tagem source code.
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 '''
-#!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 
 
 import libtriegen

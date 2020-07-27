@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 '''
 Copyright 2020 Adam Gray
 This file is part of the tagem program.
@@ -10,7 +12,6 @@ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more de
 This copyright notice should be included in any copy or substantial copy of the tagem source code.
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 '''
-#!/usr/bin/env python3
 
 '''
 This preprocesses a series of JavaScript function definitions, const var definitions, and var declarations, into a single C++ header file; the JavaScript as a minimised string accessible as MINIMISED_JS_[FIRST_FILE_NAME], and the names of all its contained functions/vars accessible as MINIMISED_JS_DECL_[FUnCTION_NAME]
