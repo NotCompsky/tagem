@@ -24,6 +24,7 @@ ON DUPLICATE KEY UPDATE id=id;
 
 INSERT INTO device (name,permissions,protocol,embed_pre,embed_post) VALUES
 ("https://youtube.com/watch?v=",0,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
+("https://",0,(SELECT id FROM protocol WHERE name="https://"),"",""),
 ("https://twitter.com/",0,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>')
 ON DUPLICATE KEY UPDATE name=name;
 -- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
@@ -36,6 +37,17 @@ INSERT INTO device (name, protocol) VALUES
 ("https://github.com/", (SELECT id FROM protocol WHERE name="https://"))
 ON DUPLICATE KEY UPDATE protocol=protocol;
 
+
+SET FOREIGN_KEY_CHECKS=0;
+INSERT INTO dir
+(id,parent,device,user,name,full_path)
+VALUES
+(1,NULL,2,2,"https://","https://"),
+(2,1,1,2,"www.youtube.com/","https://www.youtube.com/"),
+(3,2,1,2,"watch?v=","https://www.youtube.com/watch?v=")
+ON DUPLICATE KEY UPDATE parent=parent
+;
+SET FOREIGN_KEY_CHECKS=1;
 
 SET @i := -1;
 INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"!!NONE!!") ON DUPLICATE KEY UPDATE id=id;
