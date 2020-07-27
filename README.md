@@ -101,7 +101,11 @@ The [Reddit userscript](wangle-server/client/userscripts/reddit.js) can be added
 
 See [the list of officially planned features](https://github.com/NotCompsky/tagem/issues/2).
 
-## Development
+## Contributing
+
+I'm very happy to consider pull requests. Particularly - but definitely not limited to - front-end development.
+
+Translations of documentation is also of course welcome, alongside bug reports, and general feedback.
 
 ### Back End
 
@@ -120,6 +124,15 @@ If you feel like there aren't enough blogs on the internet, [here's another](htt
 ### What files does it support?
 
 Obviously it should support the viewing of any kind of file that your browser does. Practically, detecting the file type can be a bit of an issue - it is fully accurate for files it downloads, it's pretty good for videos and audio, but if you rename a PNG file to a JPEG there's no current way it will be able to tell it's actually a PNG.
+
+## Similar Projects
+
+* [Etiquette](https://github.com/voussoir/etiquette)
+  * The most similar project, as it also features heirarchical tagging
+  * Flask + SQLite app written in Python
+* [Video Hub App](https://github.com/whyboris/Video-Hub-App)
+  * For managing video files
+  * Electron app written in Typescript
 
 ## License
 
