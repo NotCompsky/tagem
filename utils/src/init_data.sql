@@ -11,6 +11,8 @@
 -- The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
 
+R"=====(
+
 INSERT INTO protocol (id, name) VALUES
 (0, "NONE!"),
 (1, "file://"),
@@ -107,3 +109,5 @@ VALUES
 (2,"XOR"),
 (3,"NOT")
 ON DUPLICATE KEY UPDATE id=id;
+
+)====="
