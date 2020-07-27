@@ -73,9 +73,17 @@ See the user guide (linked below) for some examples of features.
 
 ## User Guide
 
+For those using the web app
+
 See [USER_GUIDE.md](USER_GUIDE.md)
 
-See [ADVANCED_USAGE.md](ADVANCED_USAGE.md) for more complex features and use cases.
+## Server Admin Guide
+
+For those running the server
+
+See [ADMIN_GUIDE.md](ADMIN_GUIDE.md)
+
+See [ADMIN_ADVANCED_USAGE.md](ADVANCED_USAGE.md) for more complex features and use cases.
 
 ## Installation
 
