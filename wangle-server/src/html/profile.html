@@ -41,6 +41,22 @@
 #define ADD_TOGGLE(id, name) \
 	ADD_TOGGLE_WITH_ACTION(id, name, "console.log")
 
+
+#define CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
+	"<div id=\"" id "-container\" class=\"tagselect-container\">" \
+		"<select class=\"tagselect\" id=\"" id "\" multiple=\"multiple\"></select>"
+
+#define CREATE_TAG_SELECT_WO_BTN(id) \
+	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
+	"</div>"
+
+// elem = (id,text,fn)
+#define CREATE_TAG_SELECT(r, data, elem) \
+	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(BOOST_PP_TUPLE_ELEM(0, elem)) \
+		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+	"</div>"
+
+
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
 "<head>"
@@ -209,21 +225,6 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 "</div>"
 
 
-#define CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
-	"<div id=\"" id "-container\" class=\"tagselect-container\">" \
-		"<select class=\"tagselect\" id=\"" id "\" multiple=\"multiple\"></select>"
-
-#define CREATE_TAG_SELECT_WO_BTN(id) \
-	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
-	"</div>"
-
-// elem = (id,text,fn)
-#define CREATE_TAG_SELECT(r, data, elem) \
-	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(BOOST_PP_TUPLE_ELEM(0, elem)) \
-		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
-	"</div>"
-
-
 "<div id=\"admin-dashboard\" class=\"hidden\">"
 	"<a onclick=\"" MINIMISED_JS_DECL_recursively_record_filesystem_dir_dialog "()\">" SVG_NEW_DIR "</a>"
 	
@@ -239,9 +240,10 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	
 	"<select class=\"userselect\" id=\"select-user-for-edit\"></select>"
 	
-	"<a onclick=\"" MINIMISED_JS_DECL_toggle_edit_user_permissions_tbl "()\">Edit User Permissions Table</a>"
-	"<div id=\"edit-user-permissions\">"
-		"<h3 id=\"edit-user-permissions-username\"></h3>" // The username of the user we are editing goes here
+	CREATE_TAG_SELECT_WO_BTN("tagselect-useredit")
+	
+	"<a onclick=\"" MINIMISED_JS_DECL_toggle_edit_user_thing "('edit-user-permissions')\">Edit User Permissions Table</a>"
+	"<div id=\"edit-user-permissions\" class=\"hidden\">"
 		"<div id=\"edit-user-permissions-tbl\" class=\"table\">"
 			"<div class=\"thead\">"
 				"<div class=\"tr\">"
@@ -251,6 +253,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 					"<div class=\"td th\">"
 						"Granted?"
 					"</div>"
+					"<div class='td'>Edit</div>"
 				"</div>"
 			"</div>"
 			"<div class=\"tbody\">"
@@ -284,6 +287,25 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 			)
 			"</div>"
 		"</div>"
+	"</div>"
+	"</br>"
+	
+	"<a onclick=\"" MINIMISED_JS_DECL_toggle_edit_user_thing "('edit-user-tag-bl')\">Edit User Tag Blacklist</a>"
+	"<div id=\"edit-user-tag-bl\" class=\"hidden\">"
+		"<p>User will not be able to see any files, directories, etc., which are tagged by an encompassed tag</p>"
+		"<h3 id=\"edit-user-tag-bl-username\"></h3>" // The username of the user we are editing goes here
+		"<div id=\"edit-user-tag-bl-tbl\" class=\"table\">"
+			"<div class=\"thead\">"
+				"<div class=\"tr\">"
+					"<div class=\"td th\">"
+						"Tag"
+					"</div>"
+					"<div class='td'>" SVG_SQUARE_DELETE "</div>"
+				"</div>"
+			"</div>"
+			"<div class=\"tbody\"></div>"
+		"</div>"
+		"<a onclick=\"" MINIMISED_JS_DECL_add_new_user_tag_blacklist_rule "()\">" SVG_PLUS "</a>"
 	"</div>"
 	"</br>"
 	

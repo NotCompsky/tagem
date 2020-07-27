@@ -2073,8 +2073,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_buf(
 			"SELECT "
-				"id,"
-				"name,"
+				"u.id,"
+				"u.name,"
 				"CONCAT_WS("
 					"\",\","
 					"stream_files,"
@@ -2095,24 +2095,40 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 					"add_eras,"
 					"record_local_fs,"
 					"edit_users"
-				")"
-			"FROM user "
-			"WHERE id != 0"
+				"),"
+				"IFNULL(GROUP_CONCAT(u2t.tag),\"\")"
+			"FROM user u "
+			"LEFT JOIN user2blacklist_tag u2t ON u2t.user=u.id "
+			"WHERE u.id != 0 "
+			"GROUP BY u.id"
 		);
 		this->reset_buf_index();
-		this->init_json(
-			&this->itr,
+		this->begin_json_response();
+		this->asciify('[');
+		
+		this->init_json_rows(
+			this->itr,
 			_r::flag::dict,
-			nullptr,
 			_r::flag::quote_no_escape, // id,
 			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_no_escape // boolean permission values as integer CSV
+			_r::flag::quote_no_escape, // boolean permission values as integer CSV
+			_r::flag::quote_no_escape // user2blacklist_tag id
 		);
+		this->asciify(',');
+		
+		this->mysql_query2_after_itr(
+			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
+		);
+		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
+		
+		this->asciify(']');
+		*this->itr = 0;
+		
 		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view post__update_user_permission(const char* s){
-		GET_NUMBER(bool,editing_user_of_id)
+		GET_NUMBER(unsigned,editing_user_of_id)
 		GET_NUMBER(bool,new_value)
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
@@ -2125,6 +2141,48 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"UPDATE user "
 			"SET ", field_name, "=", new_value?'1':'0', " "
 			"WHERE id=", editing_user_of_id
+		);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__rm_user_blacklisted_tag(const char* s){
+		GET_NUMBER(unsigned,editing_user_of_id)
+		GET_NUMBER(uint64_t,tag_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
+		SKIP_TO_BODY
+		
+		const char* const field_name = s;
+		// WARNING: field_name is not verified
+		
+		this->mysql_exec(
+			"DELETE FROM user2blacklist_tag "
+			"WHERE user=", editing_user_of_id, " "
+			  "AND tag=",  tag_id
+		);
+		
+		return _r::post_ok;
+	}
+	
+	std::string_view post__add_user_blacklisted_tag(const char* s){
+		GET_NUMBER(unsigned,editing_user_of_id)
+		GET_NUMBER(uint64_t,tag_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
+		SKIP_TO_BODY
+		
+		const char* const field_name = s;
+		// WARNING: field_name is not verified
+		
+		this->mysql_exec(
+			"INSERT INTO user2blacklist_tag"
+			"(user,tag)"
+			"VALUES(",
+				editing_user_of_id, ',',
+				tag_id,
+			")"
+			"ON DUPLICATE KEY UPDATE user=user"
 		);
 		
 		return _r::post_ok;

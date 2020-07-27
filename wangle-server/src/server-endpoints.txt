@@ -149,3 +149,7 @@ GET /users >
 	return this->get_user_json(++str)
 POST /user/permission/>
 	return this->post__update_user_permission(++str)
+POST /user/bl/t-/>
+	return this->post__rm_user_blacklisted_tag(++str)
+POST /user/bl/t+/>
+	return this->post__add_user_blacklisted_tag(++str)
