@@ -1,4 +1,16 @@
-# Multiple Servers on the Same Database with Different Permissions
+# Advanced Options
+
+## Server Command Line Options
+
+### Viewing Contents from Web Pages
+
+The command line arguments are `d /path/to/view-remote-dir`. Included is [an example for Pinterest](scripts/remote-dir-viewers/pinterest.com) - I think you may need to supply your own cookies, however.
+
+This command line argument will enable web users to request the site via `Filesystem Dir` - they can type `pinterest [QUERY]`, and the script will place the pins from that query into the file page, as though they were files on the local filesystem.
+
+# Advanced Configuration
+
+## Multiple Servers on the Same Database with Different Permissions
 
 Simply rename all the core tables:
 
