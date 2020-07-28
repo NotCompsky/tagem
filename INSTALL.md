@@ -18,7 +18,7 @@ The container needs to know how to connect to the database, and for that we use 
 
 ### Recommended Method
 
-`CREATE` the database and `GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, ALTER` permissions to a user.
+`CREATE` the database and `GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, ALTER, CREATE, TRIGGER` permissions to a user. You can revoke the `ALTER, CREATE, TRIGGER` permissions once the server is up and running.
 
 Edit [example.cfg](example.cfg) to be correct for your use case, and pass its location to the container using the command line options: `--env TAGEM_MYSQL_CFG=/path/to/edited.cfg` - ensuring that the container has access to the directory `/path/to` (achieved with the options: `-v /path/to:/path/to`.
 

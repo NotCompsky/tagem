@@ -16,7 +16,7 @@ The absense of this copyright notices on some other files in this project does n
 int main(){
     compsky::mysql::create_config(
 		nullptr
-        , "SELECT, INSERT, UPDATE, DELETE, EXECUTE, ALTER"
+        , "SELECT, INSERT, UPDATE, DELETE, EXECUTE, ALTER, CREATE, TRIGGER"
         , "TAGEM_MYSQL_CFG"
     );
     
