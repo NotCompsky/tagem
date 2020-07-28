@@ -13,9 +13,8 @@
 
 R"=====(
 
-CREATE PROCEDURE IF NOT EXISTS tagem_db_initialised()
-BEGIN
-END
-;
+CREATE TABLE IF NOT EXISTS tagem_db_initialised(
+	version INT UNSIGNED NOT NULL PRIMARY KEY
+);
 
 )====="

@@ -15,7 +15,8 @@ void initialise_tagem_db(MYSQL* mysql_obj){
 	;
 	
 	try {
-		compsky::mysql::exec_buffer(mysql_obj, "CALL tagem_db_initialised()");
+		compsky::mysql::exec_buffer(mysql_obj, "UPDATE tagem_db_initialised SET version=1");
+		return;
 	} catch(compsky::mysql::except::SQLExec&){}
 	
 	const char* last_stmt = stmts;
@@ -25,6 +26,4 @@ void initialise_tagem_db(MYSQL* mysql_obj){
 			last_stmt = itr + 1;
 		}
 	}
-	
-	compsky::mysql::exec_buffer(mysql_obj, "delimiter ;");
 }
