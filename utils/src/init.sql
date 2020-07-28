@@ -340,7 +340,7 @@ CREATE TABLE IF NOT EXISTS relation_add_box_tags__rules (
 	req_relation_operator INT UNSIGNED NOT NULL DEFAULT 0,
 	req_master_operator INT UNSIGNED NOT NULL DEFAULT 0,
 	req_slave_operator INT UNSIGNED NOT NULL DEFAULT 0,
-	compiled_init VARBINARY(1024), -- e.g. 'CALL descendant_tags_id_from_ids("foobar", "5,17");'
+	compiled_init VARBINARY(1024), -- e.g. 'CALL descendant_tags_id_from_ids("foobar", "5,17")'
 	compiled_tbls VARBINARY(1024), -- e.g. 'foobar'
 	compiled_fltr VARBINARY(4096), -- e.g. ' AND r2t.tag_id=foobar.node'
 	compiled_hvng VARBINARY(4096),
@@ -402,7 +402,7 @@ CREATE TABLE IF NOT EXISTS file2thumbnail (
 	x VARBINARY(1024) NOT NULL,
 	FOREIGN KEY (file) REFERENCES file (id)
 );
--- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM file f JOIN dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v=';
+-- INSERT INTO file2thumbnail (file,x) SELECT f.id, CONCAT('https://i.ytimg.com/vi/', f.name, '/hqdefault.jpg') FROM file f JOIN dir d ON d.id=f.dir WHERE d.name='https://www.youtube.com/watch?v='
 
 
 
