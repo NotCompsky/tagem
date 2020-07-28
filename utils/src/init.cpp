@@ -14,18 +14,8 @@ The absense of this copyright notices on some other files in this project does n
 
 
 int main(){
-	constexpr static const char* sql =
-		#include "init.sql"
-		#include "init_data.sql"
-		#include "triggers.sql"
-		#include "procedures.sql"
-		#include "init_user_invalid.sql"
-		#include "init_user_guest.sql"
-		#include "init_user_admin.sql"
-	;
-
     compsky::mysql::create_config(
-        sql
+		nullptr
         , "SELECT, INSERT, UPDATE, DELETE, EXECUTE"
         , "TAGEM_MYSQL_CFG"
     );

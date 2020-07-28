@@ -33,6 +33,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "../../utils/src/thumbnailer.hpp"
 #include "get_cookies.hpp"
 #include "read_request.hpp"
+#include "initialise_tagem_db.hpp"
 
 #ifdef n_cached
 # include "cache.hpp"
@@ -3543,6 +3544,8 @@ int main(int argc,  const char* const* argv){
 	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
+	
+	initialise_tagem_db(db_infos.at(0).mysql_obj);
 	
 	UserIDIntType user_id;
 	uint64_t id;
