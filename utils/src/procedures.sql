@@ -29,14 +29,9 @@ BEGIN
     UNTIL ROW_COUNT() = 0
     END REPEAT;
 END $$
-
-delimiter ;
-
+;
 
 
-
-
-delimiter $$
 CREATE PROCEDURE IF NOT EXISTS fill_dir2parent_tree()
 BEGIN
     DROP TABLE IF EXISTS _tmp;
@@ -59,13 +54,7 @@ BEGIN
     UNTIL ROW_COUNT() = 0
     END REPEAT;
 END $$
-delimiter ;
-
-
-
-
-
-delimiter $$
+;
 
 CREATE PROCEDURE IF NOT EXISTS gen_dir2parent_tree()
 BEGIN
@@ -73,9 +62,7 @@ BEGIN
     INSERT INTO dir2parent_tree (id, parent, depth) SELECT id, id, 0 FROM dir;
     CALL fill_dir2parent_tree();
 END $$
-
-delimiter ;
-
+;
 
 CREATE PROCEDURE IF NOT EXISTS tagem_db_initialised()
 BEGIN

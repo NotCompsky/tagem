@@ -25,4 +25,6 @@ void initialise_tagem_db(MYSQL* mysql_obj){
 			last_stmt = itr + 1;
 		}
 	}
+	
+	compsky::mysql::exec_buffer(mysql_obj, "delimiter ;");
 }
