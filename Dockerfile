@@ -36,11 +36,4 @@ RUN apt install -y --no-install-recommends ffmpegthumbnailer \
 		/usr/include/* \
 		/usr/share/doc/*
 EXPOSE 80
-CMD if [ "$TAGEM_MYSQL_CFG" = "" ]; then \
-		if [ -f /tagem-auth.cfg ]; then \
-			dummy=1 \
-		;else \
-			/tagem-init \
-		;fi \
-	;fi \
-	&& /tagem-server p 80 ${TAGEM_ARGS[@]}
+ENTRYPOINT ["/tagem-server", "p", "80"]
