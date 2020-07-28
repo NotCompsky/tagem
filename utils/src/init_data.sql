@@ -30,11 +30,11 @@ ON DUPLICATE KEY UPDATE name=name;
 -- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
 
 
-INSERT INTO device (name, protocol) VALUES
-("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://")),
-("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://")),
-("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://")),
-("https://github.com/", (SELECT id FROM protocol WHERE name="https://"))
+INSERT INTO device (name,protocol,user) VALUES
+("https://www.google.com/", (SELECT id FROM protocol WHERE name="https://"),2),
+("https://stackoverflow.com/", (SELECT id FROM protocol WHERE name="https://"),2),
+("https://en.wikipedia.org/", (SELECT id FROM protocol WHERE name="https://"),2),
+("https://github.com/", (SELECT id FROM protocol WHERE name="https://"),2)
 ON DUPLICATE KEY UPDATE protocol=protocol;
 
 
@@ -76,7 +76,7 @@ INSERT INTO mimetype (id,name) VALUES (@i:=@i+1,"video/avi") ON DUPLICATE KEY UP
 
 
 INSERT INTO ext2mimetype
-(ext,mimetype)
+(name,id)
 SELECT REGEXP_REPLACE(SUBSTRING_INDEX(name, '/', -1), '^x-', ''), id
 FROM mimetype
 WHERE SUBSTRING_INDEX(name, '/', -1) NOT IN ("plain","mpeg","webm","javascript","!!NONE!!","quicktime","x-ms-asf")
@@ -89,7 +89,7 @@ UNION
 SELECT "jpg", id FROM mimetype WHERE name='image/jpeg'
 UNION
 SELECT "webm", id FROM mimetype WHERE name='video/webm'
-ON DUPLICATE KEY UPDATE mimetype=mimetype
+ON DUPLICATE KEY UPDATE id=VALUES(id)
 ;
 
 
