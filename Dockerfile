@@ -43,4 +43,4 @@ CMD if [ "$TAGEM_MYSQL_CFG" = "" ]; then \
 			/tagem-init \
 		;fi \
 	;fi \
-	&& /tagem-server p 80
+	&& /tagem-server p 80 ${TAGEM_ARGS[@]}
