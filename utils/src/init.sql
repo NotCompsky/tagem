@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS dir (
 	FOREIGN KEY (user) REFERENCES user (id),
 	FOREIGN KEY (device) REFERENCES device (id),
 	UNIQUE KEY (parent_not_null,name), -- Only one name if parent is NULL
-	--UNIQUE KEY (full_path), -- Field is too long to be a key
+	-- UNIQUE KEY (full_path), -- Field is too long to be a key
 	UNIQUE KEY (parent,name)
 );
 
