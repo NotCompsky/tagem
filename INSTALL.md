@@ -14,6 +14,8 @@ Note that the docker image does not also host the MySQL/MariaDB server, as the w
 
 The container needs to know how to connect to the database, and for that we use a config file.
 
+**NOTE**: If the MySQL server is on your local machine, and your machine is not running Windows, use `localhost` as the host name, and leave the port number blank. MySQL is weird about connecting to localhost - as an optimisation, it overrides connection settings when it thinks a UNIX socket might be available, and this somehow makes it crash when a port number is assigned to localhost.
+
 ### Recommended Method
 
 Edit [example.cfg](example.cfg) to be correct for your use case, and pass its location to the container using the command line options: `--env TAGEM_MYSQL_CFG=/path/to/edited.cfg` - ensuring that the container has access to the directory `/path/to` (achieved with the options: `-v /path/to:/path/to`.
