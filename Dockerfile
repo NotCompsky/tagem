@@ -27,7 +27,8 @@ RUN apt install -y --no-install-recommends libffmpegthumbnailer-dev \
 FROM notcompsky/tagem-base
 COPY --from=compile-2 /tagem/build/webserver/server /tagem-server
 COPY --from=compile-2 /tagem/build/utils/tagem-init /tagem-init
-RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
+RUN apt install -y --no-install-recommends ffmpegthumbnailer \
+	&& apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
 	&& rm -rf \
 		/var/lib/apt/lists/* /var/cache/apt/lists/* \
 		/usr/sbin/* \
