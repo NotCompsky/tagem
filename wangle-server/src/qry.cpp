@@ -1001,8 +1001,9 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			"X.id\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
 		join.c_str(),
+		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id\n"
 		"WHERE ", where.c_str(), "\n"
-		  "AND NOT EXISTS(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")"
+		  "AND A.id IS NULL\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, "\n"
 		"OFFSET ", offset,
