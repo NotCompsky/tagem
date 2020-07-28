@@ -1563,6 +1563,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				_r::flag::quote_no_escape, // username,
 				_r::flag::quote_and_json_escape // content
 			);
+		} else {
+			compsky::asciify::asciify(_itr_plus_offset, "[]");
 		}
 		compsky::asciify::asciify(_itr_plus_offset, ']');
 		
