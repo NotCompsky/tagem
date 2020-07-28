@@ -12,7 +12,7 @@
 */
 
 R"=====(
-CREATE TRIGGER honour_the_ancestors 
+CREATE TRIGGER IF NOT EXISTS honour_the_ancestors 
 AFTER INSERT ON dir
 FOR EACH ROW
 	INSERT INTO dir2parent_tree

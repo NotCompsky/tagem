@@ -14,6 +14,10 @@ void initialise_tagem_db(MYSQL* mysql_obj){
 		#include "../../utils/src/procedures.sql"
 	;
 	
+	try {
+		compsky::mysql::exec_buffer(mysql_obj, "CALL tagem_db_initialised()");
+	} catch(compsky::mysql::except::SQLExec&){}
+	
 	const char* last_stmt = stmts;
 	for (const char* itr = stmts;  *itr != 0;  ++itr){
 		if (unlikely(*itr == ';')){

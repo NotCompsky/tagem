@@ -80,4 +80,10 @@ END $$
 
 delimiter ;
 
+
+CREATE PROCEDURE IF NOT EXISTS tagem_db_initialised()
+BEGIN
+END
+;
+
 )====="
