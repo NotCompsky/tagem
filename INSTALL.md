@@ -12,7 +12,15 @@ Note that the docker image does not also host the MySQL/MariaDB server, as the w
 
 ## Configuration
 
-The first time the server is run, a utility will run which requires some manual input to set up the MySQL server.
+The container needs to know how to connect to the database, and for that we use a config file.
+
+### Recommended Method
+
+Edit [example.cfg](example.cfg) to be correct for your use case, and pass its location to the container using the command line options: `--env TAGEM_MYSQL_CFG=/path/to/edited.cfg` - ensuring that the container has access to the directory `/path/to` (achieved with the options: `-v /path/to:/path/to`.
+
+### Alternative Method: Inbuilt Config Generator
+
+If the environmental variable `TAGEM_MYSQL_CFG` is not set, when the docker contaienr is run, a utility will run which requires some manual input to set up the MySQL server.
 
 The options you should use are:
 
