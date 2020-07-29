@@ -77,7 +77,7 @@ function $$$display_cmnts(_db_id, ls){
 }
 
 function $$$display_post_meta(_db_id, tpl){
-	const [user, t, n_likes, username, txt] = tpl;
+	const [user, t, n_likes, username, txt] = tpl[0];
 	$$$document_getElementById('post-user').dataset.db = _db_id;
 	$$$document_getElementById('post-user').dataset.user = user;
 	$$$document_getElementById('post-user').innerText = username;
