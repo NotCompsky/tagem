@@ -82,9 +82,9 @@ FROM mimetype
 WHERE SUBSTRING_INDEX(name, '/', -1) NOT IN ("plain","mpeg","webm","javascript","!!NONE!!","quicktime","x-ms-asf")
   AND name NOT IN ("video/ogg")
 UNION
-SELECT "mp4", id FROM mimetype WHERE name='video/mpeg'
+SELECT "mp4", id FROM mimetype WHERE name='video/mp4'
 UNION
-SELECT "mp3", id FROM mimetype WHERE name='audio/mpeg'
+SELECT "mp3", id FROM mimetype WHERE name='audio/mp3'
 UNION
 SELECT "jpg", id FROM mimetype WHERE name='image/jpeg'
 UNION
