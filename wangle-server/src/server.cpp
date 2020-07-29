@@ -1166,7 +1166,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if(*s != '/')
 			return _r::not_found;
 		++s;
-		const bool is_local_dir = is_local_file_or_dir(s);
 		const uint64_t dir_id  = a2n<uint64_t>(&s);
 		if(*s != '/')
 			return _r::not_found;
@@ -1194,24 +1193,27 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			// Update an existing file
 			return _r::not_implemented_yet;
 		
+		this->mysql_query(
+			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
+			"FROM dir d "
+			"WHERE d.id=", dir_id
+		);
+		const char* path = nullptr;
+		while(this->mysql_assign_next_row(&path));
+		const bool is_local_dir = is_local_file_or_dir(path);
+		
 		if (is_local_dir){
 			// If the directory is non-local, the body of the request is set as the description rather than saved to a file.
 			// This is designed to store small snippets - code snippets, quotes, etc.
-		
-			this->mysql_query(
-				"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
-				"FROM dir d "
-				"WHERE d.id=", dir_id
-			);
-			const char* path;
-			if(unlikely(not this->mysql_assign_next_row(&path)))
+			
+			
+			if(unlikely(path == nullptr))
 				// Invalid dir_id
 				return _r::not_found;
 			
 			FILE* f = fopen(path, "rb");
 			if(unlikely(f != nullptr)){
 				fclose(f);
-				this->mysql_free_res();
 				return 
 					HEADER__RETURN_CODE__SERVER_ERR
 					"\n"
@@ -1221,7 +1223,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			
 			f = fopen(path, "wb");
 			printf("Creating file: %s\n", path);
-			this->mysql_free_res();
 			if(unlikely(f == nullptr))
 				return _r::server_error;
 			fwrite(file_contents, 1, strlen(file_contents), f);
