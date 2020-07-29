@@ -11,7 +11,7 @@ This copyright notice should be included in any copy or substantial copy of the 
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
 #include "qry.hpp"
-#include "convert_str.hpp"
+#include <compsky/deasciify/a2n.hpp>
 #include <cstdio>
 
 

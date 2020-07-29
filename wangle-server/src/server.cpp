@@ -20,7 +20,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "qry.hpp"
 #include "protocol.hpp"
 #include "verify_str.hpp"
-#include "convert_str.hpp"
 #include "str_utils.hpp"
 #include "db_info.hpp"
 #include "user_auth.hpp"
@@ -43,6 +42,8 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/mysql/qryqry.hpp>
 #include <compsky/mysql/alternating_qry.hpp>
 #include <compsky/utils/is_str_dblqt_escaped.hpp>
+#include <compsky/deasciify/a2n.hpp>
+#include <compsky/deasciify/a2f.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>

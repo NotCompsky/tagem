@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 #pragma once
 
 #include "str_utils.hpp"
+#include <compsky/deasciify/a2n.hpp>
 
 
 #define TEST_IS_HEADER(length,name) \
