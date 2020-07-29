@@ -383,7 +383,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"<div id=\"posts-container\">"
 		"<div id=\"db-links\"></div>"
 		"<div id=\"post-container\">"
-			"<a id=\"post-user\" class=\"user\"></a>"
+			"<a id=\"post-user\" class=\"user\" onclick=\"" MINIMISED_JS_DECL_view_user "(this.dataset.db, this.dataset.user)\"></a>"
 			"<time id=\"post-time\"></time>"
 			"<div id=\"post-text\"></div>"
 			
