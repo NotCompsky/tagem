@@ -133,6 +133,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 					const x = $$$document_getElementById('text-edit');
 					x.innerText = data;
 					$$$unhide_node(x);
+					$$$unhide('text-editor');
 				});
 				break;
 			case '':
