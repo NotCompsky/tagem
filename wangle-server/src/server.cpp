@@ -3122,25 +3122,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::post_ok;
 	}
 	
-	std::string_view post__add_children_to_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
-		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
-		GET_USER_ID
-		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
-		
-		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
-		tag_parentisation(
-			this,
-			user_id,
-			true,
-			_f::strlen, child_ids, child_ids_len,
-			_f::strlen, tag_ids, tag_ids_len
-		);
-		
-		return _r::post_ok;
-	}
-	
 	std::string_view post__rm_children_from_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		++s; // Skip trailing slash

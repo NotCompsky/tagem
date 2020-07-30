@@ -165,14 +165,14 @@ function $$$display_child_tags(_tag_id){
 	? "id/0/" + $$$t2p.filter(x => (x[1] == _tag_id)).map(x => x[0]).join(",")
 	: "c/"+_tag_id
 	;
-	$$$display_tags_from_url(url,"children","$$$unlink_this_parent_tag_from_this_tag");
+	$$$display_tags_from_url(url,"children","$$$unlink_this_child_tag_from_this_tag");
 }
 
 // Functions used in HTML
 function $$$add_child_tags(fn){
 	const tagselect = $('#tagselect-self-c');
 	$$$ajax_POST_w_text_response(
-		"/t/c/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
+		"/t/p/" + tagselect.val().join(",") + "/" + $$$get_tag_ids(),
 		function(){
 			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
 			$$$add_to_json_then('t2p', $$$zipsplitarr(tagselect.val(), ls), '!!!MACRO!!!SERVER_ROOT_URL/a/t2p.json', function(){
