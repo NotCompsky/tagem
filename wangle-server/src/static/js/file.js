@@ -199,7 +199,7 @@ function $$$assign_value_to_file(){
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
 	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','descr'],['file-meta']);
-	if($$$autoplay())
+	if($$$active_media_is_video())
 		$$$unhide('tagselect-eras-container');
 	else
 		$$$hide_class('file-era');
