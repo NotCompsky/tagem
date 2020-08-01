@@ -1357,7 +1357,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->mysql_query_db_by_id(
 			db_info,
-			"SELECT GROUP_CONCAT(", col_name, ")"
+			"SELECT GROUP_CONCAT(DISTINCT ", col_name, ")"
 			"FROM ", tbl_name, " "
 			"WHERE user=", external_user_id
 		);
