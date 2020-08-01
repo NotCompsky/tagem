@@ -901,11 +901,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM file f "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
+			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
+			"LEFT JOIN" USER_DISALLOWED_DIRS(user_id)  "B ON B.id=f.dir "
 			JOIN_FILE_THUMBNAIL,
 			_f::zip3, n, "LEFT JOIN file2", user->allowed_file2_vars, left_join_unique_name_for_each_file2_var,
 			"WHERE f.id=", id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  "AND f.dir NOT IN" USER_DISALLOWED_DIRS(user_id)
+			  "AND A.id IS NULL "
+			  "AND B.id IS NULL "
 			"GROUP BY f.id"
 		);
 		if(not this->init_json_rows(
@@ -2873,6 +2875,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	}
 	
 	std::string_view archive_reddit_post(const char* s){
+		// WARNING: No permissions check
+		
 		const char* const permalink = s;
 		while((*s != 0) and (*s != ' '))
 			++s;
