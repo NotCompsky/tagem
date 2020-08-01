@@ -984,7 +984,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT d.id, d.full_path, d.device "
 			"FROM dir d "
 			"JOIN("
-				"SELECT dir "
+				"SELECT DISTINCT dir "
 				"FROM file "
 				"WHERE id=", id, " "
 				"UNION "
