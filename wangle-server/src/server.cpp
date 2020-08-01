@@ -983,7 +983,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->mysql_query_after_itr(
 			"SELECT d.id, d.full_path, d.device "
 			"FROM dir d "
-			"WHERE d.id IN("
+			"JOIN("
 				"SELECT dir "
 				"FROM file "
 				"WHERE id=", id, " "
@@ -991,8 +991,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"SELECT dir "
 				"FROM file_backup "
 				"WHERE file=", id,
-			")"
-			  "AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+			")A ON A.dir=d.id "
+			"LEFT JOIN" USER_DISALLOWED_DIRS(user_id) "B ON B.id=d.id "
+			"WHERE B.id IS NULL"
 		);
 		this->init_json_rows(
 			this->itr,
