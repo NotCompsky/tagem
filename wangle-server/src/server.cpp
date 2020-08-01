@@ -167,20 +167,18 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv))) \
 		return _r::not_found;
 
-
-#define WHERE_HIDDEN_TAGS__GUEST(tag_id_field) \
-	"AND " tag_id_field " NOT IN(" \
+#define HIDDEN_TAGS(...) \
+	"(" \
 		"SELECT id " \
 		"FROM tag2parent_tree t2pt " \
-		"JOIN user2hidden_tag u2ht ON u2ht.user=" GUEST_ID_STR " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth " \
+		"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth" \
 	")"
 
-#define WHERE_HIDDEN_TAGS(tag_id_field) \
-	"AND " tag_id_field " NOT IN(" \
-		"SELECT id " \
-		"FROM tag2parent_tree t2pt " \
-		"JOIN user2hidden_tag u2ht ON u2ht.user=", user_id, " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth " \
-	")"
+#define HIDDEN_TAGS__USER \
+	HIDDEN_TAGS("", user_id, "")
+
+#define HIDDEN_TAGS__GUEST \
+	HIDDEN_TAGS(GUEST_ID_STR)
 
 #define SELECT_TAGS_INFOS_FROM_STUFF(...) \
 	"SELECT " \
@@ -203,10 +201,12 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	")A ON A.tag=t.id "
 
 #define WHERE_TAGS_INFOS(...) \
+	"LEFT JOIN" HIDDEN_TAGS__USER "HT ON HT.id=t.id " \
+	"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "BT ON BT.id=t.id " \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
 	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
-	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id) \
-	WHERE_HIDDEN_TAGS("t.id") \
+	"AND BT.id IS NULL " \
+	"AND HT.id IS NULL " \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
@@ -1012,9 +1012,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"FROM tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
 			"JOIN era e ON e.id=e2t.era "
+			"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=t.id "
 			"WHERE e.file=", id, " "
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
-			  WHERE_HIDDEN_TAGS("t.id")
+			  "AND A.id IS NULL"
 		);
 		this->init_json_rows(
 			this->itr, _r::flag::dict,
@@ -1784,11 +1785,13 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 							select_fields, " "
 						"FROM file f "
 						JOIN_FILE_THUMBNAIL
+						"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "B ON B.id=f.id "
 						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
 						join_args..., " "
+						"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=f2t.tag "
 						"WHERE TRUE "
-						FILE_TBL_USER_PERMISSION_FILTER(user_id)
-						WHERE_HIDDEN_TAGS("f2t.tag"),
+						"AND B.id IS NULL "
+						"AND A.id IS NULL ",
 						where_args..., " "
 						"GROUP BY f.id ",
 						order_args..., " "
@@ -1855,9 +1858,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
+			"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=f2t.tag "
+			"LEFT JOIN" USER_DISALLOWED_FILES(user->id) "B ON B.id=f.id "
 			"WHERE TRUE "
-			  FILE_TBL_USER_PERMISSION_FILTER(user->id)
-			  WHERE_HIDDEN_TAGS("f2t.tag")
+			  "AND A.id IS NULL "
+			  "AND B.id IS NULL "
 			"GROUP BY f.id "
 			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
@@ -1917,10 +1922,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  Args... name_args){
 		this->reset_buf_index();
 		this->asciify(
-			"SELECT id, ", (tbl_alias=='d')?"full_path ":"name ",
-			"FROM ", (tbl_alias=='d')?"dir":"tag", " "
-			"WHERE ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
-			"AND id NOT IN"
+			"SELECT X.id, X.", (tbl_alias=='d')?"full_path ":"name ",
+			"FROM ", (tbl_alias=='d')?"dir":"tag", " X "
+			"LEFT JOIN"
 		);
 		switch(tbl_alias){
 			case 'd':
@@ -1930,7 +1934,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				this->asciify(USER_DISALLOWED_TAGS(user_id));
 				break;
 		}
-		this->asciify("LIMIT 20"); // TODO: Tell client if results have been truncated
+		this->asciify(
+			"A ON A.id=X.id "
+			"WHERE A.id IS NULL "
+			  "AND ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
+			"LIMIT 20"
+		); // TODO: Tell client if results have been truncated
 		
 		try{
 			this->mysql_query_using_buf();
@@ -2234,12 +2243,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
 			this->mysql_query(
-				"SELECT id, parent "
-				"FROM tag2parent "
-				"WHERE id NOT IN" USER_DISALLOWED_TAGS(user_id)
-				  "AND parent NOT IN" USER_DISALLOWED_TAGS(user_id)
-				  WHERE_HIDDEN_TAGS("id")
-				  WHERE_HIDDEN_TAGS("parent")
+				"SELECT t2p.id, t2p.parent "
+				"FROM tag2parent t2p "
+				"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=t2p.id OR A.id=t2p.parent "
+				"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "B ON B.id=t2p.id OR B.id=t2p.parent "
+				"WHERE A.id IS NULL "
+				  "AND B.id IS NULL"
 			);
 			this->itr = this->buf;
 			this->init_json(
@@ -2256,12 +2265,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
 			this->mysql_query_buf(
-				"SELECT id, parent "
-				"FROM tag2parent "
-				"WHERE id NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				  "AND parent NOT IN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR)
-				  WHERE_HIDDEN_TAGS__GUEST("id")
-				  WHERE_HIDDEN_TAGS__GUEST("parent")
+				"SELECT t2p.id, t2p.parent "
+				"FROM tag2parent t2p "
+				"LEFT JOIN" HIDDEN_TAGS__GUEST "A ON A.id=t2p.id OR A.id=t2p.parent "
+				"LEFT JOIN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR) "B ON B.id=t2p.id OR B.id=t2p.parent "
+				"WHERE A.id IS NULL "
+				  "AND B.id IS NULL"
 			);
 			this->init_json(
 				nullptr,
@@ -2310,10 +2319,12 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
 			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
+			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
+			"LEFT JOIN" USER_DISALLOWED_DIRS(user_id)  "B ON B.id=d.id "
 			"WHERE f.id=", id, " "
 			  "AND ", (dir_id==0)?"0=":"f2.dir=", dir_id, " "
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
-			  DIR_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND A.id IS NULL "
+			  "AND B.id IS NULL "
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
@@ -2848,9 +2859,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				"t.id "
 			"FROM tag t "
 			"JOIN era e "
+			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND e.id NOT IN" USER_DISALLOWED_ERAS(user_id)
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  "AND A.id IS NULL ",
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE era=era"
 		);
@@ -3149,8 +3161,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT t.id,d.id,", user_id, " "
 			"FROM tag t "
 			"JOIN dir d "
+			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  "AND A.id IS NULL ",
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE dir=dir"
 		);
@@ -3164,8 +3177,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"SELECT t.id,f.id,", user_id, " "
 			"FROM tag t "
 			"JOIN file f "
+			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id),
+			  "AND A.id IS NULL ",
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE file=file"
 		);
@@ -3177,9 +3191,10 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"DELETE f2t "
 			"FROM file2tag f2t "
 			"JOIN tag t ON t.id=f2t.tag "
+			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND f2t.file IN (", file_ids_args..., ")"
-			  TAG_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND A.id IS NULL"
 		);
 	}
 	
@@ -3264,8 +3279,9 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 			"(file,x)"
 			"SELECT f.id,", value, " "
 			"FROM file f "
+			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
 			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND A.id IS NULL "
 			"ON DUPLICATE KEY UPDATE x=x"
 		);
 		
