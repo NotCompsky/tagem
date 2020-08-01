@@ -306,17 +306,74 @@ Int s2n(const char*& qry){
 	}
 }
 
-template<typename Int>
-successness::ReturnType get_int_range(const char*& qry,  Int& min,  Int& max){
-	min = s2n<uint64_t>(qry);
-	if (*qry != '-')
-		return successness::invalid;
-	max = s2n<uint64_t>(qry);
-	if (*qry == '?'){
-		max = -1;
-		++qry;
+struct Range {
+	const char* min_start;
+	const char* min_end;
+	const char* max_start;
+	const char* max_end;
+	std::string_view min() const {
+		return std::string_view(min_start,  (uintptr_t)min_end - (uintptr_t)min_start);
 	}
-	if (*qry != ' ')
+	std::string_view max() const {
+		return std::string_view(max_start,  (uintptr_t)max_end - (uintptr_t)max_start);
+	}
+};
+
+template<typename Int>
+void if_negatable_then_look_for_dash(const char*& qry){}
+
+template<>
+void if_negatable_then_look_for_dash<double>(const char*& qry){
+	if(*qry == '-')
+		++qry;
+}
+
+template<typename Int>
+void loop_over_valid_char_for_conversion(const char*& qry){
+	if (*qry == '0'){
+		++qry;
+		return;
+	}
+	while((*qry >= '0') and (*qry <= '9'))
+		++qry;
+}
+
+template<>
+void loop_over_valid_char_for_conversion<double>(const char*& qry){
+	loop_over_valid_char_for_conversion<uint64_t>(qry);
+	if (*qry != '.')
+		return;
+	++qry; // Skip decimal point
+	while((*qry >= '0') and (*qry <= '9'))
+		++qry;
+}
+
+template<typename Number>
+successness::ReturnType get_range(const char*& qry,  Range& range){
+	++qry; // Skip space
+	range.min_start = qry;
+	if_negatable_then_look_for_dash<Number>(qry);
+	loop_over_valid_char_for_conversion<Number>(qry);
+	range.min_end = qry;
+	if ((range.min_end == range.min_start) or (range.min_end[-1] == '-'))
+		return successness::invalid;
+	
+	if(*qry != '-')
+		return successness::invalid;
+	++qry;
+	
+	range.max_start = qry;
+	if (*qry == '?'){
+		constexpr static const char* const MAX_INT_AS_STR = "18446744073709551615"; // max of uint64_t
+		range.max_start = MAX_INT_AS_STR;
+		range.max_end = MAX_INT_AS_STR + std::char_traits<char>::length(MAX_INT_AS_STR);
+		++qry;
+	} else {
+		if_negatable_then_look_for_dash<Number>(qry);
+		loop_over_valid_char_for_conversion<Number>(qry);
+		range.max_end = qry;
+	}
+	if ((range.max_end == range.max_start) or (range.max_end[-1] == '-'))
 		return successness::invalid;
 	
 	return successness::ok;
@@ -407,14 +464,10 @@ static
 successness::ReturnType process_value_list(std::string& where,  const char*& qry){
 	LOG("process_value_list %s\n", qry);
 	
-	uint64_t min;
-	uint64_t max;
-	const auto rc = get_int_range(qry, min, max);
+	Range range;
+	const auto rc = get_range<double>(qry, range);
 	if (rc != successness::ok)
 		return rc;
-	
-	LOG("  min == %lu\n", min);
-	LOG("  max == %lu\n", max);
 	
 	// The following is like the loop in process_name_list, but changing what is done on a match
 	// TODO: Deduplicate code
@@ -434,9 +487,9 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 						where += "SELECT file FROM file2";
 						where.append(start,  (uintptr_t)qry - (uintptr_t)start);
 						where += " WHERE x>=";
-						where += std::to_string(min);
+						where += std::string_view(range.min());
 						where += " AND x<=";
-						where += std::to_string(max);
+						where += std::string_view(range.max());
 						where += " UNION ";
 						if (*(++qry) != ' ')
 							return successness::invalid;
@@ -659,7 +712,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						return successness::invalid;
 				}
 				
-				rc = get_int_range(qry, min, max);
+				Range range;
+				rc = get_range<uint64_t>(qry, range);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -670,9 +724,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				where += "IN(SELECT file FROM ";
 				where += (arg_token_base==arg::eras)?"era":"file_backup";
 				where += " GROUP BY file HAVING COUNT(*)>=";
-				where += std::to_string(min);
+				where += std::string_view(range.min());
 				where += " AND COUNT(*)<=";
-				where += std::to_string(max);
+				where += std::string_view(range.max());
 				where += ")";
 				++n_args_since_operator;
 				break;
@@ -760,7 +814,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (rc != successness::ok)
 					return rc;
 				
-				rc = get_int_range(qry, min, max);
+				Range range;
+				rc = get_range<uint64_t>(qry, range);
 				if (rc != successness::ok)
 					return rc;
 				
@@ -786,9 +841,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += ")GROUP BY ";
 					where += attribute_name;
 					where += "\nHAVING COUNT(*)>=";
-					where += std::to_string(min);
+					where += std::string_view(range.min());
 					where += " AND COUNT(*)<=";
-					where += std::to_string(max);
+					where += std::string_view(range.max());
 					where += ")";
 				} else if (attribute_kind == attribute_kind::ersatz_many_to_one){
 					return successness::unimplemented;
@@ -818,9 +873,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					derived_tbl += std::to_string(user_id);
 					derived_tbl += ")\n\t\tGROUP BY x";
 					derived_tbl += "\nHAVING COUNT(*)>=";
-					derived_tbl += std::to_string(min);
+					derived_tbl += std::string_view(range.min());
 					derived_tbl += " AND COUNT(*)<=";
-					derived_tbl += std::to_string(max);
+					derived_tbl += std::string_view(range.max());
 					derived_tbl += "\n\t)";
 					where += derived_tbl;
 					where += "\n)";

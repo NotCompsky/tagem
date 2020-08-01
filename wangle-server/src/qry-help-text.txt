@@ -4,9 +4,9 @@ USAGE
 
 INPUT DATA TYPES
 	RANGE
-		An integer range is of the form [MIN]-[MAX]
-		MIN must be a non-negative integer
-		MAX must be either a non-negative integer, or "?" (without the quotation marks)
+		A numeric range is of the form [MIN]-[MAX]
+		MIN must be a number
+		MAX must be either a number, or "?" (without the quotation marks)
 	
 	NAME
 		A string surrounded by double quotes, with all double quotes within itself escaped
