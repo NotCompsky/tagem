@@ -36,7 +36,7 @@ function $$$text_editor_save(){
 	}
 	const dir_inp = $$$document_getElementById("dirselect");
 	const _dir_id = dir_inp.value;
-	if(_dir_id === null){
+	if((_dir_id === null)||(_dir_id==="")){
 		$$$alert("Must assign file to directory");
 		return;
 	}
