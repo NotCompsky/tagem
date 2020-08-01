@@ -22,6 +22,10 @@ get_cmnts(){
 	| sed 's/\\"/"/g'
 }
 
+if [ "$COOKIES" = "" ]; then
+	echo "WARNING: No cookies supplied" >&2
+fi
+
 
 declare -i limit=100
 for url in "$@"; do
@@ -31,14 +35,14 @@ for url in "$@"; do
 	
 	#read subreddit_name submission_id_str < <(echo "$url" | sed -E 's_^https://[a-z]+\.reddit\.com/r/([^/]+)/comments/([^/]+)/[^/]+/$_\1 \2_g')
 	
-	echo "Scraping $url"
+	echo "Scraping $url" >&2
 	
 	submission_id_str="$(echo "$url" | sed -E 's_^https?://[a-z]+\.reddit\.com/r/[^/]+/comments/([a-z0-9]+)/.*$_\1_g')"
 	submission_id="$(rscraper-str2id "$submission_id_str")"
 	
 	if [ "$(mysql -r -s --disable-column-names -e "SELECT id FROM post WHERE id=$submission_id" reddit)" = "" ]; then
-		echo "Getting submission data from reddit.com"
-		curl "$url.json" -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-GB,en;q=0.5' --compressed -H 'Connection: keep-alive' -H 'Cookie: loid=00000000001nfxgyoo.2.1530024500789.Z0FBQUFBQmV6UmdhOXRjdUgwS0xPekk3a0tKQUVCWVRzUWJLdWNhYkFuUnhYbGVJeDY4Y3BkN0pNcVdNOXVVbXVPbFhXTG1xN25fN1U3emZSSnlTc0w2Z1VOVUJzNk9FMnltUklablFKTmZaTG1MYmZGQ0ZIZ29jNElQNU1RcDhMVmFhVmt4UVdtTE0; csv=1; edgebucket=EOs04mOdq8fydJY8yd; eu_cookie_v2=3; recent_srs=t5_2fwo%2Ct5_2qh4j%2Ct5_2qh4a%2Ct5_hitz3%2Ct5_2qjto%2Ct5_1rqwi%2Ct5_2rtff%2Ct5_2thqg%2Ct5_2qnvz%2Ct5_2w2s8; over18=1; reddit_session=129393369240%2C2020-05-28T22%3A53%3A47%2C4dd4bbf420bd000f0bce2d21daff864eb084d403; redesign_optout=true; pc=lj; d2_token=3.6a4d6e92e89c01e4ff2a318c0571d02476304332528aa914e060b52e46935db5.eyJhY2Nlc3NUb2tlbiI6IjEyOTM5MzM2OTI0MC1KQzktamJ6ZzNKdy01YjI2UUFZMEYzblpleEEiLCJleHBpcmVzIjoiMjAyMC0wNi0xMFQxNDowNzowNC4wMDBaIiwibG9nZ2VkT3V0IjpmYWxzZSwic2NvcGVzIjpbIioiLCJlbWFpbCJdfQ==; session_tracker=fmfpiieaoaklkjedeb.0.1591794322292.Z0FBQUFBQmU0TnFUX2FIUUJGM00xblBUaFFrSlFMZ0FCQnZuU0J5OE9WdFAyUy1qVDFoR0hCeDV0cDl0YVZrdk1jY1d3UElqTmZXNjlRazZoMUJuM0tIdENYTXJ4UkJFUTR0UVYwMEo4bG9oLUdiSWNJUUlEdUg1b1NMVDR2cHB2dWRlUXNxVmF4ekk; Compsky_recentclicks2=t3_gzxdf8%2Ct3_h06bnf%2Ct3_gzysdx%2Ct3_h037xb%2Ct3_h07ne8' -H 'Upgrade-Insecure-Requests: 1' -H 'DNT: 1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache' -H 'TE: Trailers' -o /tmp/rscrape-submission.json
+		echo "Getting submission data from reddit.com" >&2
+		curl "$url.json" -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-GB,en;q=0.5' --compressed -H 'Connection: keep-alive' -H "Cookie: ${COOKIES}" -H 'Upgrade-Insecure-Requests: 1' -H 'DNT: 1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache' -H 'TE: Trailers' -o /tmp/rscrape-submission.json
 		
 		IFS=',' read submisison_id_str subreddit_name subreddit_id t user_id_str username url title_and_text < <(cat /tmp/rscrape-submission.json \
 		| jq '.[0].data.children[0].data | [.id, .subreddit, .subreddit_id, .created, .author_fullname, .author, .url, .title, .selftext] | @csv' \
@@ -67,9 +71,9 @@ ON DUPLICATE KEY UPDATE id=id
 	before_t="$(date +%s)"
 	
 	while true; do
-		echo "Getting results before $before_t"
+		echo "Getting results before $before_t" >&2
 		url="https://api.pushshift.io/reddit/comment/search?link_id=t3_${submission_id_str}&before=${before_t}&filter=id,author_fullname,author,parent_id,created_utc,body&size=${limit}"
-		echo "Getting $url"
+		echo "Getting $url" >&2
 		curl -s "$url" -o /tmp/rscrape-submission.cmnts.json
 		declare -i i=0
 		while IFS=',' read -r id username user_id_str t parent_id body; do
@@ -106,7 +110,7 @@ ON DUPLICATE KEY UPDATE id=id
 			"
 		done < <(get_cmnts)
 		
-		echo "Got $i results"
+		echo "Got $i results" >&2
 		
 		# Retrieved latest first, so t is the earliest timestamp retrieved
 		if [ $i -lt $limit ]; then
