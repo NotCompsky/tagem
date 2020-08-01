@@ -1372,11 +1372,11 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		this->reset_buf_index();
 		this->mysql_query(
-			"SELECT GROUP_CONCAT(f.id)"
-			"FROM file f "
-			"JOIN file2post f2p ON f2p.file=f.id "
+			"SELECT GROUP_CONCAT(f2p.file)"
+			"FROM file2post f2p "
+			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f2p.file "
 			"WHERE f2p.post IN (", post_ids, ")"
-			  FILE_TBL_USER_PERMISSION_FILTER(user_id)
+			  "AND A.id IS NULL "
 			"LIMIT " TABLE_LIMIT
 		);
 		mysql_free_result(_post_ids_res);
