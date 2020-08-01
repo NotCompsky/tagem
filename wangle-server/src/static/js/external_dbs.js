@@ -61,14 +61,14 @@ function $$$display_cmnts(_db_id, ls){
 		for(const [key, [parent,n_children,_s]] of Object.entries(tree)){
 			if(n_children !== 0)
 				continue;
+			if(key === "0")
+				break bigloopboi;
 			if(tree[parent]===undefined){
 				tree[0][2] += _s + '</div></div>';
 			}else{
 				tree[parent][2] += _s + '</div></div>';
 				--tree[parent][1];
 			}
-			if(key === "0")
-				break bigloopboi;
 			delete tree[key];
 		}
 	}
