@@ -5,15 +5,8 @@ FROM notcompsky/tagem-compile-1 AS compile-2
 WORKDIR /tagem
 COPY . /tagem
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
-RUN apt install -y --no-install-recommends libavfilter-dev \
-	\
+RUN apt install -y --no-install-recommends libffmpegthumbnailer-dev \
 	&& curl -s https://raw.githubusercontent.com/dtschump/CImg/master/CImg.h > /usr/include/CImg.h \
-	\
-	&& git clone git clone https://github.com/dirkvdb/ffmpegthumbnailer \
-	&& mkdir ffmpegthumbnailer/build \
-	&& cd ffmpegthumbnailer/build \
-	&& cmake -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DENABLE_TESTS=OFF .. \
-	&& make install \
 	\
 	&& git clone https://github.com/NotCompsky/libcompsky \
 	&& mkdir libcompsky/build \
@@ -35,7 +28,8 @@ RUN apt install -y --no-install-recommends libavfilter-dev \
 FROM notcompsky/tagem-base
 COPY --from=compile-2 /tagem/build/webserver/server /tagem-server
 COPY --from=compile-2 /tagem/build/utils/tagem-init /tagem-init
-RUN apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
+RUN apt install -y --no-install-recommends ffmpegthumbnailer \
+	&& apt purge -y libc-dev-bin libssl-dev linux-libc-dev libcrypt-dev \
 	&& rm -rf \
 		/var/lib/apt/lists/* /var/cache/apt/lists/* \
 		/usr/sbin/* \
