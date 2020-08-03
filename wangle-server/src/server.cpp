@@ -14,8 +14,6 @@ The absense of this copyright notices on some other files in this project does n
 
 #define CACHE_CONTROL_HEADER "Cache-Control: max-age=" MAX_CACHE_AGE "\n"
 
-#include "FrameDecoder.h"
-#include "CStringCodec.h"
 #include "skip_to_body.hpp"
 #include "qry.hpp"
 #include "protocol.hpp"
@@ -44,10 +42,11 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/utils/is_str_dblqt_escaped.hpp>
 #include <compsky/deasciify/a2n.hpp>
 #include <compsky/deasciify/a2f.hpp>
+#include <compsky/wangle/compsky_handler.hpp>
+#include <compsky/wangle/compsky_pipeline_factory.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
-#include <wangle/channel/AsyncSocketHandler.h>
 
 #include <mutex>
 #include <cstring> // for malloc
@@ -227,9 +226,6 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if (not has_permission) \
 		return _r::unauthorised;
 
-
-typedef wangle::Pipeline<folly::IOBufQueue&,  std::string_view> RTaggerPipeline;
-
 static
 std::vector<DatabaseInfo> db_infos;
 
@@ -290,54 +286,20 @@ namespace _r {
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
 	std::mutex protocol_json_mutex;
-	
-	namespace flag {
-		constexpr static const Arr arr;
-		constexpr static const Dict dict;
-		
-		constexpr static QuoteAndJSONEscape quote_and_json_escape;
-		constexpr static QuoteAndEscape quote_and_escape;
-		constexpr static QuoteNoEscape quote_no_escape;
-		constexpr static NoQuote no_quote;
-	};
 }
 
-class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  const std::string_view> {
+constexpr size_t handler_buf_sz = 20 * 1024 * 1024;
+
+class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
+ public:
+	constexpr
+	std::string_view determine_response(const char* str){
+		--str;
+		#include "auto-generated/auto__server-determine-response.hpp"
+		return _r::not_found;
+	}
   private:
-	constexpr static const size_t buf_sz = 20 * 1024 * 1024;
-	char* buf;
-	char* itr;
-	
 	static std::mutex mysql_mutex;
-	MYSQL_RES* res;
-	MYSQL_RES* res2;
-	MYSQL_ROW row;
-	
-	constexpr
-	uintptr_t buf_indx(){
-		return (uintptr_t)this->itr - (uintptr_t)this->buf;
-	}
-	
-	constexpr
-	void reset_buf_index(){
-		this->itr = this->buf;
-	}
-	
-	inline
-	char last_char_in_buf(){
-		return *(this->itr - 1);
-	}
-	
-	constexpr
-	void move_itr_to_trailing_null(){
-		while(*this->itr != 0)
-			++this->itr;
-	}
-	
-	template<typename... Args>
-	void asciify(Args... args){
-		compsky::asciify::asciify(this->itr,  args...);
-	};
 	
 	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
@@ -451,122 +413,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		this->asciify(args...);
 		this->mysql_exec_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
-	}
-
-	
-	template<typename... Args>
-	bool mysql_assign_next_row(Args... args){
-		return compsky::mysql::assign_next_row(this->res, &this->row, args...);
-	}
-	
-	template<typename... Args>
-	bool mysql_assign_next_row2(Args... args){
-		// WARNING: Shares row.
-		return compsky::mysql::assign_next_row(this->res2, &this->row, args...);
-	}
-	
-	template<typename... Args>
-	bool mysql_assign_next_row__no_free(Args... args){
-		return compsky::mysql::assign_next_row__no_free(this->res, &this->row, args...);
-	}
-	
-	void mysql_free_res(){
-		mysql_free_result(this->res);
-	}
-	
-	void mysql_seek(const int i){
-		mysql_data_seek(this->res, i);
-	}
-	
-	std::string_view get_buf_as_string_view(){
-		return std::string_view(this->buf, this->buf_indx());
-	}
-	
-#ifdef n_cached
-	void add_buf_to_cache(const unsigned int which_cached_fn,  const uint64_t user_id,  const unsigned int n_requests = 1){
-		cached_stuff::add(this->buf, this->buf_indx(), which_cached_fn, user_id, n_requests);
-	}
-#endif
-	
-	
-	template<typename... Args>
-	char* get_itr_from_buf(std::nullptr_t,  const char* const _headers,  Args... args){
-		size_t sz = 0; // NOTE: If there is a free(): corrupted chunk error, it is probably because strlens has calculated the wrong size for the container.
-		
-		sz += std::char_traits<char>::length(_headers);
-		sz += 1;
-		sz += _r::get_size_of_json_response_rows_from_sql_res(this->res, &this->row, args...);
-		sz += 1;
-		sz += 1;
-		
-		void* buf = malloc(sz);
-		if(unlikely(buf == nullptr))
-			exit(4096);
-		return reinterpret_cast<char*>(buf);
-	}
-	template<typename... Args>
-	char* get_itr_from_buf(char** buf,  const char* const,  Args...){
-		return *buf;
-	}
-	void set_buf_to_itr(std::nullptr_t, char*){}
-	void set_buf_to_itr(char** buf,  char* itr){
-		*buf = itr;
-	}
-	void set_buf_to_itr(const char** buf,  char* itr){
-		*buf = const_cast<const char*>(itr);
-	}
-	
-	template<typename ArrOrDict,  typename... Args>
-	bool asciify_json_response_rows(char*& itr,  const ArrOrDict f_arr_or_dict,  Args... args){
-		_r::asciify_json_response_rows_from_sql_res(this->res, &this->row, itr, f_arr_or_dict, args...);
-		const bool rc = (likely(*(itr - 1) == ','));
-		if (rc)
-			--itr;
-		return rc;
-	}
-	
-	template<typename ArrOrDict,  typename... Args>
-	bool init_json_rows(char*& itr,  const ArrOrDict _flag,  Args... args){
-		compsky::asciify::asciify(itr, _r::opener_symbol(_flag));
-		const bool rc = this->asciify_json_response_rows(itr, _flag, args...);
-		*(itr++) = _r::closer_symbol(_flag);
-		return rc;
-	}
-	
-	template<typename StackdBuf,  typename MallocdBuf,  typename ArrOrDict,  typename... Args>
-	void init_json(const StackdBuf stacked_itr,  const ArrOrDict _flag,  MallocdBuf mallocd_dst,  Args... args){
-		/*
-		 * stacked_itr is either nullptr or this->itr
-		 * In the first case,  itr_init is a new malloc'd string that is assigned to mallocd_dst
-		 * In the latter case, this->itr is incremented so that a string_view of this->buf can be replied
-		 */
-		
-		char* const itr_init = this->get_itr_from_buf(stacked_itr, _r::json_init, args...);
-		char* itr = itr_init;
-		
-		compsky::asciify::asciify(itr, _r::json_init);
-		this->mysql_seek(0); // Reset to first result
-		this->init_json_rows(itr, _flag, args...);
-		*itr = 0;
-		
-		this->set_buf_to_itr(mallocd_dst, itr_init);
-		this->set_buf_to_itr(stacked_itr, itr);
-	}
-	
-	void begin_json_response(char*& itr){
-		compsky::asciify::asciify(itr, _r::json_init);
-	}
-	
-	void begin_json_response(){
-		this->reset_buf_index();
-		this->begin_json_response(this->itr);
-	}
-	
-	template<typename... Args>
-	void write_json_list_response_into_buf(Args... args){
-		this->begin_json_response();
-		this->init_json_rows(this->itr, _r::flag::arr, args...);
-		*this->itr = 0;
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
@@ -796,7 +642,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 				char* _itr = _buf;
 				compsky::asciify::asciify(_itr, page_n, '\0');
 				const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
-				if (proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  RTaggerHandler::buf_sz - this->buf_indx())){
+				if (proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  handler_buf_sz - this->buf_indx())){
 					return _r::server_error;
 				}
 				this->move_itr_to_trailing_null();
@@ -2287,7 +2133,7 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		constexpr static const size_t block_sz = 1024 * 1024 * 10;
 		constexpr static const size_t stream_block_sz = 1024 * 1024; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
-		static_assert(buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
+		static_assert(handler_buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
 		GET_NUMBER_NONZERO(uint64_t, id)
 		
@@ -3296,21 +3142,6 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		return _r::post_ok;
 	}
 	
-	constexpr
-	std::string_view determine_response(const char* str){
-		--str;
-#		include "auto-generated/auto__server-determine-response.hpp"
-		return _r::not_found;
-	}
-	
-	void asciify_request_address_info(const std::string_view msg){
-		this->reset_buf_index();
-		for(size_t i = 0;  i < msg.size()  &&  msg.data()[i] != '\n'; ++i){
-			this->asciify(msg.data()[i]);
-		}
-		*this->itr = 0;
-	}
-	
 	void md5_hash(uint8_t* const hash,  const char* const string,  const size_t string_len){
 		MD5_CTX md5_ctx;
 		MD5_Init(&md5_ctx);
@@ -3410,46 +3241,8 @@ class RTaggerHandler : public wangle::HandlerAdapter<const std::string_view,  co
 		
 		return _r::post_ok; // NOTE: this is likely to have timed out already on the client's side
 	}
-  public:
-	RTaggerHandler()
-	{
-		this->buf = (char*)malloc(this->buf_sz);
-		if(unlikely(this->buf == nullptr))
-			// TODO: Replace with compsky::asciify::alloc
-			exit(4096);
-	}
-	
-	~RTaggerHandler(){
-	}
-	
-		void read(Context* ctx,  const std::string_view msg) override {
-			this->asciify_request_address_info(msg);
-			const std::string client_addr = ctx->getPipeline()->getTransportInfo()->remoteAddr->getAddressStr();
-			std::cout << client_addr << '\t' << this->buf << std::endl;
-			const std::string_view v = likely(std::find(banned_client_addrs.begin(), banned_client_addrs.end(), client_addr) == banned_client_addrs.end()) ? this->determine_response(msg.data()) : _r::banned_client;
-			if (unlikely(v == _r::not_found)){
-				this->asciify_request_address_info(msg);
-				fprintf(stderr, "!!!WARNING!!! Nation-state cyber attack detected! IP %s has been BANNED for attempting to HACK at path %s\n", client_addr.c_str(), this->buf);
-				banned_client_addrs.push_back(client_addr);
-			}
-			write(ctx, v);
-			close(ctx);
-		}
 };
 std::mutex RTaggerHandler::mysql_mutex;
-
-class RTaggerPipelineFactory : public wangle::PipelineFactory<RTaggerPipeline> {
-	public:
-		RTaggerPipeline::Ptr newPipeline(std::shared_ptr<folly::AsyncTransportWrapper> sock) override {
-			auto pipeline = RTaggerPipeline::create();
-			pipeline->addBack(wangle::AsyncSocketHandler(sock));
-			pipeline->addBack(wangle::FrameDecoder());
-			pipeline->addBack(wangle::CStringCodec());
-			pipeline->addBack(RTaggerHandler());
-			pipeline->finalize();
-			return pipeline;
-		}
-};
 
 int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
@@ -3614,8 +3407,8 @@ int main(int argc,  const char* const* argv){
 	}
 	connected_local_devices_str.pop_back();
 	
-	wangle::ServerBootstrap<RTaggerPipeline> server;
-	server.childPipeline(std::make_shared<RTaggerPipelineFactory>());
+	wangle::ServerBootstrap<CompskyPipeline> server;
+	server.childPipeline(std::make_shared<CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());
 	server.bind(port_n);
 	server.waitForStop();
 	
