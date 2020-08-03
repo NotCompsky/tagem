@@ -1,0 +1,79 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 15bfa3f..c735467 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -44,14 +44,6 @@ if (SANITIZE_ADDRESS)
+     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+ endif ()
+ 
+-find_package(FFmpeg REQUIRED)
+-if (NOT FFmpeg_FOUND)
+-    message(FATAL_ERROR "BAAM")
+-endif ()
+-if (NOT TARGET FFmpeg::avcodec)
+-    message(FATAL_ERROR "BOOM")
+-endif ()
+-
+ find_package(JPEG)
+ if (JPEG_FOUND)
+     set(HAVE_JPEG ON)
+@@ -93,10 +85,10 @@ add_library(libffmpegthumbnailerobj OBJECT
+ )
+ 
+ target_link_libraries(libffmpegthumbnailerobj
+-    FFmpeg::avformat
+-    FFmpeg::avcodec
+-    FFmpeg::avutil
+-    FFmpeg::avfilter
++    /usr/lib/x86_64-linux-gnu/libavformat.a
++    /usr/lib/x86_64-linux-gnu/libavcodec.a
++    /usr/lib/x86_64-linux-gnu/libavutil.a
++    /usr/lib/x86_64-linux-gnu/libavfilter.a
+     $<$<BOOL:${HAVE_JPEG}>:${JPEG_LIBRARIES}>
+     $<$<BOOL:${HAVE_PNG}>:PNG::PNG>
+ )
+@@ -133,6 +125,7 @@ if (ENABLE_STATIC)
+ 
+     set_target_properties(libffmpegthumbnailerstatic PROPERTIES
+         OUTPUT_NAME ffmpegthumbnailer
++        PUBLIC_HEADER "${LIB_HDRS}"
+     )
+     target_include_directories(libffmpegthumbnailerstatic
+         PUBLIC
+@@ -161,35 +154,15 @@ if (ENABLE_SHARED)
+     set (SHARED_LIB libffmpegthumbnailer)
+ endif ()
+ 
+-ADD_EXECUTABLE(ffmpegthumbnailer main.cpp)
+-target_include_directories(ffmpegthumbnailer PRIVATE ${CMAKE_BINARY_DIR})
+-
+-if (ENABLE_GIO)
+-    find_path(DL_INCLUDE dlfcn.h)
+-    target_include_directories(ffmpegthumbnailer PRIVATE ${DL_INCLUDE})
+-    target_link_libraries(ffmpegthumbnailer ${CMAKE_DL_LIBS})
+-endif ()
+-
+-if (ENABLE_SHARED)
+-    target_link_libraries(ffmpegthumbnailer ${SHARED_LIB})
+-else ()
+-    target_link_libraries(ffmpegthumbnailer ${STATIC_LIB})
+-endif ()
+-
+-install(TARGETS ffmpegthumbnailer ${STATIC_LIB} ${SHARED_LIB}
++install(TARGETS ${STATIC_LIB} ${SHARED_LIB}
+     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libffmpegthumbnailer
+ )
+ 
+-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/man/ffmpegthumbnailer.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+ install(FILES ${CMAKE_BINARY_DIR}/libffmpegthumbnailer.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+ 
+-if (ENABLE_THUMBNAILER)
+-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dist/ffmpegthumbnailer.thumbnailer DESTINATION ${CMAKE_INSTALL_DATADIR}/thumbnailers)
+-endif ()
+-
+ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_BINARY_DIR}/config.h)
+ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libffmpegthumbnailer.pc.in ${CMAKE_BINARY_DIR}/libffmpegthumbnailer.pc @ONLY)
+ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/CMakeUninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeUninstall.cmake" IMMEDIATE @ONLY)

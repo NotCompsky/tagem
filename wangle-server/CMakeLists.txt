@@ -27,7 +27,6 @@ option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
-set(WHICH_MYSQL_CLIENT "mysqlclient" CACHE STRING "Which MySQL or MariaDB client to use")
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
@@ -47,7 +46,23 @@ find_package(folly REQUIRED)
 find_package(wangle REQUIRED)
 find_package(gflags REQUIRED)
 find_package(Compsky REQUIRED)
-find_package(CURL REQUIRED)
+
+find_library(CURL NAMES curl.a libcurl.a curl)
+find_library(FFMPEGTHUMBNAILER NAMES ffmpegthumbnailer.a libffmpegthumbnailer.a ffmpegthumbnailer)
+find_library(
+	MYSQL_CLIENT
+	NAMES
+		mariadbclient.a
+		libmariadbclient.a
+		mariadb/mariadbclient.a
+		mariadb/libmariadbclient.a
+		mysqlclient.a
+		libmysqlclient.a
+		mysql/mysqlclient.a
+		mysql/libmysqlclient.a
+		mariadbclient
+		mysqlclient
+)
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
@@ -71,7 +86,7 @@ set_target_properties(
 		LINK_FLAGS_RELEASE -s
 )
 target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
-target_link_libraries(server PRIVATE "${WHICH_MYSQL_CLIENT}" wangle::wangle curl ffmpegthumbnailer)
+target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" "${FFMPEGTHUMBNAILER}")
 # NOTE: I should be able to simply link compsky_mysql, and have that - as an INTERFACE library - link to mysqlclient or mariadbclient, whichever is installed. However, CMake doesn't agree, and I have a limit to how much CMake I can stand without getting paid.
 if(n_cached)
 	target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
