@@ -29,10 +29,8 @@ The absense of this copyright notices on some other files in this project does n
 #include "read_request.hpp"
 #include "initialise_tagem_db.hpp"
 
-#ifdef n_cached
-# define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
-# include <compsky/wangle/cache.hpp>
-#endif
+#define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
+#include <compsky/wangle/cache.hpp>
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/mysql/qryqry.hpp>
