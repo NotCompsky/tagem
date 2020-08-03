@@ -1,3 +1,9 @@
+# General
+
+This project is statically compiled within a Docker container - hence it's tiny size.
+
+I will release the executable - which can be run directly - with every major release, however to get the very latest release, you will have to either use the Docker image, or extract the executable from that Docker image.
+
 # Docker Installation
 
 ## Description
