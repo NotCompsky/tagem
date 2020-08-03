@@ -115,6 +115,10 @@ See [COMPILING.md](COMPILING.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [DESIG
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), and [FRONTEND.md](FRONTEND.md).
 
+### Stats
+
+See [STATS.md](STATS.md) for some Git contribution graphs.
+
 ## Background
 
 If you feel like there aren't enough blogs on the internet, [here's another](https://gist.github.com/NotCompsky/f1ab63fa2f191b156b9187b111449d20). It's a look at how this project evolved from some unlikely decisions, as I'm personally interested in how [the Butterfly Effect](https://en.wikipedia.org/wiki/Butterfly_effect) occurs in software development.
