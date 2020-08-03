@@ -21,8 +21,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "str_utils.hpp"
 #include "db_info.hpp"
 #include "user_auth.hpp"
-#include "asciify_flags.hpp"
-#include "jsonify.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
 #include "fs.hpp"
@@ -44,6 +42,8 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/wangle/compsky_handler.hpp>
 #include <compsky/wangle/compsky_pipeline_factory.hpp>
 #include <compsky/wangle/static_response.hpp>
+#include <compsky/wangle/jsonify.hpp>
+#include <compsky/wangle/asciify_flags.hpp>
 
 #include <folly/init/Init.h>
 #include <wangle/bootstrap/ServerBootstrap.h>
