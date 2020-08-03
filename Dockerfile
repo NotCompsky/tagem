@@ -14,6 +14,12 @@ ENV LDFLAGS="-Wl,-Bstatic"
 ENV CFLAGS="-static"
 ENV CXXFLAGS="-static"
 
+WORKDIR /tagem
+COPY wangle-server /tagem/wangle-server
+COPY utils /tagem/utils
+COPY include /tagem/include
+# WARNING: -fpermissive is used because Facebook's wangle library currently has a line in its logging library that tries to convert void** to void*
+
 RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& cd ffmpegthumbnailer \
 	&& git apply /ffmpegthumbnailer-static.patch \
@@ -37,13 +43,10 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 		-DMYSQL_UNDER_DIR_OVERRIDE=1 \
 		-DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=/usr/local/include \
 		.. \
-	&& make install
-WORKDIR /tagem
-COPY wangle-server /tagem/wangle-server
-COPY utils /tagem/utils
-COPY include /tagem/include
-# WARNING: -fpermissive is used because Facebook's wangle library currently has a line in its logging library that tries to convert void** to void*
-RUN rm -rf /tagem/build \
+	&& make install \
+	\
+	&& chmod +x /tagem/wangle-server/scripts/* \
+	&& rm -rf /tagem/build \
 	;  mkdir /tagem/build \
 	&& cd /tagem/build \
 	&& LD_LIBRARY_PATH="/usr/local/lib64:$LD_LIBRARY_PATH" cmake \
