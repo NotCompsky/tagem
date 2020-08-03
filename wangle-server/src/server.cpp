@@ -30,7 +30,8 @@ The absense of this copyright notices on some other files in this project does n
 #include "initialise_tagem_db.hpp"
 
 #ifdef n_cached
-# include "cache.hpp"
+# define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
+# include <compsky/wangle/cache.hpp>
 #endif
 
 #include <compsky/mysql/query.hpp>
@@ -286,6 +287,20 @@ namespace _r {
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
 	std::mutex protocol_json_mutex;
+}
+
+namespace cached_stuff {
+	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
+	// TODO: Invalidate caches when necessary (after data is modified)
+	enum CacheID {
+		files_given_tag,
+		files_given_dir,
+		files_given_ids,
+		tags_given_file,
+		dir_info,
+		file_info,
+		n_fns
+	};
 }
 
 constexpr size_t handler_buf_sz = 20 * 1024 * 1024;
