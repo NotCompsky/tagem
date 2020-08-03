@@ -1,0 +1,3 @@
+[submodule "wangle-server/scripts"]
+	path = wangle-server/scripts
+	url = https://github.com/NotCompsky/wangler
