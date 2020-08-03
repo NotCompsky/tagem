@@ -54,6 +54,7 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 		\
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
 		-DCMAKE_BUILD_TYPE=Release \
+		-DENABLE_STATIC=ON \
 		-Dwangle_DIR=/bob-the-builder/wangle/ \
 		-Dfolly_DIR=/bob-the-builder/folly/ \
 		-Dfizz_DIR=/bob-the-builder/fizz/ \

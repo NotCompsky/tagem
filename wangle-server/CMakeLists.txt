@@ -27,6 +27,7 @@ option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
+option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
@@ -47,11 +48,10 @@ find_package(wangle REQUIRED)
 find_package(gflags REQUIRED)
 find_package(Compsky REQUIRED)
 
-find_library(CURL NAMES curl.a libcurl.a curl)
-find_library(FFMPEGTHUMBNAILER NAMES ffmpegthumbnailer.a libffmpegthumbnailer.a ffmpegthumbnailer)
-find_library(
-	MYSQL_CLIENT
-	NAMES
+if(ENABLE_STATIC)
+	set(CURL_LIB_NAMES curl.a libcurl.a)
+	set(FFMPEGTHUMBNAILER_LIB_NAMES ffmpegthumbnailer.a libffmpegthumbnailer.a)
+	set(MYSQLCLIENT_LIB_NAMES
 		mariadbclient.a
 		libmariadbclient.a
 		mariadb/mariadbclient.a
@@ -60,9 +60,15 @@ find_library(
 		libmysqlclient.a
 		mysql/mysqlclient.a
 		mysql/libmysqlclient.a
-		mariadbclient
-		mysqlclient
-)
+	)
+else()
+	set(CURL_LIB_NAMES curl)
+	set(FFMPEGTHUMBNAILER_LIB_NAMES ffmpegthumbnailer)
+	set(MYSQLCLIENT_LIB_NAMES mariadbclient mysqlclient)
+endif()
+find_library(CURL NAMES ${CURL_LIB_NAMES})
+find_library(FFMPEGTHUMBNAILER NAMES ${FFMPEGTHUMBNAILER_LIB_NAMES})
+find_library(MYSQL_CLIENT NAMES ${MYSQLCLIENT_LIB_NAMES})
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
