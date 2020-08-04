@@ -47,8 +47,6 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_FILES_INNER_PRE, user_id, \
 	")"
-#define FILE_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND f.id NOT IN" USER_DISALLOWED_FILES(user_id)
 
 #define USER_DISALLOWED_ERAS_INNER_PRE \
 		"SELECT e2t.era AS id " \
@@ -83,8 +81,6 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_TAGS_INNER_PRE user_id \
 	")"
-#define TAG_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND t.id NOT IN" USER_DISALLOWED_TAGS(user_id)
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
 		"SELECT D2t.device AS id " \
 		JOIN_TAG_BLACKLIST \
@@ -107,8 +103,8 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_DIRS_INNER_PRE, user_id, \
 	")"
-#define DIR_TBL_USER_PERMISSION_FILTER(user_id) \
-	"AND d.id NOT IN" USER_DISALLOWED_DIRS(user_id)
+#define NOT_EXISTS_DIR(dir_id, user_id) \
+	"NOT EXISTS(SELECT id FROM" USER_DISALLOWED_DIRS(user_id) "WHERE id=" dir_id ")"
 
 namespace sql_factory{
 
