@@ -18,14 +18,17 @@ jobs:
 
       - run:
           name: libcompsky - Download
-          command: 'git clone https://github.com/NotCompsky/libcompsky'
+          command: 'git clone --depth 1 https://github.com/NotCompsky/libcompsky'
       - run:
           name: libcompsky - Build
           command: 'mkdir libcompsky/build  &&  cd libcompsky/build  &&  cmake ..  &&  make  &&  make install  &&  cd ../..'
 
       - run:
           name: tagem - Download
-          command: 'git clone https://github.com/NotCompsky/tagem'
+          command: 'git clone --depth 1 --recurse-submodules https://github.com/NotCompsky/tagem'
       - run:
           name: tagem - Build
           command: 'mkdir tagem/build  &&  chmod +x tagem/wangle-server/scripts/*  &&  cd tagem/build  &&  cmake ../wangle-server -Dproxygen_root_DIR=../../proxygen -DCURL_INCLUDE_DIR=/usr/local/include -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so -DCMAKE_BUILD_TYPE=Release -Dwangle_DIR=/bob-the-builder/wangle/ -Dfolly_DIR=/bob-the-builder/folly/ -Dfizz_DIR=/bob-the-builder/fizz/  &&  make server'
+      - store_artifacts:
+          path: /tagem/build/server
+          destination: server
