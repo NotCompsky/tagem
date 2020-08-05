@@ -113,6 +113,8 @@ Each must be separated by a logical operator - thus far the only implemented one
 		Filter for files with a number of backups in this range
 	boxes [RANGE]
 		Filter for files with a number of boxes in this range.
+	tags [RANGE]
+		Filter for files with a number of associated tags in this range.
 	same [ATTRIBUTE] [RANGE]
 		This filter is NOT to be preceded by a logical operator
 		Only for the file table

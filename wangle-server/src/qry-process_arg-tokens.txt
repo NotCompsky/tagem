@@ -18,6 +18,8 @@ backups >
 	return arg::backups
 boxes >
 	return arg::boxes
+tags >
+	return arg::tags
 e >
 	return arg::era
 f >

@@ -60,6 +60,7 @@ namespace arg {
 		eras,
 		backups,
 		boxes,
+		tags,
 		external_db,
 		order_by_asc,
 		order_by_desc,
@@ -130,6 +131,8 @@ const char* get_tbl_for_file_assoc_count(const arg::ArgType arg){
 			return "file_backup";
 		case arg::boxes:
 			return "box";
+		case arg::tags:
+			return "file2tag";
 		default:
 			abort();
 	}
@@ -717,6 +720,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			}
 			case arg::eras:
 			case arg::boxes:
+			case arg::tags:
 			case arg::backups: {
 				if (which_tbl != 'f')
 					return successness::invalid;
