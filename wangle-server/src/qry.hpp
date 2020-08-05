@@ -70,6 +70,8 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_ERAS_INNER_PRE, user_id, \
 	")"
+#define NOT_DISALLOWED_ERA(era_id, user_id) \
+	"NOT EXISTS(" USER_DISALLOWED_ERAS_INNER_PRE, user_id, " AND id=" era_id ")"
 
 #define USER_DISALLOWED_TAGS_INNER_PRE \
 		"SELECT t2pt.id " \
