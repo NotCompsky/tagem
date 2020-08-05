@@ -47,6 +47,8 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_FILES_INNER_PRE, user_id, \
 	")"
+#define NOT_DISALLOWED_FILE(file, user_id) \
+	"NOT EXISTS(" USER_DISALLOWED_FILES_INNER_PRE, user_id, " AND f2t.file=", file ")"
 
 #define USER_DISALLOWED_ERAS_INNER_PRE \
 		"SELECT e2t.era AS id " \
@@ -77,6 +79,8 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_TAGS_INNER_PRE, user_id, \
 	")"
+#define NOT_DISALLOWED_TAG(tag, user_id) \
+	"NOT EXISTS(" USER_DISALLOWED_TAGS_INNER_PRE, user_id, " AND t2pt.id=", tag ")"
 #define USER_DISALLOWED_TAGS__COMPILE_TIME(user_id) \
 	"(" \
 		USER_DISALLOWED_TAGS_INNER_PRE user_id \
@@ -103,8 +107,8 @@ The absense of this copyright notices on some other files in this project does n
 	"(" \
 		USER_DISALLOWED_DIRS_INNER_PRE, user_id, \
 	")"
-#define NOT_EXISTS_DIR(dir_id, user_id) \
-	"NOT EXISTS(SELECT id FROM" USER_DISALLOWED_DIRS(user_id) "WHERE id=" dir_id ")"
+#define NOT_DISALLOWED_DIR(dir_id, user_id) \
+	"NOT EXISTS(" USER_DISALLOWED_DIRS_INNER_PRE, user_id, " AND id=" dir_id ")"
 
 namespace sql_factory{
 
