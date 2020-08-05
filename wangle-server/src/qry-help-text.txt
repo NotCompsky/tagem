@@ -42,7 +42,7 @@ INPUT DATA TYPES
 		Each attribute has a "kind" of relation too - either one-to-many, or many-to-many
 		VALID ATTRIBUTES
 			[ATTRIBUTE_KIND] attributes
-				[ATTRIBUTE_NAME]            [VALID_TABLES]
+				[ATTRIBUTE_NAME]              VALID_TABLES            NOTES
 			many-to-one attributes
 				name                          all except D and e
 				title                         f
@@ -106,8 +106,13 @@ Each must be separated by a logical operator - thus far the only implemented one
 				Filter for tags where one immediate ancestor is the tag "Country"
 			t parenty = "Continent"
 				Filter for tags where any ancestor is the tag "Continent"
+	mime [REGEX]
+		Filter for files with a mimetype of the given name.
+		Note that, unlike this, "attr mime" refers to the mime's ID, not name.
 	backups [RANGE]
 		Filter for files with a number of backups in this range
+	boxes [RANGE]
+		Filter for files with a number of boxes in this range.
 	same [ATTRIBUTE] [RANGE]
 		This filter is NOT to be preceded by a logical operator
 		Only for the file table

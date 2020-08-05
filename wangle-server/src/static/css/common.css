@@ -65,6 +65,8 @@
 
 "#view{"
 	"transform:translateX(0);" // "For elements whose layout is governed by the CSS box model, any value other than none for the transform property also causes the element to establish a containing block for all descendants. Its padding box will be used to layout for all of its absolute-position descendants, fixed-position descendants, and descendant fixed background attachments." - https://www.w3.org/TR/css-transforms-1/#containing-block-for-all-descendants
+	
+	"display:grid;" // When child grid columns are set to the same value, they will stack atop one another, the idea from the user "Instead" from here: https://stackoverflow.com/questions/6780614/css-how-to-position-two-elements-on-top-of-each-other-without-specifying-a-hei
 "}"
 "#view *{"
 	"width:100%;"
@@ -164,6 +166,10 @@
 ".media-view{"
 	"max-width:100vw;"
 	"max-height:100vh;"
+	
+	"grid-column:1;"
+	"grid-row:1;"
+	// The grid columns are only to ensure all media-view elements are stacked atop one another, the idea from the user "Instead" from here: https://stackoverflow.com/questions/6780614/css-how-to-position-two-elements-on-top-of-each-other-without-specifying-a-hei
 "}"
 
 ".unmake-popup{"

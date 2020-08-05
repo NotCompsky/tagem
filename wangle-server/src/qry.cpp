@@ -59,6 +59,7 @@ namespace arg {
 		device_exists,
 		eras,
 		backups,
+		boxes,
 		external_db,
 		order_by_asc,
 		order_by_desc,
@@ -119,6 +120,20 @@ struct SQLArg {
 	const char* data;
 	const size_t len;
 };
+
+static
+const char* get_tbl_for_file_assoc_count(const arg::ArgType arg){
+	switch(arg){
+		case arg::eras:
+			return "eras";
+		case arg::backups:
+			return "file_backup";
+		case arg::boxes:
+			return "box";
+		default:
+			abort();
+	}
+}
 
 static
 char has_name_attribute(const char tbl_alias){
@@ -588,6 +603,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	unsigned n_calls__limit = 0;  // Doesn't reallly matter to the serverif multiple limits are specified
 	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
 	unsigned n_calls__backups = 0;
+	unsigned n_calls__boxes = 0;
 	unsigned n_calls__eras = 0;
 	
 	unsigned ersatz_count = 0;
@@ -700,6 +716,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				break;
 			}
 			case arg::eras:
+			case arg::boxes:
 			case arg::backups: {
 				if (which_tbl != 'f')
 					return successness::invalid;
@@ -722,7 +739,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (is_inverted)
 					where += "NOT ";
 				where += "IN(SELECT file FROM ";
-				where += (arg_token_base==arg::eras)?"era":"file_backup";
+				where += get_tbl_for_file_assoc_count(arg_token_base);
 				where += " GROUP BY file HAVING COUNT(*)>=";
 				where += std::string_view(range.min());
 				where += " AND COUNT(*)<=";
