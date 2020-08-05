@@ -2,7 +2,9 @@
 	"position:fixed;"
 	"width:100%;"
 	"height:100%;"
+	"pointer-events:none;"
 "}"
+
 
 "textedit{"
 	"display:block;"
@@ -48,6 +50,10 @@
 	// I think it is used for something else as well, but I'm tired so I'll look later.
 	"z-index:1000;"
 	"border:1px solid #999;"
+	"pointer-events:all;"
+"}"
+".box:hover{"
+	"background:rgba(0,128,0,0.3);"
 "}"
 
 ".list{"
