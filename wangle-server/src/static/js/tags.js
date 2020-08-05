@@ -120,7 +120,7 @@ function $$$display_tag(id, name, thumb, fn_name, alias){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ ((thumb===null)?"":"<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>")
 			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + $$$escape_html_text(name) + "</a>"
-			+ "<button class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">-</button>"
+			+ "<a class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">[-]</a>"
 		+ "</div>";
 }
 function $$$display_tags_onto_node_from_url(url,node,fn_name,alias){
