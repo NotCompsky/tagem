@@ -118,14 +118,14 @@ function $$$unlink_this_child_tag_from_this_tag(node){
 }
 function $$$display_tag(id, name, thumb, fn_name, alias){
 	return "<div class='tag' data-id=\"" + id + "\">"
-			+ "<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>"
+			+ ((thumb===null)?"":"<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>")
 			+ "<a onclick='$$$view_tag(\"" + id + "\")'>" + $$$escape_html_text(name) + "</a>"
 			+ "<button class=\"del\" onclick=\"" + fn_name + "(this,'" + alias + "')\">-</button>"
 		+ "</div>";
 }
-function $$$display_tags_from_url(url,node_id,fn_name,alias){
+function $$$display_tags_onto_node_from_url(url,node,fn_name,alias){
 	if(url==="id/0/"){
-		$$$document_getElementById(node_id).innerHTML = "";
+		node.innerHTML = "";
 		return;
 	}
 	$$$ajax_data_w_JSON_response(
@@ -137,16 +137,22 @@ function $$$display_tags_from_url(url,node_id,fn_name,alias){
 			for (const [id, name, thumb, size] of data){
 				s += $$$display_tag(id, name, thumb, fn_name, alias);
 			}
-			$$$document_getElementById(node_id).innerHTML = s;
+			node.innerHTML = s;
 		}
 	);
 }
-function $$$display_tags(tag_ids, node_id, fn_name, alias){
+function $$$display_tags_from_url(url,node_id,fn_name,alias){
+	$$$display_tags_onto_node_from_url(url,$$$document_getElementById(node_id),fn_name,alias);
+}
+function $$$display_tags_onto_node(tag_ids, node, fn_name, alias){
 	if(tag_ids.length===0){
-		$$$document_getElementById(node_id).innerHTML = "";
+		node.innerHTML = "";
 		return;
 	}
-	$$$display_tags_from_url("id/0/"+tag_ids.join(","),node_id,fn_name,alias);
+	$$$display_tags_onto_node_from_url("id/0/"+tag_ids.join(","),node,fn_name,alias);
+}
+function $$$display_tags(tag_ids, node_id, fn_name, alias){
+	$$$display_tags_onto_node(tag_ids,$$$document_getElementById(node_id),fn_name,alias);
 }
 function $$$display_tags_add(tags, node_id, fn_name, alias){
 	// TODO: Have server return tag dictionary in response to tagging a file

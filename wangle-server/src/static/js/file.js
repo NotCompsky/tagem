@@ -11,6 +11,27 @@
 
 var $$$active_media = null;
 var $$$file_title;
+var $$$boxes = null;
+
+
+function $$$unlink_this_tag_from_this_box(){
+}
+
+
+function $$$draw_box(box){
+	const [id,frame,x,y,w,h,tags] = box;
+	const e = $$$document.createElement("div");
+	e.dataset.id = id;
+	e.style.transform = "translateX("+x+"px) translateY("+y+"px)";
+	// transforms due to https://www.w3.org/TR/css-transforms-1/#containing-block-for-all-descendants (see CSS)
+	e.style.width  = w+"px"
+	e.style.minHeight = h+"px";
+	e.style.maxHeight = h+"px";
+	// Both Firefox and Chrome treat height attribute on its own as min-height, and max-height+height as min-height+min-height.
+	e.classList = "box";
+	e.innerHTML = tags.map(([id,name]) => $$$display_tag(id, name, null, "$$$unlink_this_tag_from_this_box", 'b')).join("");
+	$$$document_getElementById("view").prepend(e);
+}
 
 
 function $$$get_file_id(and_era){
@@ -113,6 +134,10 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	}
 	$$$try_to_pause_yt_video();
 	const embed_pre = $$$D[_device_id][2];
+	
+	$$$for_node_in_document_getElementsByClassName("box",$$$remove_node);
+	$$$for_each_of($$$boxes,$$$draw_box);
+	
 	if (embed_pre === ""){
 		const _src_end = (_dir_id === "") ? "" : "/" + _dir_id;
 		const src = (_dir_name.startsWith("http")) ? (_dir_name + _file_name) : ("/S/f/" + $$$file_id + _src_end);
@@ -281,7 +306,7 @@ function $$$view_file(_file_id_and_t){
 		$$$ajax_GET_w_JSON_response(
 			"!!!MACRO!!!SERVER_ROOT_URL/a/f/i/"+$$$file_id,
 			function(data){
-				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, description, file2_values_csv], eras, backups, _d, t_dict] = data;
+				const [[thumb, _dir_id, name, title, sz, t_added_to_db, t_origin, duration, w, h, views, likes, dislikes, fps, ext_db_n_post_ids, tag_ids, mime, description, file2_values_csv], eras, backups, _d, t_dict, boxes] = data;
 				$$$set_profile_thumb(thumb);
 				$$$dir_id = _dir_id;
 				$$$d = _d;
@@ -321,6 +346,9 @@ function $$$view_file(_file_id_and_t){
 				
 				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 3);
+				
+				$$$boxes = boxes.map(x => [x[0],x[1],x[2],x[3],x[4],x[5],x[6].split(",").map(id => [id, t_dict[id]])]);
+				// Map tag IDs to ID-object pairs
 			}
 		);
 		}

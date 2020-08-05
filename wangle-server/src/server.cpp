@@ -165,12 +165,17 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv))) \
 		return _r::not_found;
 
+
+#define HIDDEN_TAGS_INNER(...) \
+		"SELECT t2pt.id " \
+		"FROM tag2parent_tree t2pt " \
+		"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth"
 #define HIDDEN_TAGS(...) \
 	"(" \
-		"SELECT id " \
-		"FROM tag2parent_tree t2pt " \
-		"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth" \
+		HIDDEN_TAGS_INNER(__VA_ARGS__) \
 	")"
+#define NOT_HIDDEN_TAG(tag, user_id) \
+	"NOT EXISTS(" HIDDEN_TAGS_INNER("", user_id, "") " WHERE t2pt.id=", tag ")"
 
 #define HIDDEN_TAGS__USER \
 	HIDDEN_TAGS("", user_id, "")
@@ -867,16 +872,52 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"FROM tag t "
 			"JOIN era2tag e2t ON e2t.tag=t.id "
 			"JOIN era e ON e.id=e2t.era "
-			"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=t.id "
-			"LEFT JOIN" USER_DISALLOWED_ERAS(user_id) "B ON B.id=e.id "
 			"WHERE e.file=", id, " "
-			  "AND B.id IS NULL "
-			  "AND A.id IS NULL"
+			  "AND " NOT_HIDDEN_TAG("t.id", user_id)
+			  "AND " NOT_DISALLOWED_ERA("e.id", user_id)
+			"UNION "
+			"SELECT "
+				"DISTINCT t.id,"
+				"t.name "
+			"FROM tag t "
+			"JOIN box2tag b2t ON b2t.tag=t.id "
+			"JOIN box b ON b.id=b2t.box "
+			"WHERE b.file=", id, " "
+			  "AND " NOT_HIDDEN_TAG("t.id", user_id)
+			  "AND " NOT_DISALLOWED_TAG("b.id", user_id)
 		);
 		this->init_json_rows(
 			this->itr, _r::flag::dict,
 			_r::flag::quote_no_escape, // tag_id,
 			_r::flag::quote_and_escape // tag_name
+		);
+		this->asciify(',');
+		
+		
+		this->mysql_query_after_itr(
+			"SELECT "
+				"b.id,"
+				"b.frame_n,"
+				"b.x,"
+				"b.y,"
+				"b.w,"
+				"b.h,"
+				"GROUP_CONCAT(b2t.tag)"
+			"FROM box b "
+			"JOIN box2tag b2t ON b2t.box=b.id "
+			"WHERE b.file=", id, " "
+			  "AND " NOT_DISALLOWED_TAG("b2t.tag", user_id)
+			"GROUP BY b.id"
+		);
+		this->init_json_rows(
+			this->itr, _r::flag::arr,
+			_r::flag::quote_no_escape, // box ID
+			_r::flag::no_quote,        // frame number
+			_r::flag::no_quote,        // x
+			_r::flag::no_quote,        // y
+			_r::flag::no_quote,        // w
+			_r::flag::no_quote,        // h
+			_r::flag::quote_no_escape  // tag IDs
 		);
 		this->asciify(']');
 		

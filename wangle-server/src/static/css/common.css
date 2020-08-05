@@ -1,3 +1,9 @@
+".box{"
+	"z-index:1000;"
+	"position:fixed;"
+	"outline-style:solid;"
+"}"
+
 "textedit{"
 	"display:block;"
 	"white-space:pre;"
@@ -57,6 +63,9 @@
 	"white-space:pre-wrap;"
 "}"
 
+"#view{"
+	"transform:translateX(0);" // "For elements whose layout is governed by the CSS box model, any value other than none for the transform property also causes the element to establish a containing block for all descendants. Its padding box will be used to layout for all of its absolute-position descendants, fixed-position descendants, and descendant fixed background attachments." - https://www.w3.org/TR/css-transforms-1/#containing-block-for-all-descendants
+"}"
 "#view *{"
 	"width:100%;"
 "}"

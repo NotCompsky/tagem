@@ -36,3 +36,12 @@ function $$$get_tbl_body(id){
 function $$$focus(id){
 	$$$document_getElementById(id).focus();
 }
+
+function $$$remove_node(e){
+	e.remove();
+}
+
+function $$$for_each_of(ls,fn){
+	for(let x of ls)
+		fn(x);
+}
