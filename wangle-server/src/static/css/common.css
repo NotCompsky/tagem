@@ -1,7 +1,7 @@
-".box{"
-	"z-index:1000;"
+".box-container{"
 	"position:fixed;"
-	"outline-style:solid;"
+	"width:100%;"
+	"height:100%;"
 "}"
 
 "textedit{"
@@ -44,6 +44,9 @@
 "}"
 
 ".box{"
+	// Used for boxes displayed above the file
+	// I think it is used for something else as well, but I'm tired so I'll look later.
+	"z-index:1000;"
 	"border:1px solid #999;"
 "}"
 
