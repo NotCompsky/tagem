@@ -211,16 +211,16 @@ while read -r media_path; do
 		dname="\"$dname\""
 		fname="\"$fname\""
 		
-		dir_identifier="(SELECT id FROM _dir WHERE full_path=$dname)"
+		dir_identifier="(SELECT id FROM dir WHERE full_path=$dname)"
 		
-		mysql_exec "INSERT INTO _file (user,dir,name,title,description,w,h,duration,fps,views,likes,dislikes,t_origin) VALUES(
+		mysql_exec "INSERT INTO file (user,dir,name,title,description,w,h,duration,fps,views,likes,dislikes,t_origin) VALUES(
 4,
 $dir_identifier,
 $fname,LEFT($title,100),LEFT($descr,1000),$w,$h,$duration,$fps,$views,$likes,$dislikes,$t_origin
 		) ON DUPLICATE KEY UPDATE
-		w=IFNULL(_file.w,$w),h=IFNULL(_file.h,$h),fps=IFNULL(_file.fps,$fps),duration=IFNULL(_file.duration,$duration),views=IFNULL(_file.views,$views),likes=IFNULL(_file.likes,$likes),dislikes=IFNULL(_file.dislikes,$dislikes),title=IFNULL(_file.title,LEFT($title,100)),description=IFNULL(_file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(_file.t_origin,0),_file.t_origin,$t_origin)"
+		w=IFNULL(file.w,$w),h=IFNULL(file.h,$h),fps=IFNULL(file.fps,$fps),duration=IFNULL(file.duration,$duration),views=IFNULL(file.views,$views),likes=IFNULL(file.likes,$likes),dislikes=IFNULL(file.dislikes,$dislikes),title=IFNULL(file.title,LEFT($title,100)),description=IFNULL(file.description,LEFT($descr,1000)),t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,$t_origin)"
 		
-		file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=(SELECT id FROM _dir WHERE full_path=$dname))"
+		file_identifier="(SELECT id FROM file WHERE name=$fname AND dir=(SELECT id FROM dir WHERE full_path=$dname))"
 		
 		if [ "$thumbnail" = null ]; then
 			dummy=1
@@ -232,12 +232,12 @@ $fname,LEFT($title,100),LEFT($descr,1000),$w,$h,$duration,$fps,$views,$likes,$di
 			dummy=1
 		else
 			uploader="\"Uploader: ${uploader:1}"
-			mysql_exec "INSERT INTO _tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
-			if mysql_exec "INSERT INTO tag2parent (id,parent,user) SELECT t.id, p.id, 4 FROM _tag t, _tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE parent=parent"; then
+			mysql_exec "INSERT INTO tag (name,user) VALUES ($uploader,4) ON DUPLICATE KEY UPDATE user=user"
+			if mysql_exec "INSERT INTO tag2parent (id,parent,user) SELECT t.id, p.id, 4 FROM tag t, tag p WHERE t.name=$uploader AND p.name=\"Uploader\" ON DUPLICATE KEY UPDATE parent=parent"; then
 				echo "Tag \"Uploader\" does not exist" >&2
 				exit
 			fi
-			mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $file_identifier, id, 4 FROM _tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
+			mysql_exec "INSERT INTO file2tag (file,tag,user) SELECT $file_identifier, id, 4 FROM tag WHERE name=$uploader ON DUPLICATE KEY UPDATE file=file"
 		fi
 	done < <(jq '.webpage_url, .thumbnail, .width, .height, .duration, .fps, .view_count, .views, .like_count, .likes, .dislike_count, .dislikes, .timestamp, .date, .uploader, .title, .description' <<< "$json")
 	
@@ -247,14 +247,14 @@ $fname,LEFT($title,100),LEFT($descr,1000),$w,$h,$duration,$fps,$views,$likes,$di
 	
 	if [ "$ehhhh_ok" ]; then
 		fname="\"$(echo "$file_name_on_disk" | sed -E "$ehh_ok_regexp")\""
-		mysql_exec "INSERT INTO _file (user,dir,name) VALUES (4,$ehhhh_ok,$fname) ON DUPLICATE KEY UPDATE dir=dir"
-		file_identifier="(SELECT id FROM _file WHERE name=$fname AND dir=$ehhhh_ok)"
+		mysql_exec "INSERT INTO file (user,dir,name) VALUES (4,$ehhhh_ok,$fname) ON DUPLICATE KEY UPDATE dir=dir"
+		file_identifier="(SELECT id FROM file WHERE name=$fname AND dir=$ehhhh_ok)"
 	fi
 	
 	insert_dir "$dir_name_on_disk"
 	mysql_exec "INSERT INTO file_backup (user,file,dir,name,mimetype) VALUES (
 	4,
-	$file_identifier,(SELECT id FROM _dir WHERE full_path=\"$dir_name_on_disk\"),\"$file_name_on_disk\",(SELECT id FROM ext2mimetype WHERE name=\"${file_name_on_disk##*.}\")
+	$file_identifier,(SELECT id FROM dir WHERE full_path=\"$dir_name_on_disk\"),\"$file_name_on_disk\",(SELECT id FROM ext2mimetype WHERE name=\"${file_name_on_disk##*.}\")
 	) ON DUPLICATE KEY UPDATE file=file"
 done < <(
 	if [ "$is_piped" ]; then
