@@ -73,7 +73,7 @@ bool is_file(const char* const path){
 inline
 int extract_audio(char* const output_filepath_basename,  const char* const input_filepath,  const bool _extract_audio,  const bool print_output_file_path){
 	int err = ERR_SUCCESS;
-	AVFormatContext* input_fmt_ctx = avformat_alloc_context();
+	static AVFormatContext* input_fmt_ctx = avformat_alloc_context();
 	AVFormatContext* output_fmt_ctx;
 	AVPacket pkt;
 	const char* file_ext;
@@ -192,9 +192,6 @@ int extract_audio(char* const output_filepath_basename,  const char* const input
 	
 	cleanup2:
 	avformat_close_input(&input_fmt_ctx);
-	
-	cleanup1:
-	avformat_free_context(input_fmt_ctx);
 	
 	return 0;
 }
