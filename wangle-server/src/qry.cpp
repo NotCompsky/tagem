@@ -607,6 +607,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	unsigned n_calls__offset = 0; // Doesn't reallly matter to the serverif multiple offests are specified
 	unsigned n_calls__backups = 0;
 	unsigned n_calls__boxes = 0;
+	unsigned n_calls__tags = 0;
 	unsigned n_calls__eras = 0;
 	
 	unsigned ersatz_count = 0;
@@ -725,12 +726,25 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (which_tbl != 'f')
 					return successness::invalid;
 				
-				if (arg_token_base == arg::eras){
-					if (++n_calls__eras == 2)
-						return successness::invalid;
-				} else {
-					if (++n_calls__backups == 2)
-						return successness::invalid;
+				switch(arg_token_base){
+					case arg::eras:
+						if (++n_calls__eras == 2)
+							return successness::invalid;
+						break;
+					case arg::backups:
+						if (++n_calls__backups == 2)
+							return successness::invalid;
+						break;
+					case arg::boxes:
+						if (++n_calls__boxes == 2)
+							return successness::invalid;
+						break;
+					case arg::tags:
+						if (++n_calls__tags == 2)
+							return successness::invalid;
+						break;
+					default:
+						abort();
 				}
 				
 				Range range;
@@ -856,10 +870,10 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += join;
 					where += "WHERE ";
 					where += (old_where.empty())?"TRUE":old_where;
-					where += "\nAND X.id NOT IN(";
+					where += "\nAND ";
 					where += user_disallowed_X_tbl_filter_inner_pre;
 					where += std::to_string(user_id);
-					where += ")GROUP BY ";
+					where += "GROUP BY ";
 					where += attribute_name;
 					where += "\nHAVING COUNT(*)>=";
 					where += std::string_view(range.min());
@@ -889,10 +903,10 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					derived_tbl += join;
 					derived_tbl += "\n\t\tWHERE ";
 					derived_tbl += (old_where.empty())?"TRUE":old_where;
-					derived_tbl += "\n\t\tAND X.id NOT IN(";
+					derived_tbl += "\n\t\tAND ";
 					derived_tbl += user_disallowed_X_tbl_filter_inner_pre;
 					derived_tbl += std::to_string(user_id);
-					derived_tbl += ")\n\t\tGROUP BY x";
+					derived_tbl += "\n\t\tGROUP BY x";
 					derived_tbl += "\nHAVING COUNT(*)>=";
 					derived_tbl += std::string_view(range.min());
 					derived_tbl += " AND COUNT(*)<=";
@@ -1046,24 +1060,25 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 		default: return successness::invalid;
 	}
 	
-	const char* user_disallowed_X_tbl_filter_inner_pre;
+	char* filter = itr;
 	switch(which_tbl){
 		case 'e':
-			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_ERAS_INNER_PRE;
+			compsky::asciify::asciify(filter, NOT_DISALLOWED_ERA("X.id", "X.file", "0", "0", user_id));
+			// WARNING: This does not yet conduct directory filtering
 			break;
 		case 'f':
-			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_FILES_INNER_PRE;
+			compsky::asciify::asciify(filter, NOT_DISALLOWED_FILE("X.id", "X.dir", "0", user_id));
+			// WARNING: No device filtering is yet conducted
 			break;
 		case 'd':
-			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_DIRS_INNER_PRE;
+			compsky::asciify::asciify(filter, NOT_DISALLOWED_DIR("X.id", "X.device", user_id));
 			break;
 		case 't':
-			user_disallowed_X_tbl_filter_inner_pre = USER_DISALLOWED_TAGS_INNER_PRE;
+			compsky::asciify::asciify(filter, NOT_DISALLOWED_TAG("X.id", user_id));
 			break;
-		// No other values are possible
 	}
-	
-	const auto rc = process_args(connected_local_devices_str, user_disallowed_X_tbl_filter_inner_pre, user_id, join, where, order_by, limit, offset, which_tbl, qry);
+	compsky::asciify::asciify(filter, '\0');
+	const auto rc = process_args(connected_local_devices_str, filter, user_id, join, where, order_by, limit, offset, which_tbl, qry);
 	if (rc != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
@@ -1076,10 +1091,31 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 		"SELECT "
 			"X.id\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
+		(which_tbl=='e') ? "JOIN file f ON f.id=X.file JOIN dir d ON d.id=f.dir " : "",
+		(which_tbl=='f') ? "JOIN dir d ON d.id=X.dir " : "",
 		join.c_str(),
-		"LEFT JOIN(", user_disallowed_X_tbl_filter_inner_pre, user_id, ")A ON A.id=X.id\n"
 		"WHERE ", where.c_str(), "\n"
-		  "AND A.id IS NULL\n"
+		  "AND "
+	);
+	
+	switch(which_tbl){
+		case 'e':
+			compsky::asciify::asciify(itr, NOT_DISALLOWED_ERA("X.id", "X.file", "f.dir", "d.device", user_id));
+			break;
+		case 'f':
+			compsky::asciify::asciify(itr, NOT_DISALLOWED_FILE("X.id", "X.dir", "d.device", user_id));
+			break;
+		case 'd':
+			compsky::asciify::asciify(itr, NOT_DISALLOWED_DIR("X.id", "X.device", user_id));
+			break;
+		case 't':
+			compsky::asciify::asciify(itr, NOT_DISALLOWED_TAG("X.id", user_id));
+			break;
+	}
+	
+	compsky::asciify::asciify(
+		itr,
+		"\n"
 		"ORDER BY ", ((order_by.empty()) ? "NULL" : order_by.c_str()), "\n"
 		"LIMIT ", limit, "\n"
 		"OFFSET ", offset,

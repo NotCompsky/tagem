@@ -15,102 +15,62 @@ The absense of this copyright notices on some other files in this project does n
 
 #include <string>
 
-#define DIR2TAG_SUBQUERY \
-	"(" \
-		"SELECT d2pt.id AS dir, d2t.tag " \
-		"FROM dir2parent_tree d2pt " \
-		"JOIN dir2tag d2t ON d2t.dir=d2pt.parent " \
-		"UNION " \
-		"SELECT d.id, D2t.tag " \
-		"FROM dir d " \
-		"JOIN device D ON D.id=d.device " \
-		"JOIN device2tag D2t ON D2t.device=D.id " \
-	")"
 
 #define JOIN_TAG_BLACKLIST \
 	"FROM user2blacklist_tag u2ht " \
-	"JOIN tag2parent_tree t2pt ON t2pt.parent=u2ht.tag "
+	"JOIN tag2parent_tree _t2pt ON _t2pt.parent=u2ht.tag "
 
-#define USER_DISALLOWED_FILES_INNER_PRE \
-		"SELECT f2t.file AS id " \
-		JOIN_TAG_BLACKLIST \
-		"JOIN(" \
-			"SELECT file, tag " \
-			"FROM file2tag " \
-			"UNION " \
-			"SELECT f.id, d2t.tag " \
-			"FROM file f " \
-			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir" \
-		")f2t ON f2t.tag=t2pt.id " \
-		"WHERE u2ht.user="
-#define USER_DISALLOWED_FILES(user_id) \
-	"(" \
-		USER_DISALLOWED_FILES_INNER_PRE, user_id, \
-	")"
-#define NOT_DISALLOWED_FILE(file, user_id) \
-	"NOT EXISTS(" USER_DISALLOWED_FILES_INNER_PRE, user_id, " AND f2t.file=", file ")"
 
-#define USER_DISALLOWED_ERAS_INNER_PRE \
-		"SELECT e2t.era AS id " \
+#define NOT_DISALLOWED_TAG__BASE(...) \
+	"NOT EXISTS(" \
+		"SELECT _t2pt.id " \
 		JOIN_TAG_BLACKLIST \
-		"JOIN(" \
-			"SELECT e.id AS era, f2t.tag " \
-			"FROM era e " \
-			"JOIN file2tag f2t ON f2t.file=e.file " \
-			"UNION " \
-			"SELECT era, tag " \
-			"FROM era2tag " \
-			"UNION " \
-			"SELECT f.id, d2t.tag " \
-			"FROM file f " \
-			"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.dir=f.dir " \
-		")e2t ON e2t.tag=t2pt.id " \
-		"WHERE u2ht.user="
-#define USER_DISALLOWED_ERAS(user_id) \
-	"(" \
-		USER_DISALLOWED_ERAS_INNER_PRE, user_id, \
-	")"
-#define NOT_DISALLOWED_ERA(era_id, user_id) \
-	"NOT EXISTS(" USER_DISALLOWED_ERAS_INNER_PRE, user_id, " AND id=" era_id ")"
-
-#define USER_DISALLOWED_TAGS_INNER_PRE \
-		"SELECT t2pt.id " \
-		JOIN_TAG_BLACKLIST \
-		"WHERE u2ht.user="
-#define USER_DISALLOWED_TAGS(user_id) \
-	"(" \
-		USER_DISALLOWED_TAGS_INNER_PRE, user_id, \
+		"WHERE u2ht.user=" __VA_ARGS__ \
 	")"
 #define NOT_DISALLOWED_TAG(tag, user_id) \
-	"NOT EXISTS(" USER_DISALLOWED_TAGS_INNER_PRE, user_id, " AND t2pt.id=", tag ")"
-#define USER_DISALLOWED_TAGS__COMPILE_TIME(user_id) \
-	"(" \
-		USER_DISALLOWED_TAGS_INNER_PRE user_id \
-	")"
+	NOT_DISALLOWED_TAG__BASE("", user_id, " AND _t2pt.id=", tag)
+#define NOT_DISALLOWED_TAG__COMPILE_TIME(tag, user_id) \
+	NOT_DISALLOWED_TAG__BASE(user_id " AND _t2pt.id=" tag)
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
 		"SELECT D2t.device AS id " \
 		JOIN_TAG_BLACKLIST \
-		"JOIN device2tag D2t ON D2t.tag=t2pt.id " \
+		"JOIN device2tag D2t ON D2t.tag=_t2pt.id " \
 		"WHERE u2ht.user="
-#define USER_DISALLOWED_DEVICES(user_id) \
-	"(" \
+#define NOT_DISALLOWED_DEVICE(device, user_id) \
+	"NOT EXISTS(" \
 		USER_DISALLOWED_DEVICES_INNER_PRE, user_id, \
+		" AND D2t.device=" device \
 	")"
-#define USER_DISALLOWED_DEVICES__COMPILE_TIME(user_id) \
-	"(" \
+#define NOT_DISALLOWED_DEVICE__COMPILE_TIME(device, user_id) \
+	"NOT EXISTS(" \
 		USER_DISALLOWED_DEVICES_INNER_PRE user_id \
+		" AND D2t.device=" device \
 	")"
-#define USER_DISALLOWED_DIRS_INNER_PRE \
+#define NOT_DISALLOWED_DIR(dir_id, device_id, user_id) \
+	"NOT EXISTS(" \
 		"SELECT d2t.dir AS id " \
 		JOIN_TAG_BLACKLIST \
-		"JOIN" DIR2TAG_SUBQUERY "d2t ON d2t.tag=t2pt.id " \
-		"WHERE u2ht.user="
-#define USER_DISALLOWED_DIRS(user_id) \
-	"(" \
-		USER_DISALLOWED_DIRS_INNER_PRE, user_id, \
-	")"
-#define NOT_DISALLOWED_DIR(dir_id, user_id) \
-	"NOT EXISTS(" USER_DISALLOWED_DIRS_INNER_PRE, user_id, " AND id=" dir_id ")"
+		"JOIN dir2tag d2t ON d2t.tag=_t2pt.id " \
+		"WHERE u2ht.user=", user_id, " AND id=" dir_id \
+	")" \
+	"AND " NOT_DISALLOWED_DEVICE(device_id, user_id)
+#define NOT_DISALLOWED_FILE(file, dir, device, user_id) \
+	"NOT EXISTS(" \
+		"SELECT f2t.file AS id " \
+		JOIN_TAG_BLACKLIST \
+		"JOIN file2tag f2t ON f2t.tag=_t2pt.id " \
+		"WHERE u2ht.user=", user_id, " " \
+		"AND f2t.file=", file \
+	")" \
+	"AND " NOT_DISALLOWED_DIR(dir, device, user_id)
+#define NOT_DISALLOWED_ERA(era, file, dir, device, user_id) \
+	"NOT EXISTS(" \
+		"SELECT e2t.era AS id " \
+		JOIN_TAG_BLACKLIST \
+		"JOIN era2tag e2t ON e2t.tag=_t2pt.id " \
+		"WHERE u2ht.user=", user_id, " AND id=" era \
+	")" \
+	"AND " NOT_DISALLOWED_FILE(file, dir, device, user_id)
 
 namespace sql_factory{
 

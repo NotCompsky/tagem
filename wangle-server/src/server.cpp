@@ -196,10 +196,12 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"SELECT f2t.tag, COUNT(*) AS n " \
 		"FROM file2tag f2t " \
 		/* NOTE: MySQL doesn't seem to optimise this often - usually faster if duplicate the limitations within this subquery */ \
+		"JOIN file f ON f.id=f2t.file " \
+		"JOIN dir d ON d.id=f.dir " \
 		"WHERE f2t.tag IN(" \
 			__VA_ARGS__ \
 		")" \
-		"AND " NOT_DISALLOWED_FILE("f2t.file", user_id) \
+		"AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id) \
 		"GROUP BY tag" \
 	")A ON A.tag=t.id "
 
@@ -432,7 +434,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
-		this->mysql_query("SELECT d.id FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", user_id));
+		this->mysql_query("SELECT d.id FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id));
 		const bool rc = (this->mysql_assign_next_row());
 		if (rc)
 			this->mysql_free_res();
@@ -549,7 +551,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"SELECT d.name "
 			"FROM dir d "
 			"WHERE d.id=", id, " "
-			  "AND " NOT_DISALLOWED_DIR("d.id", user_id)
+			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 		);
 		if (not this->init_json_rows(
 			this->itr,
@@ -565,7 +567,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"FROM dir d "
 			"JOIN dir2parent_tree dt ON dt.parent=d.id "
 			"WHERE dt.id=", id, " "
-			  "AND " NOT_DISALLOWED_DIR("d.id", user_id)
+			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY depth DESC"
 		);
 		this->init_json_rows(
@@ -581,7 +583,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"SELECT d.id, d.name "
 			"FROM dir d "
 			"WHERE d.parent=", id, " "
-			  "AND " NOT_DISALLOWED_DIR("d.id", user_id)
+			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY name ASC"
 		);
 		this->init_json_rows(
@@ -761,13 +763,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"IFNULL(f.description,\"\"),"
 				"CONCAT(\"0\"", _f::n_elements, n, select_unique_name_for_each_file2_var, ")"
 			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			JOIN_FILE_THUMBNAIL,
 			_f::zip3, n, "LEFT JOIN file2", user->allowed_file2_vars, left_join_unique_name_for_each_file2_var,
 			"WHERE f.id=", id, " "
-			  "AND " NOT_DISALLOWED_FILE("f.id", user_id)
-			  "AND " NOT_DISALLOWED_DIR("f.dir", user_id)
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"GROUP BY f.id"
 		);
 		if(not this->init_json_rows(
@@ -807,10 +809,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"GROUP_CONCAT(e2t.tag)"
 			"FROM era e "
 			"JOIN era2tag e2t ON e2t.era=e.id "
-			"LEFT JOIN" USER_DISALLOWED_ERAS(user_id) "A ON A.id=e.id "
+			"JOIN file f ON f.id=e.file "
 			// NOTE: Each era should be associated with at least one tag.
 			"WHERE e.file=", id, " "
-			  "AND A.id IS NULL "
+			  "AND " NOT_DISALLOWED_ERA("e.id", "0", "0", "0", user_id) // File has already been filtered for permissions
 			"GROUP BY e.id "
 			"HAVING COUNT(*)" // Ensure we don't get an empty result - (NULL,NULL,NULL) - when it really means we have no results
 		);
@@ -826,10 +828,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		
 		this->mysql_query_after_itr(
-			"SELECT dir, name, mimetype "
+			"SELECT f.dir, f.name, f.mimetype "
 			"FROM file_backup f "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.file=", id, " "
-			  "AND " NOT_DISALLOWED_DIR("f.dir", user_id)
+			  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 		);
 		this->init_json_rows(
 			this->itr,
@@ -853,7 +856,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"FROM file_backup "
 				"WHERE file=", id,
 			")A ON A.dir=d.id "
-			"WHERE " NOT_DISALLOWED_DIR("d.id", user_id)
+			"WHERE " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 		);
 		this->init_json_rows(
 			this->itr,
@@ -874,7 +877,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"JOIN era e ON e.id=e2t.era "
 			"WHERE e.file=", id, " "
 			  "AND " NOT_HIDDEN_TAG("t.id", user_id)
-			  "AND " NOT_DISALLOWED_ERA("e.id", user_id)
+			  "AND " NOT_DISALLOWED_ERA("e.id", "0", "0", "0", user_id) // File table already filtered
 			"UNION "
 			"SELECT "
 				"DISTINCT t.id,"
@@ -1173,7 +1176,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->add_tags_to_files(
 			user_id,
 			tag_ids, tag_ids_len,
-			"AND f.id=", file_id, " AND " NOT_DISALLOWED_FILE("f.id", user_id)
+			"AND f.id=", file_id // File already permission checked
 		);
 		
 		return _r::post_ok;
@@ -1275,8 +1278,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->mysql_query(
 			"SELECT GROUP_CONCAT(f2p.file)"
 			"FROM file2post f2p "
+			"JOIN file f ON f.id=f2p.file "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE f2p.post IN (", post_ids, ")"
-			  "AND " NOT_DISALLOWED_FILE("f2p.file", user_id)
+			  "AND " NOT_DISALLOWED_FILE("f2p.file", "f.dir", "d.device", user_id)
 			"LIMIT " TABLE_LIMIT
 		);
 		mysql_free_result(_post_ids_res);
@@ -1580,8 +1585,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
 			"JOIN file f ON f.dir=d.id "
 			"WHERE d.id IN (", ids_args..., ")"
-			  "AND " NOT_DISALLOWED_DIR ("d.id", user_id)
-			  "AND " NOT_DISALLOWED_FILE("f.id", user_id)
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"GROUP BY d.id "
 			"ORDER BY FIELD(d.id,", ids_args..., ")"
 			"LIMIT 100 "
@@ -1643,10 +1647,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->mysql_query_after_itr(
 			"SELECT d.id, LENGTH(d.name)"
 			"FROM dir d "
-			"LEFT JOIN" USER_DISALLOWED_DIRS(user_id) "A ON A.id=d.id "
 			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
 			  "AND d.parent", (child_dir_id==0)?" IS NULL AND 0=":"=", child_dir_id, " "
-			  "AND A.id IS NULL "
+			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY LENGTH(d.name) DESC "
 			"LIMIT 1"
 		);
@@ -1679,14 +1682,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 							FILE_OVERVIEW_FIELDS("f.id"),
 							select_fields, " "
 						"FROM file f "
+						"JOIN dir d ON d.id=f.dir "
 						JOIN_FILE_THUMBNAIL
-						"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "B ON B.id=f.id "
 						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
 						join_args..., " "
-						"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=f2t.tag "
 						"WHERE TRUE "
-						"AND B.id IS NULL "
-						"AND A.id IS NULL ",
+						  "AND " NOT_DISALLOWED_TAG( "f2t.tag", user_id)
+						  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id),
 						where_args..., " "
 						"GROUP BY f.id ",
 						order_args..., " "
@@ -1749,15 +1751,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"0,"
 				"0 "
 			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
 			"JOIN file2", _f::strlen, file2_var_name, file2_var_name_len, " f2v ON f2v.file=f.id "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
 			"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=f2t.tag "
-			"LEFT JOIN" USER_DISALLOWED_FILES(user->id) "B ON B.id=f.id "
-			"WHERE TRUE "
-			  "AND A.id IS NULL "
-			  "AND B.id IS NULL "
+			"WHERE " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user->id)
 			"GROUP BY f.id "
 			"LIMIT " TABLE_LIMIT " "
 			"OFFSET ", 100*page_n
@@ -1819,19 +1819,17 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(
 			"SELECT X.id, X.", (tbl_alias=='d')?"full_path ":"name ",
 			"FROM ", (tbl_alias=='d')?"dir":"tag", " X "
-			"LEFT JOIN"
+			"WHERE "
 		);
 		switch(tbl_alias){
 			case 'd':
-				this->asciify(USER_DISALLOWED_DIRS(user_id));
+				this->asciify(NOT_DISALLOWED_DIR("X.id", "X.device", user_id));
 				break;
 			default: /*case 't'*/
-				this->asciify(USER_DISALLOWED_TAGS(user_id));
+				this->asciify(NOT_DISALLOWED_TAG("X.id", user_id));
 				break;
 		}
 		this->asciify(
-			"A ON A.id=X.id "
-			"WHERE A.id IS NULL "
 			  "AND ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
 			"LIMIT 20"
 		); // TODO: Tell client if results have been truncated
@@ -1869,8 +1867,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->mysql_query(
 				"SELECT D.id, D.name, D.protocol, D.embed_pre, D.embed_post "
 				"FROM device D "
-				"LEFT JOIN" USER_DISALLOWED_DEVICES(user_id) "A ON A.id=D.id "
-				"WHERE A.id IS NULL"
+				"WHERE " NOT_DISALLOWED_DEVICE("D.id", user_id)
 			);
 			this->itr = this->buf;
 			this->init_json(
@@ -1892,8 +1889,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->mysql_query_buf(
 				"SELECT D.id, D.name, D.protocol, D.embed_pre, D.embed_post "
 				"FROM device D "
-				"LEFT JOIN" USER_DISALLOWED_DEVICES__COMPILE_TIME(GUEST_ID_STR) "A ON A.id=D.id "
-				"WHERE A.id IS NULL"
+				"WHERE " NOT_DISALLOWED_DEVICE__COMPILE_TIME("D.id", GUEST_ID_STR)
 			);
 			this->init_json(
 				nullptr,
@@ -2143,9 +2139,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"SELECT t2p.id, t2p.parent "
 				"FROM tag2parent t2p "
 				"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=t2p.id OR A.id=t2p.parent "
-				"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "B ON B.id=t2p.id OR B.id=t2p.parent "
 				"WHERE A.id IS NULL "
-				  "AND B.id IS NULL"
+				  "AND " NOT_DISALLOWED_TAG("t2p.id OR _t2pt.id=t2p.parent", user_id)
 			);
 			this->itr = this->buf;
 			this->init_json(
@@ -2165,9 +2160,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"SELECT t2p.id, t2p.parent "
 				"FROM tag2parent t2p "
 				"LEFT JOIN" HIDDEN_TAGS__GUEST "A ON A.id=t2p.id OR A.id=t2p.parent "
-				"LEFT JOIN" USER_DISALLOWED_TAGS__COMPILE_TIME(GUEST_ID_STR) "B ON B.id=t2p.id OR B.id=t2p.parent "
 				"WHERE A.id IS NULL "
-				  "AND B.id IS NULL"
+				  "AND " NOT_DISALLOWED_TAG__COMPILE_TIME("t2p.id OR _t2pt.id=t2p.parent", GUEST_ID_STR)
 			);
 			this->init_json(
 				nullptr,
@@ -2216,12 +2210,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
 			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
 			"JOIN mimetype m ON m.id=f.mimetype "
-			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
-			"LEFT JOIN" USER_DISALLOWED_DIRS(user_id)  "B ON B.id=d.id "
 			"WHERE f.id=", id, " "
 			  "AND ", (dir_id==0)?"0=":"f2.dir=", dir_id, " "
-			  "AND A.id IS NULL "
-			  "AND B.id IS NULL "
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
@@ -2589,11 +2580,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					user_id, ","
 					"IFNULL(mt.id,0)"
 				"FROM file f "
+				"JOIN dir d ON d.id=f.dir "
 				"LEFT JOIN mimetype mt ON mt.name=\"", mimetype, "\" "
-				"LEFT JOIN" USER_DISALLOWED_DIRS(user_id) "A ON A.id=f.dir "
 				"WHERE NOT EXISTS"
 				"(SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\")"
-				  "AND A.id IS NULL "
+				  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 				"LIMIT 1"
 			);
 			
@@ -2641,7 +2632,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				tag_ids, tag_ids_len,
 				  "AND d.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND d.parent=", parent_dir_id, " "
-				  "AND " NOT_DISALLOWED_DIR("d.id", user_id)
+				  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			);
 		} else /* if (which_tbl == 'f') */ {
 			this->add_tags_to_files(
@@ -2650,7 +2641,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				  "AND t.id != 0 "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
-				  "AND " NOT_DISALLOWED_DIR("f.dir", user_id)
+				  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 			);
 		}
 		
@@ -2731,9 +2722,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				era_end, 5, ',',
 				user_id, " "
 			"FROM file f "
-			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.id=", file_id, " "
-			  "AND A.id IS NULL"
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		
 		this->add_tag_to_era(
@@ -2757,11 +2748,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"t.id "
 			"FROM tag t "
 			"JOIN era e "
-			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
-			"LEFT JOIN" USER_DISALLOWED_ERAS(user_id) "B ON B.id=e.id "
+			"JOIN file f ON f.id=e.file "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND B.id IS NULL " 
-			  "AND A.id IS NULL ",
+			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
+			  "AND " NOT_DISALLOWED_ERA("e.id", "e.file", "f.dir", "d.device", user_id),
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE era=era"
 		);
@@ -2816,10 +2807,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->mysql_exec(
 			"UPDATE file f "
-			"LEFT JOIN" USER_DISALLOWED_ERAS(user_id) "A ON A.id=f.id "
+			"JOIN dir d ON d.id=f.dir "
 			"SET f.title=\"", _f::esc, '"', s, "\" "
 			"WHERE f.id=", f_id, " "
-			  "AND A.id IS NULL"
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		
 		return _r::post_ok;
@@ -2941,10 +2932,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"FROM tag2parent t2p "
 			"JOIN tag t ON t.id=t2p.id "
 			"JOIN tag p ON p.id=t2p.parent "
-			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
 			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
-			  "AND A.id IS NULL"
+			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 			  // "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id) // Unnecessary
 		);
 		
@@ -2969,10 +2959,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"SELECT t.id, p.id,", user_id, " "
 				"FROM tag t "
 				"JOIN tag p "
-				"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id OR A.id=p.id "
 				"WHERE t.id IN (", child_ids_args..., ")"
 				  "AND p.id IN (", parent_ids_args...,   ")"
-				  "AND A.id IS NULL "
+				  "AND " NOT_DISALLOWED_TAG("t.id OR t2pt.id=p.id", user_id)
 				"ON DUPLICATE KEY UPDATE parent=parent"
 			);
 			
@@ -2987,10 +2976,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					"SELECT t.id, t2pt.parent, t2pt.depth+1 "
 					"FROM tag t "
 					"JOIN tag2parent_tree t2pt "
-					"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id OR A.id=t2pt.id "
 					"WHERE t.id IN(", child_ids_args..., ")"
 					  "AND t2pt.parent IN (", parent_ids_args...,   ")"
-					  "AND A.id IS NULL"
+					  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=t2pt.id", user_id)
 				")A "
 				"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
 			);
@@ -3001,9 +2989,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
 					"FROM tag2parent_tree t2pt "
 					"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
-					"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t2pt.id "
 					"WHERE t2pt.id IN (", parent_ids_args..., ")"
-					  "AND A.id IS NULL "
+					  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id)
 					"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 				);
 			}
@@ -3063,9 +3050,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"SELECT t.id,d.id,", user_id, " "
 			"FROM tag t "
 			"JOIN dir d "
-			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			  "AND A.id IS NULL ",
+			  "AND " NOT_DISALLOWED_TAG("t.id", user_id),
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE dir=dir"
 		);
@@ -3079,9 +3065,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"SELECT t.id,f.id,", user_id, " "
 			"FROM tag t "
 			"JOIN file f "
-			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
-			"AND A.id IS NULL ",
+			"AND " NOT_DISALLOWED_TAG("t.id", user_id),
 			where_args..., " "
 			"ON DUPLICATE KEY UPDATE file=file"
 		);
@@ -3093,10 +3079,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"DELETE f2t "
 			"FROM file2tag f2t "
 			"JOIN tag t ON t.id=f2t.tag "
-			"LEFT JOIN" USER_DISALLOWED_TAGS(user_id) "A ON A.id=t.id "
 			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
 			  "AND f2t.file IN (", file_ids_args..., ")"
-			  "AND A.id IS NULL"
+			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 		);
 	}
 	
@@ -3108,10 +3093,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		GREYLIST_USERS_WITHOUT_PERMISSION("unlink_tags")
 		
 		this->mysql_query(
-			"SELECT id "
-			"FROM file "
-			"WHERE id IN (", _f::strlen, file_ids, file_ids_len, ")"
-			  "AND id IN" USER_DISALLOWED_FILES(user_id)
+			"SELECT f.id "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		bool unauthorised = false;
 		while(this->mysql_assign_next_row(&unauthorised));
@@ -3181,9 +3167,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"(file,x)"
 			"SELECT f.id,", value, " "
 			"FROM file f "
-			"LEFT JOIN" USER_DISALLOWED_FILES(user_id) "A ON A.id=f.id "
+			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
-			  "AND A.id IS NULL "
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"ON DUPLICATE KEY UPDATE x=x"
 		);
 		
