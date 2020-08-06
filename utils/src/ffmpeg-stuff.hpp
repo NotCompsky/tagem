@@ -70,3 +70,24 @@ bool is_file(const char* const path){
 	static struct stat buffer;
 	return (stat(path, &buffer) == 0); 
 }
+
+
+#define FFMPEG_OPEN_FILE_PRE \
+	int err = ERR_SUCCESS; \
+	static AVFormatContext* input_fmt_ctx = avformat_alloc_context(); \
+	 \
+	if (!input_fmt_ctx){ \
+		return ERR_CANNOT_ALLOC_INPUT_CONTEXT; \
+	} \
+	 \
+	if (avformat_open_input(&input_fmt_ctx, input_filepath, NULL, NULL)){ \
+		err = ERR_CANNOT_OPEN_FILE; \
+		goto cleanup1; \
+	} \
+	 \
+	if (avformat_find_stream_info(input_fmt_ctx, NULL)){ \
+		err = ERR_CANNOT_FIND_STREAM_INFO; \
+		goto cleanup2; \
+	}
+#define FFMPEG_OPEN_FILE_POST \
+	avformat_close_input(&input_fmt_ctx);

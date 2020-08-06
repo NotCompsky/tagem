@@ -22,28 +22,13 @@ The absense of this copyright notices on some other files in this project does n
 
 inline
 int extract_audio(char* const output_filepath_basename,  const char* const input_filepath,  const bool _extract_audio,  const bool print_output_file_path){
-	int err = ERR_SUCCESS;
-	static AVFormatContext* input_fmt_ctx = avformat_alloc_context();
+	FFMPEG_OPEN_FILE_PRE
+	AVOutputFormat* outfmt;
+	AVStream* output_audio;
 	AVFormatContext* output_fmt_ctx;
 	AVPacket pkt;
 	const char* file_ext;
-	AVOutputFormat* outfmt;
 	AVStream* input_audio;
-	AVStream* output_audio;
-	
-	if (!input_fmt_ctx){
-		return ERR_CANNOT_ALLOC_INPUT_CONTEXT;
-	}
-	
-	if (avformat_open_input(&input_fmt_ctx, input_filepath, NULL, NULL)){
-		err = ERR_CANNOT_OPEN_FILE;
-		goto cleanup1;
-	}
-	
-	if (avformat_find_stream_info(input_fmt_ctx, NULL)){
-		err = ERR_CANNOT_FIND_STREAM_INFO;
-		goto cleanup2;
-	}
 	
 	///AVCodec* output_audio_codec;
 	for (int i = 0;  i < input_fmt_ctx->nb_streams;  i++){
@@ -140,7 +125,5 @@ int extract_audio(char* const output_filepath_basename,  const char* const input
 	avformat_free_context(output_fmt_ctx);
 	
 	cleanup2:
-	avformat_close_input(&input_fmt_ctx);
-	
-	return 0;
+	FFMPEG_OPEN_FILE_POST
 }
