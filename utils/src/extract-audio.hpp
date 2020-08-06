@@ -96,7 +96,6 @@ int extract_audio(char* const output_filepath_basename,  const char* const input
 	}
 	
 	///AVCodec* output_audio_codec;
-	input_audio;
 	for (int i = 0;  i < input_fmt_ctx->nb_streams;  i++){
 		input_audio = input_fmt_ctx->streams[i];
 
