@@ -48,14 +48,15 @@ function $$$setup_page_for_e_tbl(){
 	$$$set_profile_name("Eras");
 }
 
-function $$$ytdl_era(id){
+function $$$ytdl_era(node){
 	const dir_inp = $$$document_getElementById("dirselect");
 	if(dir_inp.value===""){
 		$$$alert("No directory selected");
 		return;
 	}
-	$$$ajax_POST_data_w_text_response("/e/dl/"+dir_inp.value+"/"+id,function(){
+	$$$ajax_POST_data_w_text_response("/e/dl/"+dir_inp.value+"/"+node.dataset.id,function(){
 		dir_inp.value = "";
+		$$$alert("Saved to '" + $$$file_id + "@" + node.dataset.start + "-" + node.dataset.end + ".mkv'");
 	});
 }
 
@@ -67,7 +68,7 @@ function $$$create_era_info_row(era){
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
 		_s += "<td class='td'>" + era_tag_ids + "</td>";
-		_s += "<td class='td'><a onclick=\"$$$ytdl_era('"+id+"')\">youtube-dl</a></td>";
+		_s += "<td class='td'><a onclick=\"$$$ytdl_era(this)\">youtube-dl</a></td>";
 	_s += "</tr>";
 	return _s;
 }
