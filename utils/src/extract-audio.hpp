@@ -125,5 +125,10 @@ int extract_audio(char* const output_filepath_basename,  const char* const input
 	avformat_free_context(output_fmt_ctx);
 	
 	cleanup2:
-	FFMPEG_OPEN_FILE_POST
+	avformat_close_input(&input_fmt_ctx);
+	
+	cleanup1:
+	avformat_free_context(input_fmt_ctx);
+	
+	return 0;
 }
