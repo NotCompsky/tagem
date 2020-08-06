@@ -24,7 +24,8 @@ namespace user_auth {
 namespace SpecialUserID {
 	enum SpecialUserID : UserIDIntType {
 		invalid = 0,
-		guest = 1
+		guest = 1,
+		admin = 2
 	};
 	#define GUEST_ID_STR "1"
 }

@@ -48,6 +48,17 @@ function $$$setup_page_for_e_tbl(){
 	$$$set_profile_name("Eras");
 }
 
+function $$$ytdl_era(id){
+	const dir_inp = $$$document_getElementById("dirselect");
+	if(dir_inp.value===""){
+		$$$alert("No directory selected");
+		return;
+	}
+	$$$ajax_POST_data_w_text_response("/e/dl/"+dir_inp.value+"/"+id,function(){
+		dir_inp.value = "";
+	});
+}
+
 function $$$create_era_info_row(era){
 	const [id,start,end,era_tag_ids] = era;
 	let _s = "";
@@ -56,6 +67,7 @@ function $$$create_era_info_row(era){
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
 		_s += "<td class='td'>" + era_tag_ids + "</td>";
+		_s += "<td class='td'><a onclick=\"$$$ytdl_era('"+id+"')\">youtube-dl</a></td>";
 	_s += "</tr>";
 	return _s;
 }

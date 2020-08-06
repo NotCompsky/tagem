@@ -11,7 +11,7 @@
 -- The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
 
-// NOTE: This account is entirely optional.
+// NOTE: This account is necessary for 'post__ytdl_era'
 
 R"=====(
 

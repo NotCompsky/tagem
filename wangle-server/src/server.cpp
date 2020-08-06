@@ -262,6 +262,7 @@ const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
 const char* FILES_GIVEN_REMOTE_DIR = nullptr;
+const char* EXTRACT_YTDL_ERA_SCRIPT_PATH = nullptr;
 
 static bool regenerate_mimetype_json = true;
 static bool regenerate_device_json = true;
@@ -614,6 +615,52 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 #endif
 		
 		return this->get_buf_as_string_view();
+	}
+	
+	std::string_view post__ytdl_era(const char* s){
+		GET_NUMBER_NONZERO(uint64_t,dest_dir)
+		GET_NUMBER_NONZERO(uint64_t,era)
+		GET_USER_ID
+		
+		this->mysql_query(
+			"SELECT "
+				"CONCAT(d.full_path, f.name),"
+				"e.start,"
+				"e.end,"
+				"CONCAT(d2.full_path, f.id, '@', e.start, '-', e.end, '.mkv'),"
+				"CONCAT('Subfile of ', f.id)"
+			"FROM era e "
+			"JOIN file f ON f.id=e.file "
+			"JOIN dir d ON d.id=f.dir "
+			"JOIN dir d2 ON d2.id=", dest_dir, " "
+			"WHERE e.id=", era, " "
+			  "AND " NOT_DISALLOWED_ERA("e.id", "f.id", "d.id", "d.device", user_id)
+			  "AND " NOT_DISALLOWED_DIR("d2.id", "d2.device", user_id)
+		);
+		const char* url = nullptr;
+		const char* era_start;
+		const char* era_end;
+		const char* dest;
+		const char* tag_name;
+		this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name);
+		if (unlikely(url == nullptr))
+			return _r::not_found;
+		
+		this->add_t_to_db(user_auth::SpecialUserID::admin, "1", 1, tag_name, strlen(tag_name));
+		
+		const char* args[] = {EXTRACT_YTDL_ERA_SCRIPT_PATH, url, era_start, era_end, dest, nullptr};
+		if (proc::exec(60,  args,  STDOUT_FILENO,  this->buf,  0))
+			return _r::server_error;
+		
+		this->mysql_free_res();
+		
+		this->mysql_query_buf("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
+		const char* tag_id_str;
+		this->mysql_assign_next_row(&tag_id_str);
+		
+		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_id_str, strlen(tag_id_str), dest, strlen(dest), 0, false);
+		
+		return _r::post_ok;
 	}
 	
 	std::string_view files_given_dir__filesystem(const char* s){
@@ -3314,6 +3361,10 @@ int main(int argc,  const char* const* argv){
 				break;
 			case 'd':
 				FILES_GIVEN_REMOTE_DIR = *(++argv);
+				break;
+			case '^':
+				// TODO: Use better arg parsing
+				EXTRACT_YTDL_ERA_SCRIPT_PATH = *(++argv);
 				break;
 			case 'x':
 				external_db_env_vars.push_back(*(++argv));

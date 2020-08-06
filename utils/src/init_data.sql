@@ -100,7 +100,11 @@ VALUES
 ON DUPLICATE KEY UPDATE id=id;
 
 
-INSERT INTO tag (id,name,user) VALUES (0,"!!ROOT TAG!!",2) ON DUPLICATE KEY UPDATE id=id;
+INSERT INTO tag (id,name,user)
+VALUES
+(1,"Part of File",2),
+(0,"!!ROOT TAG!!",2)
+ON DUPLICATE KEY UPDATE id=id;
 UPDATE tag SET id=0 WHERE name="!!ROOT TAG!!";
 
 

@@ -79,6 +79,9 @@ POST /record-local-dir/>
 POST /gen-thumbs/>
 	return this->generate_thumbnails(++str)
 
+POST /e/dl/>
+	return this->post__ytdl_era(++str)
+
 POST /t/thumb/>
 	return this->update_tag_thumbnail(++str)
 POST /D/add/>

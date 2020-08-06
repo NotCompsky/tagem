@@ -13,6 +13,8 @@ OPTIONS
 		At the time of writing, the format of each element would be:
 			[THUMBNAIL_SRC, DIRECTORY_ID, FILE_NAME, FILE_SIZE, "", "", "", ""]
 		This is meant for viewing remote directories.
+	^ [/PATH/TO/extract-yt-era]
+		Path to a script that tags (url, begin, end, outpath) as arguments, and downloads a file - using youtube-dl - to extract exactly that portion of the video at [url], and save it to [outpath].
 
 EXTERNAL DATABASES
 	Optional
