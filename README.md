@@ -44,6 +44,8 @@ A single page application, with associated command-line utilities, for the rapid
 * **Eras**
   * Tagged time intervals of audio and video files.
   * These can be searched for, and used in playlists interchangeably with files themselves.
+  * Eras can be downloaded (from a local file or remote URL) into their own file.
+    * NOTE: This currently requires `ffmpeg` to be installed alongside this server. However, it will eventually be combined into the server itself.
 * **Playlists**
   * Playlists can be created on the fly out of any selection of files and/or eras (in any combination).
 * **Support for other databases**
