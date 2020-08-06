@@ -28,6 +28,7 @@ namespace SpecialUserID {
 		admin = 2
 	};
 	#define GUEST_ID_STR "1"
+	#define ADMIN_ID_STR "2"
 }
 
 

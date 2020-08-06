@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
 
-url="$1"
-era_start="$2"
-era_end="$3"
-outpath="$4"
-
-
-urls=($(youtube-dl -g "$url"))
-cmds=(-ss "$era_start" -to "$era_end" -i "${urls[0]}")
-if [ ${#urls[@]} -eq 2 ]; then
-	cmds+=(-ss "$era_start" -to "$era_end" -i "${urls[1]}")
-fi
-ffmpeg "${cmds[@]}" -vcodec copy -acodec copy "$outpath"
+outpath="$1"
+cmds=(ffmpeg)
+while read -r era_start era_end url; do
+	urls=($(youtube-dl -g "$url"))
+	cmd+=(-ss "$era_start" -to "$era_end" -i "${urls[0]}")
+	if [ ${#urls[@]} -eq 2 ]; then
+		cmd+=(-ss "$era_start" -to "$era_end" -i "${urls[1]}")
+	fi
+done
+"${cmds[@]}" -vcodec copy -acodec copy "$outpath"

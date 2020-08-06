@@ -264,6 +264,8 @@ size_t CACHE_DIR_STRLEN;
 const char* FILES_GIVEN_REMOTE_DIR = nullptr;
 const char* EXTRACT_YTDL_ERA_SCRIPT_PATH = nullptr;
 
+const char* TAG__PART_OF_FILE__ID;
+
 static bool regenerate_mimetype_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
@@ -617,26 +619,24 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view post__ytdl_era(const char* s){
-		GET_NUMBER_NONZERO(uint64_t,dest_dir)
-		GET_NUMBER_NONZERO(uint64_t,era)
-		GET_USER_ID
-		
+	template<typename... Args>
+	std::string_view ytdl_eras(const UserIDIntType user_id,  const uint64_t dest_dir,  const char* const eras,  const size_t eras_len,  Args... file_name_args){
 		this->mysql_query(
 			"SELECT "
 				"CONCAT(d.full_path, f.name),"
 				"e.start,"
 				"e.end,"
-				"CONCAT(d2.full_path, f.id, '@', e.start, '-', e.end, '.mkv'),"
-				"CONCAT('Subfile of ', f.id)"
+				"CONCAT(d2.full_path,", file_name_args..., "),"
+				"CONCAT(\"Part of file: \",f.id)"
 			"FROM era e "
 			"JOIN file f ON f.id=e.file "
 			"JOIN dir d ON d.id=f.dir "
 			"JOIN dir d2 ON d2.id=", dest_dir, " "
-			"WHERE e.id=", era, " "
+			"WHERE e.id IN (", _f::strlen, eras, eras_len, ")"
 			  "AND " NOT_DISALLOWED_ERA("e.id", "f.id", "d.id", "d.device", user_id)
 			  "AND " NOT_DISALLOWED_DIR("d2.id", "d2.device", user_id)
 		);
+		
 		const char* url = nullptr;
 		const char* era_start;
 		const char* era_end;
@@ -646,21 +646,61 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		if (unlikely(url == nullptr))
 			return _r::not_found;
 		
-		this->add_t_to_db(user_auth::SpecialUserID::admin, "1", 1, tag_name, strlen(tag_name));
+		std::vector<const char*> args;
+		args.reserve(1 + 1 + 3 * compsky::mysql::n_results<size_t>(this->res) + 1);
 		
-		const char* args[] = {EXTRACT_YTDL_ERA_SCRIPT_PATH, url, era_start, era_end, dest, nullptr};
-		if (proc::exec(60,  args,  STDOUT_FILENO,  this->buf,  0))
+		args[0] = EXTRACT_YTDL_ERA_SCRIPT_PATH;
+		args[1] = dest;
+		size_t i = 1;
+		std::string tag_ids = "0";
+		do {
+			this->add_t_to_db(user_auth::SpecialUserID::admin, TAG__PART_OF_FILE__ID, strlen(TAG__PART_OF_FILE__ID), tag_name, strlen(tag_name));
+			this->mysql_query2("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
+			const char* tag_id_str;
+			tag_ids += ",";
+			while(this->mysql_assign_next_row2(&tag_id_str))
+				tag_ids += tag_id_str;
+			
+			args[++i] = era_start;
+			args[++i] = era_end;
+			args[++i] = url;
+		} while(this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name));
+		args.back() = nullptr;
+		
+		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  this->buf,  0))
 			return _r::server_error;
 		
-		this->mysql_free_res();
-		
-		this->mysql_query_buf("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
-		const char* tag_id_str;
-		this->mysql_assign_next_row(&tag_id_str);
-		
-		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_id_str, strlen(tag_id_str), dest, strlen(dest), 0, false);
+		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false);
 		
 		return _r::post_ok;
+	}
+	
+	std::string_view post__ytdl_eras(const char* s){
+		GET_NUMBER_NONZERO(uint64_t,dest_dir)
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, eras, eras_len, s, ' ')
+		GET_USER_ID
+		SKIP_TO_BODY
+		const char* const dest_file_name = s;
+		
+		return this->ytdl_eras(
+			user_id,
+			dest_dir,
+			eras, eras_len,
+			'"', _f::esc, '"', dest_file_name, '"'
+		);
+	}
+	
+	std::string_view post__ytdl_era(const char* s){
+		GET_NUMBER_NONZERO(uint64_t,dest_dir)
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, eras, eras_len, s, ' ')
+		GET_USER_ID
+		
+		return this->ytdl_eras(
+			user_id,
+			dest_dir,
+			eras, eras_len,
+			"f.id, '@', e.start, '-', e.end, '.mkv'"
+		);
 	}
 	
 	std::string_view files_given_dir__filesystem(const char* s){
@@ -3499,6 +3539,27 @@ int main(int argc,  const char* const* argv){
 		connected_local_devices_str += std::to_string(id) + ",";
 	}
 	connected_local_devices_str.pop_back();
+	
+	compsky::mysql::exec_buffer(
+		db_infos.at(0).mysql_obj,
+		"INSERT INTO tag"
+		"(name,user)"
+		"VALUES("
+			"\"!!PART OF FILE!!\","
+			ADMIN_ID_STR
+		")"
+		"ON DUPLICATE KEY UPDATE id=id"
+	);
+	compsky::mysql::query_buffer(
+		db_infos.at(0).mysql_obj,
+		res4,
+		"SELECT id "
+		"FROM tag "
+		"WHERE name=\"!!PART OF FILE!!\" "
+		"LIMIT 1"
+	);
+	compsky::mysql::assign_next_row(res4, &row, &TAG__PART_OF_FILE__ID);
+	// NOTE: The above result is not freed.
 	
 	wangle::ServerBootstrap<CompskyPipeline> server;
 	server.childPipeline(std::make_shared<CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());

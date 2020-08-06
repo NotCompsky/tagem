@@ -68,7 +68,7 @@ function $$$create_era_info_row(era){
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+start+"-"+end+"')\">" + $$$t2human(start) + "</a></td>";
 		_s += "<td class='td'><a onclick=\"$$$view_file('"+$$$file_id+"@"+end+"')\">" + $$$t2human(end) + "</a></td>";
 		_s += "<td class='td'>" + era_tag_ids + "</td>";
-		_s += "<td class='td'><a onclick=\"$$$ytdl_era(this)\">youtube-dl</a></td>";
+		_s += "<td class='td'><a onclick=\"$$$ytdl_era(this.parentNode.parentNode)\">youtube-dl</a></td>";
 	_s += "</tr>";
 	return _s;
 }
