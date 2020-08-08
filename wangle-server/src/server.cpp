@@ -313,7 +313,6 @@ constexpr size_t handler_buf_sz = 20 * 1024 * 1024;
 
 class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
  public:
-	constexpr
 	std::string_view determine_response(const char* str){
 		--str;
 		#include "auto-generated/auto__server-determine-response.hpp"
@@ -376,37 +375,30 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	
 	template<typename... Args>
 	void mysql_query_db_by_id(DatabaseInfo& db_info,  Args... args){
-		this->reset_buf_index();
+		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_query_buf_db_by_id(db_info, this->buf, this->buf_indx());
+		this->itr = itr_init;
 	}
 	
 	template<typename... Args>
 	void mysql_query_db_by_id2(DatabaseInfo& db_info,  Args... args){
-		this->reset_buf_index();
+		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_query_buf_db_by_id2(db_info, this->buf, this->buf_indx());
+		this->itr = itr_init;
 	}
 	
 	template<typename... Args>
 	void mysql_exec_db_by_id(DatabaseInfo& db_info,  Args... args){
-		this->reset_buf_index();
+		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
+		this->itr = itr_init;
 	}
 	
 	template<typename... Args>
 	void mysql_query(Args... args){
-		this->mysql_query_db_by_id(db_infos.at(0), args...);
-	}
-	
-	template<typename... Args>
-	void mysql_query2(Args... args){
-		this->mysql_query_db_by_id2(db_infos.at(0), args...);
-	}
-	
-	template<typename... Args>
-	void mysql_query_after_itr(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_query_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
@@ -414,7 +406,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	}
 	
 	template<typename... Args>
-	void mysql_query2_after_itr(Args... args){
+	void mysql_query2(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_query_buf_db_by_id2(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
@@ -423,13 +415,6 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	
 	template<typename... Args>
 	void mysql_exec(Args... args){
-		this->reset_buf_index();
-		this->asciify(args...);
-		this->mysql_exec_using_buf();
-	}
-	
-	template<typename... Args>
-	void mysql_exec_after_itr(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
 		this->mysql_exec_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
@@ -550,7 +535,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->begin_json_response();
 		this->asciify('[');
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT d.name "
 			"FROM dir d "
 			"WHERE d.id=", id, " "
@@ -565,7 +550,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		// List of all parent directories
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT d.id, d.name "
 			"FROM dir d "
 			"JOIN dir2parent_tree dt ON dt.parent=d.id "
@@ -582,7 +567,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		// List of all IMMEDIATE child directories
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT d.id, d.name "
 			"FROM dir d "
 			"WHERE d.parent=", id, " "
@@ -597,7 +582,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->asciify(',');
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT tag "
 			"FROM dir2tag "
 			"WHERE dir=", id
@@ -843,7 +828,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify('[');
 		
 		--this->itr; // Removes the previous open bracket. This is because the following SQL query has only ONE response - an array would be appropriate if there were more
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir")
 				"f.mimetype,"
@@ -888,7 +873,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				"e.id,"
 				"e.start,"
@@ -914,7 +899,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT f.dir, f.name, f.mimetype "
 			"FROM file_backup f "
 			"JOIN dir d ON d.id=f.dir "
@@ -931,7 +916,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT d.id, d.full_path, d.device "
 			"FROM dir d "
 			"JOIN("
@@ -955,7 +940,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				"DISTINCT t.id,"
 				"t.name "
@@ -984,7 +969,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(',');
 		
 		
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				"b.id,"
 				"b.frame_n,"
@@ -1647,7 +1632,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	
 	template<typename... Args>
 	void tags_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2_after_itr(
+		this->mysql_query2(
 			TAGS_INFOS("", ids_args..., "")
 			"ORDER BY FIELD(t.id,", ids_args..., ")"
 			"LIMIT 100 "
@@ -1658,10 +1643,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	
 	template<typename... Args>
 	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2_after_itr(
+		this->mysql_query2(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				"d.id,"
 				"d.name,"
@@ -1731,7 +1716,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	template<typename... Args>
 	void qry_mysql_for_next_parent_dir(const UserIDIntType user_id,  const uint64_t child_dir_id,  Args... args){
 		// This function is to be used to traverse the dir table from the deepest ancestor to the immediate parent
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT d.id, LENGTH(d.name)"
 			"FROM dir d "
 			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
@@ -1761,10 +1746,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					OrderArgs... order_args,
 					FileIDsArgs... file_ids_args
 				){
-					thees->mysql_query2_after_itr(
+					thees->mysql_query2(
 						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
 					);
-					thees->mysql_query_after_itr(
+					thees->mysql_query(
 						"SELECT "
 							FILE_OVERVIEW_FIELDS("f.id"),
 							select_fields, " "
@@ -1832,7 +1817,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->mysql_query2(
 			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", _f::strlen, file2_var_name, file2_var_name_len, ")")
 		);
-		this->mysql_query_after_itr(
+		this->mysql_query(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
@@ -2128,7 +2113,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->asciify(',');
 		
-		this->mysql_query2_after_itr(
+		this->mysql_query2(
 			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
 		);
 		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
@@ -2619,7 +2604,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				break;
 			}
 			// NOTE: The directory to add may not end in a slash. However, all its parent directories must. The following SQL will not insert the directory we wish to add, only insert all its ancestors.
-			this->mysql_exec_after_itr(
+			this->mysql_exec(
 				"INSERT INTO dir"
 				"(parent,device,user,full_path,name)"
 				"SELECT "
@@ -2643,7 +2628,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		// Add entry to primary table
 		if (which_tbl == 'd'){
-			this->mysql_exec_after_itr(
+			this->mysql_exec(
 				"INSERT INTO dir "
 				"(parent, device, user, full_path, name)"
 				"SELECT "
@@ -2658,7 +2643,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				// Guaranteed not to be a duplicate
 			);
 		} else /* == 'f' */ {
-			this->mysql_exec_after_itr(
+			this->mysql_exec(
 				"INSERT INTO file "
 				"(dir, name, user, mimetype)"
 				"SELECT ",
@@ -2700,7 +2685,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
 				
 				if (mimetype[0]){
-					this->mysql_exec_after_itr(
+					this->mysql_exec(
 						"UPDATE file f "
 						"JOIN file_backup f2 ON f2.file=f.id "
 						"SET f.mimetype=f2.mimetype "
@@ -2736,10 +2721,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	}
 	
 	std::string_view add_to_tbl(const char tbl,  const char* s){
-		const char* tag_ids;
-		size_t tag_ids_len;
-		
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(FALSE, tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
 		// NOTE: A tag_ids of "0" should be allowed, at least for adding directories.
 		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t,dir_id)
@@ -3048,7 +3030,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"JOIN tag p "
 				"WHERE t.id IN (", child_ids_args..., ")"
 				  "AND p.id IN (", parent_ids_args...,   ")"
-				  "AND " NOT_DISALLOWED_TAG("t.id OR t2pt.id=p.id", user_id)
+				  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=p.id", user_id)
 				"ON DUPLICATE KEY UPDATE parent=parent"
 			);
 			
@@ -3295,7 +3277,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->asciify(CACHE_DIR);
 		char* const thumbnail_filename = this->itr;
 		for (const uint64_t device : connected_local_devices){
-			this->mysql_query_after_itr(
+			this->mysql_query(
 				"SELECT "
 					"f.id,"
 					"d.full_path,"
@@ -3377,11 +3359,6 @@ int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
 	
 	curl_global_init(CURL_GLOBAL_ALL);
-	
-	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,foo,they"));
-	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","what,does,they,foo"));
-	assert(matches__left_up_to_space__right_up_to_comma_or_null("foo bar","foo,what,does"));
-	assert(not matches__left_up_to_space__right_up_to_comma_or_null("bar foo","who,does,foo"));
 	
 	int port_n = 0;
 	std::vector<const char*> external_db_env_vars;
