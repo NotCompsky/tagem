@@ -9,6 +9,10 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+function $$$add_empty_box(){
+	$$$draw_box([0, 0, 0.25, 0.25, 0.5, 0.5, []]);
+}
+
 function $$$draw_box(box){
 	const [id,frame,x,y,w,h,tags] = box;
 	const e = $$$document.createElement("div");
@@ -39,13 +43,13 @@ function $$$draw_box(box){
 	
 	$$$make_resizeable(e);
 	why.prepend(e);
-	$$$document_getElementById("view").prepend(why);
+	$$$document_getElementById("view").appendChild(why);
 }
 
 
 function $$$make_resizeable(box){
-	const minimum_size = 10;
 	// NOTE: Although we are dragging the item by an amount in pixels, we must only set the width to a % of it's parent (image) width.
+	const min_size_px = 10.0;
 	for (const resizer of box.getElementsByClassName("resizer")){
 		resizer.addEventListener('mousedown', function(e){
 			const corner_orig_x_px = e.pageX;
@@ -61,6 +65,8 @@ function $$$make_resizeable(box){
 			
 			const xscale = parseFloat(box.dataset.w) / box_orig_w_px;
 			const yscale = parseFloat(box.dataset.h) / box_orig_h_px;
+			const min_x = min_size_px * xscale;
+			const min_y = min_size_px * yscale;
 			
 			function user_dragging_box_event(e){
 				console.log(xscale, yscale);
@@ -75,7 +81,8 @@ function $$$make_resizeable(box){
 				} else {
 					h = parseFloat(box.dataset.h) + delta_y_norm;
 				}
-				box.style.minHeight = box.style.maxHeight = box.style.height = 100*h+"%";
+				if(h >= min_y)
+					box.style.minHeight = box.style.maxHeight = box.style.height = 100*h+"%";
 				
 				const delta_x_norm = xscale * (e.pageX - corner_orig_x_px);
 				if (resizer.classList.contains('topL') || resizer.classList.contains('botL')){
@@ -85,18 +92,23 @@ function $$$make_resizeable(box){
 				} else {
 					w = parseFloat(box.dataset.w) + delta_x_norm;
 				}
-				box.style.width = 100*w+"%";
+				if(w >= min_x)
+					box.style.width = 100*w+"%";
 				
-				if (!resizer.classList.contains('botR'))
+				if ((!resizer.classList.contains('botR'))&&(h >= min_y)&&(w >= min_x))
 					box.parentNode.style.transform = "translateX("+100*x+"%) translateY("+100*y+"%)";
 			}
 			
 			window.addEventListener('mousemove', user_dragging_box_event);
 			window.addEventListener('mouseup', function(){
-				box.dataset.w = w;
-				box.dataset.h = h;
-				box.dataset.x = x;
-				box.dataset.y = y;
+				if(w >= min_x)
+					box.dataset.w = w;
+				if(h >= min_y)
+					box.dataset.h = h;
+				if((x >= 0)&&(x <= 1))
+					box.dataset.x = x;
+				if((y >= 0)&&(y <= 1))
+					box.dataset.y = y;
 				window.removeEventListener('mousemove', user_dragging_box_event);
 			});
 		});

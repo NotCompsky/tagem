@@ -118,6 +118,7 @@ function $$$add_key_intercepts(){
 	$$$Mousetrap_bind('b', $$$toggle_file_add_backup_dialog);
 	$$$Mousetrap_bind('m', $$$merge_files);
 	$$$Mousetrap_bind('q', e => $$$focus('qry'));
+	$$$Mousetrap_bind('B', $$$add_empty_box);
 }
 function $$$del_key_intercepts(){
 	$$$Mousetrap_unbind('e');
@@ -126,4 +127,5 @@ function $$$del_key_intercepts(){
 	$$$Mousetrap_unbind('b');
 	$$$Mousetrap_unbind('m');
 	$$$Mousetrap_unbind('q');
+	$$$Mousetrap_unbind('B');
 }
