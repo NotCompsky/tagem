@@ -18,31 +18,6 @@ function $$$unlink_this_tag_from_this_box(){
 }
 
 
-function $$$draw_box(box){
-	const [id,frame,x,y,w,h,tags] = box;
-	const e = $$$document.createElement("div");
-	e.dataset.id = id;
-	
-	// e.style.transform = "translateX("+100*x+"%) translateY("+100*y+"%)";
-	// The insane thing is that CSS translate rules use the node's own dimensions for translates here, for no apparent reason. Even animation translates use the parent node's dimensions!
-	// So to get around this, we create a container <div>, set its width to 100% of the parent, and translate that instead.
-	const why = $$$document.createElement("div");
-	why.style.transform = "translateX("+100*x+"%) translateY("+100*y+"%)";
-	why.classList = "box-container";
-	
-	// transforms due to https://www.w3.org/TR/css-transforms-1/#containing-block-for-all-descendants (see CSS)
-	e.style.width  = 100*w+"%"
-	e.style.minHeight = 100*h+"%";
-	e.style.maxHeight = 100*h+"%";
-	// Both Firefox and Chrome treat height attribute on its own as min-height, and max-height+height as min-height+min-height.
-	e.classList = "box";
-	e.innerHTML = tags.map(([id,name]) => $$$display_tag(id, name, null, "$$$unlink_this_tag_from_this_box", 'b')).join("");
-	
-	why.prepend(e);
-	$$$document_getElementById("view").prepend(why);
-}
-
-
 function $$$get_file_id(and_era){
 	return (and_era) ? $$$get_file_id_and_selected_era_start_and_ends_csv() : $$$file_id;
 }
