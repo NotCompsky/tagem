@@ -10,6 +10,12 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
+
+function $$$prompt_for_tags(fn){
+	$$$tagselect_popup_fn = fn;
+	$$$unhide("tagselect-popup-container");
+}
+
 function $$$tag_stuff_then(alias, ids, selector, fn){
 	// alias is either file 'f', dir 'd', or device 'D'
 	const tagselect = $(selector);

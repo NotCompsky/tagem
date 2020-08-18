@@ -9,8 +9,12 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+function $$$add_empty_box_given_tags(tags){
+	$$$draw_box([0, 0, 0.25, 0.25, 0.5, 0.5, tags]);
+}
+
 function $$$add_empty_box(){
-	$$$draw_box([0, 0, 0.25, 0.25, 0.5, 0.5, []]);
+	$$$prompt_for_tags($$$add_empty_box_given_tags);
 }
 
 function $$$draw_box(box){
