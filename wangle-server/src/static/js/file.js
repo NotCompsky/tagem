@@ -120,7 +120,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 	$$$try_to_pause_yt_video();
 	const embed_pre = $$$D[_device_id][2];
 	
-	$$$for_node_in_document_getElementsByClassName("box",$$$remove_node);
+	$$$rm_class("box-container");
 	$$$for_each_of($$$boxes,$$$draw_box);
 	
 	if (embed_pre === ""){

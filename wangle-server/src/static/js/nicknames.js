@@ -26,6 +26,12 @@ function $$$for_node_in_document_getElementsByClassName_1args(s,fn,x){
 	for(let e of $$$document_getElementsByClassName(s))
 		fn(e,x);
 }
+function $$$for_node_in_document_getElementsByClassName_1args__reverse(s,fn,x){
+	const ls = $$$document_getElementsByClassName(s);
+	for(let i = ls.length;  i !== 0;  ){
+		fn(ls[--i],x);
+	}
+}
 const $$$for_node_in_document_getElementsByClassName = $$$for_node_in_document_getElementsByClassName_1args;
 // Because why not? JS just ignores all the extra arguments.
 
@@ -44,4 +50,9 @@ function $$$remove_node(e){
 function $$$for_each_of(ls,fn){
 	for(let x of ls)
 		fn(x);
+}
+
+function $$$rm_class(s){
+	$$$for_node_in_document_getElementsByClassName_1args__reverse(s,$$$remove_node);
+	// NOTE: Must reverse order of iteration, else removing first node puts the 2nd node in the 1st node's place and skips its deletion
 }
