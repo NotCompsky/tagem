@@ -652,7 +652,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		} while(this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name));
 		args.back() = nullptr;
 		
-		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  this->buf,  0))
+		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
 			return _r::server_error;
 		
 		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false);
@@ -2862,7 +2862,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		const char* args[] = {"record-reddit-post", this->buf, nullptr};
 		
-		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  this->buf,  0)))
+		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  nullptr,  0)))
 			return _r::server_error;
 		
 		return _r::post_ok;

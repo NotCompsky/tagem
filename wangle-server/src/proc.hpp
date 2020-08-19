@@ -21,8 +21,23 @@ The absense of this copyright notices on some other files in this project does n
 
 namespace proc {
 
-inline
-bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  char* const output_buf,  const size_t output_buf_sz){
+namespace _detail {
+	void read_if_not_nullptr(const int pipefd, char* const output_buf, const size_t output_buf_sz){
+		read(pipefd, output_buf, output_buf_sz);
+	}
+	void read_if_not_nullptr(const int, std::nullptr_t, const size_t){}
+	
+	void fcntl_if_not_nullptr(const int pipefd,  char* const output_buf){
+		fcntl(pipefd, F_SETFL, fcntl(pipefd, F_GETFL) | O_NONBLOCK);
+	}
+	
+	void fcntl_if_not_nullptr(const int,  std::nullptr_t){}
+}
+
+
+
+template<typename CStringOrNullPtr>
+bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  const CStringOrNullPtr output_buf,  const size_t output_buf_sz){
 	int status = 0;
 	const char* which_err;
 	int pipefd[2];
@@ -46,7 +61,7 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 		exit(0);
 	}
 	close(pipefd[1]);
-	fcntl(pipefd[0], F_SETFL, fcntl(pipefd[0], F_GETFL) | O_NONBLOCK);
+	_detail::fcntl_if_not_nullptr(pipefd[0], output_buf);
 	
 	while (not waitpid(pid , &status, WNOHANG)){
 		if (--timeout == 0){
@@ -61,7 +76,7 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 		goto print_args_and_return;
 	}
 	
-	read(pipefd[0], output_buf, output_buf_sz);
+	_detail::read_if_not_nullptr(pipefd[0], output_buf, output_buf_sz);
 	
 	return false;
 	
