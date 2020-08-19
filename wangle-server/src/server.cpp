@@ -878,11 +878,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"e.id,"
 				"e.start,"
 				"e.end,"
-				"GROUP_CONCAT(e2t.tag)"
+				"IFNULL(GROUP_CONCAT(e2t.tag),\"\")"
 			"FROM era e "
-			"JOIN era2tag e2t ON e2t.era=e.id "
 			"JOIN file f ON f.id=e.file "
-			// NOTE: Each era should be associated with at least one tag.
+			"LEFT JOIN era2tag e2t ON e2t.era=e.id "
+			// NOTE: Each era should be associated with at least one tag, and this may be assumed in other parts of this server. However, I believe in second chances, and the client should be allowed to rectify their error by having these abominations rendered even without tags.
 			"WHERE e.file=", id, " "
 			  "AND " NOT_DISALLOWED_ERA("e.id", "0", "0", "0", user_id) // File has already been filtered for permissions
 			"GROUP BY e.id "
