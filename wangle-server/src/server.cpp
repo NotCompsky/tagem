@@ -2518,9 +2518,16 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			return _r::not_found;
 		closedir(dir);
 		
-		if (tag_ids != nullptr)
+		if (tag_ids != nullptr){
 			// Tag the root directory the client chose
-			this->add_file_or_dir_to_db('d', nullptr, user_id, tag_ids, tag_ids_len, this->buf, this->buf_indx(), 0, false);
+			// TODO: Guess the mimetype
+			if (this->itr[-2] != '/'){
+				this->itr[-1] = '/';
+				this->itr[0] = 0;
+				++this->itr;
+			}
+			this->add_file_or_dir_to_db('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false);
+		}
 		
 		this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 		// NOTE: if max_depth is 0, this wraps around to MAX_UNSIGNED. This is deliberate - it means there is (effectively) no limit.
