@@ -2757,6 +2757,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			GET_FLOAT(double,h)
 			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '\n')
 			
+			uint64_t box_id_final = box_id;
+			
 			if (box_id == 0){
 				this->mysql_exec(
 					"INSERT INTO box"
@@ -2774,7 +2776,6 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				);
 				// NOTE: To add tags without knowing the box IDs, and knowing that floats are not stored exactly, we must find the box whose coordinates most closely match the given coordinates
 				
-				uint64_t box_id = 0;
 				this->mysql_query(
 					"SELECT id "
 					"FROM box "
@@ -2787,9 +2788,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 						"POWER(h-",h,3,",2) "
 					"LIMIT 1"
 				);
-				while(this->mysql_assign_next_row(&box_id));
+				while(this->mysql_assign_next_row(&box_id_final));
 				
-				this->asciify(box_id, ',');
+				this->asciify(box_id_final, ',');
 			} else {
 				this->mysql_exec(
 					"UPDATE box "
@@ -2809,7 +2810,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				"INSERT INTO box2tag"
 				"(box,tag,user)"
 				"SELECT ",
-					box_id, ","
+					box_id_final, ","
 					"t.id,",
 					user_id, " "
 				"FROM tag t "
