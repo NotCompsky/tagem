@@ -3441,7 +3441,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					continue;
 				}
 				
-				static cimg_library::CImg<unsigned char> img; // WARNING: Might get errors with other kinds of colour spaces
+				cimg_library::CImg<unsigned char> img; // WARNING: Might get errors with other kinds of colour spaces
 				try {
 					img.load(this->file_path);
 				} catch(std::exception& e){
