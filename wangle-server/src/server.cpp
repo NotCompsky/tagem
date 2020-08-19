@@ -150,6 +150,10 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	if (unlikely(name == 0)) \
 		return _r::not_found;
 
+#define GET_FLOAT(type,name) \
+	const type name = a2f<type>(&s); \
+	++s;
+
 #define SKIP_TO_BODY \
 	s = skip_to_body(s); \
 	if (unlikely(s == nullptr)) \
@@ -2725,6 +2729,106 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		}
 		
 		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
+	}
+	
+	std::string_view post__add_boxes(const char* s){
+		GET_NUMBER_NONZERO(uint64_t,file_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("add_boxes")
+		SKIP_TO_BODY
+		--s;
+		
+		// TODO: Perform a permissions check on file_id
+		this->mysql_query("SELECT IFNULL(MAX(id),0) FROM box WHERE file=", file_id);
+		uint64_t below_new_box_ids = 0;
+		while(this->mysql_assign_next_row(&below_new_box_ids));
+		
+		// This function returns an array of the new box IDs
+		this->begin_json_response();
+		this->asciify('[');
+		
+		do {
+			++s; // Skip trailing newline
+			GET_NUMBER(uint64_t,box_id) // It is 0 for an entirely new box
+			GET_NUMBER(uint64_t,frame_n)
+			GET_FLOAT(double,x)
+			GET_FLOAT(double,y)
+			GET_FLOAT(double,w)
+			GET_FLOAT(double,h)
+			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '\n')
+			
+			if (box_id == 0){
+				this->mysql_exec(
+					"INSERT INTO box"
+					"(file,frame_n,x,y,w,h,user)"
+					"VALUES(",
+						file_id, ',',
+						frame_n, ',',
+						x, 3, ',',
+						y, 3, ',',
+						w, 3, ',',
+						h, 3, ',',
+						user_id,
+					")"
+					"ON DUPLICATE KEY UPDATE id=id" // WARNING: In this case, tags may not be applied if the old user is not equal to the new user
+				);
+				// NOTE: To add tags without knowing the box IDs, and knowing that floats are not stored exactly, we must find the box whose coordinates most closely match the given coordinates
+				
+				uint64_t box_id = 0;
+				this->mysql_query(
+					"SELECT id "
+					"FROM box "
+					"WHERE file=", file_id, " "
+						"AND user=", user_id, " "
+					"ORDER BY "
+						"POWER(x-",x,3,",2)+"
+						"POWER(y-",y,3,",2)+"
+						"POWER(w-",y,3,",2)+"
+						"POWER(h-",h,3,",2) "
+					"LIMIT 1"
+				);
+				while(this->mysql_assign_next_row(&box_id));
+				
+				this->asciify(box_id, ',');
+			} else {
+				this->mysql_exec(
+					"UPDATE box "
+					"SET "
+						"frame_n=", frame_n, ","
+						"x=", x, 3, ","
+						"y=", y, 3, ","
+						"w=", w, 3, ","
+						"h=", h, 3, " "
+					"WHERE id=", box_id, " "
+					  "AND file=", file_id // Security/sensibleness feature
+					// TODO: Record user ID somehow (per update? or change the user of the box?)
+				);
+			}
+			
+			this->mysql_exec(
+				"INSERT INTO box2tag"
+				"(box,tag,user)"
+				"SELECT ",
+					box_id, ","
+					"t.id,",
+					user_id, " "
+				"FROM tag t "
+				"WHERE t.id IN(", _f::strlen, tag_ids, tag_ids_len, ")"
+				  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
+				"ON DUPLICATE KEY UPDATE box=box"
+			);
+			
+			if (s[1] == 0)
+				// NOTE: s[0] != 0 is guaranteed by GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL
+				break;
+		} while(true);
+		
+		if (this->last_char_in_buf() == ',')
+			--this->itr;
+		this->asciify(']');
+		*this->itr = 0;
+		
+		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view add_to_tbl(const char tbl,  const char* s){

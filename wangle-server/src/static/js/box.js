@@ -9,8 +9,10 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+// WARNING: Boxes are messed up for images displayed within <iframe>. I do not think there is an easy fix to this, and no fixed is currently planned. Images should only be displayed in <img> tag, and if they are displayed in an <iframe> that is because the wrong mimetype has been set.
+
 function $$$add_empty_box_given_tags(tags){
-	$$$draw_box([0, 0, 0.25, 0.25, 0.5, 0.5, tags]);
+	$$$draw_box(["0", 0, 0.25, 0.25, 0.5, 0.5, tags]);
 }
 
 function $$$add_empty_box(){
@@ -35,6 +37,7 @@ function $$$draw_box(box){
 	e.style.maxHeight = 100*h+"%";
 	// Both Firefox and Chrome treat height attribute on its own as min-height, and max-height+height as min-height+min-height.
 	e.classList = "box";
+	e.dataset.frame_n = frame;
 	e.dataset.w = w;
 	e.dataset.h = h;
 	e.dataset.x = x;
@@ -117,4 +120,25 @@ function $$$make_resizeable(box){
 			});
 		});
 	}
+}
+
+function $$$get_box_tags(node){
+	return Array.from(node.getElementsByClassName("tag")).map(e => e.dataset.id).join(",");
+}
+
+function $$$save_boxes(){
+	$$$ajax_POST_data_w_JSON_response(
+		"/box/add/"+$$$file_id,
+		Array.from($$$document_getElementsByClassName("box")).map(e => e.dataset.id+";"+e.dataset.frame_n+";"+e.dataset.x+";"+e.dataset.y+";"+e.dataset.w+";"+e.dataset.h+";"+$$$get_box_tags(e)).join("\n")+"\n",
+		function(box_ids){
+			// Update the IDs of the newly recorded boxes
+			let i = 0;
+			for(let e of $$$document_getElementsByClassName("box")){
+				if(e.dataset.id !== "0")
+					continue;
+				e.dataset.id = box_ids[i++];
+			}
+			$$$alert_success();
+		}
+	);
 }

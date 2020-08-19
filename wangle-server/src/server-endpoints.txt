@@ -156,3 +156,6 @@ POST /user/bl/t-/>
 	return this->post__rm_user_blacklisted_tag(++str)
 POST /user/bl/t+/>
 	return this->post__add_user_blacklisted_tag(++str)
+
+POST /box/add/>
+	return this->post__add_boxes(++str)

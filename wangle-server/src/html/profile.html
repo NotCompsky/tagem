@@ -380,6 +380,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	
 	"<button onclick=\"" MINIMISED_JS_DECL_show_update_orig_src_dialog "()\">Update src</button>"
 	
+	"<button onclick=\"" MINIMISED_JS_DECL_save_boxes "()\">Save Boxes</button>"
+	
 	"<div id=\"posts-container\">"
 		"<div id=\"db-links\"></div>"
 		"<div id=\"post-container\">"
@@ -491,6 +493,11 @@ ADD_TOGGLE("add-f-backup-ytdl","YouTube-DL?")
 "<div id=\"tagselect-era-container\" class=\"popup hidden\">"
 	CREATE_TAG_SELECT(_, _, ("tagselect-era", "Add to Era", MINIMISED_JS_DECL_tag_era "()"))
 	"<button onclick=\"" MINIMISED_JS_DECL_hide_tagselect_era "()\">Close</button>"
+"</div>"
+
+"<div id=\"tagselect-popup-container\" class=\"popup hidden\">"
+	CREATE_TAG_SELECT(_, _, ("tagselect-popup", "Tags", MINIMISED_JS_DECL_hide "('tagselect-popup-container');" MINIMISED_JS_DECL_tagselect_popup_fn "($('#tagselect-popup').select2('data').map(x => [x.id, x.text]))"))
+	"<button onclick=\"" MINIMISED_JS_DECL_hide_node "(this.parentNode)\">Close</button>"
 "</div>"
 
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
