@@ -2554,7 +2554,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 			} else if (e->d_type == DT_REG){
 				// regular file
-				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx(), 0, false);
+				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false);
 			}
 			
 			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
