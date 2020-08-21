@@ -82,7 +82,6 @@ function $$$make_resizeable(box){
 				
 				const delta_y_norm = yscale * (e.pageY - corner_orig_y_px);
 				if (resizer.classList.contains('topL') || resizer.classList.contains('topR')){
-					console.log("Moving up by", delta_y_norm);
 					y = parseFloat(box.dataset.y) + delta_y_norm;
 					h = parseFloat(box.dataset.h) - delta_y_norm;
 				} else {
@@ -93,7 +92,6 @@ function $$$make_resizeable(box){
 				
 				const delta_x_norm = xscale * (e.pageX - corner_orig_x_px);
 				if (resizer.classList.contains('topL') || resizer.classList.contains('botL')){
-					console.log("Moving left by", delta_x_norm);
 					x = parseFloat(box.dataset.x) + delta_x_norm;
 					w = parseFloat(box.dataset.w) - delta_x_norm;
 				} else {
