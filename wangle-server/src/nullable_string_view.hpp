@@ -28,6 +28,7 @@ struct NullableStringView {
 	, sz(sz)
 	{}
 	
+	constexpr
 	bool operator==(const NullableStringView& other) const {
 		if(other.sz != this->sz)
 			return false;
@@ -40,6 +41,7 @@ struct NullableStringView {
 		return true;
 	}
 	
+	constexpr
 	bool operator<(const NullableStringView other) const {
 		if(other.sz != this->sz)
 			return (this->sz < other.sz);
