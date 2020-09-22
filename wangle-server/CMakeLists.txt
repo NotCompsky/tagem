@@ -27,6 +27,7 @@ set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
 option(MANGLE_JS_NAMES "Minimise the names of JavaScript functions and variables" OFF)
 option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
+option(ENABLE_LIMIT_WITHIN_GROUP_CONCAT "Allow the use of LIMIT statements within GROUP_CONCAT functions, disabling the workaround. Currently only MariaDB servers have fixed this bug, while all official MySQL versions require the workaround." OFF)
 if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
     set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
 else()
@@ -90,6 +91,9 @@ target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" 
 )
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
+if(ENABLE_LIMIT_WITHIN_GROUP_CONCAT)
+	target_compile_definitions(server PRIVATE LIMITS_WITHIN_GROUP_CONCATS)
+endif()
 
 
 add_custom_target(
