@@ -24,6 +24,7 @@ else()
 endif()
 
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
+option(ENABLE_PYTHON "Allows the use of embedded Python, instead of relying on forking the process to call external Python programs" ON)
 option(MANGLE_JS_NAMES "Minimise the names of JavaScript functions and variables" OFF)
 option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
@@ -76,7 +77,11 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
 # Creates directory during build system generation
 
-add_executable(server "${SRC_DIR}/server.cpp" "${SRC_DIR}/qry.cpp"
+add_executable(
+	server
+	"${SRC_DIR}/server.cpp"
+	"${SRC_DIR}/qry.cpp"
+	"${SRC_DIR}/python_stuff.cpp"
 )
 set_target_properties(
 	server
@@ -91,6 +96,17 @@ target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" 
 )
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
+if(ENABLE_PYTHON)
+	target_include_directories(server PRIVATE "/usr/include/python3.8") # TODO: Generalise
+	target_compile_definitions(server PRIVATE "PYTHON=1")
+	if(ENABLE_STATIC)
+		set(LIBPYTHON_NAMES "python3.8.a" "libpython3.8.a")
+	else()
+		set(LIBPYTHON_NAMES "python3.8" "python3.7" "python3.6" "python3.5") # WARNING: I have not tested any versions prior to python3.8
+	endif()
+	find_library(LIBPYTHON NAMES ${LIBPYTHON_NAMES})
+	target_link_libraries(server PRIVATE "${LIBPYTHON}")
+endif()
 if(ENABLE_LIMIT_WITHIN_GROUP_CONCAT)
 	target_compile_definitions(server PRIVATE LIMITS_WITHIN_GROUP_CONCATS)
 endif()

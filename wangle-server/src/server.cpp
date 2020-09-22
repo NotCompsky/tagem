@@ -60,6 +60,10 @@ The absense of this copyright notices on some other files in this project does n
 #define cimg_display 0
 #include <CImg.h>
 
+#ifdef PYTHON
+# include "python_stuff.hpp"
+#endif
+
 /*
  * The following initial contents of YTDL_FORMAT are copyright TheFrenchGhostys (https://gitlab.com/TheFrenchGhosty)
  * Modified content from https://gitlab.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
@@ -2431,8 +2435,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					"%(extractor)s-%(id)s.%(ext)s",
 					'\0'
 				);
+#ifdef PYTHON
+				if (python::ytdl(this->file_path, url))
+#else
 				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(60, ytdl_args, STDERR_FILENO, this->file_path)){
+				if (proc::exec(60, ytdl_args, STDERR_FILENO, this->file_path))
+#endif
+				{
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
 				}
@@ -2449,12 +2458,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 					);
 				}
 				
+#ifndef PYTHON
 				// Now run youtube-dl a second time, to paste the output filename into this->file_path, because it has no option to print the filename without only simulating
 				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
 				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, this->file_path)){
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
 				}
+#endif
 				
 				if (file_extension == nullptr){
 					replace_first_instance_of(this->file_path, '\n', '\0');
@@ -3538,6 +3549,10 @@ int main(int argc,  const char* const* argv){
 		);
 		return 1;
 	}
+	
+#ifdef PYTHON
+	python::init_ytdl();
+#endif
 	
 	int dummy_argc = 0;
 	folly::Init init(&dummy_argc, (char***)&argv_orig);
