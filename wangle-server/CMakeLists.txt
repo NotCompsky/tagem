@@ -29,6 +29,7 @@ option(MANGLE_JS_NAMES "Minimise the names of JavaScript functions and variables
 option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
 option(ENABLE_LIMIT_WITHIN_GROUP_CONCAT "Allow the use of LIMIT statements within GROUP_CONCAT functions, disabling the workaround. Currently only MariaDB servers have fixed this bug, while all official MySQL versions require the workaround." OFF)
+option(BUILD_TESTS "Run compile-time tests" OFF)
 if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
     set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
 else()
@@ -41,11 +42,14 @@ set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and A
 set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 
-
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
 else()
 	set(MANGLE_JS_NAMES_ARGS "")
+endif()
+
+if(BUILD_TESTS)
+	target_compile_definitions(server PRIVATE TESTS)
 endif()
 
 find_package(fizz REQUIRED)

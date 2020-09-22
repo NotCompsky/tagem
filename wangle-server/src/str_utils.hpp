@@ -12,6 +12,7 @@ The absense of this copyright notices on some other files in this project does n
 */
 #pragma once
 
+#include "test.hpp"
 #include <compsky/macros/likely.hpp>
 #include <compsky/macros/str2switch.hpp>
 
@@ -77,8 +78,8 @@ bool in_str(const char* str,  const char c){
 	}
 	return false;
 }
-static_assert(in_str("foo",'f'));
-static_assert(not in_str("bar",'f'));
+STATIC_ASSERT(in_str("foo",'f'));
+STATIC_ASSERT(not in_str("bar",'f'));
 
 constexpr
 bool endswith(const char* str,  const char c){
@@ -89,8 +90,8 @@ bool endswith(const char* str,  const char c){
 		++str;
 	return (*(--str) == c);
 }
-static_assert(endswith("foo",'o'));
-static_assert(not endswith("bar",'o'));
+STATIC_ASSERT(endswith("foo",'o'));
+STATIC_ASSERT(not endswith("bar",'o'));
 
 constexpr
 void replace_first_instance_of(char* str,  const char a,  const char b){
@@ -140,7 +141,7 @@ size_t count_until(const char* s,  const char c){
 	}
 	return n;
 }
-static_assert(count_until("foobar",'b')==3);
+STATIC_ASSERT(count_until("foobar",'b')==3);
 
 constexpr
 bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  const char* b){
@@ -202,9 +203,9 @@ size_t n_chars_until_char_in(const char* const str_orig,  Args... args){
 	return (uintptr_t)str - (uintptr_t)str_orig;
 }
 
-static_assert(n_chars_until_char_in("foo/bar/ree/gee/", '/') == 3);
-static_assert(n_chars_until_char_in("/bar/ree/gee/", '/') == 0);
-static_assert(n_chars_until_char_in("/bar/ree/gee/", 'a', 'b', 'c') == 1);
+STATIC_ASSERT(n_chars_until_char_in("foo/bar/ree/gee/", '/') == 3);
+STATIC_ASSERT(n_chars_until_char_in("/bar/ree/gee/", '/') == 0);
+STATIC_ASSERT(n_chars_until_char_in("/bar/ree/gee/", 'a', 'b', 'c') == 1);
 
 
 
@@ -222,9 +223,9 @@ constexpr
 bool in_str_not_at_end(const char* const str,  const char c){
 	return in_str_not_at_end__where_end_marked_by(str, c, '\0');
 }
-static_assert(in_str_not_at_end("www.youtube.com/watch?v=ABCDEFGHIJK", '/'));
-static_assert(not in_str_not_at_end("watch?v=ABCDEFGHIJK", '/'));
-static_assert(not in_str_not_at_end("foobar/", '/'));
+STATIC_ASSERT(in_str_not_at_end("www.youtube.com/watch?v=ABCDEFGHIJK", '/'));
+STATIC_ASSERT(not in_str_not_at_end("watch?v=ABCDEFGHIJK", '/'));
+STATIC_ASSERT(not in_str_not_at_end("foobar/", '/'));
 
 
 
