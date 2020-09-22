@@ -12,9 +12,11 @@ The absense of this copyright notices on some other files in this project does n
 */
 #pragma once
 
+#include "verify_str.hpp"
 #include "test.hpp"
 #include <compsky/macros/likely.hpp>
 #include <compsky/macros/str2switch.hpp>
+#include <inttypes.h> // for uintptr_t
 
 
 #define IS_STR_EQL(str_to_be_tested,length,name) \

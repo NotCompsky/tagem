@@ -662,22 +662,17 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (not is_valid_tbl2tbl_reference(which_tbl, arg_token_base))
 					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
-				where += " X.id ";
 				if (is_inverted)
-					where += "NOT ";
-				where += "IN (SELECT x.";
+					where += " NOT";
+				where += " EXISTS(SELECT 1 FROM ";
 				if (has_intermediate_tbl_in_tbl2tbl_reference(which_tbl, arg_token_base)){
 					// e.g. for file to tag
 					// 1st example branch
-					where += tbl_full_name(which_tbl); // e.g. "file"
-					where += " FROM ";
 					where += tbl_full_name(which_tbl); // e.g. "file"
 					where += "2";
 					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag"
 				} else {
 					// 2nd example branch
-					where += "id";
-					where += " FROM ";
 					where += tbl_full_name(which_tbl); // e.g. "file"
 				}
 				where += " x JOIN ";
@@ -695,7 +690,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += "x.";
 					where += tbl_full_name(tbl_arg_to_alias(arg_token_base)); // e.g. "tag" or "dir"
 				}
-				where += " WHERE y.";
+				where += " WHERE x.";
+				where += (has_intermediate_tbl_in_tbl2tbl_reference(which_tbl, arg_token_base)) ? tbl_full_name(which_tbl) : "id";
+				where += "=X.id AND y.";
 				where += (arg_token_base==arg::dir)?"full_path":"name";
 				rc = process_name_list(where, tbl_arg_to_alias(arg_token_base), qry);
 				if (rc != successness::ok)

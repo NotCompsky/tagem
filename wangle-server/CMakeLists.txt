@@ -85,6 +85,9 @@ add_executable(
 	server
 	"${SRC_DIR}/server.cpp"
 	"${SRC_DIR}/qry.cpp"
+	"${SRC_DIR}/curl_utils.cpp"
+	"${SRC_DIR}/db_info.cpp"
+	"${SRC_DIR}/initialise_tagem_db.cpp"
 	"${SRC_DIR}/python_stuff.cpp"
 )
 set_target_properties(

@@ -2476,7 +2476,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				
 				rc = FunctionSuccessness::ok;
 			} else
-				rc = dl_file__curl(user_headers, url, this->file_path, overwrite_existing, mimetype);
+				rc = curl::dl_file(user_headers, url, this->file_path, overwrite_existing, mimetype);
 		}
 		
 		dl_or_cp_file__return:
@@ -3496,7 +3496,7 @@ std::mutex RTaggerHandler::mysql_mutex;
 int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
 	
-	curl_global_init(CURL_GLOBAL_ALL);
+	curl::init();
 	
 	int port_n = 0;
 	std::vector<const char*> external_db_env_vars;
@@ -3693,7 +3693,7 @@ int main(int argc,  const char* const* argv){
 	
 	mysql_library_end();
 	
-	curl_global_cleanup();
+	curl::clean();
 
 	return 0;
 }

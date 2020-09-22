@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 #pragma once
 
 #include "nullable_string_view.hpp"
+#include <vector>
 
 
 typedef unsigned UserIDIntType;
