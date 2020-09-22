@@ -15,6 +15,8 @@ const $$$YOUTUBE_DEVICE_ID = "1";
 
 var $$$currently_viewing_object_type;
 
+var $$$mouse_is_down = false;
+
 var $$$tag_id;
 var $$$file_id;
 var $$$file_name;

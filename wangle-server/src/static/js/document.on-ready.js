@@ -74,4 +74,6 @@ function $$$on_document_ready(){
 	
 	for(node of $$$document_getElementsByClassName('css-colour-picker'))
 		node.addEventListener("change",$$$on_css_colour_picker_change);
+	
+	$$$document_getElementById('view-img').addEventListener('mousedown', $$$mousedown_on_image);
 }

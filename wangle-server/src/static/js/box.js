@@ -11,12 +11,26 @@
 
 // WARNING: Boxes are messed up for images displayed within <iframe>. I do not think there is an easy fix to this, and no fixed is currently planned. Images should only be displayed in <img> tag, and if they are displayed in an <iframe> that is because the wrong mimetype has been set.
 
-function $$$add_empty_box_given_tags(tags){
-	$$$draw_box(["0", 0, 0.25, 0.25, 0.5, 0.5, tags]);
+
+const $$$min_box_size_px = 10.0;
+const $$$temporary_box_container = $$$document_getElementById("tmp-box-container");
+const $$$temporary_box = $$$document_getElementById("tmp-box");
+
+
+// "private" variables only to be used in this page's functions
+var $$$box_to_be_created__x1; // The anchor - not necessarily the left of the box
+var $$$box_to_be_created__y1;
+var $$$box_to_be_created__x;
+var $$$box_to_be_created__y;
+var $$$box_to_be_created__w;
+var $$$box_to_be_created__h;
+function $$$draw_box__init_dimensions(box){
+	[$$$box_to_be_created__x, $$$box_to_be_created__y, $$$box_to_be_created__w, $$$box_to_be_created__h] = box;
 }
 
-function $$$add_empty_box(){
-	$$$prompt_for_tags($$$add_empty_box_given_tags);
+
+function $$$add_box_given_tags(tags){
+	$$$draw_box(["0", 0, $$$box_to_be_created__x, $$$box_to_be_created__y, $$$box_to_be_created__w, $$$box_to_be_created__h, tags]);
 }
 
 function $$$draw_box(box){
@@ -53,17 +67,15 @@ function $$$draw_box(box){
 	$$$document_getElementById("view").appendChild(why);
 }
 
-
 function $$$make_resizeable(box){
 	// NOTE: Although we are dragging the item by an amount in pixels, we must only set the width to a % of it's parent (image) width.
-	const min_size_px = 10.0;
 	for (const resizer of box.getElementsByClassName("resizer")){
 		resizer.addEventListener('mousedown', function(e){
 			const corner_orig_x_px = e.pageX;
 			const corner_orig_y_px = e.pageY;
 			
-			const box_orig_w_px = parseFloat(getComputedStyle(box).width.replace('px', ''));
-			const box_orig_h_px = parseFloat(getComputedStyle(box).height.replace('px', ''));
+			const box_orig_w_px = parseFloat(box.scrollWidth);
+			const box_orig_h_px = parseFloat(box.scrollHeight);
 			
 			let x = parseFloat(box.dataset.x);
 			let y = parseFloat(box.dataset.y);
@@ -72,14 +84,10 @@ function $$$make_resizeable(box){
 			
 			const xscale = parseFloat(box.dataset.w) / box_orig_w_px;
 			const yscale = parseFloat(box.dataset.h) / box_orig_h_px;
-			const min_x = min_size_px * xscale;
-			const min_y = min_size_px * yscale;
+			const min_x = $$$min_box_size_px * xscale;
+			const min_y = $$$min_box_size_px * yscale;
 			
-			function user_dragging_box_event(e){
-				console.log(xscale, yscale);
-				console.log(e.pageX, e.pageY);
-				console.log(corner_orig_x_px, corner_orig_y_px);
-				
+			function user_dragging_new_box_event(e){
 				const delta_y_norm = yscale * (e.pageY - corner_orig_y_px);
 				if (resizer.classList.contains('topL') || resizer.classList.contains('topR')){
 					y = parseFloat(box.dataset.y) + delta_y_norm;
@@ -104,7 +112,7 @@ function $$$make_resizeable(box){
 					box.parentNode.style.transform = "translateX("+100*x+"%) translateY("+100*y+"%)";
 			}
 			
-			window.addEventListener('mousemove', user_dragging_box_event);
+			window.addEventListener('mousemove', user_dragging_new_box_event);
 			window.addEventListener('mouseup', function(){
 				if(w >= min_x)
 					box.dataset.w = w;
@@ -114,7 +122,7 @@ function $$$make_resizeable(box){
 					box.dataset.x = x;
 				if((y >= 0)&&(y <= 1))
 					box.dataset.y = y;
-				window.removeEventListener('mousemove', user_dragging_box_event);
+				window.removeEventListener('mousemove', user_dragging_new_box_event);
 			});
 		});
 	}
@@ -139,4 +147,65 @@ function $$$save_boxes(){
 			$$$alert_success();
 		}
 	);
+}
+
+function $$$create_box_from_dragging(e){
+	let x = $$$box_to_be_created__x1;
+	let y = $$$box_to_be_created__y1;
+	let X = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
+	let Y = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	
+	// Guarantee x <= X etc
+	if (x > X)
+		[x, X] = [X, x];
+	if (y > Y)
+		[y, Y] = [Y, y];
+	
+	if ((X > x + $$$min_box_size_px) && (Y > y + $$$min_box_size_px)){
+		const scaleX = $$$document_getElementById("view").scrollWidth;
+		const scaleY = $$$document_getElementById("view").scrollHeight;
+		$$$draw_box__init_dimensions([x/scaleX,y/scaleY,(X-x)/scaleX,(Y-y)/scaleY]);
+		window.removeEventListener('mousemove', $$$user_dragging_new_box_event);
+		window.removeEventListener('mouseup', $$$user_mouseup_event);
+		$$$prompt_for_tags($$$add_box_given_tags);
+	}
+	
+	console.log(x,y,X,Y);
+}
+
+
+function $$$user_dragging_new_box_event(e){
+	let x = $$$box_to_be_created__x1;
+	let y = $$$box_to_be_created__y1;
+	let X = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
+	let Y = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	
+	// Guarantee x <= X etc
+	if (x > X)
+		[x, X] = [X, x];
+	if (y > Y)
+		[y, Y] = [Y, y];
+	
+	if ((X > x + $$$min_box_size_px) && (Y > y + $$$min_box_size_px)){
+		$$$temporary_box_container.classList.remove("hidden");
+		$$$temporary_box_container.style.transform = "translateX("+x+"px) translateY("+y+"px)";
+		$$$temporary_box.style.width  = (X-x)+"px";
+		$$$temporary_box.style.minHeight = $$$temporary_box.style.maxHeight = $$$temporary_box.style.height = (Y-y)+"px";
+	}
+	
+	console.log(x,y,X,Y);
+}
+
+function $$$user_mouseup_event(e){
+	$$$temporary_box_container.classList.add("hidden");
+	$$$create_box_from_dragging(e);
+	window.removeEventListener('mousemove', $$$user_dragging_new_box_event);
+	window.removeEventListener('mouseup', $$$user_mouseup_event);
+}
+
+function $$$mousedown_on_image(e){
+	$$$box_to_be_created__x1 = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
+	$$$box_to_be_created__y1 = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	window.addEventListener('mousemove', $$$user_dragging_new_box_event);
+	window.addEventListener('mouseup', $$$user_mouseup_event);
 }
