@@ -3591,7 +3591,9 @@ int main(int argc,  const char* const* argv){
 		
 		db_info.test_is_accessible_from_master_connection(db_infos.at(0).connection(),  buf);
 	}
-	db_name2id_json.pop_back();
+	if (db_name2id_json.back() != '"')
+		// If there is at least one element in this dictionary
+		db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
 	_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
