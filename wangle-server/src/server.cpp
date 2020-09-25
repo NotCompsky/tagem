@@ -178,18 +178,15 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 		"SELECT t2pt.id " \
 		"FROM tag2parent_tree t2pt " \
 		"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth"
-#define HIDDEN_TAGS(...) \
-	"(" \
-		HIDDEN_TAGS_INNER(__VA_ARGS__) \
-	")"
+#define HIDDEN_TAGS(conditions, ...) \
+	"JOIN tag2parent_tree t2pt ON " conditions " " \
+	"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth "
+
 #define NOT_HIDDEN_TAG(tag, user_id) \
-	"NOT EXISTS(" HIDDEN_TAGS_INNER("", user_id, "") " WHERE t2pt.id=", tag ")"
+	"NOT EXISTS(" HIDDEN_TAGS_INNER("", user_id, "") " WHERE (t2pt.id=", tag "))"
 
-#define HIDDEN_TAGS__USER \
-	HIDDEN_TAGS("", user_id, "")
-
-#define HIDDEN_TAGS__GUEST \
-	HIDDEN_TAGS(GUEST_ID_STR)
+#define NOT_HIDDEN_TAG__GUEST(tag) \
+	"NOT EXISTS(" HIDDEN_TAGS_INNER(GUEST_ID_STR) " WHERE (t2pt.id=" tag "))"
 
 #ifdef LIMITS_WITHIN_GROUP_CONCATS
 # define LIMIT1_WITHIN_GROUP_CONCAT "LIMIT 1"
@@ -229,11 +226,10 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	")A ON A.tag=t.id "
 
 #define WHERE_TAGS_INFOS(...) \
-	"LEFT JOIN" HIDDEN_TAGS__USER "HT ON HT.id=t.id " \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
 	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
 	"AND " NOT_DISALLOWED_TAG("t.id", user_id) \
-	"AND HT.id IS NULL " \
+	"AND " NOT_HIDDEN_TAG("t.id", user_id) \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
@@ -1851,7 +1847,6 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
-			"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=f2t.tag "
 			"WHERE " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user->id)
 			"GROUP BY f.id "
 			"LIMIT " TABLE_LIMIT " "
@@ -2233,8 +2228,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->mysql_query(
 				"SELECT t2p.id, t2p.parent "
 				"FROM tag2parent t2p "
-				"LEFT JOIN" HIDDEN_TAGS__USER "A ON A.id=t2p.id OR A.id=t2p.parent "
-				"WHERE A.id IS NULL "
+				"WHERE " NOT_HIDDEN_TAG("t2p.id OR t2pt.id=t2p.parent", user_id)
 				  "AND " NOT_DISALLOWED_TAG("t2p.id OR _t2pt.id=t2p.parent", user_id)
 			);
 			this->itr = this->buf;
@@ -2254,8 +2248,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->mysql_query_buf(
 				"SELECT t2p.id, t2p.parent "
 				"FROM tag2parent t2p "
-				"LEFT JOIN" HIDDEN_TAGS__GUEST "A ON A.id=t2p.id OR A.id=t2p.parent "
-				"WHERE A.id IS NULL "
+				"WHERE " NOT_HIDDEN_TAG__GUEST("t2p.id OR t2pt.id=t2p.parent")
 				  "AND " NOT_DISALLOWED_TAG__COMPILE_TIME("t2p.id OR _t2pt.id=t2p.parent", GUEST_ID_STR)
 			);
 			this->init_json(
