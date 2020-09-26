@@ -31,6 +31,7 @@ SET
 	exec_unsafe_tasks=TRUE,
 	exec_safe_tasks=TRUE,
 	edit_tasks=TRUE,
+	add_tags=TRUE,
 	link_tags=TRUE,
 	unlink_tags=TRUE,
 	edit_tags=TRUE,
