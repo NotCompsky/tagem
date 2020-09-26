@@ -3019,17 +3019,17 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	
 	template<typename... Args>
 	void merge_files(const UserIDIntType user_id,  const uint64_t orig_f_id,  Args... dupl_f_ids_args){
-		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", dupl_f_ids_args..., ") AND tag IN (SELECT tag FROM file2tag WHERE file=", orig_f_id, ")");
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", dupl_f_ids_args..., ") AND tag IN (SELECT * FROM (SELECT tag FROM file2tag WHERE file=", orig_f_id, ") AS t)");
 		this->mysql_exec("INSERT INTO file2tag (file,tag,user) SELECT ", orig_f_id, ", tag, user FROM file2tag f2t WHERE file IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY update file2tag.file=file2tag.file");
-		this->mysql_exec("DELETE FROM file2tag WHERE file IN (SELECT * FROM (", dupl_f_ids_args..., ") AS t)");
+		this->mysql_exec("DELETE FROM file2tag WHERE file IN (", dupl_f_ids_args..., ")");
 		
 		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", dupl_f_ids_args..., ")");
 		
-		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", dupl_f_ids_args..., ") AND dir IN (SELECT dir FROM file_backup WHERE file=", orig_f_id, ")");
+		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", dupl_f_ids_args..., ") AND dir IN (SELECT * FROM (SELECT dir FROM file_backup WHERE file=", orig_f_id, ") AS t)");
 		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", dupl_f_ids_args..., ")");
 		
 		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
-		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT post FROM file2post WHERE file=", orig_f_id, ") AND file IN(", dupl_f_ids_args..., ")");
+		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT * FROM (SELECT post FROM file2post WHERE file=", orig_f_id, ") AS t) AND file IN(", dupl_f_ids_args..., ")");
 		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
 		this->mysql_exec("DELETE FROM file WHERE id IN (", dupl_f_ids_args..., ")");
 	}
