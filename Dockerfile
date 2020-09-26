@@ -1,7 +1,7 @@
 # Has to be in the root directory, otherwise the docker build system will not allow copying the necessary files from the host to the container
 # All the other Dockerfiles are under wangle-server/docker
 
-FROM notcompsky/wangle-static-and-ffmpeg:latest AS intermediate
+FROM notcompsky/static-wangle-ffmpeg:latest AS intermediate
 WORKDIR /tagem
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
 COPY wangle-server/docker/ffmpegthumbnailer-static.patch /ffmpegthumbnailer-static.patch
@@ -62,7 +62,7 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& ( \
 		make server \
 		|| (\
-			/usr/local/bin/x86_64-linux-musl-g++  -static -fpermissive  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/FrameDecoder.cpp.o CMakeFiles/server.dir/src/qry.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib/libwangle.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libfizz.a /usr/local/lib/libfolly.a /usr/local/lib64/libfmt.a /usr/local/lib64/liblz4.a /usr/local/lib64/libzstd.a /usr/local/lib64/libsnappy.a /usr/lib/libdwarf.a /usr/local/lib/libunwind.a /usr/local/lib/libsodium.a  /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libglog.a /usr/local/lib/libgflags.a /usr/local/lib/libevent.a /usr/local/lib64/libdouble-conversion.a -ldl /usr/lib/librt.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a           /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
+			/usr/local/bin/x86_64-linux-musl-g++ -flto -static -fpermissive  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/FrameDecoder.cpp.o CMakeFiles/server.dir/src/qry.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib/libwangle.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libfizz.a /usr/local/lib/libfolly.a /usr/local/lib64/libfmt.a /usr/local/lib64/liblz4.a /usr/local/lib64/libzstd.a /usr/local/lib64/libsnappy.a /usr/lib/libdwarf.a /usr/local/lib/libunwind.a /usr/local/lib/libsodium.a  /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libglog.a /usr/local/lib/libgflags.a /usr/local/lib/libevent.a /usr/local/lib64/libdouble-conversion.a -ldl /usr/lib/librt.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a           /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
 			&& strip --strip-all rscrape-cmnts \
 		) \
 	)
