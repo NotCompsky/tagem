@@ -26,7 +26,7 @@ function $$$recursively_record_filesystem_dir_dialog(){
 }
 
 function $$$recursively_record_filesystem_dir(){
-	const s = $$$prompt("/path/of/directory");
+	const s = $$$prompt("!!!MACRO!!!PATH_OF_DIRECTORY_EXAMPLE") !!!MACRO!!!JS__REPLACE_PATH_SEP;
 	if((s==="")||(s===null))
 		return;
 	const max_depth = $$$get_int_with_prompt("Maximum depth - 0 being 'no limit'");

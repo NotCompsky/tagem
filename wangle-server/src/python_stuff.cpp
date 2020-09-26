@@ -11,9 +11,8 @@ This copyright notice should be included in any copy or substantial copy of the 
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
 
-#pragma once
-
 #include "python_stuff.hpp"
+#include "os.hpp"
 #include <compsky/macros/likely.hpp>
 #include <stdexcept>
 #include <mutex>
@@ -38,17 +37,40 @@ static PyObject* ytdl_obj;
 namespace tagem_module {
 	static PyObject* to_stdout;
 	
+	static PyObject* modul;
+	
+	static PyObject* whyyyyyyyyyyyyyyyy;
+	
 	static
-	void to_stdout_fn(PyObject* const self,  PyObject* const file_path){
+	PyObject* to_stdout_fn(PyObject* const self,  PyObject* const args,  PyObject* const keyword_args){
 		// Overrides to_stdout - saves file path instead of writing to stdout
-		printf("\n\n\nfilepath == %s\n\n\n\n", PyUnicode_AsUTF8(file_path));
-		fflush(stdout);
-		PyObject_SetAttrString(self, "filepath", file_path);
+		
+		// NOTE: self is the module, not the class instantiation, for some reason.
+		// So as a workaround, static C-string is set, and mutex lock is needed in the calling function
+		// In reality, the download() function could take many minutes, so a mutex lock is completely infeasible. Hence we must *hope* that there won't be a data race.
+		
+		PyObject* const file_path = PyTuple_GetItem(args, 0);
+		if (unlikely(file_path == nullptr)){
+			fprintf(stderr,  "file_path is NULL\n");  fflush(stderr);
+			Py_RETURN_NONE;
+		}
+		const char* const str = PyUnicode_AsUTF8(file_path);
+		if (not os::is_local_file_or_dir(str))
+			Py_RETURN_NONE;
+		fprintf(stderr,  "\n\n\nfilepath == %s\n\n\n\n", str);
+		fflush(stderr);
+		/*if (unlikely(PyObject_SetAttrString(self, "filepath", file_path) == -1)){
+			fprintf(stderr,  "Error setting filepath value on object\n");
+			fflush(stderr);
+		}
+		Py_INCREF(file_path);*/
+		whyyyyyyyyyyyyyyyy = file_path;
+		Py_RETURN_NONE;
 	}
 	
 	static
 	PyMethodDef _methods[] = {
-		{"to_stdout", (PyCFunction)to_stdout_fn, METH_O, "Description."},
+		{"to_stdout", (PyCFunction)to_stdout_fn, METH_VARARGS | METH_KEYWORDS, "Description."},
 		{nullptr, nullptr, 0, nullptr}
 	};
 	
@@ -73,8 +95,8 @@ namespace tagem_module {
 void init_ytdl(){
 	Py_SetProgramName(L"tagem");
 	Py_Initialize();
-	PyObject* const tagem_module = PyModule_Create(&tagem_module::_module);
-	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module, "to_stdout");
+	tagem_module::modul = PyModule_Create(&tagem_module::_module);
+	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
 	
 	PyObject* ytdl_module = PyImport_ImportModule("youtube_dl");
 	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");
@@ -83,7 +105,7 @@ void init_ytdl(){
 }
 
 bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
-	PyObject* const args = Py_BuildValue("[s]", url); // Or [item]?
+	PyObject* const urls_ls = Py_BuildValue("[s]", url); // Or [item]?
 	
 	PyObject* const opts = PyDict_New();
 	PyDict_SetItem(
@@ -114,21 +136,34 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 	
 	// Override to_stdout, so that the file path is written to a buffer instead of stdout
 	PyObject_SetAttrString(ytdl_instantiation, "to_stdout", tagem_module::to_stdout);
+	/*PyObject_SetAttrString(tagem_module::modul, "ytdl_instantiation", ytdl_instantiation);
+	PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
+	// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
 	
-	const PyObject* const result = PyObject_CallObject(ytdl_fn, args);
+	PyObject* const fn_args = PyTuple_New(1);
+	PyTuple_SetItem(fn_args, 0, urls_ls);
+	const PyObject* const result = PyObject_CallObject(ytdl_fn, fn_args);
 	
+	/*
 	PyObject* const file_path = PyObject_GetAttrString(ytdl_instantiation, "filepath");
-	Py_ssize_t sz;
-	const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
-	memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
-	out_fmt_as_input__resulting_fp_as_output[sz] = 0;
+	if (unlikely(file_path == nullptr)){
+		fprintf(stderr,  "file_path is NULL\n");
+		fflush(stderr);
+	} else {*/
+	PyObject* const file_path = tagem_module::whyyyyyyyyyyyyyyyy;
+		Py_ssize_t sz;
+		const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
+		memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
+		out_fmt_as_input__resulting_fp_as_output[sz] = 0;
+		Py_DECREF(file_path);
+	/*}*/
 	
-	Py_DECREF(file_path);
 	Py_DECREF(result);
 	Py_DECREF(ytdl_fn);
 	Py_DECREF(ytdl_instantiation);
 	Py_DECREF(opts);
-	Py_DECREF(args);
+	Py_DECREF(fn_args);
+	Py_DECREF(urls_ls);
 	
 	return false;
 }

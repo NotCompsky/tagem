@@ -14,6 +14,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "verify_str.hpp"
 #include "test.hpp"
+#include "os.hpp"
 #include <compsky/macros/likely.hpp>
 #include <compsky/macros/str2switch.hpp>
 #include <inttypes.h> // for uintptr_t
@@ -171,7 +172,7 @@ constexpr
 const char* basename__accepting_trailing_slash(const char* path){
 	const char* fname = path;
 	while(*path != 0){
-		if (*path == '/'){
+		if (*path == os::unix_path_sep){
 			if (*(++path) == 0)
 				// NOTE: The next character won't be a slash
 				break;
@@ -234,7 +235,7 @@ STATIC_ASSERT(not in_str_not_at_end("foobar/", '/'));
 constexpr
 void get_file_name_and_ext__filename_ends_with_newline_or_null(const char* itr,  const char*& file_name,  const char*& ext){
 	while((*itr != 0) and (*itr != '\n')){
-		if (*itr == '/')
+		if (*itr == os::unix_path_sep)
 			file_name = itr;
 		else if (*itr == '.')
 			ext = itr;

@@ -14,6 +14,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #define CACHE_CONTROL_HEADER "Cache-Control: max-age=" MAX_CACHE_AGE "\n"
 
+#include "os.hpp"
 #include "skip_to_body.hpp"
 #include "qry.hpp"
 #include "protocol.hpp"
@@ -106,13 +107,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	printf("  s == %.10s...\n", s); \
 	fflush(stdout); \
 	if(*s != terminator) \
-		return _r::not_found; \
+		return compsky::wangler::_r::not_found; \
 	++s;
 
 #define CHECK_FOR_EXPECT_100_CONTINUE_HEADER \
 	printf("CHECK_FOR_EXPECT_100_CONTINUE_HEADER %s\n", s); \
 	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
-		return _r::expect_100_continue;
+		return compsky::wangler::_r::expect_100_continue;
 
 #define GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
 	BOOST_PP_IF(var_decl, const char* const,) var  = get_comma_separated_ints(&str_name, terminating_char); \
@@ -121,28 +122,28 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
 	GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
 	if (var == nullptr) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 
 #define GET_USER \
 	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
 	if (user == nullptr) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 #define GET_USER_ID \
 	const UserIDIntType user_id = user_auth::get_user_id(get_cookie(s, "username=")); \
 	if (user_id == user_auth::SpecialUserID::invalid) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 #define BLACKLIST_GUEST \
 	if (user_id == user_auth::SpecialUserID::guest) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 #define GREYLIST_GUEST \
 	if (user_id == user_auth::SpecialUserID::guest) \
-		return _r::requires_login;
+		return compsky::wangler::_r::requires_login;
 
 #define GET_DB_INFO \
 	const unsigned db_id = a2n<unsigned>(&s); \
 	const unsigned db_indx = external_db_id2indx(db_id); \
 	if (db_indx == 0) \
-		return _r::not_found; \
+		return compsky::wangler::_r::not_found; \
 	DatabaseInfo& db_info = db_infos.at(db_indx);
 
 #define GET_NUMBER(type,name) \
@@ -152,7 +153,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define GET_NUMBER_NONZERO(type,name) \
 	GET_NUMBER(type,name) \
 	if (unlikely(name == 0)) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 
 #define GET_FLOAT(type,name) \
 	const type name = a2f<type>(&s); \
@@ -161,7 +162,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define SKIP_TO_BODY \
 	s = skip_to_body(s); \
 	if (unlikely(s == nullptr)) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 
 #define GET_FILE2_VAR_NAME(s) \
 	const char* const file2_var_name = s; \
@@ -171,7 +172,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	/* No need to check for empty string - the later function does that*/ \
 	GET_USER \
 	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv))) \
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 
 
 #define HIDDEN_TAGS_INNER(...) \
@@ -247,7 +248,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	bool has_permission = false; \
 	while(this->mysql_assign_next_row(&has_permission)); \
 	if (not has_permission) \
-		return _r::unauthorised;
+		return compsky::wangler::_r::unauthorised;
 
 static
 std::vector<DatabaseInfo> db_infos;
@@ -290,13 +291,11 @@ static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
 static bool regenerate_tag2parent_json = true;
 
+
+namespace compsky {
+namespace wangler {
+
 std::vector<std::string> banned_client_addrs;
-
-constexpr
-bool is_local_file_or_dir(const char* const url){
-	return (url[0] == '/');
-}
-
 
 namespace _r {
 	static const char* mimetype_json;
@@ -312,6 +311,8 @@ namespace _r {
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
 	std::mutex protocol_json_mutex;
+}
+}
 }
 
 namespace cached_stuff {
@@ -330,12 +331,12 @@ namespace cached_stuff {
 
 constexpr size_t handler_buf_sz = 20 * 1024 * 1024;
 
-class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
+class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  RTaggerHandler> {
  public:
 	std::string_view determine_response(const char* str){
 		--str;
 		#include "auto-generated/auto__server-determine-response.hpp"
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 	}
   private:
 	static std::mutex mysql_mutex;
@@ -456,7 +457,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->itr = this->buf;
 		const char tbl_alias = s[0];
 		if (sql_factory::parse_into(this->itr, s, connected_local_devices_str, user_id) != sql_factory::successness::ok)
-			return _r::post_not_necessarily_malicious_but_invalid;
+			return compsky::wangler::_r::post_not_necessarily_malicious_but_invalid;
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		this->reset_buf_index();
@@ -466,7 +467,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		if (id == nullptr)
 			// No results
-			return _r::EMPTY_JSON_LIST;
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		
 		this->itr[-1] = 0; // Overwrite trailing comma
 		
@@ -483,11 +484,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		constexpr static const size_t prefix_len = std::char_traits<char>::length(prefix);
 		
 		if (*md5hex == ' ')
-			return _r::invalid_file;
+			return compsky::wangler::_r::invalid_file;
 		
 		for (auto i = 0;  i < 32;  ++i){
 			if (not is_valid_hex_char(md5hex[i]))
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 			this->buf[CACHE_DIR_STRLEN + i] = md5hex[i];
 		}
 		memcpy(this->buf,  CACHE_DIR,  CACHE_DIR_STRLEN);
@@ -499,7 +500,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		FILE* const f = fopen(this->buf, "rb");
 		if (f == nullptr){
 			fprintf(stderr, "No such file thumbnail: %s\n", this->buf);
-			return _r::invalid_file;
+			return compsky::wangler::_r::invalid_file;
 		}
 		
 		struct stat st;
@@ -533,8 +534,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->begin_json_response();
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_and_escape // name
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_and_escape // name
 		);
 		*this->itr = 0;
 		
@@ -562,10 +563,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		if (not this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_and_escape // name
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_and_escape // name
 		))
-			return _r::unauthorised;
+			return compsky::wangler::_r::unauthorised;
 		this->asciify(',');
 		
 		// List of all parent directories
@@ -579,9 +580,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // id_str
-			_r::flag::quote_and_escape // name
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // id_str
+			compsky::wangler::_r::flag::quote_and_escape // name
 		);
 		this->asciify(',');
 		
@@ -595,9 +596,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // id_str
-			_r::flag::quote_and_escape // name
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // id_str
+			compsky::wangler::_r::flag::quote_and_escape // name
 		);
 		this->asciify(',');
 		
@@ -609,8 +610,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape // tag id
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape // tag id
 		);
 		
 		this->asciify(']');
@@ -648,7 +649,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const char* tag_name;
 		this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name);
 		if (unlikely(url == nullptr))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		std::vector<const char*> args;
 		args.reserve(1 + 1 + 3 * compsky::mysql::n_results<size_t>(this->res) + 1);
@@ -672,11 +673,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		args.back() = nullptr;
 		
 		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
-			return _r::server_error;
+			return compsky::wangler::_r::server_error;
 		
 		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__ytdl_eras(const char* s){
@@ -718,14 +719,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		std::array<uint8_t, 16> hash;
 		
-		const bool is_local = is_local_file_or_dir(dir_path);
+		const bool is_local = os::is_local_file_or_dir(dir_path);
 		
 		DIR* dir;
 		
 		if (is_local){
 			dir = opendir(dir_path);
 			if (unlikely(dir == nullptr))
-				return _r::server_error;
+				return compsky::wangler::_r::server_error;
 		}
 		
 		// Determine if files exist in the database - if so, supply all the usual data
@@ -752,7 +753,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				compsky::asciify::asciify(_itr, page_n, '\0');
 				const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
 				if (proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  handler_buf_sz - this->buf_indx())){
-					return _r::server_error;
+					return compsky::wangler::_r::server_error;
 				}
 				this->move_itr_to_trailing_null();
 			}
@@ -824,7 +825,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		return this->get_buf_as_string_view();
 #else
-		return _r::not_found;
+		return compsky::wangler::_r::not_found;
 #endif
 	}
 	
@@ -865,29 +866,29 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		if(not this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // md5_hash,
-			_r::flag::quote_no_escape, // dir_id,
-			_r::flag::quote_and_escape, // file_name,
-			_r::flag::quote_and_escape, // file_title,
-			_r::flag::quote_no_escape, // file_sz,
-			_r::flag::no_quote, // file_added_timestamp,
-			_r::flag::no_quote, // file_origin_timestamp,
-			_r::flag::no_quote, // duration,
-			_r::flag::no_quote, // w,
-			_r::flag::no_quote, // h,
-			_r::flag::no_quote, // views,
-			_r::flag::no_quote, // likes,
-			_r::flag::no_quote, // dislikes,
-			_r::flag::no_quote, // fps,
-			_r::flag::quote_no_escape, // external_db_and_post_ids,
-			_r::flag::quote_no_escape, // tag_ids,
-			_r::flag::no_quote, // mimetype,
-			_r::flag::quote_and_json_escape, // description
-			_r::flag::quote_no_escape // file2_values
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // md5_hash,
+			compsky::wangler::_r::flag::quote_no_escape, // dir_id,
+			compsky::wangler::_r::flag::quote_and_escape, // file_name,
+			compsky::wangler::_r::flag::quote_and_escape, // file_title,
+			compsky::wangler::_r::flag::quote_no_escape, // file_sz,
+			compsky::wangler::_r::flag::no_quote, // file_added_timestamp,
+			compsky::wangler::_r::flag::no_quote, // file_origin_timestamp,
+			compsky::wangler::_r::flag::no_quote, // duration,
+			compsky::wangler::_r::flag::no_quote, // w,
+			compsky::wangler::_r::flag::no_quote, // h,
+			compsky::wangler::_r::flag::no_quote, // views,
+			compsky::wangler::_r::flag::no_quote, // likes,
+			compsky::wangler::_r::flag::no_quote, // dislikes,
+			compsky::wangler::_r::flag::no_quote, // fps,
+			compsky::wangler::_r::flag::quote_no_escape, // external_db_and_post_ids,
+			compsky::wangler::_r::flag::quote_no_escape, // tag_ids,
+			compsky::wangler::_r::flag::no_quote, // mimetype,
+			compsky::wangler::_r::flag::quote_and_json_escape, // description
+			compsky::wangler::_r::flag::quote_no_escape // file2_values
 		))
 			// No results - probably because the user hasn't the permission to view the file
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		--this->itr; // Removes the previous close bracket. This is because the following SQL query has only ONE response - an array would be appropriate if there were more
 		this->asciify(',');
 		
@@ -909,11 +910,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // era ID
-			_r::flag::no_quote, // era_start,
-			_r::flag::no_quote, // era_end,
-			_r::flag::quote_no_escape // era_tag_ids
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // era ID
+			compsky::wangler::_r::flag::no_quote, // era_start,
+			compsky::wangler::_r::flag::no_quote, // era_end,
+			compsky::wangler::_r::flag::quote_no_escape // era_tag_ids
 		);
 		this->asciify(',');
 		
@@ -927,10 +928,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // backup_dir_id,
-			_r::flag::quote_and_escape, // backup_file_name,
-			_r::flag::no_quote // backup_mimetype
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // backup_dir_id,
+			compsky::wangler::_r::flag::quote_and_escape, // backup_file_name,
+			compsky::wangler::_r::flag::no_quote // backup_mimetype
 		);
 		this->asciify(',');
 		
@@ -951,10 +952,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::dict,
-			_r::flag::quote_no_escape, // dir_id,
-			_r::flag::quote_and_escape, // dir_name,
-			_r::flag::quote_no_escape // device_id
+			compsky::wangler::_r::flag::dict,
+			compsky::wangler::_r::flag::quote_no_escape, // dir_id,
+			compsky::wangler::_r::flag::quote_and_escape, // dir_name,
+			compsky::wangler::_r::flag::quote_no_escape // device_id
 		);
 		this->asciify(',');
 		
@@ -981,9 +982,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			  "AND " NOT_DISALLOWED_TAG("b.id", user_id)
 		);
 		this->init_json_rows(
-			this->itr, _r::flag::dict,
-			_r::flag::quote_no_escape, // tag_id,
-			_r::flag::quote_and_escape // tag_name
+			this->itr, compsky::wangler::_r::flag::dict,
+			compsky::wangler::_r::flag::quote_no_escape, // tag_id,
+			compsky::wangler::_r::flag::quote_and_escape // tag_name
 		);
 		this->asciify(',');
 		
@@ -1004,14 +1005,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"GROUP BY b.id"
 		);
 		this->init_json_rows(
-			this->itr, _r::flag::arr,
-			_r::flag::quote_no_escape, // box ID
-			_r::flag::no_quote,        // frame number
-			_r::flag::no_quote,        // x
-			_r::flag::no_quote,        // y
-			_r::flag::no_quote,        // w
-			_r::flag::no_quote,        // h
-			_r::flag::quote_no_escape  // tag IDs
+			this->itr, compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // box ID
+			compsky::wangler::_r::flag::no_quote,        // frame number
+			compsky::wangler::_r::flag::no_quote,        // x
+			compsky::wangler::_r::flag::no_quote,        // y
+			compsky::wangler::_r::flag::no_quote,        // w
+			compsky::wangler::_r::flag::no_quote,        // h
+			compsky::wangler::_r::flag::quote_no_escape  // tag IDs
 		);
 		this->asciify(']');
 		
@@ -1041,7 +1042,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"LIMIT 1000"
 		);
 		
-		this->write_json_list_response_into_buf(_r::flag::quote_no_escape);
+		this->write_json_list_response_into_buf(compsky::wangler::_r::flag::quote_no_escape);
 		
 #ifdef n_cached
 		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
@@ -1053,16 +1054,16 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	template<typename ArrOrDict>
 	void asciify_tags_arr_or_dict(char*& itr,  const ArrOrDict f_arr_or_dict){
 		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
-		compsky::asciify::asciify(itr, _r::opener_symbol(f_arr_or_dict));
+		compsky::asciify::asciify(itr, compsky::wangler::_r::opener_symbol(f_arr_or_dict));
 		this->asciify_json_response_rows(
 			itr,
 			f_arr_or_dict,
-			_r::flag::quote_no_escape, // id,
-			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_and_escape, // thumb,
-			_r::flag::no_quote // count
+			compsky::wangler::_r::flag::quote_no_escape, // id,
+			compsky::wangler::_r::flag::quote_and_escape, // name,
+			compsky::wangler::_r::flag::quote_and_escape, // thumb,
+			compsky::wangler::_r::flag::no_quote // count
 		);
-		compsky::asciify::asciify(itr, _r::closer_symbol(f_arr_or_dict));
+		compsky::asciify::asciify(itr, compsky::wangler::_r::closer_symbol(f_arr_or_dict));
 		std::swap(this->res, this->res2);
 	}
 	
@@ -1075,28 +1076,28 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		compsky::asciify::asciify(itr, "[\"0\",");
 		this->init_json_rows(
 			itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // md5_hex thumbnail
-			_r::flag::quote_no_escape, // file_id
-			_r::flag::quote_and_escape, // file name
-			_r::flag::quote_and_escape, // file title
-			_r::flag::quote_no_escape, // file size
-			_r::flag::no_quote, // file added timestamp
-			_r::flag::no_quote, // file origin timestamp
-			_r::flag::no_quote, // duration
-			_r::flag::no_quote, // w
-			_r::flag::no_quote, // h
-			_r::flag::no_quote, // views
-			_r::flag::no_quote, // likes
-			_r::flag::no_quote, // dislikes
-			_r::flag::no_quote, // fps
-			_r::flag::quote_no_escape, // external db and post IDs
-			_r::flag::quote_no_escape, // tag IDs CSV
-			_r::flag::no_quote, // era start
-			_r::flag::no_quote // era end
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // md5_hex thumbnail
+			compsky::wangler::_r::flag::quote_no_escape, // file_id
+			compsky::wangler::_r::flag::quote_and_escape, // file name
+			compsky::wangler::_r::flag::quote_and_escape, // file title
+			compsky::wangler::_r::flag::quote_no_escape, // file size
+			compsky::wangler::_r::flag::no_quote, // file added timestamp
+			compsky::wangler::_r::flag::no_quote, // file origin timestamp
+			compsky::wangler::_r::flag::no_quote, // duration
+			compsky::wangler::_r::flag::no_quote, // w
+			compsky::wangler::_r::flag::no_quote, // h
+			compsky::wangler::_r::flag::no_quote, // views
+			compsky::wangler::_r::flag::no_quote, // likes
+			compsky::wangler::_r::flag::no_quote, // dislikes
+			compsky::wangler::_r::flag::no_quote, // fps
+			compsky::wangler::_r::flag::quote_no_escape, // external db and post IDs
+			compsky::wangler::_r::flag::quote_no_escape, // tag IDs CSV
+			compsky::wangler::_r::flag::no_quote, // era start
+			compsky::wangler::_r::flag::no_quote // era end
 		);
 		compsky::asciify::asciify(itr, ',');
-		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
+		this->asciify_tags_arr_or_dict(itr, compsky::wangler::_r::flag::dict);
 		compsky::asciify::asciify(itr, "]");
 		*itr = 0;
 	}
@@ -1108,7 +1109,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	std::string_view post__record_files(const char* s){
 		uint64_t dir_id = a2n<uint64_t>(&s);
 		if ((*s != ' ') or (dir_id == 0))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		CHECK_FOR_EXPECT_100_CONTINUE_HEADER
 		
@@ -1127,7 +1128,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		while(true){
 			const char* const file_name_begin = s;
 			if(unlikely(not compsky::utils::is_str_dblqt_escaped(s, ',', '\0')))
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 			const size_t file_name_len = (uintptr_t)s - (uintptr_t)file_name_begin;
 			this->asciify('(', user_id, ',', dir_id, ',', _f::strlen, file_name_begin, file_name_len, ')', ',');
 			if (*s == 0)
@@ -1136,7 +1137,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		}
 		if (unlikely(this->last_char_in_buf() != ','))
 			// No file names were provided
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		--this->itr; // Remove trailing comma
 		this->asciify("ON DUPLICATE KEY UPDATE user=user");
 		*this->itr = 0;
@@ -1148,10 +1149,10 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
-			_r::flag::dict,
+			compsky::wangler::_r::flag::dict,
 			nullptr,
-			_r::flag::quote_no_escape, // name,
-			_r::flag::quote_no_escape // id
+			compsky::wangler::_r::flag::quote_no_escape, // name,
+			compsky::wangler::_r::flag::quote_no_escape // id
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1159,11 +1160,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	std::string_view post__create_file(const char* s){
 		uint64_t file_id = a2n<uint64_t>(&s);
 		if(*s != '/')
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		++s;
 		const uint64_t dir_id  = a2n<uint64_t>(&s);
 		if(*s != '/')
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		++s;
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
@@ -1171,7 +1172,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		GREYLIST_USERS_WITHOUT_PERMISSION("create_files")
 		
 		if (unlikely(not this->user_can_access_dir(user_id, dir_id)))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		SKIP_TO_BODY
 		
@@ -1180,13 +1181,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const size_t file_name_length = (uintptr_t)b4_file_contents - (uintptr_t)file_name;
 		
 		if(unlikely(b4_file_contents == nullptr))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		const char* const file_contents = b4_file_contents + 1;
 		
 		if (file_id != 0)
 			// Update an existing file
-			return _r::not_implemented_yet;
+			return compsky::wangler::_r::not_implemented_yet;
 		
 		this->mysql_query(
 			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
@@ -1195,7 +1196,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		const char* path = nullptr;
 		while(this->mysql_assign_next_row(&path));
-		const bool is_local_dir = is_local_file_or_dir(path);
+		const bool is_local_dir = os::is_local_file_or_dir(path);
 		
 		if (is_local_dir){
 			// If the directory is non-local, the body of the request is set as the description rather than saved to a file.
@@ -1204,7 +1205,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			
 			if(unlikely(path == nullptr))
 				// Invalid dir_id
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 			
 			FILE* f = fopen(path, "rb");
 			if(unlikely(f != nullptr)){
@@ -1219,7 +1220,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			f = fopen(path, "wb");
 			printf("Creating file: %s\n", path);
 			if(unlikely(f == nullptr))
-				return _r::server_error;
+				return compsky::wangler::_r::server_error;
 			fwrite(file_contents, 1, strlen(file_contents), f);
 			fclose(f);
 		}
@@ -1270,7 +1271,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"AND f.id=", file_id // File already permission checked
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	template<typename... Args>
@@ -1314,7 +1315,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		uint64_t new_dir_id;
 		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false);
 		if (unlikely(rc != FunctionSuccessness::ok))
-			return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
+			return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 		
 		this->mysql_query(
 			"SELECT f.id "
@@ -1337,7 +1338,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d2.full_path)+1)"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view external_user_posts(const char* s,  const unsigned required_db_info_bool_indx,  const char* const tbl_name,  const char* const col_name){
@@ -1346,7 +1347,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const uint64_t external_user_id = a2n<uint64_t>(s);
 		
 		if (not db_info.is_true(required_db_info_bool_indx))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		GET_USER_ID
 		
@@ -1362,7 +1363,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		if (post_ids == nullptr){
 			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
 			mysql_free_result(_post_ids_res);
-			return _r::EMPTY_JSON_LIST;
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		
 		this->reset_buf_index();
@@ -1382,7 +1383,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		if (file_ids == nullptr){
 			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
 			this->mysql_free_res();
-			return _r::EMPTY_JSON_LIST;
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		
 		this->begin_json_response();
@@ -1430,7 +1431,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		if (name == nullptr){
 			// No ushc user
 			this->mysql_free_res();
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		}
 		this->asciify(
 			'"', name, '"', ',',
@@ -1453,7 +1454,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const uint64_t cmnt_id = a2n<uint64_t>(s);
 		
 		if (not db_info.is_true(DatabaseInfo::has_cmnt_tbl))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		this->mysql_exec_db_by_id(
 			db_info,
@@ -1462,7 +1463,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"WHERE id=", cmnt_id
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view external_post_likes(const char* s){
@@ -1471,7 +1472,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const uint64_t post_id = a2n<uint64_t>(s);
 		
 		if (not db_info.is_true(DatabaseInfo::has_post2like_tbl))
-			return _r::EMPTY_JSON_LIST;
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		
 		this->mysql_query_db_by_id(
 			db_info,
@@ -1483,8 +1484,8 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"WHERE p2l.post=", post_id
 		);
 		this->write_json_list_response_into_buf(
-			_r::flag::quote_no_escape, // user_id
-			_r::flag::quote_no_escape // username
+			compsky::wangler::_r::flag::quote_no_escape, // user_id
+			compsky::wangler::_r::flag::quote_no_escape // username
 		);
 		
 		return this->get_buf_as_string_view();
@@ -1503,7 +1504,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		char* _itr_plus_offset = _buf_plus_offset;
 		// Reserve the first part of this->buf for writing SQL queries, and use the rest for writing the response.
 		
-		compsky::asciify::asciify(_itr_plus_offset, _r::json_init);
+		compsky::asciify::asciify(_itr_plus_offset, compsky::wangler::_r::json_init);
 		compsky::asciify::asciify(_itr_plus_offset, '[');
 		
 		{
@@ -1522,14 +1523,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			
 			if (not this->init_json_rows(
 				_itr_plus_offset,
-				_r::flag::arr,
-				_r::flag::quote_no_escape, // user,
-				_r::flag::no_quote, // timestamp,
-				_r::flag::no_quote, // n_likes,
-				_r::flag::quote_no_escape, // username,
-				_r::flag::quote_and_json_escape // text
+				compsky::wangler::_r::flag::arr,
+				compsky::wangler::_r::flag::quote_no_escape, // user,
+				compsky::wangler::_r::flag::no_quote, // timestamp,
+				compsky::wangler::_r::flag::no_quote, // n_likes,
+				compsky::wangler::_r::flag::quote_no_escape, // username,
+				compsky::wangler::_r::flag::quote_and_json_escape // text
 			))
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 			compsky::asciify::asciify(_itr_plus_offset, ',');
 		}
 		
@@ -1554,13 +1555,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			
 			this->init_json_rows(
 				_itr_plus_offset,
-				_r::flag::arr,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_no_escape, // parent,
-				_r::flag::quote_no_escape, // user,
-				_r::flag::no_quote, // timestamp,
-				_r::flag::quote_no_escape, // username,
-				_r::flag::quote_and_json_escape // content
+				compsky::wangler::_r::flag::arr,
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_no_escape, // parent,
+				compsky::wangler::_r::flag::quote_no_escape, // user,
+				compsky::wangler::_r::flag::no_quote, // timestamp,
+				compsky::wangler::_r::flag::quote_no_escape, // username,
+				compsky::wangler::_r::flag::quote_and_json_escape // content
 			);
 		} else {
 			compsky::asciify::asciify(_itr_plus_offset, "[]");
@@ -1657,7 +1658,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
-		this->asciify_tags_arr_or_dict(itr, _r::flag::arr);
+		this->asciify_tags_arr_or_dict(itr, compsky::wangler::_r::flag::arr);
 	}
 	
 	template<typename... Args>
@@ -1687,16 +1688,16 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->init_json_rows(
 			itr,
-			_r::flag::arr,
-			_r::flag::quote_no_escape, // id,
-			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_no_escape, // device
-			_r::flag::quote_no_escape, // tag IDs
-			_r::flag::no_quote // count
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // id,
+			compsky::wangler::_r::flag::quote_and_escape, // name,
+			compsky::wangler::_r::flag::quote_no_escape, // device
+			compsky::wangler::_r::flag::quote_no_escape, // tag IDs
+			compsky::wangler::_r::flag::no_quote // count
 		);
 		compsky::asciify::asciify(itr, ',');
 		
-		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
+		this->asciify_tags_arr_or_dict(itr, compsky::wangler::_r::flag::dict);
 		
 		compsky::asciify::asciify(itr, ']');
 	}
@@ -1871,15 +1872,15 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		);
 		
 		this->reset_buf_index();
-		this->asciify(_r::json_init);
+		this->asciify(compsky::wangler::_r::json_init);
 		this->init_json_rows(
 			this->itr,
-			_r::flag::dict,
-			_r::flag::quote_no_escape, // ID
-			_r::flag::quote_no_escape, // name (name of SQL table, so no special characters)
-			_r::flag::quote_no_escape, // min
-			_r::flag::quote_no_escape, // max
-			_r::flag::no_quote         // conversion ID
+			compsky::wangler::_r::flag::dict,
+			compsky::wangler::_r::flag::quote_no_escape, // ID
+			compsky::wangler::_r::flag::quote_no_escape, // name (name of SQL table, so no special characters)
+			compsky::wangler::_r::flag::quote_no_escape, // min
+			compsky::wangler::_r::flag::quote_no_escape, // max
+			compsky::wangler::_r::flag::no_quote         // conversion ID
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1887,20 +1888,20 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	std::string_view get_mimetype_json(const char* s){
 		this->mysql_query_buf("SELECT id, name FROM mimetype");
 		
-		std::unique_lock lock(_r::mimetype_json_mutex);
+		std::unique_lock lock(compsky::wangler::_r::mimetype_json_mutex);
 		if (unlikely(regenerate_mimetype_json)){
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
 			regenerate_mimetype_json = false;
 			this->init_json(
 				nullptr,
-				_r::flag::dict,
-				&_r::mimetype_json,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_no_escape // name
+				compsky::wangler::_r::flag::dict,
+				&compsky::wangler::_r::mimetype_json,
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_no_escape // name
 			);
 		}
-		return _r::mimetype_json;
+		return compsky::wangler::_r::mimetype_json;
 	}
 	
 	template<typename... Args>
@@ -1928,15 +1929,15 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
 			std::cerr << e.what() << std::endl;
-			return _r::EMPTY_JSON_LIST;
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
-			_r::flag::dict,
+			compsky::wangler::_r::flag::dict,
 			nullptr,
-			_r::flag::quote_no_escape, // id
-			_r::flag::quote_and_escape // name
+			compsky::wangler::_r::flag::quote_no_escape, // id
+			compsky::wangler::_r::flag::quote_and_escape // name
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -1962,18 +1963,18 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->itr = this->buf;
 			this->init_json(
 				&this->itr,
-				_r::flag::dict,
+				compsky::wangler::_r::flag::dict,
 				nullptr,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_and_escape, // name,
-				_r::flag::quote_no_escape, // protocol,
-				_r::flag::quote_and_escape, // embed_pre,
-				_r::flag::quote_and_escape // embed_post
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_and_escape, // name,
+				compsky::wangler::_r::flag::quote_no_escape, // protocol,
+				compsky::wangler::_r::flag::quote_and_escape, // embed_pre,
+				compsky::wangler::_r::flag::quote_and_escape // embed_post
 			);
 			return this->get_buf_as_string_view();
 		}
 		
-		std::unique_lock lock(_r::devices_json_mutex);
+		std::unique_lock lock(compsky::wangler::_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
 			this->mysql_query_buf(
@@ -1983,16 +1984,16 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			);
 			this->init_json(
 				nullptr,
-				_r::flag::dict,
-				&_r::devices_json,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_and_escape, // name,
-				_r::flag::quote_no_escape, // protocol,
-				_r::flag::quote_and_escape, // embed_pre,
-				_r::flag::quote_and_escape // embed_post
+				compsky::wangler::_r::flag::dict,
+				&compsky::wangler::_r::devices_json,
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_and_escape, // name,
+				compsky::wangler::_r::flag::quote_no_escape, // protocol,
+				compsky::wangler::_r::flag::quote_and_escape, // embed_pre,
+				compsky::wangler::_r::flag::quote_and_escape // embed_post
 			);
 		}
-		return _r::devices_json;
+		return compsky::wangler::_r::devices_json;
 	}
 	
 	std::string_view get_exec_json(const char* s){
@@ -2006,12 +2007,12 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->itr = this->buf;
 		this->init_json(
 			&this->itr,
-			_r::flag::arr,
+			compsky::wangler::_r::flag::arr,
 			nullptr,
-			_r::flag::quote_no_escape, // id,
-			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_and_escape, // description,
-			_r::flag::quote_and_json_escape // content
+			compsky::wangler::_r::flag::quote_no_escape, // id,
+			compsky::wangler::_r::flag::quote_and_escape, // name,
+			compsky::wangler::_r::flag::quote_and_escape, // description,
+			compsky::wangler::_r::flag::quote_and_json_escape // content
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -2032,7 +2033,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		if(content == nullptr)
 			// User tried to execute a task they were not authorised to see
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		const char* content_end = content;
 		while(true){
@@ -2046,7 +2047,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->mysql_free_res();
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view edit_task(const char* s){
@@ -2062,24 +2063,24 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"WHERE id=", task_id
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view get_protocol_json(const char* s){
-		std::unique_lock lock(_r::protocol_json_mutex);
+		std::unique_lock lock(compsky::wangler::_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
 			this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
 			this->init_json(
 				nullptr,
-				_r::flag::dict,
-				&_r::protocol_json,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_and_escape, // name,
-				_r::flag::no_quote // dummy  // To deliver it as id:[name] rather than id:name // TODO: Tidy
+				compsky::wangler::_r::flag::dict,
+				&compsky::wangler::_r::protocol_json,
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_and_escape, // name,
+				compsky::wangler::_r::flag::no_quote // dummy  // To deliver it as id:[name] rather than id:name // TODO: Tidy
 			);
 		}
-		return _r::protocol_json;
+		return compsky::wangler::_r::protocol_json;
 	}
 	
 	std::string_view get_user_json(const char* s){
@@ -2123,18 +2124,18 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->init_json_rows(
 			this->itr,
-			_r::flag::dict,
-			_r::flag::quote_no_escape, // id,
-			_r::flag::quote_and_escape, // name,
-			_r::flag::quote_no_escape, // boolean permission values as integer CSV
-			_r::flag::quote_no_escape // user2blacklist_tag id
+			compsky::wangler::_r::flag::dict,
+			compsky::wangler::_r::flag::quote_no_escape, // id,
+			compsky::wangler::_r::flag::quote_and_escape, // name,
+			compsky::wangler::_r::flag::quote_no_escape, // boolean permission values as integer CSV
+			compsky::wangler::_r::flag::quote_no_escape // user2blacklist_tag id
 		);
 		this->asciify(',');
 		
 		this->mysql_query2(
 			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
 		);
-		this->asciify_tags_arr_or_dict(itr, _r::flag::dict);
+		this->asciify_tags_arr_or_dict(itr, compsky::wangler::_r::flag::dict);
 		
 		this->asciify(']');
 		*this->itr = 0;
@@ -2158,7 +2159,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"ON DUPLICATE KEY UPDATE id=id"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__update_user_permission(const char* s){
@@ -2177,7 +2178,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"WHERE id=", editing_user_of_id
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__rm_user_blacklisted_tag(const char* s){
@@ -2196,7 +2197,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			  "AND tag=",  tag_id
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__add_user_blacklisted_tag(const char* s){
@@ -2219,7 +2220,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"ON DUPLICATE KEY UPDATE user=user"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view get_tag2parent_json(const char* s){
@@ -2234,15 +2235,15 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			this->itr = this->buf;
 			this->init_json(
 				&this->itr,
-				_r::flag::arr,
+				compsky::wangler::_r::flag::arr,
 				nullptr,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_no_escape // id2
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_no_escape // id2
 			);
 			return this->get_buf_as_string_view();
 		}
 		
-		std::unique_lock lock(_r::tag2parent_json_mutex);
+		std::unique_lock lock(compsky::wangler::_r::tag2parent_json_mutex);
 		if (unlikely(regenerate_tag2parent_json)){
 			regenerate_tag2parent_json = false;
 			this->mysql_query_buf(
@@ -2253,13 +2254,13 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			);
 			this->init_json(
 				nullptr,
-				_r::flag::arr,
-				&_r::tag2parent_json,
-				_r::flag::quote_no_escape, // id,
-				_r::flag::quote_no_escape // id2
+				compsky::wangler::_r::flag::arr,
+				&compsky::wangler::_r::tag2parent_json,
+				compsky::wangler::_r::flag::quote_no_escape, // id,
+				compsky::wangler::_r::flag::quote_no_escape // id2
 			);
 		}
-		return _r::tag2parent_json;
+		return compsky::wangler::_r::tag2parent_json;
 	}
 	
 	std::string_view stream_file(const char* s){
@@ -2276,18 +2277,18 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			++s; // Skip trailing slash
 			dir_id = a2n<uint64_t>(s);
 			if (unlikely(dir_id == 0))
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 		}
 		
 		size_t from;
 		size_t to;
 		const GetRangeHeaderResult rc = get_range(s, from, to);
 		if (unlikely(rc == GetRangeHeaderResult::invalid)){
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		}
 		
 		if (unlikely( (to != 0) and (to <= from) ))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("stream_files")
@@ -2307,27 +2308,27 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		while(this->mysql_assign_next_row__no_free(&mimetype, &file_path));
 		if (mimetype == nullptr){
 			this->mysql_free_res();
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		}
 		
 		FILE* const f = fopen(file_path, "rb");
 		if (f == nullptr){
 			fprintf(stderr, "Cannot open file: %s\n", file_path);
 			this->mysql_free_res();
-			return _r::invalid_file;
+			return compsky::wangler::_r::invalid_file;
 		}
 		
 		static struct stat st;
 		if (unlikely(stat(file_path, &st))){
 			fprintf(stderr, "Cannot stat file: %s\n", file_path);
 			this->mysql_free_res();
-			return _r::server_error;
+			return compsky::wangler::_r::server_error;
 		}
 		const size_t f_sz = st.st_size;
 		
 		if (unlikely(fseek(f, from, SEEK_SET))){
 			this->mysql_free_res();
-			return _r::server_error;
+			return compsky::wangler::_r::server_error;
 		}
 		
 		const size_t bytes_to_read = (rc == GetRangeHeaderResult::none) ? block_sz : ((to) ? (to - from) : stream_block_sz);
@@ -2373,7 +2374,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
-		if (in_str(file_name, '/') and (file_id==nullptr) and not is_ytdl){
+		if (in_str(file_name, os::unix_path_sep) and (file_id==nullptr) and not is_ytdl){
 			fprintf(stderr, "dl_or_cp_file rejected due to slash in file name: %s\n", file_name);
 			rc = FunctionSuccessness::server_error;
 			goto dl_or_cp_file__return;
@@ -2392,14 +2393,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			goto dl_or_cp_file__return;
 		}
 		
-		if (not endswith(dir_name, '/')){
+		if (not endswith(dir_name, os::unix_path_sep)){
 			// TODO: Allow for this
 			rc = FunctionSuccessness::server_error;
 			fprintf(stderr, "dl_or_cp_file rejected due to dir name not ending in slash: %s\n", dir_name);
 			goto dl_or_cp_file__return;
 		}
 		
-		if (not is_local_file_or_dir(dir_name)){
+		if (not os::is_local_file_or_dir(dir_name)){
 			rc = FunctionSuccessness::malicious_request;
 			goto dl_or_cp_file__return;
 		}
@@ -2415,7 +2416,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
 		// TODO: Check device is mounted
 		
-		if (is_local_file_or_dir(url)){
+		if (os::is_local_file_or_dir(url)){
 			if (is_ytdl)
 				rc = FunctionSuccessness::malicious_request;
 			else
@@ -2479,7 +2480,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 	}
 	
 	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
-		if (is_local_file_or_dir(url) and force_remote)
+		if (os::is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
 		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
@@ -2538,14 +2539,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		DIR* const dir = opendir(this->buf);
 		if (unlikely(dir == nullptr))
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		closedir(dir);
 		
 		if (tag_ids != nullptr){
 			// Tag the root directory the client chose
 			// TODO: Guess the mimetype
-			if (this->itr[-2] != '/'){
-				this->itr[-1] = '/';
+			if (this->itr[-2] != os::unix_path_sep){
+				this->itr[-1] = os::unix_path_sep;
 				this->itr[0] = 0;
 				++this->itr;
 			}
@@ -2555,16 +2556,16 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 		// NOTE: if max_depth is 0, this wraps around to MAX_UNSIGNED. This is deliberate - it means there is (effectively) no limit.
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	void recursively_record_files_infilesystem(const UserIDIntType user_id,  const unsigned max_depth){
 		DIR* const dir = opendir(this->buf);
 		if (dir == nullptr)
 			return;
-		if (this->itr[-2]  !=  '/'){
+		if (this->itr[-2]  !=  os::unix_path_sep){
 			// The character before the terminating null byte
-			this->itr[-1] = '/';
+			this->itr[-1] = os::unix_path_sep;
 			this->itr[0] = '\0';
 			++this->itr;
 		}
@@ -2871,27 +2872,27 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 				++s;
 			const size_t url_len = (uintptr_t)s - (uintptr_t)url;
 			if (url_len == 0)
-				return _r::not_found;
+				return compsky::wangler::_r::not_found;
 			switch(tbl){
 				case 'f':
 				case 'd':
 					switch(this->add_file_or_dir_to_db(tbl, user_headers, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl)){
 						case FunctionSuccessness::server_error:
-							return _r::server_error;
+							return compsky::wangler::_r::server_error;
 						case FunctionSuccessness::malicious_request:
-							return _r::not_found;
+							return compsky::wangler::_r::not_found;
 					}
 					break;
 				case 'D':
 					if (unlikely(this->add_D_to_db(user_id, tag_ids, tag_ids_len, url, url_len)))
-						return _r::not_found;
+						return compsky::wangler::_r::not_found;
 					break;
 				case 't':
 					this->add_t_to_db(user_id, tag_ids, tag_ids_len, url, url_len);
 					break;
 			}
 			if (*s == 0)
-				return _r::post_ok;
+				return compsky::wangler::_r::post_ok;
 		} while(true);
 	}
 	
@@ -2900,11 +2901,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		const float era_start = a2f<float>(&s);
 		if(*s != '-')
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		++s; // Skip dash
 		const float era_end   = a2f<float>(&s);
 		if(*s != '/')
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		++s; // Skip slash
 		
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
@@ -2935,7 +2936,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			  "AND e.end=",   era_end, 5
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	template<typename... Args>
@@ -2965,7 +2966,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const size_t url_length = count_until(url, ' ');
 		
 		if(*s == 0)
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		GET_USER_ID
 		BLACKLIST_GUEST
@@ -2976,7 +2977,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"WHERE id=", tag_id
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view archive_reddit_post(const char* s){
@@ -2986,7 +2987,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		while((*s != 0) and (*s != ' '))
 			++s;
 		if(*s == 0)
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		const size_t permalink_length = (uintptr_t)s - (uintptr_t)permalink;
 		
 		this->asciify(_f::strlen, permalink, permalink_length, '\0');
@@ -2994,9 +2995,9 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		const char* args[] = {"record-reddit-post", this->buf, nullptr};
 		
 		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  nullptr,  0)))
-			return _r::server_error;
+			return compsky::wangler::_r::server_error;
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__set_file_title(const char* s){
@@ -3013,7 +3014,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	template<typename... Args>
@@ -3041,7 +3042,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->merge_files(user_id, orig_f_id, _f::strlen, dupl_f_ids, dupl_f_ids_len);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__backup_file(const char* s){
@@ -3078,14 +3079,14 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
 			this->res = prev_res;
 			if (rc != FunctionSuccessness::ok)
-				return (rc == FunctionSuccessness::malicious_request) ? _r::not_found : _r::server_error;
+				return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 			
 			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", this->file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
 			// WARNING: The above will crash if there is no such extension in ext2mimetype
 			// This is deliberate, to tell me to add it to the DB.
 		}
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	void insert_file_backup(
@@ -3215,7 +3216,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			_f::strlen, child_ids,  child_ids_len
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__rm_parents_from_tags(const char* s){
@@ -3227,7 +3228,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->tag_antiparentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__rm_children_from_tags(const char* s){
@@ -3239,7 +3240,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->tag_antiparentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	template<typename... Args>
@@ -3302,11 +3303,11 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		bool unauthorised = false;
 		while(this->mysql_assign_next_row(&unauthorised));
 		if(unauthorised)
-			return _r::not_found;
+			return compsky::wangler::_r::not_found;
 		
 		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__add_tags_to_eras(const char* s){
@@ -3318,7 +3319,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		this->add_tag_to_era(user_id, tag_ids, tag_ids_len, "AND e.id IN(", _f::strlen, ids, ids_len, ")");
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__add_tags_to_dirs(const char* s){
@@ -3334,7 +3335,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"AND d.id IN(", _f::strlen, dir_ids, dir_ids_len, ")"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__add_tag_to_file(const char* s){
@@ -3350,7 +3351,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"AND f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__add_var_to_file(const char* s){
@@ -3373,7 +3374,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			"ON DUPLICATE KEY UPDATE x=x"
 		);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	std::string_view post__edit_tag_cmnt(const char* s){
@@ -3381,7 +3382,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 		
 		printf("Edit tag cmnt: %lu: %s\n", tag_id, s);
 		
-		return _r::post_ok;
+		return compsky::wangler::_r::post_ok;
 	}
 	
 	void md5_hash(uint8_t* const hash,  const char* const string,  const size_t string_len){
@@ -3481,7 +3482,7 @@ class RTaggerHandler : public CompskyHandler<handler_buf_sz,  RTaggerHandler> {
 			}
 		}
 		
-		return _r::post_ok; // NOTE: this is likely to have timed out already on the client's side
+		return compsky::wangler::_r::post_ok; // NOTE: this is likely to have timed out already on the client's side
 	}
 };
 std::mutex RTaggerHandler::mysql_mutex;
@@ -3588,7 +3589,7 @@ int main(int argc,  const char* const* argv){
 		// If there is at least one element in this dictionary
 		db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
-	_r::external_db_json = db_name2id_json.c_str();
+	compsky::wangler::_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
 	
 	initialise_tagem_db(db_infos.at(0).mysql_obj);
@@ -3675,8 +3676,8 @@ int main(int argc,  const char* const* argv){
 	compsky::mysql::assign_next_row(res4, &row, &TAG__PART_OF_FILE__ID);
 	// NOTE: The above result is not freed.
 	
-	wangle::ServerBootstrap<CompskyPipeline> server;
-	server.childPipeline(std::make_shared<CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());
+	wangle::ServerBootstrap<compsky::wangler::CompskyPipeline> server;
+	server.childPipeline(std::make_shared<compsky::wangler::CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());
 	server.bind(port_n);
 	server.waitForStop();
 	
