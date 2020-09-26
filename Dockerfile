@@ -23,7 +23,11 @@ COPY include /tagem/include
 RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& cd ffmpegthumbnailer \
 	&& git apply /ffmpegthumbnailer-static.patch \
-	&& mkdir build \
+	&& ( \
+		mv CMakeLists.txt CMakeLists.old.txt \
+		&& echo 'include_directories("/usr/local/include")' > CMakeLists.txt \
+		&& cat CMakeLists.old.txt >> CMakeLists.txt \
+	) && mkdir build \
 	&& cd build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=Release \
@@ -41,14 +45,14 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
 		-DMYSQL_IS_UNDER_MARIADB_DIR=1 \
 		-DMYSQL_UNDER_DIR_OVERRIDE=1 \
-		-DCMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES=/usr/local/include \
 		.. \
 	&& make install \
 	\
 	&& chmod +x /tagem/wangle-server/scripts/* \
-	&& rm -rf /tagem/build \
-	;  mkdir /tagem/build \
-	&& cd /tagem/build \
+	&& ( \
+		rm -rf /tagem/build \
+		;  mkdir /tagem/build \
+	) && cd /tagem/build \
 	&& LD_LIBRARY_PATH="/usr/local/lib64:$LD_LIBRARY_PATH" cmake \
 		-DCMAKE_CXX_FLAGS_RELEASE='-fpermissive' \
 		\
