@@ -796,6 +796,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						order_by = "f2_join.";
 						order_by += attribute_field_name(attribute_name);
 						break;
+					case attribute_kind::unique:
 					case attribute_kind::many_to_one:
 						order_by = std::string(attribute_name);
 						break;
