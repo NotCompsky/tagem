@@ -2,12 +2,30 @@
 
 
 outpath="$1"
-cmds=(ffmpeg)
-while read -r era_start era_end url; do
+
+
+cmd=(ffmpeg)
+declare -i i=2
+declare -i n=${#@} # Number of arguments
+
+while [ $i -lt $n ]; do
+	era_start="${!i}" # Get ith positional argument
+	((++i))
+	era_end="${!i}"
+	((++i))
+	url="${!i}"
+	((++i))
+	
+	echo "Extracting era from: ${url}" >&2
+	
 	urls=($(youtube-dl -g "$url"))
 	cmd+=(-ss "$era_start" -to "$era_end" -i "${urls[0]}")
 	if [ ${#urls[@]} -eq 2 ]; then
 		cmd+=(-ss "$era_start" -to "$era_end" -i "${urls[1]}")
 	fi
-done
-"${cmds[@]}" -vcodec copy -acodec copy "$outpath"
+done <<< "$@"
+
+
+echo "${cmd[@]}" >&2
+
+"${cmd[@]}" -vcodec copy -acodec copy "$outpath"
