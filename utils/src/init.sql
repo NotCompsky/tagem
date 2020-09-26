@@ -147,6 +147,8 @@ CREATE TABLE IF NOT EXISTS file (
 	title VARCHAR(100),
 	description VARCHAR(1000),
 	status INT UNSIGNED NOT NULL DEFAULT 0, -- 0 is available, 1 is deleted, 2 is private
+	latitude  DOUBLE NOT NULL DEFAULT 0,
+	longitude DOUBLE NOT NULL DEFAULT 0, -- lat and long are a pair; lat-long of 0,0 falls in the middle of the Atlantic off western Africa
     UNIQUE KEY (dir, name),
 	FOREIGN KEY (dir) REFERENCES file (id),
 	FOREIGN KEY (mimetype) REFERENCES mimetype (id),
