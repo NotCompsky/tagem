@@ -1739,7 +1739,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_query(
 			"SELECT d.id, LENGTH(d.name)"
 			"FROM dir d "
-			"WHERE LEFT(\"", _f::esc, '"', args..., "\",LENGTH(name))=name "
+			"WHERE LEFT(CAST(\"", _f::esc, '"', args..., "\" AS BINARY),LENGTH(name))=name "
 			  "AND d.parent", (child_dir_id==0)?" IS NULL AND 0=":"=", child_dir_id, " "
 			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY LENGTH(d.name) DESC "
