@@ -24,7 +24,7 @@ else()
 endif()
 
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
-option(ENABLE_PYTHON "Allows the use of embedded Python, instead of relying on forking the process to call external Python programs" ON)
+option(EMBED_PYTHON "Allows the use of embedded Python, instead of relying on forking the process to call external Python programs" OFF)
 option(MANGLE_JS_NAMES "Minimise the names of JavaScript functions and variables" OFF)
 option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
@@ -103,7 +103,7 @@ target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" 
 )
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
-if(ENABLE_PYTHON)
+if(EMBED_PYTHON)
 	target_include_directories(server PRIVATE "/usr/include/python3.8") # TODO: Generalise
 	target_compile_definitions(server PRIVATE "PYTHON=1")
 	if(ENABLE_STATIC)
