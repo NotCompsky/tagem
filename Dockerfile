@@ -20,14 +20,19 @@ COPY utils /tagem/utils
 COPY include /tagem/include
 # WARNING: -fpermissive is used because Facebook's wangle library currently has a line in its logging library that tries to convert void** to void*
 
-RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
+RUN apk add --no-cache python3-dev \
+	\
+	&& git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& cd ffmpegthumbnailer \
 	&& git apply /ffmpegthumbnailer-static.patch \
-	&& ( \
+	&& addlocalinclude() { \
 		mv CMakeLists.txt CMakeLists.old.txt \
 		&& echo 'include_directories("/usr/local/include")' > CMakeLists.txt \
 		&& cat CMakeLists.old.txt >> CMakeLists.txt \
-	) && mkdir build \
+		; \
+	} \
+	&& addlocalinclude \
+	&& mkdir build \
 	&& cd build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=Release \
@@ -38,8 +43,10 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& make install \
 	\
 	&& git clone --depth 1 https://github.com/NotCompsky/libcompsky \
-	&& mkdir libcompsky/build \
-	&& cd libcompsky/build \
+	&& cd libcompsky \
+	&& addlocalinclude \
+	&& mkdir build \
+	&& cd build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
@@ -48,6 +55,7 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 		.. \
 	&& make install \
 	\
+	&& mv /usr/include/python3.8/* /usr/include/ \
 	&& chmod +x /tagem/wangle-server/scripts/* \
 	&& ( \
 		rm -rf /tagem/build \
@@ -66,8 +74,8 @@ RUN git clone --depth 1 https://github.com/dirkvdb/ffmpegthumbnailer \
 	&& ( \
 		make server \
 		|| (\
-			/usr/local/bin/x86_64-linux-musl-g++ -flto -static -fpermissive  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/FrameDecoder.cpp.o CMakeFiles/server.dir/src/qry.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib/libwangle.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libfizz.a /usr/local/lib/libfolly.a /usr/local/lib64/libfmt.a /usr/local/lib64/liblz4.a /usr/local/lib64/libzstd.a /usr/local/lib64/libsnappy.a /usr/lib/libdwarf.a /usr/local/lib/libunwind.a /usr/local/lib/libsodium.a  /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libglog.a /usr/local/lib/libgflags.a /usr/local/lib/libevent.a /usr/local/lib64/libdouble-conversion.a -ldl /usr/lib/librt.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a           /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
-			&& strip --strip-all rscrape-cmnts \
+			/usr/local/bin/x86_64-linux-musl-g++ -flto -static -fpermissive  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/qry.cpp.o CMakeFiles/server.dir/src/curl_utils.cpp.o CMakeFiles/server.dir/src/db_info.cpp.o CMakeFiles/server.dir/src/initialise_tagem_db.cpp.o CMakeFiles/server.dir/src/python_stuff.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib/libwangle.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libfizz.a /usr/local/lib/libfolly.a /usr/local/lib64/libfmt.a /usr/local/lib64/liblz4.a /usr/local/lib64/libzstd.a /usr/local/lib64/libsnappy.a /usr/lib/libdwarf.a /usr/local/lib/libunwind.a /usr/local/lib/libsodium.a  /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libglog.a /usr/local/lib/libgflags.a /usr/local/lib/libevent.a /usr/local/lib64/libdouble-conversion.a -ldl /usr/lib/librt.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a     /usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.a          /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
+			&& strip --strip-all server \
 		) \
 	)
 
