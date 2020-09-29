@@ -15,6 +15,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "read_request.hpp"
 #include "str_utils.hpp"
 #include "os.hpp"
+#include "errors.hpp"
 #include <cstdio> // for fopen
 #include <cstring> // for memccpy
 #include <curl/curl.h>
@@ -34,7 +35,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	FILE* const f = fopen(dst_pth, "w");
 	if (f == nullptr){
 		fclose(f);
-		fprintf(stderr,  "Cannot open file for writing: %s\n",  dst_pth);
+		log("Cannot open file for writing: ",  dst_pth);
 		return FunctionSuccessness::server_error;
 	}
 	
@@ -67,7 +68,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	if (curl_rc != CURLE_OK){
 		remove(dst_pth);
 		rc = FunctionSuccessness::server_error;
-		fprintf(stderr, "dl_file__curl error\n");
+		log("dl_file__curl error");
 	} else {
 		char* _mimetype = nullptr;
 		const auto curl_rc2 = curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, &_mimetype);
