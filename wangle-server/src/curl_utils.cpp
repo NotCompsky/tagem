@@ -32,7 +32,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 			return FunctionSuccessness::ok;
 	}
 	
-	FILE* const f = fopen(dst_pth, "w");
+	FILE* const f = fopen(dst_pth, "wb");
 	if (f == nullptr){
 		fclose(f);
 		log("Cannot open file for writing: ",  dst_pth);
