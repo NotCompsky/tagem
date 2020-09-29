@@ -25,10 +25,12 @@ namespace curl {
 
 
 FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
+	// NOTE: Overwrites dst_pth if it is empty.
+	
 	FunctionSuccessness rc;
 	
 	if (not overwrite_existing){
-		if (os::file_exists(dst_pth))
+		if (os::get_file_sz(dst_pth) != 0)
 			return FunctionSuccessness::ok;
 	}
 	
