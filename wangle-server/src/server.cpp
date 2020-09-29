@@ -49,7 +49,6 @@ The absense of this copyright notices on some other files in this project does n
 #include <wangle/bootstrap/ServerBootstrap.h>
 
 #include <mutex>
-#include <cstring> // for malloc
 
 #include <filesystem> // for std::filesystem::copy_file
 
