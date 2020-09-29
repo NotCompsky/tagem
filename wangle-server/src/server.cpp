@@ -1200,9 +1200,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				// Invalid dir_id
 				return compsky::wangler::_r::not_found;
 			
-			FILE* f = fopen(path, "rb");
-			if(unlikely(f != nullptr)){
-				fclose(f);
+			if (unlikely(os::file_exists(path))){
 				return 
 					HEADER__RETURN_CODE__SERVER_ERR
 					"\n"
@@ -1210,12 +1208,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				;
 			}
 			
-			f = fopen(path, "wb");
 			printf("Creating file: %s\n", path);
-			if(unlikely(f == nullptr))
+			if (unlikely(os::write_to_file(path, file_contents, strlen(file_contents))))
 				return compsky::wangler::_r::server_error;
-			fwrite(file_contents, 1, strlen(file_contents), f);
-			fclose(f);
 		}
 		
 		this->mysql_query(
@@ -2304,29 +2299,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			return compsky::wangler::_r::not_found;
 		}
 		
-		FILE* const f = fopen(file_path, "rb");
-		if (f == nullptr){
-			fprintf(stderr, "Cannot open file: %s\n", file_path);
-			this->mysql_free_res();
-			return compsky::wangler::_r::invalid_file;
-		}
-		
-		static struct stat st;
-		if (unlikely(stat(file_path, &st))){
-			fprintf(stderr, "Cannot stat file: %s\n", file_path);
-			this->mysql_free_res();
-			return compsky::wangler::_r::server_error;
-		}
-		const size_t f_sz = st.st_size;
-		
-		if (unlikely(fseek(f, from, SEEK_SET))){
+		const size_t f_sz = os::get_file_sz(file_path);
+		if (unlikely(f_sz == 0)){
 			this->mysql_free_res();
 			return compsky::wangler::_r::server_error;
 		}
 		
 		const size_t bytes_to_read = (rc == GetRangeHeaderResult::none) ? block_sz : ((to) ? (to - from) : stream_block_sz);
-		const size_t bytes_read = fread(this->buf + room_for_headers,  1,  bytes_to_read,  f);
-		fclose(f);
+		const size_t bytes_read = os::read_from_file_at_offset(file_path,  this->buf + room_for_headers,  from,  bytes_to_read);
 		
 		const size_t end_byte = from + bytes_read;
 		
@@ -3640,8 +3620,7 @@ int main(int argc,  const char* const* argv){
 	);
 	connected_local_devices.reserve(compsky::mysql::n_results<size_t>(res4));
 	while(compsky::mysql::assign_next_row(res4, &row, &id, &name)){
-		FILE* const f = fopen(name, "rb");
-		if (f == nullptr)
+		if (not os::file_exists(name))
 			continue;
 		connected_local_devices.push_back(id);
 		connected_local_devices_str += std::to_string(id) + ",";

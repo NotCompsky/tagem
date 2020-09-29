@@ -8,6 +8,7 @@
 # include <sys/stat.h>
 # include <unistd.h>
 # include <dirent.h>
+# include <fcntl.h> // for O_*
 #endif
 
 
@@ -93,6 +94,7 @@ size_t get_file_sz(const char* const fp){
   #endif
 }
 
+inline
 bool file_exists(const char* const fp){
   #ifdef _WIN32
 	HANDLE const f = CreateFileA(fp,  GENERIC_READ,  0,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL,  nullptr);
@@ -155,6 +157,40 @@ void close_dir(dir_handler_typ dir){
 #ifdef _WIN32
 #else
 	closedir(dir);
+#endif
+}
+
+inline
+bool write_to_file(const char* const fp,  const char* const data,  const size_t n_bytes){
+#ifdef _WIN32
+#else
+	const int fd = open(fp,  O_WRONLY | O_CREAT,  S_IRUSR | S_IWUSR | S_IXUSR);
+	const bool success = (likely(write(fd, data, n_bytes) == n_bytes));
+	close(fd);
+	return not success;
+#endif
+}
+
+inline
+size_t read_from_file(const char* const fp,  char* buf,  const size_t n_bytes){
+#ifdef _WIN32
+#else
+	const int fd = open(fp,  O_RDONLY);
+	const size_t sz = read(fd, buf, n_bytes);
+	close(fd);
+	return sz;
+#endif
+}
+
+inline
+size_t read_from_file_at_offset(const char* const fp,  char* buf,  const size_t offset,  const size_t n_bytes){
+#ifdef _WIN32
+#else
+	const int fd = open(fp,  O_RDONLY);
+	lseek(fd, offset, SEEK_SET); // TODO: Test for error
+	const size_t sz = read(fd, buf, n_bytes);
+	close(fd);
+	return sz;
 #endif
 }
 
