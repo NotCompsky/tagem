@@ -773,11 +773,12 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			
 			this->md5_hash_local_file(hash.data(), dir_path, ename);
 			
-			compsky::asciify::asciify(this->file_path, dir_path, ename, '\0');
+			char file_path[4096];
+			compsky::asciify::asciify(file_path, dir_path, ename, '\0');
 			
 			size_t file_size;
 			time_t file_time;
-			os::get_file_size_and_ctime(this->file_path, file_size, file_time);
+			os::get_file_size_and_ctime(file_path, file_size, file_time);
 			this->asciify(
 				// Should be equivalent to asciify_file_info
 				'[',
@@ -2337,9 +2338,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	char file_path[4096];
-	
-	FunctionSuccessness dl_or_cp_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
+	FunctionSuccessness dl_or_cp_file(char* file_path,  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
@@ -2374,10 +2373,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			goto dl_or_cp_file__return;
 		}
 		
-		// If YTDL, then this->file_path is the template of the path of the output file; else it is the path of the output file
-		compsky::asciify::asciify(this->file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
+		// If YTDL, then file_path is the template of the path of the output file; else it is the path of the output file
+		compsky::asciify::asciify(file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
 		
-		log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", this->file_path);
+		log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", file_path);
 		
 		this->mysql_free_res();
 		
@@ -2388,32 +2387,32 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			if (is_ytdl)
 				rc = FunctionSuccessness::malicious_request;
 			else
-				rc = (std::filesystem::copy_file(url, this->file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
+				rc = (std::filesystem::copy_file(url, file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
 			if (is_ytdl){
 				compsky::asciify::asciify(
-					this->file_path,
+					file_path,
 					dir_name,
 					"%(extractor)s-%(id)s.%(ext)s",
 					'\0'
 				);
 #ifdef PYTHON
-				if (python::ytdl(this->file_path, url))
+				if (python::ytdl(file_path, url))
 #else
-				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(60, ytdl_args, STDERR_FILENO, this->file_path))
+				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
+				if (proc::exec(60, ytdl_args, STDERR_FILENO, file_path))
 #endif
 				{
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
 				}
-				this->file_path[sizeof(this->file_path)-1] = 0;
-				char* const file_extension = skip_to_after<char>(this->file_path, "Requested formats are incompatible for merge and will be merged into ");
+				file_path[4096-1] = 0;
+				char* const file_extension = skip_to_after<char>(file_path, "Requested formats are incompatible for merge and will be merged into ");
 				if (file_extension != nullptr){
 					replace_first_instance_of(file_extension, '.', '\0');
 					
 					compsky::asciify::asciify(
-						this->file_path,
+						file_path,
 						dir_name,
 						"%(extractor)s-%(id)s.", // Omit the file extension, as youtube-dl does not get the correct extension in this case when simulating (why force simulating then?!)
 						'\0'
@@ -2421,24 +2420,24 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				}
 				
 #ifndef PYTHON
-				// Now run youtube-dl a second time, to paste the output filename into this->file_path, because it has no option to print the filename without only simulating
-				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", this->file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, this->file_path)){
+				// Now run youtube-dl a second time, to paste the output filename into file_path, because it has no option to print the filename without only simulating
+				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
+				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, file_path)){
 					rc = FunctionSuccessness::server_error;
 					goto dl_or_cp_file__return;
 				}
 #endif
 				
 				if (file_extension == nullptr){
-					replace_first_instance_of(this->file_path, '\n', '\0');
+					replace_first_instance_of(file_path, '\n', '\0');
 				} else {
-					replace_first_instance_of(this->file_path, '\n', file_extension, '\0');
+					replace_first_instance_of(file_path, '\n', file_extension, '\0');
 				}
-				log("YTDL to: ", this->file_path);
+				log("YTDL to: ", file_path);
 				
 				rc = FunctionSuccessness::ok;
 			} else
-				rc = curl::dl_file(user_headers, url, this->file_path, overwrite_existing, mimetype);
+				rc = curl::dl_file(user_headers, url, file_path, overwrite_existing, mimetype);
 		}
 		
 		dl_or_cp_file__return:
@@ -2447,11 +2446,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return rc;
 	}
 	
-	FunctionSuccessness dl_file(const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
+	FunctionSuccessness dl_file(char* file_path,  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
 		if (os::is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
+		return this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
 	}
 	
 	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
@@ -2666,8 +2665,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				get_file_name_and_ext__filename_ends_with_newline_or_null(_url_buf, file_name, ext);
 				
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
-				
-				switch(this->dl_file(user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _url_buf, is_html_file, mimetype, true, is_ytdl)){
+				char file_path[4096];
+				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _url_buf, is_html_file, mimetype, true, is_ytdl)){
 					case FunctionSuccessness::server_error:
 						++n_errors;
 					case FunctionSuccessness::ok:
@@ -2676,7 +2675,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 						return FunctionSuccessness::malicious_request;
 				}
 				
-				const char* f_name = basename__accepting_trailing_slash(this->file_path);
+				const char* f_name = basename__accepting_trailing_slash(file_path);
 				
 				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
 				
@@ -3043,12 +3042,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			
 			char mimetype[100] = {0};
 			MYSQL_RES* const prev_res = this->res;
-			const auto rc = this->dl_or_cp_file(user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
+			char file_path[4096];
+			const auto rc = this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
 			this->res = prev_res;
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 			
-			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", this->file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
+			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
 			// WARNING: The above will crash if there is no such extension in ext2mimetype
 			// This is deliberate, to tell me to add it to the DB.
 		}
@@ -3364,8 +3364,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	void md5_hash_local_file(uint8_t* const hash,  const char* const dir,  const char* const file){
-		compsky::asciify::asciify(this->file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file, '\0');
-		this->md5_hash(hash, this->file_path);
+		char file_path[4096];
+		compsky::asciify::asciify(file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file, '\0');
+		this->md5_hash(hash, file_path);
 	}
 	
 	std::string_view generate_thumbnails(const char* s){
@@ -3416,23 +3417,25 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				
 				if (os::file_exists(thumbnail_filepath))
 					continue;
-				compsky::asciify::asciify(this->file_path, dir, file, '\0');
+				
+				char file_path[4096];
+				compsky::asciify::asciify(file_path, dir, file, '\0');
 				
 				if (is_video){
 					try {
-						generate_thumbnail(this->file_path, thumbnail_filepath);
-						log("Generated video thumbnail: ", this->file_path, " -> ", thumbnail_filepath);
+						generate_thumbnail(file_path, thumbnail_filepath);
+						log("Generated video thumbnail: ", file_path, " -> ", thumbnail_filepath);
 					} catch(std::exception& e){
-						log("While generating thumbnail\n\tFile: ", this->file_path, "\n\tError:",  e.what());
+						log("While generating thumbnail\n\tFile: ", file_path, "\n\tError:",  e.what());
 					}
 					continue;
 				}
 				
 				cimg_library::CImg<unsigned char> img; // WARNING: Might get errors with other kinds of colour spaces
 				try {
-					img.load(this->file_path);
+					img.load(file_path);
 				} catch(std::exception& e){
-					log("While generating thumbnail\n\tFile: ", this->file_path, "\n\tError: ",  e.what());
+					log("While generating thumbnail\n\tFile: ", file_path, "\n\tError: ",  e.what());
 					continue;
 				}
 				const unsigned int w = (img.width() >= img.height())

@@ -119,16 +119,15 @@ void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
 	}
 }
 
-template<size_t N>
-void replace_first_instance_of(char(&str)[N],  const char a,  const char* b,  const char c){
+void replace_first_instance_of(char* str,  const char a,  const char* b,  const char c){
 	// str is guaranteed to be max characters long
-	for(size_t i = 0;  i < N;  ++i){
-		if(str[i] == a){
+	while(*str != 0){
+		if(*str == a){
 			while(*b != 0){
-				str[i++] = *(b++);
+				*(str++) = *(b++);
 			}
 			// WARNING: No bounds checking (laziness)
-			str[i] = c;
+			*str = c;
 			return;
 		}
 	}
