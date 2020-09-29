@@ -44,7 +44,7 @@ void handler(const int rc){
 template<typename... Args>
 void log(Args... args){
 	static char buf[1024];
-	compsky::asciify::asciify(buf, args...);
+	compsky::asciify::asciify(buf, args..., '\0');
 	fprintf(stderr, "%s\n", buf);
 	fflush(stderr);
 }
