@@ -478,13 +478,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			if (not is_valid_hex_char(md5hex[i]))
 				return compsky::wangler::_r::not_found;
 		}
-		compsky::asciify::asciify(
-			this->buf,
+		this->reset_buf_index();
+		this->asciify(
 			CACHE_DIR,
 			_f::strlen, md5hex, 32,
-			".png",
-			'\0'
+			".png"
 		);
+		*this->itr = 0;
 		
 		const size_t sz = os::get_file_sz(this->buf);
 		if (unlikely(sz == 0)){
@@ -494,14 +494,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		FILE* const f = fopen(this->buf, "rb");
 		
-		compsky::asciify::asciify(
-			this->buf,
+		this->reset_buf_index();
+		this->asciify(
 			HEADER__RETURN_CODE__OK
 			HEADER__CONTENT_TYPE__PNG
 			CACHE_CONTROL_HEADER
-			"Content-Length: ",
-			sz,
-			"\n\n"
+			"Content-Length: ", sz, '\n',
+			'\n'
 		);
 		
 		const size_t n_read = fread(itr, 1, sz, f);
