@@ -489,14 +489,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		for (auto i = 0;  i < 32;  ++i){
 			if (not is_valid_hex_char(md5hex[i]))
 				return compsky::wangler::_r::not_found;
-			this->buf[CACHE_DIR_STRLEN + i] = md5hex[i];
 		}
-		memcpy(this->buf,  CACHE_DIR,  CACHE_DIR_STRLEN);
-		this->buf[CACHE_DIR_STRLEN + 32 + 0] = '.';
-		this->buf[CACHE_DIR_STRLEN + 32 + 1] = 'p';
-		this->buf[CACHE_DIR_STRLEN + 32 + 2] = 'n';
-		this->buf[CACHE_DIR_STRLEN + 32 + 3] = 'g';
-		this->buf[CACHE_DIR_STRLEN + 32 + 4] = 0;
+		compsky::asciify::asciify(
+			this->buf,
+			CACHE_DIR,
+			_f::strlen, md5hex, 32,
+			".png",
+			'\0'
+		);
 		FILE* const f = fopen(this->buf, "rb");
 		if (f == nullptr){
 			fprintf(stderr, "No such file thumbnail: %s\n", this->buf);
@@ -507,9 +507,12 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		stat(this->buf, &st);
 		const size_t sz = st.st_size;
 		
-		memcpy(this->buf, prefix, prefix_len);
-		char* itr = this->buf + prefix_len;
-		compsky::asciify::asciify(itr,  sz, '\n', '\n');
+		compsky::asciify::asciify(
+			this->buf,
+			_f::strlen, prefix, prefix_len,
+			sz,
+			"\n\n"
+		);
 		
 		const size_t n_read = fread(itr, 1, sz, f);
 		
