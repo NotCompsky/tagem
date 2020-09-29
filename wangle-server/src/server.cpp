@@ -54,7 +54,6 @@ The absense of this copyright notices on some other files in this project does n
 #include <filesystem> // for std::filesystem::copy_file
 
 #ifndef NO_VIEW_DIR_FS
-# include <dirent.h> // TODO: Replace with std::filesystem
 # include <openssl/md5.h>
 #endif
 
