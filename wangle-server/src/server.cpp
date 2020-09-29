@@ -28,6 +28,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "get_cookies.hpp"
 #include "read_request.hpp"
 #include "initialise_tagem_db.hpp"
+#include "errors.hpp"
 
 #define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
 #include <compsky/wangle/cache.hpp>
@@ -101,16 +102,13 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 #define FALSE 0
 
 #define GET_PAGE_N(terminator) \
-	printf("  s == %.10s...\n", s); \
 	const unsigned page_n = a2n<unsigned>(&s); \
-	printf("  s == %.10s...\n", s); \
 	fflush(stdout); \
 	if(*s != terminator) \
 		return compsky::wangler::_r::not_found; \
 	++s;
 
 #define CHECK_FOR_EXPECT_100_CONTINUE_HEADER \
-	printf("CHECK_FOR_EXPECT_100_CONTINUE_HEADER %s\n", s); \
 	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
 		return compsky::wangler::_r::expect_100_continue;
 
@@ -1208,7 +1206,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				;
 			}
 			
-			printf("Creating file: %s\n", path);
+			log("Creating file: ", path);
 			if (unlikely(os::write_to_file(path, file_contents, strlen(file_contents))))
 				return compsky::wangler::_r::server_error;
 		}
@@ -1221,7 +1219,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		while(this->mysql_assign_next_row(&file_id));
 		if (file_id != 0){
-			fprintf(stderr, "Warning: File existed in DB but not on FS\n");
+			log("Warning: File existed in DB but not on FS");
 		} else {
 			const unsigned mimetype_id = (is_local_dir) ? 17 : 0; // "text/plain"
 			const char* const description = (is_local_dir) ? "" : file_contents;
@@ -2301,6 +2299,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		const size_t f_sz = os::get_file_sz(file_path);
 		if (unlikely(f_sz == 0)){
+			log("Cannot open file: ", file_path);
 			this->mysql_free_res();
 			return compsky::wangler::_r::server_error;
 		}
@@ -2348,7 +2347,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const char* dir_name = nullptr;
 		
 		if (in_str(file_name, os::unix_path_sep) and (file_id==nullptr) and not is_ytdl){
-			fprintf(stderr, "dl_or_cp_file rejected due to slash in file name: %s\n", file_name);
+			log("dl_or_cp_file rejected due to slash in file name: ", file_name);
 			rc = FunctionSuccessness::server_error;
 			goto dl_or_cp_file__return;
 		}
@@ -2369,7 +2368,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		if (not endswith(dir_name, os::unix_path_sep)){
 			// TODO: Allow for this
 			rc = FunctionSuccessness::server_error;
-			fprintf(stderr, "dl_or_cp_file rejected due to dir name not ending in slash: %s\n", dir_name);
+			log("dl_or_cp_file rejected due to dir name not ending in slash: ", dir_name);
 			goto dl_or_cp_file__return;
 		}
 		
@@ -2381,8 +2380,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		// If YTDL, then this->file_path is the template of the path of the output file; else it is the path of the output file
 		compsky::asciify::asciify(this->file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
 		
-		printf("dl_file %s %lu %s\n", (overwrite_existing)?">":"+", dir_id, url);
-		printf("        -> %s\n", this->file_path);
+		log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", this->file_path);
 		
 		this->mysql_free_res();
 		
@@ -2439,7 +2437,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				} else {
 					replace_first_instance_of(this->file_path, '\n', file_extension, '\0');
 				}
-				printf("YTDL to: %s\n", this->file_path);
+				log("YTDL to: ", this->file_path);
 				
 				rc = FunctionSuccessness::ok;
 			} else
@@ -2720,6 +2718,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 			);
 		}
+		
+		log("n_errors: ", n_errors);
 		
 		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
 	}
@@ -3353,7 +3353,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	std::string_view post__edit_tag_cmnt(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		
-		printf("Edit tag cmnt: %lu: %s\n", tag_id, s);
+		log("Edit tag cmnt:", tag_id, ": ", s);
 		
 		return compsky::wangler::_r::post_ok;
 	}
@@ -3427,9 +3427,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				if (is_video){
 					try {
 						generate_thumbnail(this->file_path, thumbnail_filepath);
-						printf("Generated video thumbnail: %s\n", this->file_path, thumbnail_filepath);
+						log("Generated video thumbnail: ", this->file_path, " -> ", thumbnail_filepath);
 					} catch(std::exception& e){
-						fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError:%s\n",  this->file_path,  e.what());
+						log("While generating thumbnail\n\tFile: ", this->file_path, "\n\tError:",  e.what());
 					}
 					continue;
 				}
@@ -3438,7 +3438,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				try {
 					img.load(this->file_path);
 				} catch(std::exception& e){
-					fprintf(stderr,  "While generating thumbnail\n\tFile: %s\n\tError: %s\n",  this->file_path,  e.what());
+					log("While generating thumbnail\n\tFile: ", this->file_path, "\n\tError: ",  e.what());
 					continue;
 				}
 				const unsigned int w = (img.width() >= img.height())
@@ -3451,7 +3451,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				;
 				img.resize(w, h);
 				img.save(thumbnail_filepath);
-				printf("Generated image thumbnail: %s\n", thumbnail_filepath);
+				log("Generated image thumbnail: ", thumbnail_filepath);
 			}
 		}
 		
@@ -3501,13 +3501,13 @@ int main(int argc,  const char* const* argv){
 	
 	for (const char* const env_var : external_db_env_vars){
 		if (unlikely(getenv(env_var) == nullptr)){
-			fprintf(stderr, "ERROR: Environmental variable is not set: %s\n", env_var);
+			log("ERROR: Environmental variable is not set: ", env_var);
 			goto help;
 		}
 	}
 	
 	if (unlikely(port_n == 0)){
-		fprintf(stderr,  "ERROR: Port not set\n");
+		log("ERROR: Port not set");
 		
 		help:
 		fprintf(
@@ -3551,7 +3551,7 @@ int main(int argc,  const char* const* argv){
 		while(compsky::mysql::assign_next_row(res, &row, &id));
 		db_name2id_json += std::to_string(id) + std::string("\":\"") + db_info.name() + std::string("\",\"");
 		if (id == 0){
-			fprintf(stderr,  "External database not recorded in external_db table: %s\n", db_info.name());
+			log("External database not recorded in external_db table: ", db_info.name());
 			return 1;
 		}
 		db_indx2id[i] = id;

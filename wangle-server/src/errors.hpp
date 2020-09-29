@@ -2,6 +2,7 @@
 
 
 #include <cstdlib> // for exit
+#include <compsky/asciify/asciify.hpp>
 
 
 enum {
@@ -17,7 +18,6 @@ enum {
 # define LOG(...)
 #else
 # include <cstdio>
-# define LOG(...) fprintf(stderr, __VA_ARGS__); fflush(stderr);
 constexpr static
 const char* const handler_msgs[] = {
 	"No error",
@@ -41,16 +41,15 @@ void handler(const int rc){
   #endif
 }
 
-inline
-void log(const char* const str){
-	LOG("log %s\n", str)
+template<typename... Args>
+void log(Args... args){
+	static char buf[1024];
+	compsky::asciify::asciify(buf, args...);
+	fprintf(stderr, "%s\n", buf);
+	fflush(stderr);
 }
-inline
-void log(const size_t n){
-	LOG("log %lu\n", n)
-}
-template<typename... Args,  typename T>
-void handler(const int msg,  const T arg,  Args... args){
-	log(arg);
-	handler(msg, args...);
+template<typename... Args>
+void handler(const int msg,  Args... args){
+	log(args...);
+	handler(msg);
 }
