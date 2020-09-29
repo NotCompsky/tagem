@@ -14,6 +14,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "curl_utils.hpp"
 #include "read_request.hpp"
 #include "str_utils.hpp"
+#include "os.hpp"
 #include <cstdio> // for fopen
 #include <cstring> // for memccpy
 #include <curl/curl.h>
@@ -26,7 +27,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	FunctionSuccessness rc;
 	
 	if (not overwrite_existing){
-		if (fopen(dst_pth, "rb") != nullptr)
+		if (os::file_exists(dst_pth))
 			return FunctionSuccessness::ok;
 	}
 	
