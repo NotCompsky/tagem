@@ -475,14 +475,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	std::string_view file_thumbnail(const char* md5hex){
-		constexpr static const char* const prefix =
-			HEADER__RETURN_CODE__OK
-			HEADER__CONTENT_TYPE__PNG
-			CACHE_CONTROL_HEADER
-			"Content-Length: "
-		;
-		constexpr static const size_t prefix_len = std::char_traits<char>::length(prefix);
-		
 		if (*md5hex == ' ')
 			return compsky::wangler::_r::invalid_file;
 		
@@ -497,19 +489,21 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			".png",
 			'\0'
 		);
-		FILE* const f = fopen(this->buf, "rb");
-		if (f == nullptr){
-			fprintf(stderr, "No such file thumbnail: %s\n", this->buf);
+		
+		const size_t sz = os::get_file_sz(this->buf);
+		if (unlikely(sz == 0)){
+			log("No such file thumbnail: ", this->buf);
 			return compsky::wangler::_r::invalid_file;
 		}
 		
-		struct stat st;
-		stat(this->buf, &st);
-		const size_t sz = st.st_size;
+		FILE* const f = fopen(this->buf, "rb");
 		
 		compsky::asciify::asciify(
 			this->buf,
-			_f::strlen, prefix, prefix_len,
+			HEADER__RETURN_CODE__OK
+			HEADER__CONTENT_TYPE__PNG
+			CACHE_CONTROL_HEADER
+			"Content-Length: ",
 			sz,
 			"\n\n"
 		);
