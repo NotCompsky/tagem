@@ -4,20 +4,24 @@
 #include <cstddef> // for size_t
 #ifdef _WIN32
 #else
+# include <sys/types.h>
 # include <sys/stat.h>
+# include <unistd.h>
+# include <dirent.h>
 #endif
 
 
 namespace os {
 
 
-constexpr char path_sep =
-  #ifdef _WIN32
-	'\\'
-  #else
-	'/'
-  #endif
-;
+#ifdef _WIN32
+typedef ??? dir_handler_typ;
+constexpr char path_sep = '\\';
+#else
+typedef DIR* dir_handler_typ;
+typedef struct dirent* dirent_typ;
+constexpr char path_sep = '/';
+#endif
 
 constexpr char unix_path_sep = '/';
 // NOTE: Windows now supports UNIX path separators, and this greatly simplifies things. The database internally only uses UNIX path separators, and client-side Javascript for Windows servers actually converts the path separators before requests are sent to the server.
@@ -44,6 +48,33 @@ bool is_local_file_or_dir(const char* path){
 }
 
 inline
+void get_file_size_and_ctime(const char* const fp,  size_t& sz,  time_t& t){
+	// NOTE: On a failure, t is set to 0 - not sz - to allow for empty files.
+  #ifdef _WIN32
+	HANDLE const f = CreateFileA(fp,  GENERIC_READ,  0,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL,  nullptr);
+	if (unlikely(f == INVALID_HANDLE_VALUE))
+		handler(CANNOT_CREATE_FILE);
+	_LARGE_INTEGER f_sz; // For x86_32 compatibility
+	LPFILETIME ctime, atime, wtime;
+	if (unlikely(GetFileSizeEx(f, &f_sz) == 0))
+		sz = 0;
+	if (unlikely(GetFileTime(f, ctime, atime, wtime) == 0))
+		t = 0;
+	CloseHandle(f);
+	sz = f_sz.QuadPart;
+	t  = *ctime;
+  #else
+	struct stat stat_buf;
+	if (unlikely(stat(fp, &stat_buf) == -1)){
+		t = 0;
+		return;
+	}
+	sz = stat_buf.st_size;
+	t  = stat_buf.st_ctime;
+  #endif
+}
+
+inline
 size_t get_file_sz(const char* const fp){
   #ifdef _WIN32
 	HANDLE const f = CreateFileA(fp,  GENERIC_READ,  0,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL,  nullptr);
@@ -60,6 +91,71 @@ size_t get_file_sz(const char* const fp){
 		return 0;
 	return stat_buf.st_size;
   #endif
+}
+
+bool file_exists(const char* const fp){
+  #ifdef _WIN32
+	HANDLE const f = CreateFileA(fp,  GENERIC_READ,  0,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL,  nullptr);
+	return (f != INVALID_HANDLE_VALUE);
+  #else
+	static struct stat stat_buf;
+	return (stat(fp, &stat_buf) == 0);
+  #endif
+}
+
+inline
+dir_handler_typ open_dir(const char* const path){
+#ifdef _WIN32
+#else
+	return opendir(path);
+#endif
+}
+
+inline
+bool get_next_item_in_dir(dir_handler_typ dir,  dirent_typ& item){
+#ifdef _WIN32
+#else
+	item = readdir(dir);
+	return (likely(item != nullptr));
+#endif
+}
+
+inline
+bool is_dir(const dirent_typ item){
+#ifdef _WIN32
+#else
+	return (item->d_type == DT_DIR);
+#endif
+}
+
+inline
+const char* get_dirent_name(const dirent_typ item){
+#ifdef _WIN32
+#else
+	return item->d_name;
+#endif
+}
+
+inline
+bool is_not_file_or_dir_of_interest(const char* const name){
+	return (
+		(name == nullptr) ||
+		(
+			(name[0] == '.') &&
+			(
+				(name[1] == 0) ||
+				((name[1] == '.') && (name[2] == 0))
+			)
+		)
+	);
+}
+
+inline
+void close_dir(dir_handler_typ dir){
+#ifdef _WIN32
+#else
+	closedir(dir);
+#endif
 }
 
 

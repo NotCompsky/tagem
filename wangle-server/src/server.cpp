@@ -24,7 +24,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "user_auth.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
-#include "fs.hpp"
 #include "../../utils/src/thumbnailer.hpp"
 #include "get_cookies.hpp"
 #include "read_request.hpp"
@@ -718,10 +717,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		const bool is_local = os::is_local_file_or_dir(dir_path);
 		
-		DIR* dir;
+		os::dir_handler_typ dir;
 		
 		if (is_local){
-			dir = opendir(dir_path);
+			dir = os::open_dir(dir_path);
 			if (unlikely(dir == nullptr))
 				return compsky::wangler::_r::server_error;
 		}
@@ -758,20 +757,15 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->begin_json_response();
 		this->asciify("\"0\",[");
-		struct dirent* e;
-		struct stat st;
+		os::dirent_typ e;
 		unsigned min = 100 * page_n;
 		unsigned indx = 0;
 		unsigned count = 100;
-		while (((e=readdir(dir)) != 0) and (count != 0)){
+		while (os::get_next_item_in_dir(dir, e) and (count != 0)){
 			const char* const ename = e->d_name;
 			
-			if (is_not_file_or_dir_of_interest(ename))
+			if (os::is_dir(e))
 				continue;
-			
-			if (e->d_type == DT_DIR){
-				continue;
-			}
 			
 			if (compsky::mysql::in_results<0>(ename, this->res))
 				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
@@ -786,7 +780,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			
 			compsky::asciify::asciify(this->file_path, dir_path, ename, '\0');
 			
-			stat(this->file_path, &st);
+			size_t file_size;
+			time_t file_time;
+			os::get_file_size_and_ctime(this->file_path, file_size, file_time);
 			this->asciify(
 				// Should be equivalent to asciify_file_info
 				'[',
@@ -794,8 +790,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					0, ',',                                              // ID
 					'"', _f::esc, '"', ename,   '"', ',',                // name
 					'"', '"', ',',                                       // title
-					'"', st.st_size, '"', ',',                           // size
-					'"', st.st_ctime, '"', ',',                          // t_added
+					'"', file_size, '"', ',',                            // size
+					'"', file_time, '"', ',',                            // t_added
 					'0', ',',                                            // t_origin
 					'0', ',',                                            // duration
 					'0', ',',                                            // w
@@ -810,7 +806,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				','
 			);
 		}
-		closedir(dir);
+		os::close_dir(dir);
 		this->mysql_free_res();
 		
 		}
@@ -2569,9 +2565,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const size_t dir_len = strlen(this->buf);
 		struct dirent* e;
 		while (e=readdir(dir)){
-			const char* const ename = e->d_name;
+			const char* const ename = os::get_dirent_name(e);
 			
-			if (is_not_file_or_dir_of_interest(ename))
+			if (os::is_not_file_or_dir_of_interest(ename))
 				continue;
 			
 			--this->itr; // Overwrite trailing null byte
@@ -3444,7 +3440,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				compsky::asciify::asciify(thumbnail_filename_itr, "\" WHERE id=", fid);
 				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
 				
-				if (file_exists(thumbnail_filepath))
+				if (os::file_exists(thumbnail_filepath))
 					continue;
 				compsky::asciify::asciify(this->file_path, dir, file, '\0');
 				
