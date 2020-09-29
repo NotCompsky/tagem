@@ -47,7 +47,7 @@ struct User {
 	{
 		if(*_allowed_file2_vars == 0)
 			return;
-		this->allowed_file2_vars_csv = reinterpret_cast<char*>(malloc(strlen(_allowed_file2_vars)));
+		this->allowed_file2_vars_csv = reinterpret_cast<char*>(malloc(strlen(_allowed_file2_vars) + 1));
 		if (unlikely(allowed_file2_vars_csv == nullptr))
 			abort();
 		memcpy(this->allowed_file2_vars_csv,  _allowed_file2_vars,  strlen(_allowed_file2_vars) + 1);
