@@ -161,6 +161,17 @@ void close_dir(dir_handler_typ dir){
 }
 
 inline
+bool dir_exists(const char* const path){
+#ifdef _WIN32
+#else
+	DIR* const dir = opendir(path);
+	const bool b = (dir != nullptr);
+	closedir(dir);
+	return b;
+#endif
+}
+
+inline
 bool write_to_file(const char* const fp,  const char* const data,  const size_t n_bytes){
 #ifdef _WIN32
 #else

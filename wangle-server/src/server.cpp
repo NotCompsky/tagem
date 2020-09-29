@@ -2506,11 +2506,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->reset_buf_index();
 		this->asciify(s, '\0');
 		
-		
-		DIR* const dir = opendir(this->buf);
-		if (unlikely(dir == nullptr))
+		if (unlikely(not os::dir_exists(this->buf)))
 			return compsky::wangler::_r::not_found;
-		closedir(dir);
 		
 		if (tag_ids != nullptr){
 			// Tag the root directory the client chose
@@ -2530,7 +2527,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	void recursively_record_files_infilesystem(const UserIDIntType user_id,  const unsigned max_depth){
-		DIR* const dir = opendir(this->buf);
+		os::dir_handler_typ dir = os::open_dir(this->buf);
 		if (dir == nullptr)
 			return;
 		if (this->itr[-2]  !=  os::unix_path_sep){
@@ -2540,8 +2537,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			++this->itr;
 		}
 		const size_t dir_len = strlen(this->buf);
-		struct dirent* e;
-		while (e=readdir(dir)){
+		os::dirent_typ e;
+		while (os::get_next_item_in_dir(dir, e)){
 			const char* const ename = os::get_dirent_name(e);
 			
 			if (os::is_not_file_or_dir_of_interest(ename))
@@ -2550,7 +2547,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			--this->itr; // Overwrite trailing null byte
 			this->asciify(ename, '\0');
 			
-			if (e->d_type == DT_DIR){
+			if (os::is_dir(e)){
 				if (max_depth != 0)
 					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 			} else if (e->d_type == DT_REG){
@@ -2561,7 +2558,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
 			*this->itr = 0;
 		}
-		closedir(dir);
+		os::close_dir(dir);
 	}
 	
 	template<typename... Args>
