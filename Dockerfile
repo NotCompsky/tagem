@@ -67,6 +67,7 @@ RUN apk add --no-cache python3-dev \
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DENABLE_STATIC=ON \
+		-DEMBED_PYTHON=ON \
 		-Dwangle_DIR=/bob-the-builder/wangle/ \
 		-Dfolly_DIR=/bob-the-builder/folly/ \
 		-Dfizz_DIR=/bob-the-builder/fizz/ \
