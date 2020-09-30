@@ -2338,7 +2338,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_or_cp_file(char* file_path,  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
+	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
 		FunctionSuccessness rc = FunctionSuccessness::ok;
 		const char* dir_name = nullptr;
 		
@@ -2446,7 +2446,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return rc;
 	}
 	
-	FunctionSuccessness dl_file(char* file_path,  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
+	FunctionSuccessness dl_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
 		if (os::is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
