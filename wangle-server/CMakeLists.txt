@@ -81,6 +81,11 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
 # Creates directory during build system generation
 
+set(EXTRA_SRCS)
+if(EMBED_PYTHON)
+	set(EXTRA_SRCS "${EXTRA_SRCS};${SRC_DIR}/python_stuff.cpp")
+endif()
+
 add_executable(
 	server
 	"${SRC_DIR}/server.cpp"
@@ -88,7 +93,8 @@ add_executable(
 	"${SRC_DIR}/curl_utils.cpp"
 	"${SRC_DIR}/db_info.cpp"
 	"${SRC_DIR}/initialise_tagem_db.cpp"
-	"${SRC_DIR}/python_stuff.cpp"
+	${EXTRA_SRCS}
+	
 )
 include(CheckIPOSupported)
 check_ipo_supported(RESULT is_ipo_supported)
