@@ -119,6 +119,7 @@ void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
 	}
 }
 
+constexpr
 void replace_first_instance_of(char* str,  const char a,  const char* b,  const char c){
 	// str is guaranteed to be max characters long
 	while(*str != 0){
