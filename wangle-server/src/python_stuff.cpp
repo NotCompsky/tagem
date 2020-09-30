@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "python_stuff.hpp"
 #include "os.hpp"
+#include "errors.hpp"
 #include <compsky/macros/likely.hpp>
 #include <stdexcept>
 #include <mutex>
@@ -51,14 +52,13 @@ namespace tagem_module {
 		
 		PyObject* const file_path = PyTuple_GetItem(args, 0);
 		if (unlikely(file_path == nullptr)){
-			fprintf(stderr,  "file_path is NULL\n");  fflush(stderr);
+			log("file_path is NULL");
 			Py_RETURN_NONE;
 		}
 		const char* const str = PyUnicode_AsUTF8(file_path);
 		if (not os::is_local_file_or_dir(str))
 			Py_RETURN_NONE;
-		fprintf(stderr,  "\n\n\nfilepath == %s\n\n\n\n", str);
-		fflush(stderr);
+		log("filepath == ", str);
 		/*if (unlikely(PyObject_SetAttrString(self, "filepath", file_path) == -1)){
 			fprintf(stderr,  "Error setting filepath value on object\n");
 			fflush(stderr);
