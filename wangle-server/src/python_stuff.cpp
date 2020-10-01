@@ -52,18 +52,12 @@ namespace tagem_module {
 		
 		PyObject* const file_path = PyTuple_GetItem(args, 0);
 		if (unlikely(file_path == nullptr)){
-			log("file_path is NULL");
 			Py_RETURN_NONE;
 		}
 		const char* const str = PyUnicode_AsUTF8(file_path);
 		if (not os::is_local_file_or_dir(str))
 			Py_RETURN_NONE;
 		log("filepath == ", str);
-		/*if (unlikely(PyObject_SetAttrString(self, "filepath", file_path) == -1)){
-			fprintf(stderr,  "Error setting filepath value on object\n");
-			fflush(stderr);
-		}
-		Py_INCREF(file_path);*/
 		whyyyyyyyyyyyyyyyy = file_path;
 		Py_RETURN_NONE;
 	}
@@ -102,6 +96,8 @@ void init_ytdl(){
 	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");
 	ytdl_obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
 	PY_ASSERT_NOT_NULL(ytdl_obj, "Cannot find youtube_dl.YoutubeDL");
+	Py_INCREF(ytdl_module);
+	Py_INCREF(ytdl_obj);
 }
 
 bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
@@ -129,8 +125,9 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 		PyUnicode_FromString(YTDL_FORMAT)
 	);
 	PyObject* const instantiation_args = PyTuple_New(1);
+	PY_ASSERT_NOT_NULL(instantiation_args, "Cannot instantiate instantiation args");
 	PyTuple_SetItem(instantiation_args, 0, opts);
-	PyObject* const ytdl_instantiation = PyObject_CallObject(ytdl_obj, instantiation_args);
+	PyObject* const ytdl_instantiation = PyObject_CallObject(ytdl_obj, instantiation_args); // Error here
 	PY_ASSERT_NOT_NULL(ytdl_instantiation, "Cannot instantiate YoutubeDL object");
 	PyObject* const ytdl_fn = PyObject_GetAttrString(ytdl_instantiation, "download");
 	
@@ -144,25 +141,19 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 	PyTuple_SetItem(fn_args, 0, urls_ls);
 	const PyObject* const result = PyObject_CallObject(ytdl_fn, fn_args);
 	
-	/*
-	PyObject* const file_path = PyObject_GetAttrString(ytdl_instantiation, "filepath");
-	if (unlikely(file_path == nullptr)){
-		fprintf(stderr,  "file_path is NULL\n");
-		fflush(stderr);
-	} else {*/
 	PyObject* const file_path = tagem_module::whyyyyyyyyyyyyyyyy;
-		Py_ssize_t sz;
-		const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
-		memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
-		out_fmt_as_input__resulting_fp_as_output[sz] = 0;
-		Py_DECREF(file_path);
-	/*}*/
+	Py_ssize_t sz;
+	const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
+	memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
+	out_fmt_as_input__resulting_fp_as_output[sz] = 0;
 	
+	Py_DECREF(file_path);
 	Py_DECREF(result);
+	Py_DECREF(fn_args);
 	Py_DECREF(ytdl_fn);
 	Py_DECREF(ytdl_instantiation);
+	Py_DECREF(instantiation_args);
 	Py_DECREF(opts);
-	Py_DECREF(fn_args);
 	Py_DECREF(urls_ls);
 	
 	return false;
