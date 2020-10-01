@@ -28,9 +28,9 @@ The absense of this copyright notices on some other files in this project does n
 		"WHERE u2ht.user=" __VA_ARGS__ \
 	")"
 #define NOT_DISALLOWED_TAG(tag, user_id) \
-	NOT_DISALLOWED_TAG__BASE("", user_id, " AND _t2pt.id=", tag)
+	NOT_DISALLOWED_TAG__BASE("", user_id, " AND (_t2pt.id=", tag, ")")
 #define NOT_DISALLOWED_TAG__COMPILE_TIME(tag, user_id) \
-	NOT_DISALLOWED_TAG__BASE(user_id " AND _t2pt.id=" tag)
+	NOT_DISALLOWED_TAG__BASE(user_id " AND (_t2pt.id=" tag ")")
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
 		"SELECT D2t.device AS id " \
 		JOIN_TAG_BLACKLIST \
