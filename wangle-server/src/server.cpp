@@ -3267,9 +3267,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
-		bool unauthorised = false;
-		while(this->mysql_assign_next_row(&unauthorised));
-		if(unauthorised)
+		bool authorised = false;
+		while(this->mysql_assign_next_row(&authorised));
+		if (unlikely(not unauthorised))
 			return compsky::wangler::_r::not_found;
 		
 		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
