@@ -3269,7 +3269,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		bool authorised = false;
 		while(this->mysql_assign_next_row(&authorised));
-		if (unlikely(not unauthorised))
+		if (unlikely(not authorised))
 			return compsky::wangler::_r::not_found;
 		
 		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
