@@ -1909,6 +1909,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"LIMIT 20"
 		); // TODO: Tell client if results have been truncated
 		
+		if (unlikely(this->itr[-11] == '\\'))
+			// If the last double quote is escaped
+			return compsky::wangler::_r::EMPTY_JSON_LIST;				
+		
 		try{
 			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
