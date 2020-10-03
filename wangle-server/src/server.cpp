@@ -1915,6 +1915,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			log(e.what());
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
+		if (unlikely(this->res == nullptr))
+			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		this->reset_buf_index();
 		this->init_json(
 			&this->itr,
