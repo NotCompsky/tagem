@@ -1912,7 +1912,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		try{
 			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
-			std::cerr << e.what() << std::endl;
+			log(e.what());
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		this->reset_buf_index();
