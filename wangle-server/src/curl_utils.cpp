@@ -68,7 +68,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	const CURLcode curl_rc = curl_easy_perform(handle);
 	fclose(f);
 	if (curl_rc != CURLE_OK){
-		remove(dst_pth);
+		os::del_file(dst_pth);
 		rc = FunctionSuccessness::server_error;
 		log("dl_file__curl error");
 	} else {
