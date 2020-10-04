@@ -141,13 +141,16 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 	PyTuple_SetItem(fn_args, 0, urls_ls);
 	const PyObject* const result = PyObject_CallObject(ytdl_fn, fn_args);
 	
-	PyObject* const file_path = tagem_module::whyyyyyyyyyyyyyyyy;
-	Py_ssize_t sz;
-	const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
-	memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
-	out_fmt_as_input__resulting_fp_as_output[sz] = 0;
+	const bool failed = (unlikely(PyErr_Occurred() != nullptr));
+	if (not failed){
+		PyObject* const file_path = tagem_module::whyyyyyyyyyyyyyyyy;
+		Py_ssize_t sz;
+		const char* const _file_path = PyUnicode_AsUTF8AndSize(file_path, &sz);
+		memcpy(out_fmt_as_input__resulting_fp_as_output, _file_path, sz);
+		out_fmt_as_input__resulting_fp_as_output[sz] = 0;
+		Py_DECREF(file_path);
+	}
 	
-	Py_DECREF(file_path);
 	Py_DECREF(result);
 	Py_DECREF(fn_args);
 	Py_DECREF(ytdl_fn);
@@ -156,7 +159,7 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 	Py_DECREF(opts);
 	Py_DECREF(urls_ls);
 	
-	return false;
+	return failed;
 }
 
 } // namespace python
