@@ -1916,6 +1916,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		try{
 			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
+			// NOTE: This appears to cause the server to hang on all *subsequent* queries involving SQL.
 			log(e.what());
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
