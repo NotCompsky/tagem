@@ -2681,7 +2681,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 						return FunctionSuccessness::malicious_request;
 				}
 				
-				const char* f_name = basename__accepting_trailing_slash(file_path);
+				const char* f_name = basename__accepting_trailing_slash(_url_buf);
 				
 				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
 				
