@@ -24,6 +24,27 @@ The absense of this copyright notices on some other files in this project does n
 namespace curl {
 
 
+static
+bool copy_headers(const char* user_headers,  char user_agent_buf[1000],  struct curl_slist* headers){
+	const char* const user_agent = SKIP_TO_HEADER(12,"User-Agent: ")(user_headers);
+	if (user_agent == nullptr)
+		return true;
+	memccpy(user_agent_buf,  user_agent - 11,  '\r',  sizeof(user_agent_buf));
+	replace_first_instance_of(user_agent_buf, '\r', '\0');
+	headers = curl_slist_append(headers, user_agent_buf);
+	headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+	headers = curl_slist_append(headers, "Accept-Language: en-GB,en;q=0.5");
+	headers = curl_slist_append(headers, "Accept-Encoding: gzip, deflate, br");
+	headers = curl_slist_append(headers, "Connection: keep-alive");
+	headers = curl_slist_append(headers, "Upgrade-Insecure-Requests: 1");
+	headers = curl_slist_append(headers, "DNT: 1");
+	headers = curl_slist_append(headers, "Pragma: no-cache");
+	headers = curl_slist_append(headers, "Cache-Control: no-cache");
+	headers = curl_slist_append(headers, "TE: Trailers");
+	return false;
+}
+
+
 FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
 	// NOTE: Overwrites dst_pth if it is empty.
 	
@@ -45,24 +66,10 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	curl_easy_setopt(handle, CURLOPT_URL, url);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, f);
 	
-	/* Copy headers */
 	struct curl_slist* headers = nullptr;
 	char user_agent_buf[1000];
-	const char* const user_agent = SKIP_TO_HEADER(12,"User-Agent: ")(user_headers);
-	if (user_agent == nullptr)
+	if (unlikely(copy_headers(user_headers, user_agent_buf, headers)))
 		return FunctionSuccessness::malicious_request;
-	memccpy(user_agent_buf,  user_agent - 11,  '\r',  sizeof(user_agent_buf));
-	replace_first_instance_of(user_agent_buf, '\r', '\0');
-	headers = curl_slist_append(headers, user_agent_buf);
-	headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-	headers = curl_slist_append(headers, "Accept-Language: en-GB,en;q=0.5");
-	headers = curl_slist_append(headers, "Accept-Encoding: gzip, deflate, br");
-	headers = curl_slist_append(headers, "Connection: keep-alive");
-	headers = curl_slist_append(headers, "Upgrade-Insecure-Requests: 1");
-	headers = curl_slist_append(headers, "DNT: 1");
-	headers = curl_slist_append(headers, "Pragma: no-cache");
-	headers = curl_slist_append(headers, "Cache-Control: no-cache");
-	headers = curl_slist_append(headers, "TE: Trailers");
 	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
 	
 	const CURLcode curl_rc = curl_easy_perform(handle);
