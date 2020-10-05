@@ -163,10 +163,9 @@ OPTIONS
 	limit [INTEGER]
 	offset [INTEGER]
 
-KNOWN BUGS
-	At least one filter must be included
-
 EXAMPLES
+	f order d id limit 1
+		List the last added file
 	f t "Music" t "English (Language)" "French (Language)" "German (Language)" and value 90-100 "Musicness" "Score" and attr name r "[.]webm$" limit 100
 		List 100 WEBM files tagged Music and also tagged one of: English, French or German language, having either a musicness or score of between 90 and 100
 	f attr name r "\\\\.mp4" and d "^/" limit 100

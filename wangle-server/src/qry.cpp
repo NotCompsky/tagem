@@ -598,6 +598,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	const char* bracket_operator_at_depth[max_bracket_depth] = {_operator_none};
 	unsigned bracket_depth = 0;
 	int n_args_since_operator = 0;
+	unsigned n_operators = 0;
 	std::string join_for_auto_ordering = "";
 	std::string auto_order_by = "";
 	
@@ -628,7 +629,11 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					join = join_for_auto_ordering;
 				if (order_by.empty())
 					order_by = auto_order_by;
-				return ((bracket_depth == 0) and (n_args_since_operator == 1)) ? successness::ok : successness::invalid;
+				return (
+					(bracket_depth == 0) and (
+						(n_args_since_operator == 1) or (n_args_since_operator == 0  and  n_operators == 0)
+					)
+				) ? successness::ok : successness::invalid;
 				// WARNING: This also disallows using no filters altogether.
 				// TODO: Fix that.
 			case arg::invalid:
@@ -636,6 +641,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			
 			case arg::operator_or:
 			case arg::operator_and:
+				++n_operators;
 				if (n_args_since_operator != 1)
 					return successness::invalid;
 				bracket_operator_at_depth[bracket_depth] = ((arg_token_base) == arg::operator_or) ? _operator_or : _operator_and;
@@ -1092,8 +1098,8 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 		(which_tbl=='e') ? "JOIN file f ON f.id=X.file JOIN dir d ON d.id=f.dir " : "",
 		(which_tbl=='f') ? "JOIN dir d ON d.id=X.dir " : "",
 		join.c_str(),
-		"WHERE ", where.c_str(), "\n"
-		  "AND "
+		"WHERE ", where.c_str(), '\n',
+		(where.empty()) ? "" : "AND "
 	);
 	
 	switch(which_tbl){
