@@ -99,14 +99,14 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 		"outtmpl", PyUnicode_FromString(out_fmt_as_input__resulting_fp_as_output),
 		"format", PyUnicode_FromString(YTDL_FORMAT)
 	);
-	PyObj ytdl_instantiation(ytdl_obj.call<1>(opts.obj));
+	PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
 	// Override to_stdout, so that the file path is written to a buffer instead of stdout
 	ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
 	/*PyObject_SetAttrString(tagem_module::modul, "ytdl_instantiation", ytdl_instantiation);
 	PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
 	// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
 	
-	ytdl_instantiation.call_fn_void<1>("download", PyObj(Py_BuildValue("[s]", url)).obj); // NOTE: Segfaults the second time it is called
+	ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj); // NOTE: Segfaults the second time it is called
 	
 	const bool failed = (unlikely(PyErr_Occurred() != nullptr));
 	if (not failed){

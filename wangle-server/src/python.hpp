@@ -34,24 +34,24 @@ class PyObj {
 	
 	/* Call self */
 	
-	template<size_t n,  typename... Args>
+	template<typename... Args>
 	PyObject* call(Args... args){
 		this->print_as_str("Calling object: ");
-		PyObject* const result = PyObject_CallObject(this->obj, PyObj(PyTuple_Pack(n, args...)).obj);
+		PyObject* const result = PyObject_CallObject(this->obj, PyObj(PyTuple_Pack(sizeof...(args), args...)).obj);
 		PY_ASSERT_NOT_NULL(result, "Cannot call object")
 		return result;
 	}
 	
 	/* Call self without return value */
 	
-	template<size_t n,  typename... Args>
+	template<typename... Args>
 	void call_void(Args... args){
-		Py_DECREF(this->call<n>(args...));
+		Py_DECREF(this->call(args...));
 	}
 	
 	/* Call member function */
 	
-	template<size_t n,  typename... Args>
+	template<typename... Args>
 	PyObject* call_fn(const char* const fn_name,  Args... args){
 		PyObj fn(this->obj, fn_name);
 		log("Created fn");
@@ -61,9 +61,9 @@ class PyObj {
 	
 	/* Call member function without return value */
 	
-	template<size_t n,  typename... Args>
+	template<typename... Args>
 	void call_fn_void(Args... args){
-		PyObject* result = this->call_fn<n>(args...);
+		PyObject* result = this->call_fn(args...);
 		if (unlikely(result == nullptr))
 			// Python exception
 			throw std::runtime_error("Python exception");
