@@ -2628,6 +2628,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			// NOTE: The behaviour for attempting to add existing files is to still tag them
 			return FunctionSuccessness::ok;
 		
+		const std::string_view f_name_sv(url + offset,  url_len - offset);
+		
 		// Add entry to primary table
 		if (which_tbl == 'd'){
 			this->mysql_exec(
@@ -2638,7 +2640,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					"device,",
 					user_id, ","
 					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
-					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
+					"\"", _f::esc, '"',  f_name_sv, "\" "
 				"FROM dir "
 				"WHERE id=", parent_dir_id
 				// NOTE: The user has been verified to have permission to access the parent directory.
@@ -2650,14 +2652,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				"(dir, name, user, mimetype)"
 				"SELECT ",
 					parent_dir_id, ","
-					"\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\",",
+					"\"", _f::esc, '"',  f_name_sv, "\",",
 					user_id, ","
 					"IFNULL(mt.id,0)"
 				"FROM file f "
 				"JOIN dir d ON d.id=f.dir "
 				"LEFT JOIN mimetype mt ON mt.name=\"", mimetype, "\" "
 				"WHERE NOT EXISTS"
-				"(SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\")"
+				"(SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"',  f_name_sv, "\")"
 				  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 				"LIMIT 1"
 			);
@@ -2682,17 +2684,15 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 						return FunctionSuccessness::malicious_request;
 				}
 				
-				const char* f_name = basename__accepting_trailing_slash(_url_buf);
-				
-				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, "\"", f_name, "\"", user_id, mimetype);
+				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, f_name_sv, "\"", basename__accepting_trailing_slash(file_path), "\"", user_id, mimetype);
 				
 				if (mimetype[0]){
 					this->mysql_exec(
 						"UPDATE file f "
 						"JOIN file_backup f2 ON f2.file=f.id "
 						"SET f.mimetype=f2.mimetype "
-						"WHERE f.name=\"", _f::esc, '"', f_name, "\" AND f.dir=", parent_dir_id, " "
-						  "AND f2.name=\"", _f::esc, '"', f_name, "\" "
+						"WHERE f.name=\"", _f::esc, '"', f_name_sv, "\" AND f.dir=", parent_dir_id, " "
+						  "AND f2.name=\"", _f::esc, '"', f_name_sv, "\" "
 						  "AND f2.dir=", dl_backup_into_dir_id
 					);
 				}
@@ -3055,7 +3055,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 			
-			this->insert_file_backup(file_id_str, 0, dir_id, "SUBSTR(\"", file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
+			this->insert_file_backup(file_id_str, 0, dir_id, "!!!/NOSUCHNAME/!!!", "SUBSTR(\"", file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
 			// WARNING: The above will crash if there is no such extension in ext2mimetype
 			// This is deliberate, to tell me to add it to the DB.
 		}
@@ -3063,13 +3063,15 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return compsky::wangler::_r::post_ok;
 	}
 	
+	template<typename StrType>
 	void insert_file_backup(
 		const char* const file_id,
 		const uint64_t file_dir,
 		const uint64_t backup_dir,
-		const char* const file_name_pre,
-		const char* file_name,
-		const char* const file_name_post,
+		const StrType file_name,
+		const char* const file_backup_name_pre,
+		const char* const file_backup_name,
+		const char* const file_backup_name_post,
 		const UserIDIntType user_id,
 		char* const mimetype
 	){
@@ -3080,7 +3082,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"SELECT ",
 				(file_id)?file_id:"f.id", ',',
 				backup_dir, ',',
-				file_name_pre, _f::esc, '"', file_name, file_name_post, ","
+				file_backup_name_pre, _f::esc, '"', file_backup_name, file_backup_name_post, ","
 				"IFNULL(mt.id,0),",
 				user_id, " "
 			"FROM file f "
