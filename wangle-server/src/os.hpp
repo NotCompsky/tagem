@@ -9,6 +9,7 @@
 # include <unistd.h>
 # include <dirent.h>
 # include <fcntl.h> // for O_*
+# include <stdio.h> // for remove
 #endif
 
 
