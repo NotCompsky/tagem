@@ -17,7 +17,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "python.hpp"
 #include <compsky/macros/likely.hpp>
 #include <stdexcept>
-#include <mutex>
 
 
 extern const char* YTDL_FORMAT;
