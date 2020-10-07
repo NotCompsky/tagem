@@ -157,5 +157,17 @@ class PyDict : public PyObj {
 	}
 };
 
+class GILLock {
+ private:
+	PyGILState_STATE gstate;
+ public:
+	GILLock(){
+		this->gstate = PyGILState_Ensure();
+	}
+	~GILLock(){
+		PyGILState_Release(this->gstate);
+	}
+};
+
 
 } // namespace python

@@ -84,29 +84,37 @@ namespace tagem_module {
 void init_ytdl(){
 	Py_SetProgramName(L"tagem");
 	Py_Initialize();
+	PyEval_InitThreads();
 	tagem_module::modul = PyModule_Create(&tagem_module::_module);
 	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
 	
 	PyObject* ytdl_module = PyImport_ImportModule("youtube_dl");
 	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");
 	ytdl_obj.obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
+	
+	PyEval_SaveThread(); // i.e. Py_BEGIN_ALLOW_THREADS
 }
 
 bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
+	GILLock gillock();
+	
 	PyDict<4> opts(
 		"quiet", Py_True,
 		"forcefilename", Py_True,
 		"outtmpl", PyUnicode_FromString(out_fmt_as_input__resulting_fp_as_output),
 		"format", PyUnicode_FromString(YTDL_FORMAT)
 	);
+	Py_INCREF(Py_True);
+	Py_INCREF(Py_True);
 	PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
 	// Override to_stdout, so that the file path is written to a buffer instead of stdout
 	ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
+	Py_INCREF(tagem_module::to_stdout);
 	/*PyObject_SetAttrString(tagem_module::modul, "ytdl_instantiation", ytdl_instantiation);
 	PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
 	// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
 	
-	ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj); // NOTE: Segfaults the second time it is called
+	ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj); // NOTE: Segfaults the second time it is called; appears to be caused by the garbage collector, most likely threading issues.
 	
 	const bool failed = (unlikely(PyErr_Occurred() != nullptr));
 	if (not failed){
