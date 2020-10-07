@@ -84,7 +84,6 @@ namespace tagem_module {
 void init_ytdl(){
 	Py_SetProgramName(L"tagem");
 	Py_Initialize();
-	PyEval_InitThreads();
 	tagem_module::modul = PyModule_Create(&tagem_module::_module);
 	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
 	
@@ -92,12 +91,12 @@ void init_ytdl(){
 	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");
 	ytdl_obj.obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
 	
-	PyEval_SaveThread(); // i.e. Py_BEGIN_ALLOW_THREADS
 }
 
 bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
+	bool failed;
 	GILLock gillock();
-	
+	{ // Ensures the GILLock destructor is called after all PyObj destructors
 	PyDict<4> opts(
 		"quiet", Py_True,
 		"forcefilename", Py_True,
@@ -116,12 +115,12 @@ bool ytdl(char* const out_fmt_as_input__resulting_fp_as_output,  const char* con
 	
 	ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj); // NOTE: Segfaults the second time it is called; appears to be caused by the garbage collector, most likely threading issues.
 	
-	const bool failed = (unlikely(PyErr_Occurred() != nullptr));
+	failed = (unlikely(PyErr_Occurred() != nullptr));
 	if (not failed){
 		tagem_module::file_path.copy_str(out_fmt_as_input__resulting_fp_as_output);
 		Py_DECREF(tagem_module::file_path.obj);
 	}
-	
+	}
 	return failed;
 }
 
