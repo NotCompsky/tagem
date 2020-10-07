@@ -49,10 +49,11 @@ namespace tagem_module {
 		if (unlikely(_file_path == nullptr)){
 			Py_RETURN_NONE;
 		}
-		file_path.obj = _file_path;
-		const char* const str = file_path.as_str();
+		const PyObj _file_path_wrapper(_file_path);
+		const char* const str = _file_path_wrapper.as_str();
 		if (not os::is_local_file_or_dir(str))
 			Py_RETURN_NONE;
+		file_path.obj = _file_path_wrapper.obj;
 		log("filepath == ", str);
 		Py_RETURN_NONE;
 	}
