@@ -29,7 +29,7 @@ bool copy_headers(const char* user_headers,  char user_agent_buf[1000],  struct 
 	const char* const user_agent = SKIP_TO_HEADER(12,"User-Agent: ")(user_headers);
 	if (user_agent == nullptr)
 		return true;
-	memccpy(user_agent_buf,  user_agent - 11,  '\r',  sizeof(user_agent_buf));
+	memccpy(user_agent_buf,  user_agent - 11,  '\r',  1000);
 	replace_first_instance_of(user_agent_buf, '\r', '\0');
 	headers = curl_slist_append(headers, user_agent_buf);
 	headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
