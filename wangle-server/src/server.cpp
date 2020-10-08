@@ -2672,6 +2672,12 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				char _url_buf[4096];
 				compsky::asciify::asciify(_url_buf, _f::strlen, url, url_len, '\0');
 				get_file_name_and_ext__filename_ends_with_newline_or_null(_url_buf, file_name, ext);
+				char _file_name[1024];
+				if (unlikely(_url_buf[url_len-1] == os::unix_path_sep)){
+					const size_t file_name_len = strlen(file_name);
+					compsky::asciify::asciify(_file_name, _f::strlen, file_name, file_name_len-1, '\0');
+					file_name = _file_name;
+				}
 				
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 				char file_path[4096];

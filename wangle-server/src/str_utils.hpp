@@ -234,8 +234,9 @@ STATIC_ASSERT(not in_str_not_at_end("foobar/", '/'));
 
 constexpr
 void get_file_name_and_ext__filename_ends_with_newline_or_null(const char* itr,  const char*& file_name,  const char*& ext){
+	// WARNING: Assumes there is at least one slash in itr
 	while((*itr != 0) and (*itr != '\n')){
-		if (*itr == os::unix_path_sep)
+		if ((itr[0] == os::unix_path_sep) and (itr[1] != 0) and (itr[1] != '\n'))
 			file_name = itr;
 		else if (*itr == '.')
 			ext = itr;
