@@ -57,7 +57,6 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	
 	FILE* const f = fopen(dst_pth, "wb");
 	if (f == nullptr){
-		fclose(f);
 		log("Cannot open file for writing: ",  dst_pth);
 		return FunctionSuccessness::server_error;
 	}
