@@ -2669,19 +2669,19 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				const char* ext = nullptr;
 				
 				char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
-				char _url_buf[4096];
-				compsky::asciify::asciify(_url_buf, _f::strlen, url, url_len, '\0');
-				get_file_name_and_ext__filename_ends_with_newline_or_null(_url_buf, file_name, ext);
-				char _file_name[1024];
-				if (unlikely(_url_buf[url_len-1] == os::unix_path_sep)){
-					const size_t file_name_len = strlen(file_name);
-					compsky::asciify::asciify(_file_name, _f::strlen, file_name, file_name_len-1, '\0');
-					file_name = _file_name;
+				char _buf[4096 + 1024];
+				char* _itr = _buf;
+				compsky::asciify::asciify(_itr, _f::strlen, url, url_len, '\0');
+				get_file_name_and_ext__filename_ends_with_newline_or_null(_buf, file_name, ext);
+				if (unlikely(_itr[-1] == os::unix_path_sep)){
+					const size_t file_name_len = (uintptr_t)_itr - (uintptr_t)_buf - 1;
+					file_name = _itr;
+					compsky::asciify::asciify(_itr, _f::strlen, file_name, file_name_len, '\0');
 				}
 				
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 				char file_path[4096];
-				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _url_buf, is_html_file, mimetype, true, is_ytdl)){
+				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _buf, is_html_file, mimetype, true, is_ytdl)){
 					case FunctionSuccessness::server_error:
 						++n_errors;
 					case FunctionSuccessness::ok:
