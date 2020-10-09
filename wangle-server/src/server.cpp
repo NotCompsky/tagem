@@ -3540,13 +3540,13 @@ int main(int argc,  const char* const* argv){
 		throw compsky::mysql::except::SQLLibraryInit();
 	
 	db_infos.reserve(external_db_env_vars.size());
-	std::string db_name2id_json =
-		HEADER__RETURN_CODE__OK
-		HEADER__CONTENT_TYPE__JSON
-		CACHE_CONTROL_HEADER
-		"\n"
+#define DB_NAME2ID_JSON_INIT \
+		HEADER__RETURN_CODE__OK \
+		HEADER__CONTENT_TYPE__JSON \
+		CACHE_CONTROL_HEADER \
+		"\n" \
 		"{\""
-	;
+	std::string db_name2id_json = DB_NAME2ID_JSON_INIT;
 	MYSQL_RES* res;
 	MYSQL_ROW row;
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
@@ -3570,7 +3570,7 @@ int main(int argc,  const char* const* argv){
 		
 		db_info.test_is_accessible_from_master_connection(db_infos.at(0).connection(),  buf);
 	}
-	if (db_name2id_json.back() != '"')
+	if (db_name2id_json.size() != std::char_traits<char>::length(DB_NAME2ID_JSON_INIT))
 		// If there is at least one element in this dictionary
 		db_name2id_json.pop_back();
 	db_name2id_json.back() = '}';
