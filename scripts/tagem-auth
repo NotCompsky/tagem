@@ -12,4 +12,9 @@ path="$(get_auth "$auth" PATH)"
 user="$(get_auth "$auth" USER)"
 pwrd="$(get_auth "$auth" PWRD)"
 port="$(get_auth "$auth" PORT)"
-tagem_auth=(--host "$host" --port "$port" --user "$user" --password="$pwrd" --socket="$path")
+tagem_auth=(--host "$host" --user "$user" --password="$pwrd" --socket="$path")
+if [ "$port" = "" ]; then
+	dummy=1
+else
+	tagem_auth+=(--port "$port")
+fi
