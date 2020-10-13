@@ -3352,7 +3352,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
-			"ON DUPLICATE KEY UPDATE x=x"
+			"ON DUPLICATE KEY UPDATE x=VALUES(x)"
 		);
 		
 		return compsky::wangler::_r::post_ok;
@@ -3401,7 +3401,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				"JOIN dir d ON d.id=f.dir "
 				"JOIN mimetype mt ON mt.id=f.mimetype "
 				"WHERE device=", device, " "
-				  "AND mt.name REGEXP '^(image|video)/'"
+				  "AND mt.name REGEXP '^(image|video)/' "
+				  "AND f.md5_of_path IS NULL"
 			);
 			const char* fid;
 			const char* dir;
