@@ -240,10 +240,7 @@ const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvide
 	"GROUP BY t.id "
 
 #define GREYLIST_USERS_WITHOUT_PERMISSION(field_name) \
-	this->mysql_query("SELECT id FROM user WHERE id=", user_id, " AND " field_name); \
-	bool has_permission = false; \
-	while(this->mysql_assign_next_row(&has_permission)); \
-	if (not has_permission) \
+	if (not this->get_last_row_from_qry<bool>("SELECT id FROM user WHERE id=", user_id, " AND " field_name)) \
 		return compsky::wangler::_r::unauthorised;
 
 static
@@ -698,6 +695,12 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 	}
 	
+	uint64_t get_dir_id_given_path__add_if_necessary(const UserIDIntType user_id,  const char* const path){
+		if (unlikely(this->add_file_or_dir_to_db('d', nullptr, user_id, "0", 1, path, strlen(path), 0, false) != FunctionSuccessness::ok))
+			return 0;
+		return this->get_last_row_from_qry<uint64_t>("SELECT id FROM dir WHERE full_path=\"", _f::esc, '"', path, "\" LIMIT 1");
+	}
+	
 	std::string_view files_given_dir__filesystem(const char* s){
 		GET_PAGE_N(' ')
 #ifndef NO_VIEW_DIR_FS
@@ -720,7 +723,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		}
 		
 		// Determine if files exist in the database - if so, supply all the usual data
-		this->mysql_query(
+		this->mysql_query2(
 			"SELECT f.name "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
@@ -750,7 +753,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		} else {
 		
 		this->begin_json_response();
-		this->asciify("[\"0\",[");
+		const uint64_t dir_id = this->get_dir_id_given_path__add_if_necessary(user_id, dir_path);
+		this->asciify("[\"", dir_id, "\",[");
 		os::dirent_typ e;
 		unsigned min = 100 * page_n;
 		unsigned indx = 0;
@@ -761,7 +765,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			if (os::is_dir(e))
 				continue;
 			
-			if (compsky::mysql::in_results<0>(ename, this->res))
+			if (compsky::mysql::in_results<0>(ename, this->res2))
 				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
 				continue;
 			
@@ -802,7 +806,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			);
 		}
 		os::close_dir(dir);
-		this->mysql_free_res();
+		mysql_free_result(this->res2);
 		
 		}
 		
@@ -1177,13 +1181,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			// Update an existing file
 			return compsky::wangler::_r::not_implemented_yet;
 		
-		this->mysql_query(
-			"SELECT CONCAT(d.full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") "
-			"FROM dir d "
-			"WHERE d.id=", dir_id
-		);
-		const char* path = nullptr;
-		while(this->mysql_assign_next_row(&path));
+		const char* const path = this->get_last_row_from_qry<const char*>("SELECT CONCAT(full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") FROM dir WHERE id=", dir_id);
 		const bool is_local_dir = os::is_local_file_or_dir(path);
 		
 		if (is_local_dir){
@@ -1208,13 +1206,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				return compsky::wangler::_r::server_error;
 		}
 		
-		this->mysql_query(
-			"SELECT id "
-			"FROM file "
-			"WHERE dir=", dir_id, " "
-			  "AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
-		);
-		while(this->mysql_assign_next_row(&file_id));
+		file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\"");
 		if (file_id != 0){
 			log("Warning: File existed in DB but not on FS");
 		} else {
@@ -1239,13 +1231,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				")"
 			);
 			
-			this->mysql_query(
-				"SELECT id "
-				"FROM file "
-				"WHERE dir=", dir_id, " "
-				"AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\""
-			);
-			while(this->mysql_assign_next_row(&file_id));
+			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\"");
 		}
 		
 		this->add_tags_to_files(
@@ -1300,15 +1286,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		if (unlikely(rc != FunctionSuccessness::ok))
 			return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 		
-		this->mysql_query(
+		const uint64_t new_file_id = this->get_last_row_from_qry<uint64_t>(
 			"SELECT f.id "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.name=SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d.full_path)+1)"
 			  "AND d.id=", new_dir_id
 		);
-		uint64_t new_file_id = 0;
-		while(this->mysql_assign_next_row(&new_file_id));
 		
 		assert(new_file_id != 0);
 		
@@ -2729,6 +2713,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
 	}
 	
+	template<typename T,  typename... Args>
+	T get_last_row_from_qry(Args... args){
+		this->mysql_query(args...);
+		T t = 0;
+		while(this->mysql_assign_next_row(&t));
+		return t;
+	}
+	
 	std::string_view post__add_boxes(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,file_id)
 		GET_USER_ID
@@ -2737,9 +2729,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		--s;
 		
 		// TODO: Perform a permissions check on file_id
-		this->mysql_query("SELECT IFNULL(MAX(id),0) FROM box WHERE file=", file_id);
-		uint64_t below_new_box_ids = 0;
-		while(this->mysql_assign_next_row(&below_new_box_ids));
+		const uint64_t below_new_box_ids = this->get_last_row_from_qry<uint64_t>("SELECT IFNULL(MAX(id),0) FROM box WHERE file=", file_id);
 		
 		// This function returns an array of the new box IDs
 		this->begin_json_response();
@@ -2774,7 +2764,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				);
 				// NOTE: To add tags without knowing the box IDs, and knowing that floats are not stored exactly, we must find the box whose coordinates most closely match the given coordinates
 				
-				this->mysql_query(
+				box_id_final = this->get_last_row_from_qry<uint64_t>(
 					"SELECT id "
 					"FROM box "
 					"WHERE file=", file_id, " "
@@ -3274,15 +3264,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("unlink_tags")
 		
-		this->mysql_query(
-			"SELECT f.id "
+		const bool authorised = this->get_last_row_from_qry<bool>(
+			"SELECT 1 "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
-		bool authorised = false;
-		while(this->mysql_assign_next_row(&authorised));
 		if (unlikely(not authorised))
 			return compsky::wangler::_r::not_found;
 		
