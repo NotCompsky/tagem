@@ -339,19 +339,19 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	
 	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(db_info.mysql_obj, this->res, _buf, _buf_sz);
+		db_info.query_buffer(this->res, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_query_buf_db_by_id2(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::query_buffer(db_info.mysql_obj, this->res2, _buf, _buf_sz);
+		db_info.query_buffer(this->res2, _buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
 		this->mysql_mutex.lock();
-		compsky::mysql::exec_buffer(db_info.mysql_obj, _buf, _buf_sz);
+		db_info.exec_buffer(_buf, _buf_sz);
 		this->mysql_mutex.unlock();
 	}
 	

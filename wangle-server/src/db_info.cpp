@@ -35,6 +35,33 @@ void DatabaseInfo::test_is_accessible_from_master_connection(MYSQL* const master
 }
 
 
+void DatabaseInfo::attempt_to_access_tbl(const char* const tbl_name) const {
+	MYSQL_RES* res;
+	MYSQL_ROW  row;
+	static char buf[100];
+	try {
+		compsky::mysql::query(this->mysql_obj, res, buf, "SELECT * FROM ", tbl_name, " LIMIT 1");
+		mysql_free_result(res);
+	} catch(compsky::mysql::except::SQLExec& e){
+		log("Error while attempting to access table ", this->name(), ".", tbl_name, ": ", e.what());
+		abort();
+	}
+}
+
+
+void DatabaseInfo::attempt_qry(const char* const qry) const {
+	MYSQL_RES* res;
+	MYSQL_ROW  row;
+	try {
+		compsky::mysql::query_buffer(this->mysql_obj, res, qry);
+		mysql_free_result(res);
+	} catch(compsky::mysql::except::SQLExec& e){
+		log("Error while attempting qry on database: ", this->name(), ": ", e.what());
+		abort();
+	}
+}
+
+
 DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools)
 : bools{}
 {
@@ -95,4 +122,10 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 		else if (streq("user2tag", name))
 			this->bools[has_user2tag_tbl] = true;
 	}
+	
+	this->attempt_to_access_tbl("post");
+	this->attempt_to_access_tbl("user");
+	if (this->bools[has_cmnt_tbl])
+		this->attempt_to_access_tbl("cmnt");
+	
 }

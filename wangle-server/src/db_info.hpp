@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #pragma once
 
+#include "errors.hpp"
 #include <compsky/mysql/mysql.hpp>
 
 
@@ -52,6 +53,9 @@ struct DatabaseInfo {
 		return this->bools[enum_indx];
 	}
 	
+	void attempt_to_access_tbl(const char* const tbl_name) const;
+	void attempt_qry(const char* const qry) const;
+	
 	const char* name() const {
 		return auth[4];
 	}
@@ -60,6 +64,25 @@ struct DatabaseInfo {
 	}
 	void close();
 	void test_is_accessible_from_master_connection(MYSQL* const master_connection,  char* buf);
+	
+	template<typename... Args>
+	void logs(Args... args) const {
+		log(this->name(), ": ", args...);
+	}
+	
+	void query_buffer(MYSQL_RES*& res,  const char* const qry,  const size_t sz) const {
+		try {
+			compsky::mysql::query_buffer(this->mysql_obj, res, qry, sz);
+		} catch(compsky::mysql::except::SQLExec& e){
+			this->logs("Bad SQL: ", mysql_error(this->mysql_obj));
+			throw(e);
+		}
+	}
+	
+	void exec_buffer(const char* const qry,  const size_t sz) const {
+		this->logs("exec_buffer");
+		compsky::mysql::exec_buffer(this->mysql_obj, qry, sz);
+	}
 	
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools);
 };
