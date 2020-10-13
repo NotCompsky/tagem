@@ -380,9 +380,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	void mysql_exec_using_buf_db_by_id(DatabaseInfo& db_info){
-		this->mysql_mutex.lock();
-		compsky::mysql::exec_buffer(db_info.mysql_obj, this->buf, this->buf_indx());
-		this->mysql_mutex.unlock();
+		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
 	}
 	
 	void mysql_exec_using_buf(){
@@ -393,7 +391,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	void mysql_query_db_by_id(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id(db_info, this->buf, this->buf_indx());
+		this->mysql_query_buf_db_by_id(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
@@ -401,7 +399,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	void mysql_query_db_by_id2(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id2(db_info, this->buf, this->buf_indx());
+		this->mysql_query_buf_db_by_id2(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
