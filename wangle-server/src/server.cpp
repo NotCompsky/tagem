@@ -751,7 +751,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		} else {
 		
 		this->begin_json_response();
-		this->asciify("\"0\",[");
+		this->asciify("[\"0\",[");
 		os::dirent_typ e;
 		unsigned min = 100 * page_n;
 		unsigned indx = 0;
