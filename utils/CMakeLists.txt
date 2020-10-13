@@ -11,7 +11,7 @@ set(TGTS)
 set(CXX17_TGTS tagem-init)
 
 if(OpenCV_FOUND)
-	list(TGTS APPEND tagem-instances)
+	set(TGTS "${TGTS};tagem-instances")
     add_executable(tagem-instances src/view-instances.cpp)
 	set_target_properties(
 		tagem-instances
@@ -21,7 +21,7 @@ if(OpenCV_FOUND)
 			LINK_FLAGS_RELEASE -s
 	)
     target_include_directories(tagem-instances PRIVATE ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(tagem-instances PRIVATE compsky_mysql opencv_core opencv_imgcodecs opencv_highgui)
+    target_link_libraries(tagem-instances PRIVATE "${WHICH_MYSQL_CLIENT}" opencv_core opencv_imgcodecs opencv_highgui)
     target_compile_definitions(tagem-instances PRIVATE ${MY_DEFINES})
 else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")

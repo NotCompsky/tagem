@@ -25,7 +25,7 @@ namespace _f {
 	using namespace compsky::asciify::flag;
 	constexpr static concat::Start start;
 	constexpr static concat::End end;
-	constexpr static Zip2 zip2;
+	constexpr static Zip<2> zip2;
 	constexpr static guarantee::BetweenZeroAndOneInclusive between_0_1_incl;
 }
 
@@ -107,7 +107,7 @@ void view_img(const char* tag,  const char* root_tag_name,  const char* const fp
 }
 
 int main(int argc,  const char** argv) {
-	constexpr static help_txt = R"=====(
+	constexpr static const char* help_txt = R"=====(
 	USAGE
 		./tagem-instances [OPTIONS] -- TAG1 TAG2 ... TAGN
 		
