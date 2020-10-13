@@ -4,7 +4,7 @@ find_package(Compsky REQUIRED)
 
 
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
-option(TAGEM_HASH "Build the tagem-hash utility" OFF)
+option(TAGEM_HASH "Build the tagem-hash utility" ON)
 set(WHICH_MYSQL_CLIENT "mysqlclient" CACHE STRING "Which MySQL or MariaDB client to use")
 
 set(TGTS)
@@ -35,12 +35,13 @@ target_link_libraries(tagem-init compsky_mysql_create_config "${WHICH_MYSQL_CLIE
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
 
 if(TAGEM_HASH)
-	list(CXX17_TGTS APPEND tagem-hash)
-	list(TGTS APPEND tagem-hash)
-	if ("${CIMG_H_DIR} " STREQUAL " ")
-		find_package(CImg REQUIRED)
-		set(CIMG_H_DIR "${CImg_INCLUDE_DIR}")
-		message(FATAL_ERROR "Please set CIMG_H_DIR to the directory containing CImg.h (for instance, underneath the third_party of pHash, if you built that from source.")
+	set(CXX17_TGTS "${CXX17_TGTS};tagem-hash")
+	set(TGTS "${TGTS};tagem-hash")
+	if (NOT CIMG_H_DIR)
+		find_path(CIMG_H_DIR NAMES CImg.h HINTS /usr/include /usr/local/include /usr)
+		if(NOT CIMG_H_DIR)
+			message(FATAL_ERROR "Please set CIMG_H_DIR to the directory containing CImg.h (for instance, underneath the third_party of pHash, if you built that from source.")
+		endif()
 	endif()
 	add_executable(tagem-hash src/hash.cpp)
 	target_include_directories(tagem-hash PRIVATE "${PROJECT_INCLUDE_DIR}" ${COMPSKY_INCLUDE_DIRS} "${CIMG_H_DIR}")
