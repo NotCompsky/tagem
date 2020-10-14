@@ -62,6 +62,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #ifdef PYTHON
 # include "python_stuff.hpp"
+# include <rapidjson/document.h>
 #endif
 
 /*
@@ -285,6 +286,21 @@ static bool regenerate_protocol_json = true;
 static bool regenerate_tag2parent_json = true;
 
 
+namespace rapidjson {
+uint64_t get_int(const rapidjson::Value& v,  const char* k){
+	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetInt() : 0;
+}
+
+float get_flt(const rapidjson::Value& v,  const char* k){
+	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetFloat() : 0;
+}
+
+const char* get_str(const rapidjson::Value& v,  const char* k){
+	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetString() : "";
+}
+}
+
+
 namespace compsky {
 namespace wangler {
 
@@ -404,7 +420,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	void mysql_exec_db_by_id(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
+		this->mysql_exec_buf_db_by_id(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
@@ -433,11 +449,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
-		this->mysql_query("SELECT d.id FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id));
-		const bool rc = (this->mysql_assign_next_row());
-		if (rc)
-			this->mysql_free_res();
-		return rc;
+		return this->get_last_row_from_qry<bool>("SELECT 1 FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id));
 	}
 	
 	std::string_view parse_qry(const char* s){
@@ -723,7 +735,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		}
 		
 		// Determine if files exist in the database - if so, supply all the usual data
-		this->mysql_query2(
+		const SQLQuery qry1(
+			this,
+			db_infos.at(0),
 			"SELECT f.name "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
@@ -765,7 +779,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			if (os::is_dir(e))
 				continue;
 			
-			if (compsky::mysql::in_results<0>(ename, this->res2))
+			if (compsky::mysql::in_results<0>(ename, qry1.res))
 				// If ename is equal to a string in the 2nd column of the results, it has already been recorded
 				continue;
 			
@@ -806,7 +820,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			);
 		}
 		os::close_dir(dir);
-		mysql_free_result(this->res2);
 		
 		}
 		
@@ -1149,6 +1162,70 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return this->get_buf_as_string_view();
 	}
 	
+	struct SQLQuery {
+		RTaggerHandler* const thees;
+		MYSQL_RES* res;
+		MYSQL_ROW row;
+		bool not_freed_results;
+		
+		template<typename... Args>
+		SQLQuery(RTaggerHandler* const _thees,  DatabaseInfo& db_info,  Args... args)
+		: thees(_thees)
+		, not_freed_results(true)
+		{
+			char* _itr = thees->itr;
+			compsky::mysql::query(db_info.mysql_obj, this->res, _itr, args...);
+		}
+		
+		~SQLQuery(){
+			if (not_freed_results)
+				mysql_free_result(this->res);
+		}
+		
+		template<typename... Args>
+		bool assign_next_row(Args... args){
+			return this->not_freed_results = compsky::mysql::assign_next_row(this->res, &this->row, args...);
+		}
+		
+		template<typename... Args>
+		bool assign_next_row__no_free(Args... args){
+			return compsky::mysql::assign_next_row__no_free(this->res, &this->row, args...);
+		}
+	};
+	
+	class StringFromSQLQuery_DB {
+	 private:
+		RTaggerHandler* const thees;
+		MYSQL_RES* res;
+	 public:
+		const char* value;
+		
+		template<typename... Args>
+		StringFromSQLQuery_DB(RTaggerHandler* _thees,  DatabaseInfo& db_info,  Args... args)
+		: thees(_thees)
+		, value(nullptr)
+		{
+			MYSQL_RES* const _res_orig = thees->res;
+			thees->mysql_query_db_by_id(db_info, args...);
+			thees->mysql_assign_next_row(&this->value);
+			this->res = thees->res;
+			thees->res = _res_orig;
+		}
+		
+		~StringFromSQLQuery_DB(){
+			if (this->value != nullptr)
+				mysql_free_result(this->res);
+		}
+	};
+	
+	class StringFromSQLQuery : public StringFromSQLQuery_DB {
+	 public:
+		template<typename... Args>
+		StringFromSQLQuery(RTaggerHandler* _thees,  Args... args)
+		: StringFromSQLQuery_DB(_thees, db_infos.at(0), args...)
+		{}
+	};
+	
 	std::string_view post__create_file(const char* s){
 		uint64_t file_id = a2n<uint64_t>(&s);
 		if(*s != '/')
@@ -1181,35 +1258,30 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			// Update an existing file
 			return compsky::wangler::_r::not_implemented_yet;
 		
-		const char* const path = this->get_last_row_from_qry<const char*>("SELECT CONCAT(full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") FROM dir WHERE id=", dir_id);
-		const bool is_local_dir = os::is_local_file_or_dir(path);
+		const StringFromSQLQuery path(this, "SELECT CONCAT(full_path, \"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\") FROM dir WHERE id=", dir_id);
+		// NOTE: Guaranteed to be a good dir_id
+		const bool is_local_dir = os::is_local_file_or_dir(path.value);
 		
 		if (is_local_dir){
 			// If the directory is non-local, the body of the request is set as the description rather than saved to a file.
 			// This is designed to store small snippets - code snippets, quotes, etc.
 			
-			
-			if(unlikely(path == nullptr))
-				// Invalid dir_id
-				return compsky::wangler::_r::not_found;
-			
-			if (unlikely(os::file_exists(path))){
+			if (unlikely(os::file_exists(path.value)))
 				return 
 					HEADER__RETURN_CODE__SERVER_ERR
 					"\n"
 					"File already exists"
 				;
-			}
 			
-			log("Creating file: ", path);
-			if (unlikely(os::write_to_file(path, file_contents, strlen(file_contents))))
+			log("Creating file: ", path.value);
+			if (unlikely(os::write_to_file(path.value, file_contents, strlen(file_contents))))
 				return compsky::wangler::_r::server_error;
 		}
 		
-		file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\"");
-		if (file_id != 0){
-			log("Warning: File existed in DB but not on FS");
-		} else {
+		while(file_id == 0){
+			// NOTE: Might never be called if file existed in DB
+			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\" LIMIT 1");
+			
 			const unsigned mimetype_id = (is_local_dir) ? 17 : 0; // "text/plain"
 			const char* const description = (is_local_dir) ? "" : file_contents;
 			
@@ -1230,13 +1302,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					'"', _f::esc, '"', description, '"',
 				")"
 			);
-			
-			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\"");
 		}
 		
 		this->add_tags_to_files(
 			user_id,
-			tag_ids, tag_ids_len,
+			std::string_view(tag_ids, tag_ids_len),
 			"AND f.id=", file_id // File already permission checked
 		);
 		
@@ -1318,50 +1388,42 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		GET_USER_ID
 		
-		this->mysql_query_db_by_id(
+		const StringFromSQLQuery_DB post_ids(
+			this,
 			db_info,
 			"SELECT GROUP_CONCAT(DISTINCT ", col_name, ")"
 			"FROM ", tbl_name, " "
 			"WHERE user=", external_user_id
 		);
-		MYSQL_RES* const _post_ids_res = this->res;
-		const char* post_ids;
-		this->mysql_assign_next_row(&post_ids);
-		if (post_ids == nullptr){
+		if (post_ids.value == nullptr){
 			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
-			mysql_free_result(_post_ids_res);
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		
 		this->reset_buf_index();
-		this->mysql_query(
+		const StringFromSQLQuery file_ids(
+			this,
 			"SELECT GROUP_CONCAT(f2p.file)"
 			"FROM file2post f2p "
 			"JOIN file f ON f.id=f2p.file "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE f2p.post IN (", post_ids, ")"
+			"WHERE f2p.post IN (", post_ids.value, ")"
 			  "AND " NOT_DISALLOWED_FILE("f2p.file", "f.dir", "d.device", user_id)
 			"LIMIT " TABLE_LIMIT
 		);
-		mysql_free_result(_post_ids_res);
 		
-		const char* file_ids;
-		this->mysql_assign_next_row(&file_ids);
-		if (file_ids == nullptr){
+		if (file_ids.value == nullptr){
 			// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
-			this->mysql_free_res();
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		}
 		
 		this->begin_json_response();
 		this->asciify(
 			"["
-				"\"", file_ids, "\""
+				"\"", file_ids.value, "\""
 			"]"
 		);
 		*this->itr = 0;
-		
-		this->mysql_free_res();
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1373,7 +1435,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		++s;
 		const uint64_t user_id = a2n<uint64_t>(s);
 		
-		this->mysql_query_db_by_id(
+		SQLQuery qry1(
+			this,
 			db_info,
 			"SELECT "
 				"u.name,",
@@ -1393,11 +1456,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const char* is_verified;
 		const char* n_followers;
 		const char* tag_ids;
-		this->mysql_assign_next_row(&name, &full_name, &is_verified, &n_followers, &tag_ids);
+		qry1.assign_next_row(&name, &full_name, &is_verified, &n_followers, &tag_ids);
 		// mysql_assign_next_row always returns a single row due to the GROUP_CONCAT function
 		if (name == nullptr){
 			// No ushc user
-			this->mysql_free_res();
 			return compsky::wangler::_r::not_found;
 		}
 		this->asciify(
@@ -1409,8 +1471,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		this->asciify(']');
 		*this->itr = 0;
-		
-		this->mysql_free_res();
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1997,29 +2057,26 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_unsafe_tasks")
 		
-		this->mysql_query(
+		StringFromSQLQuery content(
+			this,
 			"SELECT content "
 			"FROM task "
 			"WHERE id=", task_id
 		);
-		const char* content = nullptr;
-		this->mysql_assign_next_row(&content);
 		
-		if(content == nullptr)
+		if(content.value == nullptr)
 			// User tried to execute a task they were not authorised to see
 			return compsky::wangler::_r::not_found;
 		
-		const char* content_end = content;
+		const char* content_end = content.value;
 		while(true){
 			while((*content_end != 0) and (*content_end != ';'))
 				++content_end;
-			this->mysql_exec_buf(content,  (uintptr_t)content_end - (uintptr_t)content);
+			this->mysql_exec_buf(content.value,  (uintptr_t)content_end - (uintptr_t)content.value);
 			if(*content_end == 0)
 				break;
-			content = ++content_end;
+			content.value = ++content_end;
 		}
-		
-		this->mysql_free_res();
 		
 		return compsky::wangler::_r::post_ok;
 	}
@@ -2267,7 +2324,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("stream_files")
 		
-		this->mysql_query(
+		SQLQuery qry1(
+			this,
+			db_infos.at(0),
 			"SELECT m.name, CONCAT(d.full_path, f", (dir_id==0)?"":"2", ".name) "
 			"FROM file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
@@ -2279,16 +2338,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		const char* mimetype = nullptr;
 		const char* file_path;
-		while(this->mysql_assign_next_row__no_free(&mimetype, &file_path));
+		while(qry1.assign_next_row__no_free(&mimetype, &file_path));
 		if (mimetype == nullptr){
-			this->mysql_free_res();
 			return compsky::wangler::_r::not_found;
 		}
 		
 		const size_t f_sz = os::get_file_sz(file_path);
 		if (unlikely(f_sz == 0)){
 			log("Cannot open file: ", file_path);
-			this->mysql_free_res();
 			return compsky::wangler::_r::server_error;
 		}
 		
@@ -2323,78 +2380,72 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
 		memcpy(this->buf + room_for_headers - headers_len,  this->buf,  headers_len);
 		
-		this->mysql_free_res();
-		
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
 	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
-		FunctionSuccessness rc = FunctionSuccessness::ok;
-		const char* dir_name = nullptr;
+		if (unlikely(file_name[0] == 0)){
+			log("Empty file name");
+			return FunctionSuccessness::server_error;
+		}
 		
 		if (in_str(file_name, os::unix_path_sep) and (file_id==nullptr) and not is_ytdl){
 			log("dl_or_cp_file rejected due to slash in file name: ", file_name);
-			rc = FunctionSuccessness::server_error;
-			goto dl_or_cp_file__return;
+			return FunctionSuccessness::server_error;
 		}
 		
-		this->mysql_query(
+		const StringFromSQLQuery dir_name(
+			this,
 			"SELECT d.full_path "
 			"FROM dir d "
 			"WHERE d.id=", dir_id
 		); //, " AND id NOT IN " USER_DISALLOWED_DIRS(user_id));
 		
-		if (not this->mysql_assign_next_row(&dir_name)){
+		if (dir_name.value == nullptr){
 			// No visible directory with the requested ID
 			// MySQL results already freed
-			rc = FunctionSuccessness::malicious_request;
-			goto dl_or_cp_file__return;
+			return FunctionSuccessness::malicious_request;
 		}
 		
-		if (not endswith(dir_name, os::unix_path_sep)){
+		if (not endswith(dir_name.value, os::unix_path_sep)){
 			// TODO: Allow for this
-			rc = FunctionSuccessness::server_error;
-			log("dl_or_cp_file rejected due to dir name not ending in slash: ", dir_name);
-			goto dl_or_cp_file__return;
+			log("dl_or_cp_file rejected due to dir name not ending in slash: ", dir_name.value);
+			return FunctionSuccessness::server_error;
 		}
 		
-		if (not os::is_local_file_or_dir(dir_name)){
-			rc = FunctionSuccessness::malicious_request;
-			goto dl_or_cp_file__return;
+		if (not os::is_local_file_or_dir(dir_name.value)){
+			return FunctionSuccessness::malicious_request;
 		}
 		
 		// If YTDL, then file_path is the template of the path of the output file; else it is the path of the output file
-		compsky::asciify::asciify(file_path, dir_name, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
+		compsky::asciify::asciify(file_path, dir_name.value, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
 		
 		log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", file_path);
-		
-		this->mysql_free_res();
 		
 		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
 		// TODO: Check device is mounted
 		
 		if (os::is_local_file_or_dir(url)){
 			if (is_ytdl)
-				rc = FunctionSuccessness::malicious_request;
+				return FunctionSuccessness::malicious_request;
 			else
-				rc = (std::filesystem::copy_file(url, file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
+				return (std::filesystem::copy_file(url, file_path)) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		} else {
 			if (is_ytdl){
 				compsky::asciify::asciify(
 					file_path,
-					dir_name,
+					dir_name.value,
 					"%(extractor)s-%(id)s.%(ext)s",
 					'\0'
 				);
 #ifdef PYTHON
-				if (python::ytdl(file_path, url))
+				if (this->ytdl(user_id, file_id, file_path, url))
 #else
 				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
 				if (proc::exec(60, ytdl_args, STDERR_FILENO, file_path))
 #endif
 				{
-					rc = FunctionSuccessness::server_error;
-					goto dl_or_cp_file__return;
+					return FunctionSuccessness::server_error;
 				}
 				file_path[4096-1] = 0;
 				char* const file_extension = skip_to_after<char>(file_path, "Requested formats are incompatible for merge and will be merged into ");
@@ -2403,7 +2454,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					
 					compsky::asciify::asciify(
 						file_path,
-						dir_name,
+						dir_name.value,
 						"%(extractor)s-%(id)s.", // Omit the file extension, as youtube-dl does not get the correct extension in this case when simulating (why force simulating then?!)
 						'\0'
 					);
@@ -2413,8 +2464,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				// Now run youtube-dl a second time, to paste the output filename into file_path, because it has no option to print the filename without only simulating
 				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
 				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, file_path)){
-					rc = FunctionSuccessness::server_error;
-					goto dl_or_cp_file__return;
+					return FunctionSuccessness::server_error;
 				}
 #endif
 				
@@ -2424,16 +2474,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					replace_first_instance_of(file_path, '\n', file_extension, '\0');
 				}
 				log("YTDL to: ", file_path);
-				
-				rc = FunctionSuccessness::ok;
 			} else
-				rc = curl::dl_file(user_headers, url, file_path, overwrite_existing, mimetype);
+				return curl::dl_file(user_headers, url, file_path, overwrite_existing, mimetype);
 		}
 		
-		dl_or_cp_file__return:
-		// For possible cleanups
-		
-		return rc;
+		return FunctionSuccessness::ok;
 	}
 	
 	FunctionSuccessness dl_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
@@ -2663,8 +2708,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				}
 				
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
+				const StringFromSQLQuery file_id(this, "SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', f_name_sv, "\" LIMIT 1");
 				char file_path[4096];
-				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, nullptr, file_name, _buf, is_html_file, mimetype, true, is_ytdl)){
+				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl)){
 					case FunctionSuccessness::server_error:
 						++n_errors;
 					case FunctionSuccessness::ok:
@@ -2700,7 +2746,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		} else /* if (which_tbl == 'f') */ {
 			this->add_tags_to_files(
 				user_id,
-				tag_ids, tag_ids_len,
+				std::string_view(tag_ids, tag_ids_len),
 				  "AND t.id != 0 "
 				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
 				  "AND f.dir=", parent_dir_id, " "
@@ -2715,9 +2761,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	
 	template<typename T,  typename... Args>
 	T get_last_row_from_qry(Args... args){
-		this->mysql_query(args...);
+		SQLQuery qry(this, db_infos.at(0), args...);
 		T t = 0;
-		while(this->mysql_assign_next_row(&t));
+		qry.assign_next_row(&t);
 		return t;
 	}
 	
@@ -2776,7 +2822,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 						"POWER(h-",h,3,",2) "
 					"LIMIT 1"
 				);
-				while(this->mysql_assign_next_row(&box_id_final));
 				
 				this->asciify(box_id_final, ',');
 			} else {
@@ -3031,22 +3076,21 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
-		this->mysql_query("SELECT f.id, d.full_path, f.name FROM file f JOIN dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
+		SQLQuery qry(this, db_infos.at(0), "SELECT f.id, d.full_path, f.name FROM file f JOIN dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
 		char orig_file_path[4096];
 		const char* file_id_str;
 		const char* orig_dir_name;
 		const char* file_name;
-		while(this->mysql_assign_next_row(&file_id_str, &orig_dir_name, &file_name)){
+		while(qry.assign_next_row(&file_id_str, &orig_dir_name, &file_name)){
 			if ((url_length != 0) and not is_ytdl)
 				compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
 			else
 				compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
 			
 			char mimetype[100] = {0};
-			MYSQL_RES* const prev_res = this->res;
 			char file_path[4096];
 			const auto rc = this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
-			this->res = prev_res;
+			
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 			
@@ -3229,8 +3273,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 	}
 	
-	template<typename... Args>
-	void add_tags_to_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
+	template<typename T,  typename... Args>
+	void add_tags_to_files(const UserIDIntType user_id,  const T tag_ids,  Args... where_args){
 		this->mysql_exec(
 			"INSERT INTO file2tag"
 			"(tag, file, user)"
@@ -3238,7 +3282,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"FROM tag t "
 			"JOIN file f "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			"WHERE t.id IN (", tag_ids,  ")"
 			"AND " NOT_DISALLOWED_TAG("t.id", user_id),
 			where_args..., " "
 			"ON DUPLICATE KEY UPDATE file=file"
@@ -3316,7 +3360,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->add_tags_to_files(
 			user_id,
-			tag_ids, tag_ids_len,
+			std::string_view(tag_ids, tag_ids_len),
 			"AND f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
 		);
 		
@@ -3457,6 +3501,158 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		return compsky::wangler::_r::post_ok; // NOTE: this is likely to have timed out already on the client's side
 	}
+	
+#ifdef PYTHON
+	template<typename FileIDType>
+	bool process_remote_video_metadata(const UserIDIntType user_id,  const FileIDType file_id,  const char* const json){
+		using namespace python;
+		using namespace rapidjson;
+		
+		Document d;
+		
+		if (d.Parse(tagem_module::json_metadata.as_str()).HasParseError())
+			return true;
+		
+		const char* const title = get_str(d, "title");
+		const unsigned w = get_int(d, "width");
+		const unsigned h = get_int(d, "height");
+		const float duration = get_flt(d, "duration");
+		const float fps = get_flt(d, "fps");
+		const unsigned views = get_int(d, "view_count");
+		const unsigned likes = get_int(d, "like_count");
+		const unsigned dislikes = get_int(d, "dislike_count");
+		const char* const thumbnail = get_str(d, "thumbnail");
+		const char* const descr = get_str(d, "description");
+		unsigned t_origin = get_int(d, "timestamp");
+		const char* const dt = get_str(d, "upload_date");
+		const char* const uploader = get_str(d, "uploader");
+		
+		this->mysql_exec(
+			"INSERT INTO tag"
+			"(name,user)"
+			"VALUES("
+				"\"Uploader: ", _f::esc, '"', uploader, "\",",
+				user_id,
+			")"
+			"ON DUPLICATE KEY UPDATE user=user"
+		);
+		
+		const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
+			"SELECT id "
+			"FROM tag "
+			"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
+			"LIMIT 1"
+		);
+		
+		this->add_tags_to_files(
+			user_id,
+			tag_id,
+			"AND f.id=", file_id, " "
+		);
+		
+		log("t_origin == ", t_origin);
+		
+		if (t_origin == 0){
+			struct tm time;
+			strptime(dt, "%Y%m%d", &time);
+			t_origin = mktime(&time);
+		}
+		
+		this->mysql_exec(
+			"UPDATE file "
+			"SET "
+				"w=IFNULL(file.w,", w, "),"
+				"h=IFNULL(file.h,", h, "),"
+				"fps=IFNULL(file.fps,", fps, 3, "),"
+				"duration=IFNULL(file.duration,", duration, 3, "),"
+				"views=IFNULL(file.views,", views, "),"
+				"likes=IFNULL(file.likes,", likes, "),"
+				"dislikes=IFNULL(file.dislikes,", dislikes, "),"
+				"title=IFNULL(file.title,LEFT(\"", _f::esc, '"', title, "\",100)),"
+				"description=LEFT(\"", _f::esc, '"', descr, "\",1000),"
+				"t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,", t_origin, ")"
+			"WHERE id=", file_id
+		);
+		
+		return false;
+	}
+	
+	
+	template<typename FileIDType>
+	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
+		using namespace python;
+		
+		bool failed;
+		GILLock gillock();
+		{ // Ensures the GILLock destructor is called after all PyObj destructors
+		PyDict<7> opts(
+			"quiet", Py_True,
+			"forcefilename", Py_True,
+			"outtmpl", PyUnicode_FromString(out_fmt_as_input__resulting_fp_as_output),
+			"noprogress", Py_True,
+			"dump_single_json", Py_True,
+			"forcejson", Py_True,
+			"format", PyUnicode_FromString(YTDL_FORMAT)
+		);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
+		// Override to_stdout, so that the file path is written to a buffer instead of stdout
+		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
+		Py_INCREF(tagem_module::to_stdout);
+		/*PyObject_SetAttrString(tagem_module::modul, "ytdl_instantiation", ytdl_instantiation);
+		PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
+		// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
+		
+		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		
+		failed = (unlikely(PyErr_Occurred() != nullptr));
+		if (not failed){
+			tagem_module::file_path.copy_str(out_fmt_as_input__resulting_fp_as_output);
+			Py_DECREF(tagem_module::file_path.obj);
+			this->process_remote_video_metadata(user_id, file_id, tagem_module::json_metadata.as_str());
+		}
+		}
+		return failed;
+	}
+	
+	template<typename FileIDType>
+	bool get_remote_video_metadata(const UserIDIntType user_id,  const FileIDType file_id,  const char* const url){
+		using namespace python;
+		bool failed;
+		GILLock gillock();
+		{ // Ensures the GILLock destructor is called after all PyObj destructors
+		PyDict<5> opts(
+			"quiet", Py_False,
+			"dump_single_json", Py_True,
+			"forcejson", Py_True,
+			"simulate", Py_True,
+			"skip_download", Py_True
+		);
+		Py_INCREF(Py_False);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
+		
+		// Override to_stdout, so that the file path is written to a buffer instead of stdout
+		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
+		Py_INCREF(tagem_module::to_stdout);
+		
+		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		
+		failed = (unlikely(PyErr_Occurred() != nullptr));
+		if (not failed){
+			failed = (this->process_remote_video_metadata(user_id, file_id, tagem_module::json_metadata.as_str()));
+			
+			Py_DECREF(tagem_module::json_metadata.obj);
+		}
+		}
+		return failed;
+	}
+#endif
 };
 std::mutex RTaggerHandler::mysql_mutex;
 

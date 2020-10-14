@@ -119,6 +119,16 @@ class PyObj {
 	}
 };
 
+class PyStr : public PyObj {
+ private:
+	const char* const str;
+ public:
+	PyStr(const char* const _str)
+	: str(_str)
+	, PyObj(PyUnicode_FromString(_str))
+	{}
+};
+
 template<size_t n>
 class PyDict : public PyObj {
  private:
