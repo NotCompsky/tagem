@@ -3422,16 +3422,18 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		char* const thumbnail_filepath = this->itr;
 		this->asciify(CACHE_DIR);
 		char* const thumbnail_filename = this->itr;
+		for (const bool using_backup : {false, true}){
 		for (const uint64_t device : connected_local_devices){
 			this->mysql_query(
-				"SELECT "
-					"f.id,"
-					"d.full_path,"
-					"f.name,"
+				"SELECT ",
+					(using_backup)?"f2.file":"f.id", ","
+					"d.full_path,",
+					(using_backup)?"f2":"f", ".name,"
 					"(mt.name REGEXP '^video/')"
-				"FROM file f "
-				"JOIN dir d ON d.id=f.dir "
-				"JOIN mimetype mt ON mt.id=f.mimetype "
+				"FROM file f ",
+				(using_backup)?"JOIN file_backup f2 ON f2.file=f.id ":"",
+				"JOIN dir d ON d.id=f", (using_backup)?"2":"", ".dir "
+				"JOIN mimetype mt ON mt.id=f", (using_backup)?"2":"", ".mimetype "
 				"WHERE device=", device, " "
 				  "AND mt.name REGEXP '^(image|video)/' "
 				  "AND f.md5_of_path IS NULL"
@@ -3497,6 +3499,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				img.save(thumbnail_filepath);
 				log("Generated image thumbnail: ", thumbnail_filepath);
 			}
+		}
 		}
 		
 		return compsky::wangler::_r::post_ok; // NOTE: this is likely to have timed out already on the client's side
