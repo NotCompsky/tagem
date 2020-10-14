@@ -295,8 +295,8 @@ float get_flt(const rapidjson::Value& v,  const char* k){
 	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetFloat() : 0;
 }
 
-const char* get_str(const rapidjson::Value& v,  const char* k){
-	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetString() : "";
+const char* get_str(const rapidjson::Value& v,  const char* k,  const char* default_value = 0){
+	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetString() : default_value;
 }
 }
 
@@ -3516,7 +3516,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		if (d.Parse(tagem_module::json_metadata.as_str()).HasParseError())
 			return true;
 		
-		const char* const title = get_str(d, "title");
 		const unsigned w = get_int(d, "width");
 		const unsigned h = get_int(d, "height");
 		const float duration = get_flt(d, "duration");
@@ -3524,38 +3523,54 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const unsigned views = get_int(d, "view_count");
 		const unsigned likes = get_int(d, "like_count");
 		const unsigned dislikes = get_int(d, "dislike_count");
-		const char* const thumbnail = get_str(d, "thumbnail");
-		const char* const descr = get_str(d, "description");
 		unsigned t_origin = get_int(d, "timestamp");
+		
+		const char* const title = get_str(d, "title", "");
+		const char* const thumbnail = get_str(d, "thumbnail");
+		const char* const descr = get_str(d, "description", "");
 		const char* const dt = get_str(d, "upload_date");
 		const char* const uploader = get_str(d, "uploader");
 		
-		this->mysql_exec(
-			"INSERT INTO tag"
-			"(name,user)"
-			"VALUES("
-				"\"Uploader: ", _f::esc, '"', uploader, "\",",
+		if (uploader != nullptr){
+			this->mysql_exec(
+				"INSERT INTO tag"
+				"(name,user)"
+				"VALUES("
+					"\"Uploader: ", _f::esc, '"', uploader, "\",",
+					user_id,
+				")"
+				"ON DUPLICATE KEY UPDATE user=user"
+			);
+			
+			const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
+				"SELECT id "
+				"FROM tag "
+				"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
+				"LIMIT 1"
+			);
+			
+			this->add_tags_to_files(
 				user_id,
-			")"
-			"ON DUPLICATE KEY UPDATE user=user"
-		);
+				tag_id,
+				"AND f.id=", file_id, " "
+			);
+		}
 		
-		const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
-			"SELECT id "
-			"FROM tag "
-			"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
-			"LIMIT 1"
-		);
-		
-		this->add_tags_to_files(
-			user_id,
-			tag_id,
-			"AND f.id=", file_id, " "
-		);
+		if (thumbnail != nullptr){
+			this->mysql_exec(
+				"INSERT INTO file2thumbnail"
+				"(file,x)"
+				"VALUES(",
+					file_id, ","
+					"\"", _f::esc, '"', thumbnail, "\""
+				")"
+				"ON DUPLICATE KEY UPDATE file=file"
+			);
+		}
 		
 		log("t_origin == ", t_origin);
 		
-		if (t_origin == 0){
+		if ((t_origin == 0) and (dt != nullptr)){
 			struct tm time;
 			strptime(dt, "%Y%m%d", &time);
 			t_origin = mktime(&time);
