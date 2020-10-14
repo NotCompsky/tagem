@@ -3615,6 +3615,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
+		Py_INCREF(Py_True);
 		PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
 		// Override to_stdout, so that the file path is written to a buffer instead of stdout
 		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
