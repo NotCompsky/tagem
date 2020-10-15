@@ -78,6 +78,8 @@ POST /record-local-dir/>
 	return this->post__recursively_record_filesystem_dir(++str)
 POST /gen-thumbs/>
 	return this->generate_thumbnails(++str)
+POST /update-vid-metas/>
+	return this->update_video_metadatas(++str)
 
 POST /e/dl/>
 	return this->post__ytdl_era(++str)

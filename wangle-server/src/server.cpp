@@ -3421,6 +3421,32 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->md5_hash(hash, file_path);
 	}
 	
+	std::string_view update_video_metadatas(const char* s){
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
+		
+		this->mysql_query(
+			"SELECT "
+				"DISTINCT f.id,"
+				"CONCAT(d.full_path,REGEXP_REPLACE(f.name,'[.][a-z34]{3,4}$',''))"
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
+			"LEFT JOIN tag t ON t.id=f2t.tag "
+			"WHERE d.full_path REGEXP '^https?://' "
+			  "AND f.status=0 "
+			"ORDER BY RAND()" // NOTE: It is best to randomise the order in order to minimise the number of consecutive calls to the same website.
+		);
+		
+		uint64_t fid;
+		const char* url;
+		while(this->mysql_assign_next_row(&fid, &url)){
+			this->get_remote_video_metadata(user_id, fid, url);
+		}
+		
+		return compsky::wangler::_r::post_ok;
+	}
+	
 	std::string_view generate_thumbnails(const char* s){
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")

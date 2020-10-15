@@ -48,6 +48,10 @@ function $$$generate_thumbs(){
 	$$$ajax_POST_w_text_response_generic_success("/gen-thumbs/");
 }
 
+function $$$update_video_metadatas(){
+	$$$ajax_POST_w_text_response_generic_success("/update-vid-metas/");
+}
+
 function $$$get_id_of_user_currently_being_edited(){
 	return $$$document_getElementById('select-user-for-edit').value;
 }
