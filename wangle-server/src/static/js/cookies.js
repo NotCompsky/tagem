@@ -14,6 +14,9 @@ function $$$set_cookie(name, value, lifetime){
 	document.cookie = name + '=' + value + ';max-age=' + lifetime + ';path=/;samesite=strict;';
 	// NOTE: Previous cookies are NOT overwritten
 }
+function $$$set_cookie_forever(name, value){
+	$$$set_cookie(name,value,999999999);
+}
 function $$$get_cookie(name){
 	const regexp = new RegExp('(?:^|;) ?' + name + "=([^;]+)");
 	const x = regexp.exec(document.cookie);

@@ -26,7 +26,7 @@ function $$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col(key,_
 
 
 function $$$set_user_setting_as(key,val){
-	$$$set_cookie(key,val,3600);
+	$$$set_cookie_forever(key,val,3600);
 	$$$document_getElementById('setting-'+key).textContent = val
 }
 
@@ -42,7 +42,7 @@ function $$$set_sleep_after_media_err(){
 
 function $$$set_bool_tbl_entry(id,B){
 	const b = ((B===true)||(B==="1"));
-	$$$set_cookie(id, b?'1':'0', 3600);
+	$$$set_cookie_forever(id, b?'1':'0', 3600);
 	$$$document_getElementById('setting-'+id).textContent = b?"1":"0";
 }
 
