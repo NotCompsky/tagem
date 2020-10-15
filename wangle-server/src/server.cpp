@@ -1281,8 +1281,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		while(file_id == 0){
 			// NOTE: Might never be called if file existed in DB
-			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\" LIMIT 1");
-			
 			const unsigned mimetype_id = (is_local_dir) ? 17 : 0; // "text/plain"
 			const char* const description = (is_local_dir) ? "" : file_contents;
 			
@@ -1303,6 +1301,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					'"', _f::esc, '"', description, '"',
 				")"
 			);
+			
+			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\" LIMIT 1");
 		}
 		
 		this->add_tags_to_files(
