@@ -83,7 +83,8 @@ class PyObj {
 	}
 	
 	void print_as_str(const char* const msg) const {
-		log(msg, PyUnicode_AsUTF8(PyObject_Str(this->obj)));
+		fprintf(stderr,  "%s%.100s\n", msg, PyUnicode_AsUTF8(PyObject_Str(this->obj)));
+		fflush(stderr);
 	}
 	
 	
