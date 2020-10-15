@@ -37,8 +37,8 @@ namespace tagem_module {
 	
 	static PyObject* modul;
 	
-	static PyObj file_path;
-	static PyObj json_metadata;
+	static PyObject* file_path;
+	static PyObject* json_metadata;
 	
 	static
 	PyObject* to_stdout_fn(PyObject* const self,  PyObject* const args,  PyObject* const keyword_args){
@@ -48,16 +48,17 @@ namespace tagem_module {
 		// So as a workaround, static C-string is set, and mutex lock is needed in the calling function
 		// In reality, the download() function could take many minutes, so a mutex lock is completely infeasible. Hence we must *hope* that there won't be a data race.
 		
-		PyObject* const _data = PyTuple_GetItem(args, 0);
-		if (unlikely(_data == nullptr)){
+		const PyObj data(PyTuple_GetItem(args, 0));
+		if (unlikely(data.obj == nullptr))
 			Py_RETURN_NONE;
-		}
-		const PyObj data(_data);
 		const char* const str = data.as_str();
+		Py_INCREF(data.obj);
 		if (str[0] == '{')
-			json_metadata.obj = data.obj;
+			json_metadata = data.obj;
 		else if (os::is_local_file_or_dir(str))
-			file_path.obj = data.obj;
+			file_path = data.obj;
+		else
+			Py_DECREF(data.obj);
 		Py_RETURN_NONE;
 	}
 	

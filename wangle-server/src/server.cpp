@@ -3519,7 +3519,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		Document d;
 		
-		if (d.Parse(tagem_module::json_metadata.as_str()).HasParseError())
+		if (d.Parse(json).HasParseError())
 			return true;
 		
 		const unsigned w = get_int(d, "width");
@@ -3626,7 +3626,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		PyObj ytdl_instantiation(ytdl_obj.call(opts.obj));
 		// Override to_stdout, so that the file path is written to a buffer instead of stdout
 		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
-		Py_INCREF(tagem_module::to_stdout);
+		
 		/*PyObject_SetAttrString(tagem_module::modul, "ytdl_instantiation", ytdl_instantiation);
 		PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
 		// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
@@ -3634,10 +3634,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
 		
 		failed = (unlikely(PyErr_Occurred() != nullptr));
+		PyObj _file_path(tagem_module::file_path);
+		PyObj _json(tagem_module::json_metadata);
 		if (not failed){
-			tagem_module::file_path.copy_str(out_fmt_as_input__resulting_fp_as_output);
-			Py_DECREF(tagem_module::file_path.obj);
-			this->process_remote_video_metadata(user_id, file_id, tagem_module::json_metadata.as_str());
+			_file_path.copy_str(out_fmt_as_input__resulting_fp_as_output);
+			this->process_remote_video_metadata(user_id, file_id, _json.as_str());
 		}
 		}
 		return failed;
@@ -3665,15 +3666,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		// Override to_stdout, so that the file path is written to a buffer instead of stdout
 		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
-		Py_INCREF(tagem_module::to_stdout);
 		
 		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
 		
 		failed = (unlikely(PyErr_Occurred() != nullptr));
+		PyObj _json(tagem_module::json_metadata);
 		if (not failed){
-			failed = (this->process_remote_video_metadata(user_id, file_id, tagem_module::json_metadata.as_str()));
-			
-			Py_DECREF(tagem_module::json_metadata.obj);
+			failed = this->process_remote_video_metadata(user_id, file_id, _json.as_str());
 		}
 		}
 		return failed;

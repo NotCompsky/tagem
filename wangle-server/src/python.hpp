@@ -92,7 +92,7 @@ class PyObj {
 	PyObj(PyObject* const _obj)
 	: obj(_obj)
 	{
-		PY_ASSERT_NOT_NULL(this->obj, "this->obj is NULL")
+		//PY_ASSERT_NOT_NULL(this->obj, "this->obj is NULL")
 		
 		this->print_as_str("Created: ");
 	}
