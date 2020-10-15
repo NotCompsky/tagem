@@ -3609,6 +3609,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		bool failed;
 		GILLock gillock();
 		{ // Ensures the GILLock destructor is called after all PyObj destructors
+		
+		tagem_module::file_path = nullptr;
+		
 		PyDict<7> opts(
 			"quiet", Py_True,
 			"forcefilename", Py_True,
@@ -3631,7 +3634,16 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		PyRun_String("tagem.ytdl_instantiation.to_stdout = tagem.to_stdout", Py_single_input, nullptr, nullptr);
 		// The C API call acts differently - the first argument is NOT a pointer to the 'self' object, but remains a pointer to the module object*/
 		
-		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		try {
+			ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		} catch(const std::runtime_error& e){
+			// Python exception, almost certainly an invalid URL or deleted file
+			// Most likely occurs after file_path has been assigned
+			// NOTE: Encountering an exception appears to cause the next call to fail
+			if (tagem_module::file_path != nullptr)
+				Py_DECREF(tagem_module::file_path);
+			return true;
+		}
 		
 		failed = (unlikely(PyErr_Occurred() != nullptr));
 		PyObj _file_path(tagem_module::file_path);
