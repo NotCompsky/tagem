@@ -80,8 +80,13 @@ struct DatabaseInfo {
 	}
 	
 	void exec_buffer(const char* const qry,  const size_t sz) const {
-		this->logs("exec_buffer");
-		compsky::mysql::exec_buffer(this->mysql_obj, qry, sz);
+		try {
+			this->logs("exec_buffer");
+			compsky::mysql::exec_buffer(this->mysql_obj, qry, sz);
+		} catch(compsky::mysql::except::SQLExec& e){
+			this->logs("Bad SQL: ", mysql_error(this->mysql_obj));
+			throw(e);
+		}
 	}
 	
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools);
