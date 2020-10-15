@@ -754,16 +754,17 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->asciify("[");
 		
 		if (not is_local){
-			if (FILES_GIVEN_REMOTE_DIR != nullptr){
-				char* const _buf = this->itr;
-				char* _itr = _buf;
-				compsky::asciify::asciify(_itr, page_n, '\0');
-				const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
-				if (proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  handler_buf_sz - this->buf_indx())){
-					return compsky::wangler::_r::server_error;
-				}
+			char* const _buf = this->itr;
+			char* _itr = _buf;
+			compsky::asciify::asciify(_itr, page_n, '\0');
+#ifdef PYTHON
+			const bool failed = python::view_remote_dir(_buf, dir_path);
+#else
+			const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
+			const bool failed = (FILES_GIVEN_REMOTE_DIR != nullptr) and proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  handler_buf_sz - this->buf_indx());
+#endif
+			if (unlikely(failed))
 				this->move_itr_to_trailing_null();
-			}
 		} else {
 		
 		this->begin_json_response();
@@ -2550,6 +2551,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				++this->itr;
 			}
 			this->add_file_or_dir_to_db('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false);
+			// TODO: Use libmagic to guess mime type
 		}
 		
 		this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
@@ -3005,9 +3007,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->asciify(_f::strlen, permalink, permalink_length, '\0');
 		
+#ifdef PYTHON__NOTIMPLEMENTEDYET
+		const bool failed = python::archive_reddit_post(this->buf);
+#else
 		const char* args[] = {"record-reddit-post", this->buf, nullptr};
-		
-		if (unlikely(proc::exec(60,  args,  STDOUT_FILENO,  nullptr,  0)))
+		const bool failed = proc::exec(60,  args,  STDOUT_FILENO,  nullptr,  0);
+#endif
+		if (unlikely(failed))
 			return compsky::wangler::_r::server_error;
 		
 		return compsky::wangler::_r::post_ok;
@@ -3780,6 +3786,15 @@ int main(int argc,  const char* const* argv){
 	db_name2id_json.back() = '}';
 	compsky::wangler::_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
+	
+#ifdef PYTHON
+	if (FILES_GIVEN_REMOTE_DIR != nullptr){
+		if (unlikely(python::import_view_remote_dir())){
+			log("Unable to import remote dir viewer");
+			return 1;
+		}
+	}
+#endif
 	
 	initialise_tagem_db(db_infos.at(0).mysql_obj);
 	
