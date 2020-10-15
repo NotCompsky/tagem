@@ -56,18 +56,17 @@ class PyObj {
 		PyObj fn(this->obj, fn_name);
 		log("Created fn");
 		fn.print_as_str("Calling function: ");
-		return PyObject_CallFunctionObjArgs(fn.obj, args..., NULL);
+		PyObject* const result = PyObject_CallFunctionObjArgs(fn.obj, args..., NULL);
+		if (unlikely(result == nullptr))
+			throw std::runtime_error("Python exception");
+		return result;
 	}
 	
 	/* Call member function without return value */
 	
 	template<typename... Args>
 	void call_fn_void(Args... args){
-		PyObject* result = this->call_fn(args...);
-		if (unlikely(result == nullptr))
-			// Python exception
-			throw std::runtime_error("Python exception");
-		Py_DECREF(result);
+		Py_DECREF(this->call_fn(args...));
 	}
 	
 	
