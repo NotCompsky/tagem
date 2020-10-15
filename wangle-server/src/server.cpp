@@ -3562,7 +3562,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			);
 		}
 		
-		if (thumbnail != nullptr){
+		if ((thumbnail != nullptr) and (thumbnail[0] == 'h')){
 			this->mysql_exec(
 				"INSERT INTO file2thumbnail"
 				"(file,x)"
