@@ -90,17 +90,21 @@ add_executable(
 	"${SRC_DIR}/initialise_tagem_db.cpp"
 	
 )
-include(CheckIPOSupported)
-check_ipo_supported(RESULT is_ipo_supported)
-if(is_ipo_supported)
-	set_target_properties(
-		server
-		PROPERTIES
-			CXX_STANDARD 17
-			INTERPROCEDURAL_OPTIMIZATION TRUE
-			LINK_FLAGS_RELEASE -s
-	)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT is_ipo_supported)
 endif()
+set(DO_LTO FALSE)
+if(is_ipo_supported)
+	set(DO_LTO TRUE)
+endif()
+set_target_properties(
+	server
+	PROPERTIES
+		CXX_STANDARD 17
+		INTERPROCEDURAL_OPTIMIZATION "${DO_LTO}"
+		LINK_FLAGS_RELEASE -s
+)
 target_include_directories(server PRIVATE "${WANGLE_INCLUDE_DIR}" "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}"
 )
 target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" "${FFMPEGTHUMBNAILER}"
