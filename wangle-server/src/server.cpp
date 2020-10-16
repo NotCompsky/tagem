@@ -262,6 +262,9 @@ static
 std::vector<const char*> file2_variables;
 
 static
+std::vector<const char*> tables_referencing_file_id;
+
+static
 std::vector<const char*> left_join_unique_name_for_each_file2_var;
 
 static
@@ -3050,6 +3053,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
 		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT * FROM (SELECT post FROM file2post WHERE file=", orig_f_id, ") AS t) AND file IN(", dupl_f_ids_args..., ")");
 		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
+		for (const char* tbl_name : tables_referencing_file_id){
+			this->mysql_exec("DELETE FROM ", tbl_name, " f WHERE f.file IN(", dupl_f_ids_args..., ") AND EXISTS (SELECT 1 FROM ", tbl_name, " WHERE f.id=", orig_f_id, ")");
+			this->mysql_exec("UPDATE ", tbl_name, " SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
+		}
 		this->mysql_exec("DELETE FROM file WHERE id IN (", dupl_f_ids_args..., ")");
 	}
 	
@@ -3911,6 +3918,25 @@ int main(int argc,  const char* const* argv){
 	);
 	compsky::mysql::assign_next_row(res4, &row, &TAG__PART_OF_FILE__ID);
 	// NOTE: The above result is not freed.
+	
+	{
+	MYSQL_RES* res5;
+	tagem_db_info.query_buffer(
+		res5,
+		"SELECT "
+			"TABLE_NAME "
+			// "COLUMN_NAME " // NOTE: This should always be "file"
+		"FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE "
+		"WHERE REFERENCED_TABLE_SCHEMA='tagem' "
+		  "AND REFERENCED_TABLE_NAME='file' "
+		  "AND REFERENCED_COLUMN_NAME='id' "
+		  "AND TABLE_NAME NOT IN ('file2post','file2tag','file2thumbnail','file_backup','user2whitelist_file')"
+	);
+	const char* tbl_name;
+	while(compsky::mysql::assign_next_row__no_free(res5, &row, &tbl_name)){
+		tables_referencing_file_id.push_back(tbl_name);
+	}
+	}
 	
 	wangle::ServerBootstrap<compsky::wangler::CompskyPipeline> server;
 	server.childPipeline(std::make_shared<compsky::wangler::CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());
