@@ -3558,7 +3558,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const unsigned views = get_int(d, "view_count");
 		const unsigned likes = get_int(d, "like_count");
 		const unsigned dislikes = get_int(d, "dislike_count");
-		unsigned t_origin = get_int(d, "timestamp");
+		unsigned t_origin = (unsigned)get_flt(d, "timestamp");
 		
 		const char* const title = get_str(d, "title", "");
 		const char* const thumbnail = get_str(d, "thumbnail");
