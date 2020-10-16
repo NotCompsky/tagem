@@ -876,7 +876,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += (old_where.empty())?"TRUE":old_where;
 					where += "\nAND ";
 					where += user_disallowed_X_tbl_filter_inner_pre;
-					where += std::to_string(user_id);
 					where += "\nGROUP BY ";
 					where += attribute_name;
 					where += "\nHAVING COUNT(*)>=";
@@ -909,7 +908,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					derived_tbl += (old_where.empty())?"TRUE":old_where;
 					derived_tbl += "\n\t\tAND ";
 					derived_tbl += user_disallowed_X_tbl_filter_inner_pre;
-					derived_tbl += std::to_string(user_id);
 					derived_tbl += "\n\t\tGROUP BY x";
 					derived_tbl += "\nHAVING COUNT(*)>=";
 					derived_tbl += std::string_view(range.min());
