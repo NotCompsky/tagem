@@ -3691,15 +3691,14 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		bool failed;
 		GILLock gillock();
 		{ // Ensures the GILLock destructor is called after all PyObj destructors
-		PyDict<5> opts(
+		tagem_module::json_metadata = nullptr;
+		PyDict<4> opts(
 			"quiet", Py_False,
-			"dump_single_json", Py_True,
 			"forcejson", Py_True,
 			"simulate", Py_True,
 			"skip_download", Py_True
 		);
 		Py_INCREF(Py_False);
-		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
