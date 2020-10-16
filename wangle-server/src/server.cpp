@@ -3834,15 +3834,14 @@ int main(int argc,  const char* const* argv){
 		}
 	}
 #endif
-	
-	initialise_tagem_db(db_infos.at(0).mysql_obj);
+	DatabaseInfo tagem_db_info = db_infos.at(0);
+	initialise_tagem_db(tagem_db_info.mysql_obj);
 	
 	UserIDIntType user_id;
 	uint64_t id;
 	const char* name;
 	
-	compsky::mysql::query_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.query_buffer(
 		res,
 		"SELECT "
 			"u.id,"
@@ -3859,8 +3858,7 @@ int main(int argc,  const char* const* argv){
 		const user_auth::User& user = user_auth::users.emplace_back(name, user_id, allowed_file2_vars);
 	
 	MYSQL_RES* res2;
-	compsky::mysql::query_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.query_buffer(
 		res2,
 		"SELECT CONCAT(\" file2_\", id, \" ON file2_\", id, \".file=f.id \")"
 		"FROM file2"
@@ -3870,8 +3868,7 @@ int main(int argc,  const char* const* argv){
 		left_join_unique_name_for_each_file2_var.push_back(name);
 	
 	MYSQL_RES* res3;
-	compsky::mysql::query_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.query_buffer(
 		res3,
 		"SELECT CONCAT(\",',',IFNULL(file2_\", id, \".x,0)\")"
 		"FROM file2"
@@ -3881,8 +3878,7 @@ int main(int argc,  const char* const* argv){
 		select_unique_name_for_each_file2_var.push_back(name);
 	
 	MYSQL_RES* res4;
-	compsky::mysql::query_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.query_buffer(
 		res4,
 		"SELECT id, name "
 		"FROM device "
@@ -3897,8 +3893,7 @@ int main(int argc,  const char* const* argv){
 	}
 	connected_local_devices_str.pop_back();
 	
-	compsky::mysql::exec_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.exec_buffer(
 		"INSERT INTO tag"
 		"(name,user)"
 		"VALUES("
@@ -3907,8 +3902,7 @@ int main(int argc,  const char* const* argv){
 		")"
 		"ON DUPLICATE KEY UPDATE id=id"
 	);
-	compsky::mysql::query_buffer(
-		db_infos.at(0).mysql_obj,
+	tagem_db_info.query_buffer(
 		res4,
 		"SELECT id "
 		"FROM tag "
