@@ -877,7 +877,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					where += "\nAND ";
 					where += user_disallowed_X_tbl_filter_inner_pre;
 					where += std::to_string(user_id);
-					where += "GROUP BY ";
+					where += "\nGROUP BY ";
 					where += attribute_name;
 					where += "\nHAVING COUNT(*)>=";
 					where += std::string_view(range.min());
@@ -1082,7 +1082,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			break;
 	}
 	compsky::asciify::asciify(filter, '\0');
-	const auto rc = process_args(connected_local_devices_str, filter, user_id, join, where, order_by, limit, offset, which_tbl, qry);
+	const auto rc = process_args(connected_local_devices_str, itr, user_id, join, where, order_by, limit, offset, which_tbl, qry);
 	if (rc != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
