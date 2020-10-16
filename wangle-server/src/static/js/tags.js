@@ -250,7 +250,8 @@ function $$$view_tag(_tag_id,page){
 		// It is undefined if we are just unhiding the tag view
 		$$$tag_id = _tag_id;
 		$$$populate_f_table('t', $$$tag_id, null, (page===undefined)?0:page);
-	}
+	} else if ($$$tag_id === undefined)
+		return;
 	
 	$$$ajax_GET_w_JSON_response(
 		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/0/"+$$$tag_id,
