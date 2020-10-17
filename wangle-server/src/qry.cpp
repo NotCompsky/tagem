@@ -78,6 +78,8 @@ namespace arg {
 		operator_and,
 		operator_or,
 		
+		select_count,
+		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
 	};
@@ -588,7 +590,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 }
 
 static
-successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
+successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  const char*& select_fields,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
@@ -1010,6 +1012,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				++n_args_since_operator;
 				break;
 			}
+			case arg::select_count:
+				select_fields = "COUNT(*)";
+				break;
 			case arg::limit: {
 				if (++n_calls__limit == 2)
 					return successness::invalid;
@@ -1034,7 +1039,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	}
 }
 
-successness::ReturnType parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id){
+selected_field::Type parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id){
 	// TODO: Look into filtering the filters with the user_id permission filters, to avoid brute-forcing.
 	// Not sure this is a big issue.
 	
@@ -1055,11 +1060,11 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			which_tbl = *qry;
 			break;
 		default:
-			return successness::invalid;
+			return selected_field::INVALID;
 	}
 	switch(*(++qry)){
 		case ' ': break;
-		default: return successness::invalid;
+		default: return selected_field::INVALID;
 	}
 	
 	char* filter = itr;
@@ -1080,18 +1085,19 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 			break;
 	}
 	compsky::asciify::asciify(filter, '\0');
-	const auto rc = process_args(connected_local_devices_str, itr, user_id, join, where, order_by, limit, offset, which_tbl, qry);
-	if (rc != successness::ok){
+	constexpr const char* select_x_id = "X.id";
+	const char* select_fields = select_x_id;
+	if (process_args(connected_local_devices_str, itr, user_id, select_fields, join, where, order_by, limit, offset, which_tbl, qry) != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
 		LOG("order_by == %s\n", order_by.c_str());
-		return rc;
+		return selected_field::INVALID;
 	}
 	
 	compsky::asciify::asciify(
 		itr,
-		"SELECT "
-			"X.id\n"
+		"SELECT ",
+			select_fields, "\n"
 		"FROM ", tbl_full_name(which_tbl), " X\n",
 		(which_tbl=='e') ? "JOIN file f ON f.id=X.file JOIN dir d ON d.id=f.dir " : "",
 		(which_tbl=='f') ? "JOIN dir d ON d.id=X.dir " : "",
@@ -1126,7 +1132,7 @@ successness::ReturnType parse_into(char* itr,  const char* qry,  const std::stri
 	
 	LOG("Query OK\n");
 	
-	return successness::ok;
+	return (select_fields == select_x_id) ? selected_field::X_ID : selected_field::COUNT;
 }
 
 } // namespace sql_factory

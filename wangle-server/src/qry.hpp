@@ -83,7 +83,15 @@ namespace successness {
 	};
 }
 
-successness::ReturnType parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id);
+namespace selected_field {
+	enum Type {
+		INVALID,
+		X_ID,
+		COUNT
+	};
+}
+
+selected_field::Type parse_into(char* itr,  const char* qry,  const std::string& connected_local_devices_str,  const unsigned user_id);
 
 
 } // namespace sql_factory

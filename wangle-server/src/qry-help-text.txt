@@ -162,6 +162,11 @@ OPTIONS
 		The order is left-to-right, the value being a chain of IFNULLs
 	limit [INTEGER]
 	offset [INTEGER]
+	?[SELECTION_FIELD]
+		SELECTION_FIELD is the column name to be selected in the query
+		EXAMPLES
+			?count
+				This leads to a "SELECT COUNT(*)" as the SQL query selection
 
 EXAMPLES
 	f order d id limit 1
@@ -211,4 +216,6 @@ EXAMPLES
 		Look for videos with "Podcast" in the title, which have not got any associated eras
 	e t "Advert"
 		Look for eras tagged "Advert"
+	f t "English Language" ?count
+		Count the number of files that are tagged (directly or indirectly) with "English Language"
 )========="

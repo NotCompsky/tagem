@@ -56,3 +56,5 @@ value >
 	return arg::value
 x >
 	return arg::external_db
+?count >
+	return arg::select_count
