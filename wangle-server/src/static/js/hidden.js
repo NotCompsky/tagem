@@ -53,6 +53,7 @@ function $$$hide_all_except(ids,classes){
 	$$$document_getElementById('profile-img').removeAttribute('onclick');
 	$$$hide_class('help');
 	for(const id of [
+		'qry-textarea',
 		'admin-dashboard',
 		'text-editor',
 		'text-edit',

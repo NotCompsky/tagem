@@ -79,6 +79,7 @@ namespace arg {
 		operator_or,
 		
 		select_count,
+		select_list,
 		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
@@ -113,6 +114,19 @@ namespace attribute_name {
 	constexpr static const char* const CHILD = "tag";
 	constexpr static const char CHILDY[] = "tag";
 }
+
+namespace selected_field {
+	constexpr char* x_id = "X.id";
+	constexpr char* count = "COUNT(*)";
+	constexpr char* list = "CONCAT(d.full_path, X.name)";
+	selected_field::Type get_enum(const char* const str){
+		return
+		  (str == selected_field::x_id)  ? selected_field::X_ID
+		: (str == selected_field::count) ? selected_field::COUNT
+		: selected_field::LIST
+		;
+	}
+};
 
 namespace _f {
 	using namespace compsky::asciify::flag;
@@ -1013,7 +1027,12 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				break;
 			}
 			case arg::select_count:
-				select_fields = "COUNT(*)";
+				select_fields = selected_field::count;
+				break;
+			case arg::select_list:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::list;
 				break;
 			case arg::limit: {
 				if (++n_calls__limit == 2)
@@ -1085,8 +1104,7 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 			break;
 	}
 	compsky::asciify::asciify(filter, '\0');
-	constexpr const char* select_x_id = "X.id";
-	const char* select_fields = select_x_id;
+	const char* select_fields = selected_field::x_id;
 	if (process_args(connected_local_devices_str, itr, user_id, select_fields, join, where, order_by, limit, offset, which_tbl, qry) != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
@@ -1132,7 +1150,7 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 	
 	LOG("Query OK\n");
 	
-	return (select_fields == select_x_id) ? selected_field::X_ID : selected_field::COUNT;
+	return selected_field::get_enum(select_fields);
 }
 
 } // namespace sql_factory

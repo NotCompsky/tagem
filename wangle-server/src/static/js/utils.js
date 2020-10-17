@@ -13,6 +13,10 @@ function $$$is_integer(x){
 	return Number.isInteger(x);
 }
 
+function $$$is_string(x){
+	return (typeof x === 'string' || x instanceof String);
+}
+
 function $$$node_exists_w_id(s){
 	return ($$$document_getElementById(s)!==null);
 }

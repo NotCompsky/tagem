@@ -21,6 +21,11 @@ function $$$view_qry(s){
 			$$$set_profile_name("="+data);
 			return;
 		}
+		if ($$$is_string(data)){
+			$$$document_getElementById("qry-textarea").innerText = data;
+			$$$unhide("qry-textarea");
+			return;
+		}
 		switch(s[0]){
 			case 'e': $$$display_f_tbl(data); $$$setup_page_for_e_tbl(); break;
 			case 'f': $$$display_f_tbl(data); $$$setup_page_for_f_tbl(); break;

@@ -87,6 +87,7 @@ namespace selected_field {
 	enum Type {
 		INVALID,
 		X_ID,
+		LIST,
 		COUNT
 	};
 }

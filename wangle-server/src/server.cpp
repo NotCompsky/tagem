@@ -470,19 +470,27 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		this->reset_buf_index();
 		
-		if (selected_field == sql_factory::selected_field::COUNT)
+		if (selected_field != sql_factory::selected_field::X_ID)
 			this->begin_json_response();
 		
-		const char* id = nullptr;
-		while(this->mysql_assign_next_row(&id))
-			this->asciify(id, ',');
+		const char* row = nullptr;
+		if (selected_field == sql_factory::selected_field::LIST){
+			this->asciify('"');
+			while(this->mysql_assign_next_row(&row))
+				this->asciify(_f::esc, '"', row, "\\n");
+			this->asciify('"');
+			return this->get_buf_as_string_view();
+		} else {
+			while(this->mysql_assign_next_row(&row))
+				this->asciify(row, ',');
+		}
 		
 		if (selected_field == sql_factory::selected_field::COUNT){
 			--this->itr;
 			return this->get_buf_as_string_view();
 		}
 		
-		if (id == nullptr)
+		if (row == nullptr)
 			// No results
 			return compsky::wangler::_r::EMPTY_JSON_LIST;
 		
