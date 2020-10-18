@@ -80,6 +80,8 @@ namespace arg {
 		
 		select_count,
 		select_list,
+		select_total_size,
+		select_total_views,
 		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
@@ -116,13 +118,17 @@ namespace attribute_name {
 }
 
 namespace selected_field {
-	constexpr char* x_id = "X.id";
-	constexpr char* count = "COUNT(*)";
-	constexpr char* list = "CONCAT(d.full_path, X.name)";
+	constexpr const char* x_id = "X.id";
+	constexpr const char* count = "COUNT(*)";
+	constexpr const char* list = "CONCAT(d.full_path, X.name)";
+	constexpr const char* total_size = "SUM(IFNULL(X.size,0))";
+	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
 	selected_field::Type get_enum(const char* const str){
 		return
 		  (str == selected_field::x_id)  ? selected_field::X_ID
 		: (str == selected_field::count) ? selected_field::COUNT
+		: (str == selected_field::total_size)  ? selected_field::TOTAL_SIZE
+		: (str == selected_field::total_views) ? selected_field::TOTAL_VIEWS
 		: selected_field::LIST
 		;
 	}
@@ -1028,6 +1034,16 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 			}
 			case arg::select_count:
 				select_fields = selected_field::count;
+				break;
+			case arg::select_total_size:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::total_size;
+				break;
+			case arg::select_total_views:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::total_views;
 				break;
 			case arg::select_list:
 				if (which_tbl != 'f')

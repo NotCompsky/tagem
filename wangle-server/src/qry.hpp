@@ -88,6 +88,8 @@ namespace selected_field {
 		INVALID,
 		X_ID,
 		LIST,
+		TOTAL_SIZE,
+		TOTAL_VIEWS,
 		COUNT
 	};
 }

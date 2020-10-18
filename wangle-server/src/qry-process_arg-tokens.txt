@@ -60,3 +60,7 @@ x >
 	return arg::select_count
 ?list >
 	return arg::select_list
+?size >
+	return arg::select_total_size
+?views >
+	return arg::select_total_views

@@ -485,7 +485,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				this->asciify(row, ',');
 		}
 		
-		if (selected_field == sql_factory::selected_field::COUNT){
+		if ((selected_field == sql_factory::selected_field::COUNT) or (selected_field == sql_factory::selected_field::TOTAL_SIZE) or (selected_field == sql_factory::selected_field::TOTAL_VIEWS)){
 			--this->itr;
 			return this->get_buf_as_string_view();
 		}
