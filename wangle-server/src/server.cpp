@@ -3919,15 +3919,6 @@ int main(int argc,  const char* const* argv){
 	}
 	connected_local_devices_str.pop_back();
 	
-	tagem_db_info.exec_buffer(
-		"INSERT INTO tag"
-		"(name,user)"
-		"VALUES("
-			"\"!!PART OF FILE!!\","
-			ADMIN_ID_STR
-		")"
-		"ON DUPLICATE KEY UPDATE id=id"
-	);
 	tagem_db_info.query_buffer(
 		res4,
 		"SELECT id "
