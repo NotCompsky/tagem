@@ -83,9 +83,6 @@ namespace arg {
 		select_total_size,
 		select_total_views,
 		
-		use_file_backups_as_file_table,
-		// TODO: combine_file_backups_with_file_table,
-		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
 	};
@@ -613,7 +610,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 }
 
 static
-successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  const char*& select_fields,  const char*& tbl_name,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
+successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  const char*& select_fields,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	LOG("process_args %c %s\n", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
@@ -1048,11 +1045,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return successness::invalid;
 				select_fields = selected_field::total_views;
 				break;
-			case arg::use_file_backups_as_file_table:
-				if (which_tbl != 'f')
-					return successness::invalid;
-				tbl_name = "file_backup";
-				break;
 			case arg::select_list:
 				if (which_tbl != 'f')
 					return successness::invalid;
@@ -1129,8 +1121,7 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 	}
 	compsky::asciify::asciify(filter, '\0');
 	const char* select_fields = selected_field::x_id;
-	const char* tbl_name = tbl_full_name(which_tbl);
-	if (process_args(connected_local_devices_str, itr, user_id, select_fields, tbl_name, join, where, order_by, limit, offset, which_tbl, qry) != successness::ok){
+	if (process_args(connected_local_devices_str, itr, user_id, select_fields, join, where, order_by, limit, offset, which_tbl, qry) != successness::ok){
 		LOG("join == %s\n", join.c_str());
 		LOG("where == %s\n", where.c_str());
 		LOG("order_by == %s\n", order_by.c_str());
@@ -1141,7 +1132,7 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 		itr,
 		"SELECT ",
 			select_fields, "\n"
-		"FROM ", tbl_name, " X\n",
+		"FROM ", tbl_full_name(which_tbl), " X\n",
 		(which_tbl=='e') ? "JOIN file f ON f.id=X.file JOIN dir d ON d.id=f.dir " : "",
 		(which_tbl=='f') ? "JOIN dir d ON d.id=X.dir " : "",
 		join.c_str(),

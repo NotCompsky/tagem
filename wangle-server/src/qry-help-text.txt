@@ -172,12 +172,6 @@ OPTIONS
 				This returns the total size of all selected files
 			views
 				This returns the total number of views across all selected files
-	[COMBINATION_MODE]backups     (only valid with file table)
-		COMBINATION_MODE must be one of
-			=
-				Replace file table with file_backup table
-			+    (Not implemented yet)
-				Combine file table with file_backup table
 
 EXAMPLES
 	f order d id limit 1
