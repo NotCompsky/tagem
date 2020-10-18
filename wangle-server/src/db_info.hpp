@@ -79,6 +79,10 @@ struct DatabaseInfo {
 		}
 	}
 	
+	void query_buffer(MYSQL_RES*& res,  const char* const qry) const {
+		this->query_buffer(res, qry, strlen(qry));
+	}
+	
 	void exec_buffer(const char* const qry,  const size_t sz) const {
 		try {
 			this->logs("exec_buffer");
@@ -87,6 +91,10 @@ struct DatabaseInfo {
 			this->logs("Bad SQL: ", mysql_error(this->mysql_obj));
 			throw(e);
 		}
+	}
+	
+	void exec_buffer(const char* const qry) const {
+		this->exec_buffer(qry, strlen(qry));
 	}
 	
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools);
