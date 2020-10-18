@@ -64,3 +64,5 @@ x >
 	return arg::select_total_size
 ?views >
 	return arg::select_total_views
+=backups >
+	return arg::use_file_backups_as_file_table
