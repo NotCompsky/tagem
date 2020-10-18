@@ -3592,6 +3592,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const unsigned likes = get_int(d, "like_count");
 		const unsigned dislikes = get_int(d, "dislike_count");
 		unsigned t_origin = (unsigned)get_flt(d, "timestamp");
+		const size_t size = get_int(d, "size");
 		
 		const char* const title = get_str(d, "title", "");
 		const char* const thumbnail = get_str(d, "thumbnail");
@@ -3655,6 +3656,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				"views=IFNULL(file.views,", views, "),"
 				"likes=IFNULL(file.likes,", likes, "),"
 				"dislikes=IFNULL(file.dislikes,", dislikes, "),"
+				"size=IFNULL(file.size,", size, "),"
 				"title=IFNULL(file.title,LEFT(\"", _f::esc, '"', title, "\",100)),"
 				"description=LEFT(\"", _f::esc, '"', descr, "\",1000),"
 				"t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,", t_origin, ")"
