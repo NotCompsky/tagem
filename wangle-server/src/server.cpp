@@ -3471,7 +3471,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		uint64_t fid;
 		const char* url;
 		while(this->mysql_assign_next_row(&fid, &url)){
-			this->get_remote_video_metadata(user_id, fid, url);
+			if (unlikely(this->get_remote_video_metadata(user_id, fid, url))){
+				this->mysql_exec(
+					"UPDATE file "
+					"SET status=1 "
+					"WHERE id=", fid
+				);
+			}
 		}
 		
 		return compsky::wangler::_r::post_ok;
@@ -3641,6 +3647,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_exec(
 			"UPDATE file "
 			"SET "
+				"status=2,"
 				"w=IFNULL(file.w,", w, "),"
 				"h=IFNULL(file.h,", h, "),"
 				"fps=IFNULL(file.fps,", fps, 3, "),"
