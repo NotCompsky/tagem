@@ -25,7 +25,7 @@ int main(const int argc,  const char* const* const argv){
 	}
 	char buf[4096];
 	const auto rc = sql_factory::parse_into(buf, argv[1], "0", a2n<unsigned>(argv[2]));
-	if (rc == sql_factory::successness::ok)
+	if (rc != sql_factory::selected_field::INVALID)
 		printf("%s\n", buf);
 	return rc;
 }
