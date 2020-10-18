@@ -3073,8 +3073,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_exec("DELETE FROM file2post WHERE post IN (SELECT * FROM (SELECT post FROM file2post WHERE file=", orig_f_id, ") AS t) AND file IN(", dupl_f_ids_args..., ")");
 		this->mysql_exec("UPDATE file2post SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
 		for (const char* tbl_name : tables_referencing_file_id){
-			this->mysql_exec("DELETE FROM ", tbl_name, " f WHERE f.file IN(", dupl_f_ids_args..., ") AND EXISTS (SELECT 1 FROM ", tbl_name, " WHERE f.id=", orig_f_id, ")");
-			this->mysql_exec("UPDATE ", tbl_name, " SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ")");
+			if (not this->get_last_row_from_qry<bool>("SELECT 1 FROM ", tbl_name, " WHERE file=", orig_f_id))
+				this->mysql_exec("UPDATE ", tbl_name, " SET file=", orig_f_id, " WHERE file IN(", dupl_f_ids_args..., ") LIMIT 1");
+			this->mysql_exec("DELETE FROM ", tbl_name, " f WHERE f.file IN(", dupl_f_ids_args..., ")");
 		}
 		this->mysql_exec("DELETE FROM file WHERE id IN (", dupl_f_ids_args..., ")");
 	}
