@@ -65,6 +65,7 @@ INPUT DATA TYPES
 				dct (perceptual hash)         f
 				audio (perceptual hash)       f
 				tag                           f
+				thumb                         f
 				parent (direct ancestor)      t
 				parenty (any ancestory)       t
 				child                         t
@@ -225,4 +226,8 @@ EXAMPLES
 		Count the number of files that are tagged (directly or indirectly) with "English Language"
 	f t "English Language" ?list
 		Prints a list of all files tagged with such
+	f attr thumb r "."
+		Files which have any associated thumbnail
+	f attr dct r "."
+		Files which have any associated dct_hash (i.e. locally downloaded files with thumbnails)
 )========="

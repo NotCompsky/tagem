@@ -31,6 +31,10 @@ sha >
 	attribute_name = attribute_name::SHA256;
 	attribute_kind = attribute_kind::many_to_one;
 	return (which_tbl=='f') ? successness::ok : successness::invalid
+thumb >
+	attribute_name = attribute_name::THUMBNAIL;
+	attribute_kind = attribute_kind::many_to_many;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
 size >
 	attribute_name = (which_tbl=='f') ? attribute_name::SIZE : attribute_name::ERSATZ_SIZE;
 	attribute_kind = (which_tbl=='f') ? attribute_kind::many_to_one : attribute_kind::ersatz_many_to_one;

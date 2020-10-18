@@ -101,6 +101,7 @@ namespace attribute_name {
 	constexpr static const char* const MD5 = "md5";
 	constexpr static const char* const MIMETYPE = "mimetype";
 	constexpr static const char* const SHA256 = "sha256";
+	constexpr static const char* const THUMBNAIL = "thumbnail";
 	constexpr static const char* const SIZE = "size";
 	constexpr static const char* const ERSATZ_SIZE = "n";
 	constexpr static const char* const VIEWS    = "views";
@@ -307,6 +308,11 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 	join += " ON ersatz";
 	join += std::to_string(ersatz_count);
 	join += ".id=X.id\n";
+}
+
+static
+bool many2many_attr_has_its_own_tbl(const char* const attribute_name){
+	return not ((attribute_name == attribute_name::DCT_HASH) or (attribute_name == attribute_name::AUDIO_HASH) or (attribute_name == attribute_name::MD5) or (attribute_name == attribute_name::SHA256) or (attribute_name == attribute_name::THUMBNAIL));
 }
 
 static
@@ -974,14 +980,18 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				const auto value_kind = get_attribute_value_kind(attribute_name);
 				
 				if (attribute_kind == attribute_kind::many_to_many){
-					where += " X.id IN(SELECT id FROM ";
+					where += " X.id IN(SELECT ";
+					where += many2many_attr_has_its_own_tbl(attribute_name) ? "id" : tbl_full_name(which_tbl);
+					where += " FROM ";
 					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
 					where += " WHERE ";
 					add_many2many_field_name(where, attribute_name, which_tbl);
 					if (value_kind == attribute_value_kind::string){
-						where += " IN(SELECT id FROM ";
-						where += get_tbl_name_from_attr_name(attribute_name);
-						where += " WHERE name";
+						if (many2many_attr_has_its_own_tbl(attribute_name)){
+							where += " IN(SELECT id FROM ";
+							where += get_tbl_name_from_attr_name(attribute_name);
+							where += " WHERE name";
+						}
 					}
 				} else if ((attribute_kind == attribute_kind::many_to_one) or (attribute_kind == attribute_kind::unique)){
 					where += " X.";
@@ -1025,7 +1035,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				
 				if (attribute_kind == attribute_kind::many_to_many){
 					if (value_kind == attribute_value_kind::string)
-						where += ")";
+						if (many2many_attr_has_its_own_tbl(attribute_name))
+							where += ")";
 					where += ")";
 				}
 				
