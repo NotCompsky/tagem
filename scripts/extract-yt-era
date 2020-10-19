@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
 
+youtube-dl(){
+	python3 -m youtube_dl "$@"
+}
+
+
 outpath="$1"
 
 
