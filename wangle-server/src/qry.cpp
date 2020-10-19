@@ -740,12 +740,13 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if ((which_tbl != 'f') and (which_tbl != 'd'))
 					return successness::unimplemented;
 				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
 				if (which_tbl == 'f')
-					where += "EXISTS(SELECT 1 FROM file f JOIN dir d ON d.id=f.dir WHERE f.id=X.id AND d.device IN(" + connected_local_devices_str + "))";
+					where += "IN (SELECT f.id FROM file f JOIN dir d ON d.id=f.dir WHERE d.device IN(" + connected_local_devices_str + "))";
 				else
-					where += "EXISTS(SELECT 1 FROM dir d WHERE d.id=X.id AND d.device IN(" + connected_local_devices_str + ")";
+					where += "IN (SELECT id FROM dir WHERE device IN(" + connected_local_devices_str + ")";
 				++n_args_since_operator;
 				break;
 				break;
@@ -784,15 +785,16 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					return rc;
 				
 				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
 					where += "NOT ";
-				where += "EXISTS(SELECT 1 FROM ";
+				where += "IN(SELECT file FROM ";
 				where += get_tbl_for_file_assoc_count(arg_token_base);
 				where += " GROUP BY file HAVING COUNT(*)>=";
 				where += std::string_view(range.min());
 				where += " AND COUNT(*)<=";
 				where += std::string_view(range.max());
-				where += " AND file=X.id)";
+				where += ")";
 				++n_args_since_operator;
 				break;
 			}
@@ -800,9 +802,10 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (which_tbl != 'f')
 					return successness::invalid;
 				where += bracket_operator_at_depth[bracket_depth];
+				where += " X.id ";
 				if (is_inverted)
-					where += " NOT";
-				where += " EXISTS(SELECT 1 FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE f2p.file=X.id AND db.name";
+					where += "NOT ";
+				where += "IN (SELECT f2p.file FROM file2post f2p JOIN external_db db ON db.id=f2p.db WHERE db.name";
 				rc = process_name_list(where, 'x', qry);
 				if (rc != successness::ok)
 					return rc;
@@ -912,11 +915,12 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				} else if (attribute_kind == attribute_kind::ersatz_many_to_one){
 					return successness::unimplemented;
 				} else {
+					where = "X.id";
 					if (is_inverted)
 						where += "NOT";
-					where += " EXISTS(SELECT 1\n\tFROM file2";
+					where += " IN(SELECT file\n\tFROM file2";
 					where += attribute_name;
-					where += "\n\tWHERE file=X.id AND ";
+					where += "\n\tWHERE ";
 					where += attribute_field_name(attribute_name);
 					where += " IN";
 					
@@ -977,11 +981,11 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				const auto value_kind = get_attribute_value_kind(attribute_name);
 				
 				if (attribute_kind == attribute_kind::many_to_many){
-					where += " EXISTS(SELECT 1 FROM ";
-					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
-					where += " WHERE X.id=";
+					where += " X.id IN(SELECT ";
 					where += many2many_attr_has_its_own_tbl(attribute_name) ? "id" : tbl_full_name(which_tbl);
-					where += " AND ";
+					where += " FROM ";
+					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
+					where += " WHERE ";
 					add_many2many_field_name(where, attribute_name, which_tbl);
 					if (value_kind == attribute_value_kind::string){
 						if (many2many_attr_has_its_own_tbl(attribute_name)){
