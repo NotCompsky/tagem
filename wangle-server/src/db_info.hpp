@@ -15,6 +15,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "errors.hpp"
 #include <compsky/mysql/mysql.hpp>
+#include <compsky/deasciify/a2n.hpp>
 
 
 struct DatabaseInfo {
@@ -56,8 +57,23 @@ struct DatabaseInfo {
 	void attempt_to_access_tbl(const char* const tbl_name) const;
 	void attempt_qry(const char* const qry) const;
 	
+	const char* host() const {
+		return auth[0];
+	}
+	const char* path() const {
+		return auth[1];
+	}
+	const char* user() const {
+		return auth[2];
+	}
+	const char* pwrd() const {
+		return auth[3];
+	}
 	const char* name() const {
 		return auth[4];
+	}
+	unsigned port() const {
+		return a2n<unsigned>(auth[4]);
 	}
 	MYSQL* connection() const {
 		return this->mysql_obj;

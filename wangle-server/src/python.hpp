@@ -125,7 +125,17 @@ class PyStr : public PyObj {
  public:
 	PyStr(const char* const _str)
 	: str(_str)
-	, PyObj(PyUnicode_FromString(_str))
+	, PyObj(_str ? PyUnicode_FromString(_str) : Py_None)
+	{}
+};
+
+class PyInt : public PyObj {
+ private:
+	const long n;
+ public:
+	PyInt(const long _n)
+	: n(_n)
+	, PyObj(PyLong_FromLong(_n))
 	{}
 };
 

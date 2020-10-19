@@ -97,28 +97,24 @@ void init_ytdl(){
 	ytdl_obj.obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
 }
 
-bool import_view_remote_dir(const char* const usr,  const char* const pwd,  const char* const host,  const char* const path){
+PyObject* create_mysql_obj(const DatabaseInfo& db_info){
+	PyObject* _module = PyImport_ImportModule("pymysql");
+	if (unlikely(_module == nullptr))
+		throw std::runtime_error("Python: Cannot import pymysql");
+	
+	return PyObj(_module, "connect").call(PyStr(db_info.host()).obj, PyStr(db_info.user()).obj, PyStr(db_info.pwrd()).obj, PyStr(db_info.name()).obj, PyInt(db_info.port()).obj, PyStr(db_info.path()).obj);
+}
+
+void import_view_remote_dir(const DatabaseInfo& db_info){
 	PyObject* _module = PyImport_ImportModule("youtube_dl");
 	if (unlikely(_module == nullptr))
-		return true;
+		throw std::runtime_error("Python: Cannot import youtube_dl");
 	
-	PyObj init_mysql_fn(_module, "init_mysql");
-	
-	PyStr _usr(usr);
-	PyStr _pwd(pwd);
-	PyStr _host(host);
-	PyStr _path(path);
-	
-	init_mysql_fn.call(_usr.obj, _pwd.obj, _host.obj, _path.obj);
-	
-	return false;
+	PyObj conn(create_mysql_obj(db_info), "cursor");
+	Py_INCREF(conn.obj);
 }
 
-bool import_view_remote_dir(){
-	return false;
-}
-
-bool view_remote_dir(const char* const url,  const char* const scripts_dir){
+bool view_remote_dir(char* buf,  const char* const url){
 	return false;
 }
 

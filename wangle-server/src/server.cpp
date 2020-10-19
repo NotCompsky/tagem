@@ -3872,16 +3872,13 @@ int main(int argc,  const char* const* argv){
 	compsky::wangler::_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
 	
-#ifdef PYTHON
-	if (FILES_GIVEN_REMOTE_DIR != nullptr){
-		if (unlikely(python::import_view_remote_dir())){
-			log("Unable to import remote dir viewer");
-			return 1;
-		}
-	}
-#endif
 	DatabaseInfo tagem_db_info = db_infos.at(0);
 	initialise_tagem_db(tagem_db_info.mysql_obj);
+	
+#ifdef PYTHON
+	if (FILES_GIVEN_REMOTE_DIR != nullptr)
+		python::import_view_remote_dir(tagem_db_info);
+#endif
 	
 	UserIDIntType user_id;
 	uint64_t id;
