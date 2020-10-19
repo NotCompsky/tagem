@@ -109,7 +109,8 @@ class PyObj {
 	
 	~PyObj(){
 		this->print_as_str("Destroyed: ");
-		//Py_DECREF(this->obj);
+		if (likely(this->obj != Py_None))
+			Py_DECREF(this->obj);
 	}
 	
 	PyObj& operator=(PyObj& other){
@@ -167,7 +168,6 @@ class PyDict : public PyObj {
 		for (PyObject* const _key : this->vals){
 			Py_DECREF(_key);
 		}
-		Py_DECREF(this->obj);
 	}
 	
 	PyDict& operator=(PyDict& other){
