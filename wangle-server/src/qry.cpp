@@ -99,6 +99,7 @@ namespace attribute_name {
 	constexpr static const char* const ID = "id";
 	constexpr static const char* const AUDIO_HASH = "audio_hash";
 	constexpr static const char* const MD5 = "md5";
+	constexpr static const char* const MD5_OF_PATH = "md5_of_path";
 	constexpr static const char* const MIMETYPE = "mimetype";
 	constexpr static const char* const SHA256 = "sha256";
 	constexpr static const char* const THUMBNAIL = "thumbnail";

@@ -228,6 +228,6 @@ EXAMPLES
 		Prints a list of all files tagged with such
 	f attr thumb r "."
 		Files which have any associated thumbnail
-	f attr dct r "."
-		Files which have any associated dct_hash (i.e. locally downloaded files with thumbnails)
+	f attr md5_of_path r "."
+		Files which have any associated md5_of_path (i.e. locally downloaded files with thumbnails)
 )========="

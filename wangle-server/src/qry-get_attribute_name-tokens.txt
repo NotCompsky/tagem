@@ -23,6 +23,10 @@ md5 >
 	attribute_name = attribute_name::MD5;
 	attribute_kind = attribute_kind::many_to_one;
 	return (which_tbl=='f') ? successness::ok : successness::invalid
+md5_of_path >
+	attribute_name = attribute_name::MD5_OF_PATH;
+	attribute_kind = attribute_kind::many_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
 mime >
 	attribute_name = attribute_name::MIMETYPE;
 	attribute_kind = attribute_kind::many_to_one;
