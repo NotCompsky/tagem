@@ -3530,10 +3530,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					compsky::asciify::asciify(thumbnail_filename_itr, c);
 				}
 				compsky::asciify::asciify(thumbnail_filename_itr, "\" WHERE id=", fid);
-				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
 				
 				if (os::file_exists(thumbnail_filepath))
-					continue;
+					goto update_md5hash_then_continue;
 				
 				char file_path[4096];
 				compsky::asciify::asciify(file_path, dir, file, '\0');
@@ -3545,15 +3544,16 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					} catch(std::exception& e){
 						log("While generating thumbnail\n\tFile: ", file_path, "\n\tError:",  e.what());
 					}
-					continue;
+					goto update_md5hash_then_continue;
 				}
 				
+				{
 				cimg_library::CImg<unsigned char> img; // WARNING: Might get errors with other kinds of colour spaces
 				try {
 					img.load(file_path);
 				} catch(std::exception& e){
 					log("While generating thumbnail\n\tFile: ", file_path, "\n\tError: ",  e.what());
-					continue;
+					goto update_md5hash_then_continue;
 				}
 				const unsigned int w = (img.width() >= img.height())
 					? 256
@@ -3565,7 +3565,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				;
 				img.resize(w, h);
 				img.save(thumbnail_filepath);
+				}
 				log("Generated image thumbnail: ", thumbnail_filepath);
+				
+				update_md5hash_then_continue:
+				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
 			}
 		}
 		}
