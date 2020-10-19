@@ -3707,6 +3707,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			// NOTE: Encountering an exception appears to cause the next call to fail
 			if (tagem_module::file_path != nullptr)
 				Py_DECREF(tagem_module::file_path);
+			init_ytdl();
 			return true;
 		}
 		
@@ -3727,7 +3728,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		bool failed;
 		GILLock gillock();
 		{ // Ensures the GILLock destructor is called after all PyObj destructors
-		tagem_module::json_metadata = nullptr;
 		PyDict<4> opts(
 			"quiet", Py_False,
 			"forcejson", Py_True,
@@ -3743,7 +3743,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		// Override to_stdout, so that the file path is written to a buffer instead of stdout
 		ytdl_instantiation.set_attr("to_stdout", tagem_module::to_stdout);
 		
-		ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		try {
+			ytdl_instantiation.call_fn_void("download", PyObj(Py_BuildValue("[s]", url)).obj);
+		} catch(const std::runtime_error& e){
+			// NOTE: Encountering a Python exception seems to set ytdl_obj to nullptr
+			init_ytdl();
+			return true;
+		}
 		
 		failed = (unlikely(PyErr_Occurred() != nullptr));
 		PyObj _json(tagem_module::json_metadata);
