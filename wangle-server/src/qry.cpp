@@ -833,7 +833,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						break;
 					case attribute_kind::unique:
 					case attribute_kind::many_to_one:
-						order_by = std::string(attribute_name);
+						order_by = "X.";
+						order_by += std::string(attribute_name);
 						break;
 					case attribute_kind::ersatz_many_to_one:
 						++ersatz_count;
