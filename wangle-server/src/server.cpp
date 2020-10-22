@@ -2734,26 +2734,27 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				const bool is_html_file  =  (ext == nullptr)  or  (ext < file_name);
 				const StringFromSQLQuery file_id(this, "SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', f_name_sv, "\" LIMIT 1");
 				char file_path[4096];
-				switch(this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl)){
-					case FunctionSuccessness::server_error:
-						++n_errors;
-					case FunctionSuccessness::ok:
-						break;
-					case FunctionSuccessness::malicious_request:
-						return FunctionSuccessness::malicious_request;
-				}
 				
-				this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, f_name_sv, "\"", basename__accepting_trailing_slash(file_path), "\"", user_id, mimetype);
+				auto const successness = this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl);
 				
-				if (mimetype[0]){
-					this->mysql_exec(
-						"UPDATE file f "
-						"JOIN file_backup f2 ON f2.file=f.id "
-						"SET f.mimetype=f2.mimetype "
-						"WHERE f.name=\"", _f::esc, '"', f_name_sv, "\" AND f.dir=", parent_dir_id, " "
-						  "AND f2.name=\"", _f::esc, '"', f_name_sv, "\" "
-						  "AND f2.dir=", dl_backup_into_dir_id
-					);
+				if (unlikely(successness == FunctionSuccessness::malicious_request))
+					return FunctionSuccessness::malicious_request;
+				
+				if (likely(successness == FunctionSuccessness::server_error)){
+					++n_errors;
+				} else {
+					this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, f_name_sv, "\"", basename__accepting_trailing_slash(file_path), "\"", user_id, mimetype);
+					
+					if (mimetype[0]){
+						this->mysql_exec(
+							"UPDATE file f "
+							"JOIN file_backup f2 ON f2.file=f.id "
+							"SET f.mimetype=f2.mimetype "
+							"WHERE f.name=\"", _f::esc, '"', f_name_sv, "\" AND f.dir=", parent_dir_id, " "
+							"AND f2.name=\"", _f::esc, '"', f_name_sv, "\" "
+							"AND f2.dir=", dl_backup_into_dir_id
+						);
+					}
 				}
 			}
 		}
