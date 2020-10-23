@@ -109,7 +109,7 @@ class PyObj {
 	
 	~PyObj(){
 		this->print_as_str("Destroyed: ");
-		if (likely(this->obj != Py_None))
+		if (likely((this->obj != Py_None) and (this->obj != nullptr)))
 			Py_DECREF(this->obj);
 	}
 	

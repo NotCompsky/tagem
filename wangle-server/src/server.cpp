@@ -3719,7 +3719,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		failed = (unlikely(PyErr_Occurred() != nullptr));
 		PyObj _file_path(tagem_module::file_path);
 		PyObj _json(tagem_module::json_metadata);
-		if (not failed){
+		if (not failed and (likely(_file_path.obj != nullptr))){
+			// Might be nullptr if the url is valid but the video(s) has been removed
 			_file_path.copy_str(out_fmt_as_input__resulting_fp_as_output);
 			this->process_remote_video_metadata(user_id, file_id, _json.as_str());
 		}
