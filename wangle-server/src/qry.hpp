@@ -23,7 +23,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #define NOT_DISALLOWED_TAG__BASE(...) \
 	"NOT EXISTS(" \
-		"SELECT _t2pt.id " \
+		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
 		"WHERE u2ht.user=" __VA_ARGS__ \
 	")"
@@ -32,7 +32,7 @@ The absense of this copyright notices on some other files in this project does n
 #define NOT_DISALLOWED_TAG__COMPILE_TIME(tag, user_id) \
 	NOT_DISALLOWED_TAG__BASE(user_id " AND (_t2pt.id=" tag ")")
 #define USER_DISALLOWED_DEVICES_INNER_PRE \
-		"SELECT D2t.device AS id " \
+		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
 		"JOIN device2tag D2t ON D2t.tag=_t2pt.id " \
 		"WHERE u2ht.user="
@@ -48,7 +48,7 @@ The absense of this copyright notices on some other files in this project does n
 	")"
 #define NOT_DISALLOWED_DIR(dir_id, device_id, user_id) \
 	"NOT EXISTS(" \
-		"SELECT d2t.dir AS id " \
+		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
 		"JOIN dir2tag d2t ON d2t.tag=_t2pt.id " \
 		"WHERE u2ht.user=", user_id, " AND id=" dir_id \
@@ -56,7 +56,7 @@ The absense of this copyright notices on some other files in this project does n
 	"AND " NOT_DISALLOWED_DEVICE(device_id, user_id)
 #define NOT_DISALLOWED_FILE(file, dir, device, user_id) \
 	"NOT EXISTS(" \
-		"SELECT f2t.file AS id " \
+		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
 		"JOIN file2tag f2t ON f2t.tag=_t2pt.id " \
 		"WHERE u2ht.user=", user_id, " " \
@@ -65,7 +65,7 @@ The absense of this copyright notices on some other files in this project does n
 	"AND " NOT_DISALLOWED_DIR(dir, device, user_id)
 #define NOT_DISALLOWED_ERA(era, file, dir, device, user_id) \
 	"NOT EXISTS(" \
-		"SELECT e2t.era AS id " \
+		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
 		"JOIN era2tag e2t ON e2t.tag=_t2pt.id " \
 		"WHERE u2ht.user=", user_id, " AND id=" era \
