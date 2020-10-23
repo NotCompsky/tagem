@@ -14,6 +14,8 @@ OPTIONS
 			[THUMBNAIL_SRC, DIRECTORY_ID, FILE_NAME, FILE_SIZE, "", "", "", ""]
 		This is meant for viewing remote directories.
 	c [/PATH/TO/THUMBNAIL/DIRECTORY]
+	f [/PATH/TO/ffmpeg]
+		Default: /usr/bin/ffmpeg
 	^ [/PATH/TO/extract-yt-era]
 		Path to a script that takes (outpath, begin, end, url) as arguments, and downloads a file - using youtube-dl - to extract exactly that portion of the video at [url], and save it to [outpath].
 

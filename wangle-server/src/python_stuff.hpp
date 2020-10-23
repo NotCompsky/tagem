@@ -22,6 +22,7 @@ The absense of this copyright notices on some other files in this project does n
 
 
 extern const char* YTDL_FORMAT;
+extern const char* FFMPEG_LOCATION;
 
 
 namespace python {
@@ -39,6 +40,8 @@ namespace tagem_module {
 	
 	static PyObject* file_path;
 	static PyObject* json_metadata;
+	
+	static PyObject* ffmpeg_location;
 	
 	static
 	PyObject* to_stdout_fn(PyObject* const self,  PyObject* const args,  PyObject* const keyword_args){
@@ -91,6 +94,7 @@ void init_ytdl(){
 	Py_Initialize();
 	tagem_module::modul = PyModule_Create(&tagem_module::_module);
 	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
+	tagem_module::ffmpeg_location = PyUnicode_FromString(FFMPEG_LOCATION);
 	
 	PyObject* ytdl_module = PyImport_ImportModule("youtube_dl");
 	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");

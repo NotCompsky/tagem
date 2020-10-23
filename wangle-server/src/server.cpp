@@ -71,6 +71,7 @@ The absense of this copyright notices on some other files in this project does n
  * GPL v3: https://github.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts/raw/291b526c82f10b980c09ee5da9b432a039a1f0b0/LICENSE
  */
 const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvideo[vcodec^=vp9.2][height=720][fps>30]/bestvideo[vcodec^=vp9][height=720][fps>30]/bestvideo[vcodec^=avc1][height=720][fps>30]/bestvideo[height=720][fps>30]/bestvideo[vcodec^=av01][height=720]/bestvideo[vcodec^=vp9.2][height=720]/bestvideo[vcodec^=vp9][height=720]/bestvideo[vcodec^=avc1][height=720]/bestvideo[height=720]/bestvideo[vcodec^=av01][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=480][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=480][fps>30]/bestvideo[height<720][height>=480][fps>30]/bestvideo[vcodec^=av01][height<720][height>=480]/bestvideo[vcodec^=vp9.2][height<720][height>=480]/bestvideo[vcodec^=vp9][height<720][height>=480]/bestvideo[vcodec^=avc1][height<720][height>=480]/bestvideo[height<720][height>=480]/bestvideo[vcodec^=av01][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=360][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=360][fps>30]/bestvideo[height<720][height>=360][fps>30]/bestvideo[vcodec^=av01][height<720][height>=360]/bestvideo[vcodec^=vp9.2][height<720][height>=360]/bestvideo[vcodec^=vp9][height<720][height>=360]/bestvideo[vcodec^=avc1][height<720][height>=360]/bestvideo[height<720][height>=360]/bestvideo[vcodec^=av01][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=240][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=240][fps>30]/bestvideo[height<720][height>=240][fps>30]/bestvideo[vcodec^=av01][height<720][height>=240]/bestvideo[vcodec^=vp9.2][height<720][height>=240]/bestvideo[vcodec^=vp9][height<720][height>=240]/bestvideo[vcodec^=avc1][height<720][height>=240]/bestvideo[height<720][height>=240]/bestvideo[vcodec^=av01][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=144][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=144][fps>30]/bestvideo[height<720][height>=144][fps>30]/bestvideo[vcodec^=av01][height<720][height>=144]/bestvideo[vcodec^=vp9.2][height<720][height>=144]/bestvideo[vcodec^=vp9][height<720][height>=144]/bestvideo[vcodec^=avc1][height<720][height>=144]/bestvideo[height<720][height>=144]/bestvideo)+(bestaudio[acodec^=opus]/bestaudio)/best";
+const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 
 #define NULL_IMG_SRC "\"data:,\""
 
@@ -3682,8 +3683,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		tagem_module::file_path = nullptr;
 		
-		PyDict<7> opts(
+		PyDict<8> opts(
 			"quiet", Py_True,
+			"ffmpeg_location", tagem_module::ffmpeg_location,
 			"forcefilename", Py_True,
 			"outtmpl", PyUnicode_FromString(out_fmt_as_input__resulting_fp_as_output),
 			"noprogress", Py_True,
@@ -3691,6 +3693,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"forcejson", Py_True,
 			"format", PyUnicode_FromString(YTDL_FORMAT)
 		);
+		Py_INCREF(tagem_module::ffmpeg_location);
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
 		Py_INCREF(Py_True);
@@ -3792,6 +3795,9 @@ int main(int argc,  const char* const* argv){
 				break;
 			case 'd':
 				FILES_GIVEN_REMOTE_DIR = *(++argv);
+				break;
+			case 'f':
+				FFMPEG_LOCATION = *(++argv);
 				break;
 			case '^':
 				// TODO: Use better arg parsing
