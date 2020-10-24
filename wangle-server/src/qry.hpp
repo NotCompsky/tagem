@@ -50,8 +50,9 @@ The absense of this copyright notices on some other files in this project does n
 	"NOT EXISTS(" \
 		"SELECT 1 " \
 		JOIN_TAG_BLACKLIST \
-		"JOIN dir2tag d2t ON d2t.tag=_t2pt.id " \
-		"WHERE u2ht.user=", user_id, " AND id=" dir_id \
+		"JOIN dir2parent_tree d2pt ON d2pt.id=" dir_id " " \
+		"JOIN dir2tag d2t ON d2t.tag=_t2pt.id AND d2t.dir=d2pt.parent " \
+		"WHERE u2ht.user=", user_id, \
 	")" \
 	"AND " NOT_DISALLOWED_DEVICE(device_id, user_id)
 #define NOT_DISALLOWED_FILE(file, dir, device, user_id) \
