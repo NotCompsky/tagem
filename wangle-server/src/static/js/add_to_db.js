@@ -61,7 +61,7 @@ function $$$add_to_db(obj_type){
 	}
 	
 	const backup_dir_id = $$$get_dir_id_to_backup_into();
-	if(backup_dir_id===""){
+	if(backup_dir_id===""||backup_dir_id===null){
 		$$$alert("Backup requested, but no directory selected");
 		return;
 	}
