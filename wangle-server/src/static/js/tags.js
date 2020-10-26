@@ -49,8 +49,8 @@ function $$$display_t_tbl(data){
 	let s = "";
 	for (const [id, name, thumb, size] of data){
 		s += "<div class='tr' data-id=\"" + id + "\">";
-			s += "<div class='td thumb' onclick='$$$view_tag(\"" + id + "\",0)'>";
-				s += "<img class='thumb' src='" + thumb + "' onerror='$$$set_src_to_tag_svg(this)'/>";
+			s += "<div class='td thumbnail' onclick='$$$view_tag(\"" + id + "\",0)'>";
+				s += "<img src='" + thumb + "' onerror='$$$set_src_to_tag_svg(this)'/>";
 			s += "</div>";
 			s += "<div class='td'>";
 				s += $$$escape_html_text(name);
