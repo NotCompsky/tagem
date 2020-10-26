@@ -16,7 +16,7 @@ function $$$switch_stylesheet(s){
 			e.classList.remove('tbl-'+c);
 		e.classList.add('tbl-'+s);
 	}
-	$$$set_cookie("css", s, 3600);
+	$$$set_cookie_forever("css", s);
 }
 function $$$rotate_stylesheet(){
 	let i = $$$stylesheet_opts.indexOf($$$get_cookie("css")) + 1;
