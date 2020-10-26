@@ -180,10 +180,11 @@ function $$$setup_page_for_f_tbl(){
 
 function $$$toggle_dl_locally(){
 	const b = $$$document_getElementById('add-f-backup-toggle').checked;
-	for(let x of ['dirselect-container','add-f-backup-ytdl']){
+	for(let x of ['dirselect-container','add-f-backup-ytdl','audio-only']){
 		$$$set_visibility(x,b);
 	}
 	$$$document_getElementById('add-f-backup-ytdl').checked = false;
+	$$$reset_audio_only_checked();
 }
 
 function $$$toggle_file_add_backup_dialog(){
@@ -194,11 +195,13 @@ function $$$toggle_file_add_backup_dialog(){
 		$$$hide('add-f-backup-toggle-container');
 		$$$hide('add-f-backup');
 		$$$hide('add-f-backup-ytdl-container');
+		$$$hide('audio-only-container');
 	} else {
 		$$$unhide('add-f-backup-toggle-container');
 		$$$unhide('add-f-backup');
 		$$$unhide('add-f-backup-url');
 		$$$unhide('add-f-backup-ytdl-container');
+		$$$unhide('audio-only-container');
 	}
 }
 
@@ -221,7 +224,7 @@ function $$$backup_files(){
 		}
 	}
 	$$$ajax_POST_w_text_response(
-		"/f/backup/" + file_ids + "/" + _dir_id + "/" + $$$is_ytdl_checked() + "/" + url,
+		"/f/backup/" + file_ids + "/" + _dir_id + "/" + $$$is_ytdl_checked() + "/"  + $$$is_audio_only_checked() + "/" + url,
 		function(){
 			$$$hide('dirselect-container');
 			$$$hide('add-f-backup');
@@ -231,7 +234,7 @@ function $$$backup_files(){
 
 function $$$add_files_dialog(){
 	$$$document_getElementById('add-f-backup-toggle').checked = false;
-	$$$hide_all_except(['tagselect-files-container','add-f-backup-toggle-container','add-f-dialog','add-f-backup-ytdl-container']);
+	$$$hide_all_except(['tagselect-files-container','add-f-backup-toggle-container','add-f-dialog','add-f-backup-ytdl-container','audio-only-container']);
 	$$$hide('add-f-backup-url');
 	// TODO: Toggle switch to allow selecting dir ID for backup
 	$('#dirselect').val(null).trigger('change');

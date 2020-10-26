@@ -697,7 +697,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
 			return compsky::wangler::_r::server_error;
 		
-		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false);
+		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false, false);
 		
 		return compsky::wangler::_r::post_ok;
 	}
@@ -731,7 +731,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	uint64_t get_dir_id_given_path__add_if_necessary(const UserIDIntType user_id,  const char* const path){
-		if (unlikely(this->add_file_or_dir_to_db('d', nullptr, user_id, "0", 1, path, strlen(path), 0, false) != FunctionSuccessness::ok))
+		if (unlikely(this->add_file_or_dir_to_db('d', nullptr, user_id, "0", 1, path, strlen(path), 0, false, false) != FunctionSuccessness::ok))
 			return 0;
 		return this->get_last_row_from_qry<uint64_t>("SELECT id FROM dir WHERE full_path=\"", _f::esc, '"', path, "\" LIMIT 1");
 	}
@@ -1376,7 +1376,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		const char* const new_path__file_name = s;
 		
 		uint64_t new_dir_id;
-		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false);
+		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false, false);
 		if (unlikely(rc != FunctionSuccessness::ok))
 			return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
 		
@@ -2407,7 +2407,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl){
+	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl,  const bool is_audio_only){
 		if (unlikely(file_name[0] == 0)){
 			log("Empty file name");
 			return FunctionSuccessness::server_error;
@@ -2463,9 +2463,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					'\0'
 				);
 #ifdef PYTHON
-				if (this->ytdl(user_id, file_id, file_path, url))
+				if (this->ytdl(user_id, file_id, file_path, url, is_audio_only))
 #else
-				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
+				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", (is_audio_only)?"bestaudio":YTDL_FORMAT, url, nullptr};
 				if (proc::exec(60, ytdl_args, STDERR_FILENO, file_path))
 #endif
 				{
@@ -2505,11 +2505,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return FunctionSuccessness::ok;
 	}
 	
-	FunctionSuccessness dl_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl){
+	FunctionSuccessness dl_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl,  const bool is_audio_only){
 		if (os::is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl);
+		return this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl, is_audio_only);
 	}
 	
 	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
@@ -2573,7 +2573,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				this->itr[0] = 0;
 				++this->itr;
 			}
-			this->add_file_or_dir_to_db('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false);
+			this->add_file_or_dir_to_db('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false, false);
 			// TODO: Use libmagic to guess mime type
 		}
 		
@@ -2609,7 +2609,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 			} else if (e->d_type == DT_REG){
 				// regular file
-				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false);
+				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false, false);
 			}
 			
 			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
@@ -2624,7 +2624,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return this->add_file_or_dir_to_db__w_parent_dir_id(dir_id, args...);
 	}
 	
-	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const char* const mimetype = ""){
+	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
 		parent_dir_id = 0;
@@ -2736,7 +2736,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				const StringFromSQLQuery file_id(this, "SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', f_name_sv, "\" LIMIT 1");
 				char file_path[4096];
 				
-				auto const successness = this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl);
+				auto const successness = this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl, is_audio_only);
 				
 				if (unlikely(successness == FunctionSuccessness::malicious_request))
 					return FunctionSuccessness::malicious_request;
@@ -2897,6 +2897,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t,dir_id)
 		GET_NUMBER(bool,is_ytdl)
+		GET_NUMBER(bool,is_audio_only)
 		
 		const char* const user_headers = s;
 		
@@ -2915,7 +2916,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			switch(tbl){
 				case 'f':
 				case 'd':
-					switch(this->add_file_or_dir_to_db(tbl, user_headers, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl)){
+					switch(this->add_file_or_dir_to_db(tbl, user_headers, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl, is_audio_only)){
 						case FunctionSuccessness::server_error:
 							return compsky::wangler::_r::server_error;
 						case FunctionSuccessness::malicious_request:
@@ -3098,6 +3099,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
 		GET_NUMBER(bool, is_ytdl)
+		GET_NUMBER(bool, is_audio_only)
 		
 		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
 		const size_t url_length = count_until(url, ' ');
@@ -3122,7 +3124,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			
 			char mimetype[100] = {0};
 			char file_path[4096];
-			const auto rc = this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl);
+			const auto rc = this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl, is_audio_only);
 			
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::wangler::_r::not_found : compsky::wangler::_r::server_error;
@@ -3672,7 +3674,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	
 	
 	template<typename FileIDType>
-	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url){
+	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 		using namespace python;
 		
 		bool failed;
@@ -3689,7 +3691,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"noprogress", Py_True,
 			"dump_single_json", Py_True,
 			"forcejson", Py_True,
-			"format", PyUnicode_FromString(YTDL_FORMAT)
+			"format", PyUnicode_FromString((is_audio_only) ? "bestaudio" : YTDL_FORMAT)
 		);
 		Py_INCREF(tagem_module::ffmpeg_location);
 		Py_INCREF(Py_True);

@@ -67,7 +67,7 @@ function $$$add_to_db(obj_type){
 	}
 	
 	$$$ajax_POST_data_w_text_response(
-		"/" + obj_type + "/add/" + tag_ids.join(",")+"/" + backup_dir_id + "/" + $$$is_ytdl_checked(), // is_ytdl_checked is meaningless for anything other than files. Safe to include though.
+		"/" + obj_type + "/add/" + tag_ids.join(",")+"/" + backup_dir_id + "/" + $$$is_ytdl_checked() + "/" + $$$is_audio_only_checked(), // is_ytdl_checked etc is meaningless for anything other than files. Safe to include though.
 		urls.join("\n"),
 		function(){
 			tagselect.val("").change();
@@ -88,6 +88,14 @@ function $$$get_dir_id_to_backup_into(){
 
 function $$$is_ytdl_checked(){
 	return $$$document_getElementById('add-f-backup-ytdl').checked ? 1 : 0;
+}
+
+function $$$is_audio_only_checked(){
+	return $$$document_getElementById('audio-only').checked ? 1 : 0;
+}
+
+function $$$reset_audio_only_checked(){
+	$$$document_getElementById('audio-only').checked = false;
 }
 
 function $$$add_to_db__append(obj_type){
