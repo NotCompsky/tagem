@@ -3097,9 +3097,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
 		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
-		
-		--s; // Do not skip slash, as it is skipped by the following macro
-		const bool is_ytdl = (IS_STR_EQL(s, 5, "ytdl/"));
+		GET_NUMBER(bool, is_ytdl)
 		
 		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
 		const size_t url_length = count_until(url, ' ');

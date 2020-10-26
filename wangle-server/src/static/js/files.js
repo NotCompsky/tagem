@@ -210,7 +210,6 @@ function $$$backup_files(){
 	}
 	const _dir_id = $$$document_getElementById("dirselect").value;
 	let url = $$$document_getElementById("add-f-backup-url").value;
-	const is_ytdl = $$$document_getElementById("add-f-backup-ytdl").checked;
 	if(_dir_id===""){
 		$$$alert("No directory selected");
 		return;
@@ -221,10 +220,8 @@ function $$$backup_files(){
 			return;
 		}
 	}
-	if(is_ytdl)
-		url = "ytdl/" + url;
 	$$$ajax_POST_w_text_response(
-		"/f/backup/" + file_ids + "/" + _dir_id + "/" + url,
+		"/f/backup/" + file_ids + "/" + _dir_id + "/" + $$$is_ytdl_checked() + "/" + url,
 		function(){
 			$$$hide('dirselect-container');
 			$$$hide('add-f-backup');
