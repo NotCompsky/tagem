@@ -37,13 +37,16 @@ function $$$t2human(t){
 }
 
 function $$$set_t(id,t){
-	$$$document_getElementById(id).innerHTML=$$$timestamp2dt(t);
+	$$$document_getElementById(id).childNodes[1].innerHTML=$$$timestamp2dt(t);
 }
 function $$$set_t_added(t){
 	$$$set_t('t-added', t);
 }
 function $$$set_t_origin(t){
-	$$$set_t('t-origin', t);
+	$$$set_t('t1', t);
+}
+function $$$set_t_ended(t){
+	$$$set_t('t2', t);
 }
 
 function $$$dt2timestamp(dt){

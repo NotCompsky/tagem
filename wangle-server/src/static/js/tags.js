@@ -239,7 +239,7 @@ function $$$get_selected_tag_ids(){
 }
 
 function $$$view_tag(_tag_id,page){
-	$$$hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn']);
+	$$$hide_all_except(['parents-container','children-container','f','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn','meta','t1','t2','descr']);
 	$$$document_getElementById('profile-img').onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
@@ -254,12 +254,15 @@ function $$$view_tag(_tag_id,page){
 		return;
 	
 	$$$ajax_GET_w_JSON_response(
-		"!!!MACRO!!!SERVER_ROOT_URL/a/t/id/0/"+$$$tag_id,
+		"!!!MACRO!!!SERVER_ROOT_URL/a/t/info/"+$$$tag_id,
 		function(data){
-			const [id, name,thumb,size] = data[0];
+			const [id,name,thumb,size,t1,t2,descr] = data[0];
 			$$$set_profile_name(name);
 			$$$set_profile_thumb(thumb);
 			$$$set_window_location_hash('t0/'+$$$tag_id);
+			$$$set_t_origin(t1);
+			$$$set_t_ended(t2);
+			$$$set_description(descr);
 		}
 	);
 	

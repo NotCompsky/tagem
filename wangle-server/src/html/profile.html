@@ -482,19 +482,6 @@ ADD_TOGGLE("audio-only",       "Audio-Only?")
 	"<tbody id=\"eras-info-tbody\" class=\"tbody\"></tbody>"
 "</table>"
 
-"<table class=\"file-meta\">"
-	"<tr>"
-		"<td>Added</td>"
-		"<td><time id=\"t-added\"></time></td>"
-	"</tr>"
-	"<tr>"
-		"<td>Origin</td>"
-		"<td><time id=\"t-origin\"></time></td>"
-	"</tr>"
-"</table>"
-
-"<div id=\"descr\"></div>"
-
 "<div id=\"tagselect-era-container\" class=\"popup hidden\">"
 	CREATE_TAG_SELECT(_, _, ("tagselect-era", "Add to Era", MINIMISED_JS_DECL_tag_era "()"))
 	"<button onclick=\"" MINIMISED_JS_DECL_hide_tagselect_era "()\">Close</button>"
@@ -512,6 +499,23 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 ))
 
 "</div>"
+
+"<table id=\"meta\">"
+	"<tr id=\"t-added\">"
+		"<td>Added</td>"
+		"<td><time></time></td>"
+	"</tr>"
+	"<tr id=\"t1\">"
+		"<td>Origin</td>"
+		"<td><time></time></td>"
+	"</tr>"
+	"<tr id=\"t2\">"
+		"<td>Ended</td>"
+		"<td><time></time></td>"
+	"</tr>"
+"</table>"
+
+"<div id=\"descr\"></div>"
 
 "<div id=\"text-editor\">"
 	"<h2 contenteditable=\"true\">Edit file name here...</h2>"

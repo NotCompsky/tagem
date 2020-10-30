@@ -208,7 +208,7 @@ function $$$assign_value_to_file(){
 
 function $$$view_file__hides(){
 	// To allow deferred reshowing (once content is loaded) to wrongly displaying old content
-	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','descr'],['file-meta']);
+	$$$hide_all_except(['file2-container','values-container','tags-container','file-info','tagselect-files-container','tagselect-files-btn','meta','t-added','t1','descr'],['file-meta']);
 	if($$$active_media_is_video())
 		$$$unhide('tagselect-eras-container');
 	else
@@ -327,7 +327,7 @@ function $$$view_file(_file_id_and_t){
 				$$$document_getElementById("view-btns").innerHTML = _s;
 				$$$view_file__hides();
 				
-				$$$document_getElementById('descr').textContent = description;
+				$$$set_description(description);
 				
 				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 3);

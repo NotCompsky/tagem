@@ -199,7 +199,7 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 # define NO_LIMITS_WITHIN_GROUP_CONCATS_WORKAROUND2 ", ' ', -1)"
 #endif
 
-#define SELECT_TAGS_INFOS_FROM_STUFF(...) \
+#define SELECT_TAGS_INFOS__BASE__SELECT \
 	"SELECT " \
 		"t.id," \
 		"t.name," \
@@ -207,7 +207,9 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 		"GROUP_CONCAT(IFNULL(p.thumbnail," NULL_IMG_SRC ") ORDER BY (1/(1+t2pt.depth))*(p.thumbnail IS NOT NULL) " SELECT_TAGS_INFOS_FROM_STUFF__DIRECTION " " LIMIT1_WITHIN_GROUP_CONCAT ")" \
 		NO_LIMITS_WITHIN_GROUP_CONCATS_WORKAROUND2 \
 		"," \
-		"IFNULL(A.n,0) " \
+		"IFNULL(A.n,0)"
+
+#define SELECT_TAGS_INFOS__BASE__BODY(...) \
 	"FROM tag t " \
  	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
 	"JOIN tag p ON p.id=t2pt.parent " \
@@ -223,6 +225,15 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 		"AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id) \
 		"GROUP BY tag" \
 	")A ON A.tag=t.id "
+#define SELECT_TAGS_INFOS_FROM_STUFF(...) \
+	SELECT_TAGS_INFOS__BASE__SELECT \
+	SELECT_TAGS_INFOS__BASE__BODY(__VA_ARGS__)
+#define SELECT_TAGS_INFOS__WITH_T_AND_DESCR__FROM_STUFF(...) \
+	SELECT_TAGS_INFOS__BASE__SELECT "," \
+		"t.t1," \
+		"t.t2," \
+		"t.description " \
+	SELECT_TAGS_INFOS__BASE__BODY(__VA_ARGS__)
 
 #define WHERE_TAGS_INFOS(...) \
 	"WHERE t.id IN(" __VA_ARGS__ ")" \
@@ -232,6 +243,10 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
+	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	"GROUP BY t.id "
+#define TAGS_INFOS__WITH_T_AND_DESCR(...) \
+	SELECT_TAGS_INFOS__WITH_T_AND_DESCR__FROM_STUFF(__VA_ARGS__) \
 	WHERE_TAGS_INFOS(__VA_ARGS__) \
 	"GROUP BY t.id "
 #define TAGS_INFOS__WTH_DUMMY_WHERE_THING(...) \
@@ -1699,6 +1714,30 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		
 		this->asciify_file_info(itr);
+	}
+	
+	std::string_view get__tag_info__given_id(const char* s){
+		GET_NUMBER_NONZERO(uint64_t,tag_id)
+		GET_USER_ID
+		this->mysql_query(
+			TAGS_INFOS__WITH_T_AND_DESCR("", tag_id, "")
+		);
+		this->reset_buf_index();
+		this->begin_json_response(this->itr);
+		this->asciify('[');
+		this->asciify_json_response_rows(
+			this->itr,
+			compsky::wangler::_r::flag::arr,
+			compsky::wangler::_r::flag::quote_no_escape, // id,
+			compsky::wangler::_r::flag::quote_and_escape, // name,
+			compsky::wangler::_r::flag::quote_and_escape, // thumb,
+			compsky::wangler::_r::flag::no_quote, // count
+			compsky::wangler::_r::flag::no_quote, // t1
+			compsky::wangler::_r::flag::no_quote, // t2
+			compsky::wangler::_r::flag::quote_and_json_escape // description
+		);
+		this->asciify(']');
+		return this->get_buf_as_string_view();
 	}
 	
 	template<typename... Args>
