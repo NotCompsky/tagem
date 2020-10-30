@@ -61,7 +61,7 @@ function $$$add_to_db(obj_type){
 	}
 	
 	const backup_dir_id = $$$get_dir_id_to_backup_into();
-	if(backup_dir_id===""||backup_dir_id===null){
+	if((obj_type==='f')&&(backup_dir_id===""||backup_dir_id===null)){
 		$$$alert("Backup requested, but no directory selected");
 		return;
 	}
@@ -84,6 +84,10 @@ function $$$get_dir_id_to_backup_into(){
 	if($$$is_node_hidden(x)||(!x.checked))
 		return "0";
 	return $('#dirselect').val();
+}
+
+function $$$uncheck_dl_locally(){
+	$$$document_getElementById('add-f-backup-toggle').checked = false;
 }
 
 function $$$is_ytdl_checked(){

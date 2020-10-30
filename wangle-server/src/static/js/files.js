@@ -188,7 +188,7 @@ function $$$toggle_dl_locally(){
 }
 
 function $$$toggle_file_add_backup_dialog(){
-	$$$document_getElementById('add-f-backup-toggle').checked = false;
+	$$$uncheck_dl_locally();
 	$('#dirselect').val(null).trigger("change");
 	$$$hide('add-f-backup-ytdl');
 	if($$$is_visible('add-f-backup')){
@@ -233,7 +233,7 @@ function $$$backup_files(){
 }
 
 function $$$add_files_dialog(){
-	$$$document_getElementById('add-f-backup-toggle').checked = false;
+	$$$uncheck_dl_locally();
 	$$$hide_all_except(['tagselect-files-container','add-f-backup-toggle-container','add-f-dialog','add-f-backup-ytdl-container','audio-only-container']);
 	$$$hide('add-f-backup-url');
 	// TODO: Toggle switch to allow selecting dir ID for backup
