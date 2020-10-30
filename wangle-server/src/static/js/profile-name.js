@@ -14,6 +14,8 @@ function $$$edit_title_path(){
 	switch($$$currently_viewing_object_type){
 		case "f":
 			return "/f/title/";
+		case "t":
+			return "/t/name/";
 		default:
 			return null;
 	}

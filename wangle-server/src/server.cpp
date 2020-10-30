@@ -3044,6 +3044,22 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return compsky::wangler::_r::post_ok;
 	}
 	
+	std::string_view post__set_tag_name(const char* s){
+		GET_NUMBER_NONZERO(uint64_t, tag_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_names")
+		SKIP_TO_BODY
+		
+		this->mysql_exec(
+			"UPDATE tag t "
+			"SET t.name=\"", _f::esc, '"', s, "\" "
+			"WHERE t.id=", tag_id, " "
+			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
+		);
+		
+		return compsky::wangler::_r::post_ok;
+	}
+	
 	std::string_view post__set_file_title(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, f_id)
 		GET_USER_ID

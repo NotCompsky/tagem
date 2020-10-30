@@ -86,6 +86,8 @@ POST /e/dl/>
 
 POST /t/thumb/>
 	return this->update_tag_thumbnail(++str)
+POST /t/name/>
+	return this->post__set_tag_name(++str);
 POST /D/add/>
 	return this->add_to_tbl('D', ++str)
 POST /d/add/>
