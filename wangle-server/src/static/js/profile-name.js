@@ -30,7 +30,7 @@ function $$$edit_title(){
 	if((s==="")||(s===null))
 		return;
 	$$$ajax_POST_data_w_text_response(
-		url+$$$file_id,
+		url+$$$id_of_currently_viewed_page(),
 		s,
 		function(){
 			$$$set_profile_name(s);

@@ -74,16 +74,6 @@ function $$$populate_t_id2name_table(arr){
 	);
 }
 
-function $$$tbl_alias_to_id_value(alias){
-	switch(alias){
-		case 'f':
-			return $$$file_id;
-		case 'd':
-			return $$$dir_id;
-		case 't':
-			return $$$tag_id;
-	}
-}
 function $$$unlink_this_tag_from_this(node,alias,relation,fn){
 	// alias is either 'f' for file, or 'd' for directory, or 'D' for device
 	if(!$$$logged_in())
