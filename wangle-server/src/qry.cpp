@@ -26,6 +26,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
 #define CHAR_IN(x,ls) IS_CONTAINED_IN_VARARGS(char,x,ls)
+#define STR_IN(x,ls) IS_CONTAINED_IN_VARARGS(const char*,x,ls)
 
 
 namespace sql_factory{
@@ -209,7 +210,7 @@ static
 const char* attribute_field_name(const char* const attribute_name){
 	// NOTE: Thus far only used for many-to-many variables
 	// Compiler refuses to allow the switch operator
-	if ((attribute_name == attribute_name::DCT_HASH) or (attribute_name == attribute_name::AUDIO_HASH))
+	if (STR_IN(attribute_name,(attribute_name::DCT_HASH)(attribute_name::AUDIO_HASH)))
 		return "x";
 	else
 		return attribute_name;
@@ -239,7 +240,7 @@ void add_many2many_join_tbl_name(std::string& join,  const char* const attribute
 			return;
 		case 't':
 			join += "tag2parent";
-			if ((attribute_name == attribute_name::PARENTY) or (attribute_name == attribute_name::CHILDY))
+			if (STR_IN(attribute_name,(attribute_name::PARENTY)(attribute_name::CHILDY)))
 				join += "_tree";
 			return;
 	}
@@ -313,12 +314,12 @@ void add_join_for_ersatz_attr(std::string& join,  const char* const attribute_na
 
 static
 bool many2many_attr_has_its_own_tbl(const char* const attribute_name){
-	return not ((attribute_name == attribute_name::DCT_HASH) or (attribute_name == attribute_name::AUDIO_HASH) or (attribute_name == attribute_name::MD5) or (attribute_name == attribute_name::SHA256) or (attribute_name == attribute_name::THUMBNAIL));
+	return not (STR_IN(attribute_name,(attribute_name::DCT_HASH)(attribute_name::AUDIO_HASH)(attribute_name::MD5)(attribute_name::SHA256)(attribute_name::THUMBNAIL)));
 }
 
 static
 const char* get_tbl_name_from_attr_name(const char* const attribute_name){
-	if ((attribute_name == attribute_name::PARENT) or (attribute_name == attribute_name::PARENTY))
+	if (STR_IN(attribute_name,(attribute_name::PARENT)(attribute_name::PARENTY)))
 		return "tag";
 	return attribute_name;
 }
