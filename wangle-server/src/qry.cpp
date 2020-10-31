@@ -464,7 +464,7 @@ static
 successness::ReturnType process_name_list(std::string& where,  const char tbl_alias,  const char*& qry){
 	LOG("process_name_list %c %s\n", tbl_alias, qry);
 	const size_t where_length_orig = where.size();
-	where += " REGEXP "; // This is overwritten with " IN (   " if there is only one value in this list
+	where += " REGEXP BINARY "; // This is overwritten with " IN (   " if there is only one value in this list
 	const char* qry_begin = qry;
 	unsigned n_elements = 0;
 	while(true){
@@ -500,7 +500,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 				--qry;
 				where.pop_back(); // Remove trailing comma (which is guaranteed to exist)
 				if (n_elements > 1){
-					where.replace(where_length_orig, 8, " IN (   ");
+					where.replace(where_length_orig, 15, " IN (   ");
 					where += ")";
 				}
 				return successness::ok;
@@ -1023,7 +1023,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					default: // string
 						switch(comparison_mode){
 							case 'r':
-								where += " REGEXP ";
+								where += " REGEXP BINARY ";
 								break;
 							case '=':
 								where += '=';

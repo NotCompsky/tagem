@@ -2044,7 +2044,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		GET_USER_ID
 		
-		return this->select2(tbl_alias, user_id, "REGEXP \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
+		return this->select2(tbl_alias, user_id, "REGEXP BINARY \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
 		// NOTE: AFAIK, in URLs, one should have spaces as %20 before the ? and + after.
 		// However, select2 encodes spaces as %20, not +, even though they are passed as URL parameters.
 	}
@@ -3554,13 +3554,13 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					(using_backup)?"f2.file":"f.id", ","
 					"d.full_path,",
 					(using_backup)?"f2":"f", ".name,"
-					"(mt.name REGEXP '^video/')"
+					"(mt.name REGEXP BINARY '^video/')"
 				"FROM file f ",
 				(using_backup)?"JOIN file_backup f2 ON f2.file=f.id ":"",
 				"JOIN dir d ON d.id=f", (using_backup)?"2":"", ".dir "
 				"JOIN mimetype mt ON mt.id=f", (using_backup)?"2":"", ".mimetype "
 				"WHERE device=", device, " "
-				  "AND mt.name REGEXP '^(image|video)/' "
+				  "AND mt.name REGEXP BINARY '^(image|video)/' "
 				  "AND f.md5_of_path IS NULL"
 			);
 			const char* fid;
