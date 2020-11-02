@@ -47,6 +47,7 @@ var $$$yt_player;
 
 // User options stored in cookies
 var $$$use_regex;
+var $$$prioritise_local_autoplay;
 
 const $$$stylesheet_opts = ["blocks","table"];
 

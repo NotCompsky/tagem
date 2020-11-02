@@ -40,6 +40,12 @@ function $$$set_sleep_after_media_err(){
 	$$$set_user_setting_as('sleep_after_media_err',n,3600);
 }
 
+function $$$set_prioritise_local_autoplay(){
+	const b = $$$confirm("Prioritise local autoplay?");
+	$$$prioritise_local_autoplay = (b===true);
+	$$$set_bool_tbl_entry("prioritise_local_autoplay",b);
+}
+
 function $$$set_bool_tbl_entry(id,B){
 	const b = ((B===true)||(B==="1"));
 	$$$set_cookie_forever(id, b?'1':'0', 3600);

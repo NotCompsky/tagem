@@ -33,6 +33,7 @@ function $$$on_document_ready(){
 	$$$switch_stylesheet(css);
 	
 	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_cookie__bool("use_regex",false);
+	$$$prioritise_local_autoplay = $$$get_and_set_default_user_setting_tofrom_cookie__bool("prioritise_local_autoplay",false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('thumbnail',false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fname',false);
 	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('ftitle',false);
