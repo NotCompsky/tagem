@@ -41,6 +41,7 @@ endif()
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
+set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
@@ -111,6 +112,9 @@ target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" wangle::wangle "${CURL}" 
 )
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
+if(DNS_OVER_HTTPS_CLIENT_URL)
+	target_compile_definitions(server PRIVATE "DNS_OVER_HTTPS_CLIENT_URL=\"${DNS_OVER_HTTPS_CLIENT_URL}\"")
+endif()
 if(EMBED_PYTHON)
 	target_include_directories(server PRIVATE "/usr/include/python3.8") # TODO: Generalise
 	target_compile_definitions(server PRIVATE "PYTHON=1")
