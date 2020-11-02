@@ -30,12 +30,19 @@ function $$$after_tagged_this_file(ids, tags){
 
 function $$$hide_all_views_except(except){
 	for(let type of ['img','video','audio','iframe','object','yt-player']){
+		const node = $$$document_getElementById('view-'+type);
 		if(type === except){
 			$$$unhide('view-'+type);
-			const node = $$$document_getElementById('view-'+type).getElementsByTagName('source')[0];
-			if(node !== undefined)
-				node.removeAttribute('src');
+			const snode = node.getElementsByTagName('source')[0];
+			if(snode !== undefined)
+				snode.removeAttribute('src');
 			continue;
+		}else{
+			if(node.pause !== undefined)
+				node.pause();
+			else if(node.src !== undefined)
+				// iframe has src attribute, but otherwise unable to pause music
+				node.removeAttribute("src");
 		}
 		$$$hide('view-'+type);
 		if (type === 'yt-player')
