@@ -1413,6 +1413,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			new_dir_id,
 			"SUBSTR(\"", _f::esc, '"', new_path__file_name, "\",LENGTH(d2.full_path)+1)"
 		);
+		// NOTE: The merge would fail here if a file weren't allowed to have multiple backups in the same directory.
 		
 		return compsky::wangler::_r::post_ok;
 	}
