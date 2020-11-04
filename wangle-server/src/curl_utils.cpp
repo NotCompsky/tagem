@@ -64,6 +64,7 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 	CURL* const handle = curl_easy_init();
 	curl_easy_setopt(handle, CURLOPT_URL, url);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, f);
+	curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, true);
 #ifdef DNS_OVER_HTTPS_CLIENT_URL
 	curl_easy_setopt(handle, CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL);
 #endif
