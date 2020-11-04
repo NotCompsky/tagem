@@ -89,6 +89,19 @@ namespace tagem_module {
 	};
 }
 
+
+PyObject* attempt_import_failover(const char* const name){
+	log("Unable to import ", name);
+	abort();
+}
+
+template<typename... Strings>
+PyObject* attempt_import_failover(const char* const name,  const char* const module_name,  Strings... module_names){
+	PyObject* o = PyImport_ImportModule(module_name);
+	return o ? o : attempt_import_failover(name, module_names...);
+}
+
+
 void init_ytdl(){
 	Py_SetProgramName(L"tagem");
 	Py_Initialize();
@@ -96,18 +109,7 @@ void init_ytdl(){
 	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
 	tagem_module::ffmpeg_location = PyUnicode_FromString(FFMPEG_LOCATION);
 	
-	PyObject* ytdl_module;
-	ytdl_module = PyImport_ImportModule("youtube_dlc");
-	if (ytdl_module == nullptr){
-		log("Cannot import youtube_dlc; reverting to youtube_dl");
-		PyErr_Print();
-		ytdl_module = PyImport_ImportModule("youtube_dl");
-		if (unlikely(ytdl_module == nullptr)){
-			log("Cannot import youtube_dl");
-			PyErr_Print();
-			throw std::runtime_error("Cannot load youtube-dl");
-		}
-	}
+	PyObject* const ytdl_module = attempt_import_failover("youtube-dl", "youtube_dlc", "youtube_dl");
 	ytdl_obj.obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
 }
 
