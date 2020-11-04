@@ -96,8 +96,18 @@ void init_ytdl(){
 	tagem_module::to_stdout = PyObject_GetAttrString(tagem_module::modul, "to_stdout");
 	tagem_module::ffmpeg_location = PyUnicode_FromString(FFMPEG_LOCATION);
 	
-	PyObject* ytdl_module = PyImport_ImportModule("youtube_dl");
-	PY_ASSERT_NOT_NULL(ytdl_module, "Cannot import youtube_dl");
+	PyObject* ytdl_module;
+	ytdl_module = PyImport_ImportModule("youtube_dlc");
+	if (ytdl_module == nullptr){
+		log("Cannot import youtube_dlc; reverting to youtube_dl");
+		PyErr_Print();
+		ytdl_module = PyImport_ImportModule("youtube_dl");
+		if (unlikely(ytdl_module == nullptr)){
+			log("Cannot import youtube_dl");
+			PyErr_Print();
+			throw std::runtime_error("Cannot load youtube-dl");
+		}
+	}
 	ytdl_obj.obj = PyObject_GetAttrString(ytdl_module, "YoutubeDL");
 }
 
