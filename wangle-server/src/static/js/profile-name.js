@@ -26,7 +26,7 @@ function $$$edit_title(){
 	const url = $$$edit_title_path();
 	if(url===null)
 		return;
-	const s = $$$prompt("New title");
+	const s = $$$prompt("New title", $$$get_profile_name());
 	if((s==="")||(s===null))
 		return;
 	$$$ajax_POST_data_w_text_response(
