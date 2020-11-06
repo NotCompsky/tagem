@@ -986,7 +986,11 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				
 				if (attribute_kind == attribute_kind::many_to_many){
 					where += " X.id IN(SELECT ";
-					where += many2many_attr_has_its_own_tbl(attribute_name) ? "id" : tbl_full_name(which_tbl);
+					where += many2many_attr_has_its_own_tbl(attribute_name) ?
+								STR_IN(attribute_name, (attribute_name::CHILD)(attribute_name::CHILDY)) ?
+									"parent"
+									: "id"
+								: tbl_full_name(which_tbl);
 					where += " FROM ";
 					add_many2many_join_tbl_name(where, attribute_name, which_tbl);
 					where += " WHERE ";

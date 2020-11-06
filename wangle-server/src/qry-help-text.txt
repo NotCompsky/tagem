@@ -110,6 +110,8 @@ Each must be separated by a logical operator - thus far the only implemented one
 				Filter for tags where any ancestor is the tag "Continent"
 			t attr parenty = "British City" and attr parenty = "Terrorist Attack" ?list
 				List all terrorist attacks which occurred in British cities
+			t attr childy r "Terrorist Attack" and not attr parenty r "Terrorist Attack" and attr parenty = "British City" ?list limit 100
+				List all British cities which hosted terrorist attacks
 	mime [REGEX]
 		Filter for files with a mimetype of the given name.
 		Note that, unlike this, "attr mime" refers to the mime's ID, not name.
