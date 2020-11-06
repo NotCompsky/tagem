@@ -117,8 +117,8 @@ namespace attribute_name {
 	constexpr static const char* const FPS = "fps";
 	constexpr static const char* const PARENT = "parent";
 	constexpr static const char PARENTY[] = "parent"; // Array style to guarantee different address
-	constexpr static const char* const CHILD = "tag";
-	constexpr static const char CHILDY[] = "tag";
+	constexpr static const char* const CHILD = "id";
+	constexpr static const char CHILDY[] = "id";
 }
 
 namespace selected_field {
@@ -321,7 +321,7 @@ bool many2many_attr_has_its_own_tbl(const char* const attribute_name){
 
 static
 const char* get_tbl_name_from_attr_name(const char* const attribute_name){
-	if (STR_IN(attribute_name,(attribute_name::PARENT)(attribute_name::PARENTY)))
+	if (STR_IN(attribute_name,(attribute_name::PARENT)(attribute_name::PARENTY)(attribute_name::CHILD)(attribute_name::CHILDY)))
 		return "tag";
 	return attribute_name;
 }
