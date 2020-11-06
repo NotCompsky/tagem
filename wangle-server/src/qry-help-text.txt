@@ -104,10 +104,12 @@ Each must be separated by a logical operator - thus far the only implemented one
 				Shorthand for
 					f attr name r "^A"
 				Lists all files beginning with "A"
-			t parent = "Country"
+			t attr parent = "Country"
 				Filter for tags where one immediate ancestor is the tag "Country"
-			t parenty = "Continent"
+			t attr parenty = "Continent"
 				Filter for tags where any ancestor is the tag "Continent"
+			t attr parenty = "British City" and attr parenty = "Terrorist Attack" ?list
+				List all terrorist attacks which occurred in British cities
 	mime [REGEX]
 		Filter for files with a mimetype of the given name.
 		Note that, unlike this, "attr mime" refers to the mime's ID, not name.
