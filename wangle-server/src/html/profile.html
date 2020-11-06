@@ -73,10 +73,11 @@ The absense of this copyright notices on some other files in this project does n
 "<html lang=\"en\">"
 "<head>"
 	"<style>"
-		// This stylesheet exists only to set the thumbnail dimensions dynamically though JavaScript
+		// This stylesheet sets default values for things that are set dynamically though JavaScript
 		".thumbnail img{max-width:256px; max-height:256px;}"
 		".fg{background-color:#2A3845;}"
 		".bg{background-color:#08141F;}"
+		".bg2{background-color:#1C202A;}"
 	"</style>"
 	"<meta charset=\"utf-8\"/>"
 	
@@ -215,6 +216,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("fg")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("bg")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("bg2")
 	"</table>"
 "</div>"
 
@@ -516,7 +518,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</tr>"
 "</table>"
 
-"<div id=\"descr\"></div>"
+"<div id=\"descr\" class=\"bg2\" contenteditable=\"true\"></div>"
 
 "<div id=\"text-editor\">"
 	"<h2 contenteditable=\"true\">Edit file name here...</h2>"

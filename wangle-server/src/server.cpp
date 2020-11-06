@@ -3084,7 +3084,23 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return compsky::wangler::_r::post_ok;
 	}
 	
-	std::string_view post__set_tag_name(const char* s){
+	std::string_view post__set_dir_attr(const char* s,  const char* const attr){
+		GET_NUMBER_NONZERO(uint64_t, dir_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_names")
+		SKIP_TO_BODY
+		
+		this->mysql_exec(
+			"UPDATE dir d "
+			"SET d.", attr, "=\"", _f::esc, '"', s, "\" "
+			"WHERE d.id=", dir_id, " "
+			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
+		);
+		
+		return compsky::wangler::_r::post_ok;
+	}
+	
+	std::string_view post__set_tag_attr(const char* s,  const char* const attr){
 		GET_NUMBER_NONZERO(uint64_t, tag_id)
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_names")
@@ -3092,7 +3108,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->mysql_exec(
 			"UPDATE tag t "
-			"SET t.name=\"", _f::esc, '"', s, "\" "
+			"SET t.", attr, "=\"", _f::esc, '"', s, "\" "
 			"WHERE t.id=", tag_id, " "
 			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 		);
@@ -3100,7 +3116,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return compsky::wangler::_r::post_ok;
 	}
 	
-	std::string_view post__set_file_title(const char* s){
+	std::string_view post__set_file_attr(const char* s,  const char* const attr){
 		GET_NUMBER_NONZERO(uint64_t, f_id)
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_names")
@@ -3109,7 +3125,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_exec(
 			"UPDATE file f "
 			"JOIN dir d ON d.id=f.dir "
-			"SET f.title=\"", _f::esc, '"', s, "\" "
+			"SET f.", attr, "=\"", _f::esc, '"', s, "\" "
 			"WHERE f.id=", f_id, " "
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);

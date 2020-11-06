@@ -89,7 +89,7 @@ POST /e/dl/>
 POST /t/thumb/>
 	return this->update_tag_thumbnail(++str)
 POST /t/name/>
-	return this->post__set_tag_name(++str);
+	return this->post__set_tag_attr(++str, "name");
 POST /D/add/>
 	return this->add_to_tbl('D', ++str)
 POST /d/add/>
@@ -139,7 +139,13 @@ POST /q/ >
 POST /login >
 	break
 POST /f/title/>
-	return this->post__set_file_title(++str);
+	return this->post__set_file_attr(++str, "title");
+POST /f/descr/>
+	return this->post__set_file_attr(++str, "description");
+POST /t/descr/>
+	return this->post__set_tag_attr(++str, "description");
+POST /d/descr/>
+	return this->post__set_dir_attr(++str, "description");
 POST /f/merge/>
 	return this->post__merge_files(++str)
 POST /f/backup/>

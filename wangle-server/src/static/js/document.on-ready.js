@@ -51,6 +51,7 @@ function $$$on_document_ready(){
 	
 	$$$set_css_colour("fg",$$$get_cookie("css_colour_fg"));
 	$$$set_css_colour("bg",$$$get_cookie("css_colour_bg"));
+	$$$set_css_colour("bg2",$$$get_cookie("css_colour_bg2"));
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
 		const val2 = $$$get_cookie(key);
@@ -77,4 +78,7 @@ function $$$on_document_ready(){
 		node.addEventListener("change",$$$on_css_colour_picker_change);
 	
 	$$$document_getElementById('view-img').addEventListener('mousedown', $$$mousedown_on_image);
+	
+	$$$get_descr_obj().addEventListener("mousedown", $$$mousedown_on_descr);
+	$$$get_descr_obj().addEventListener("mouseleave", $$$mouseleave_descr);
 }
