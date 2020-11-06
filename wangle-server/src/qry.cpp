@@ -124,7 +124,8 @@ namespace attribute_name {
 namespace selected_field {
 	constexpr const char* x_id = "X.id";
 	constexpr const char* count = "COUNT(*)";
-	constexpr const char* list = "CONCAT(d.full_path, X.name)";
+	constexpr const char* list__file = "CONCAT(d.full_path, X.name)";
+	constexpr const char* list = "X.name";
 	constexpr const char* total_size = "SUM(IFNULL(X.size,0))";
 	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
 	selected_field::Type get_enum(const char* const str){
@@ -1061,9 +1062,10 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				select_fields = selected_field::total_views;
 				break;
 			case arg::select_list:
-				if (which_tbl != 'f')
+				if (which_tbl == 'e')
+					// TODO: Implement something for eras
 					return successness::invalid;
-				select_fields = selected_field::list;
+				select_fields = (which_tbl == 'f') ? selected_field::list__file : selected_field::list;
 				break;
 			case arg::limit: {
 				if (++n_calls__limit == 2)
