@@ -62,11 +62,15 @@ tag >
 time_origin >
 	attribute_name = attribute_name::T_ORIGIN;
 	attribute_kind = attribute_kind::many_to_one;
-	return (which_tbl=='f') ? successness::ok : successness::invalid
+	return CHAR_IN(which_tbl,('f')('t')) ? successness::ok : successness::invalid
 time_recorded >
 	attribute_name = attribute_name::T_RECORDED;
 	attribute_kind = attribute_kind::many_to_one;
 	return (which_tbl=='f') ? successness::ok : successness::invalid
+time_ended >
+	attribute_name = attribute_name::T_ENDED;
+	attribute_kind = attribute_kind::many_to_one;
+	return (which_tbl=='t') ? successness::ok : successness::invalid
 width >
 	attribute_name = attribute_name::WIDTH;
 	attribute_kind = attribute_kind::many_to_one;

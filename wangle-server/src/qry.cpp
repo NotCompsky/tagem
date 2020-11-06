@@ -113,6 +113,7 @@ namespace attribute_name {
 	constexpr static const char* const HEIGHT = "w";
 	constexpr static const char* const T_ORIGIN   = "t_origin";
 	constexpr static const char* const T_RECORDED = "added_on";
+	constexpr static const char* const T_ENDED = "t_ended";
 	constexpr static const char* const FPS = "fps";
 	constexpr static const char* const PARENT = "parent";
 	constexpr static const char PARENTY[] = "parent"; // Array style to guarantee different address

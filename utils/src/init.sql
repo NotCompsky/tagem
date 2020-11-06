@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS tag (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	user INT UNSIGNED NOT NULL,
 	name VARBINARY(128),
-	t1 BIGINT NOT NULL DEFAULT 0, -- The time the tag began to exist - for instance, if the tag is a person, their date of birth
-	t2 BIGINT NOT NULL DEFAULT 0, -- The time the tag ceased to exist.
+	t_origin BIGINT NOT NULL DEFAULT 0, -- The time the tag began to exist - for instance, if the tag is a person, their date of birth
+	t_ended BIGINT NOT NULL DEFAULT 0, -- The time the tag ceased to exist.
 	thumbnail VARBINARY(200),
 	cover VARBINARY(200) NOT NULL DEFAULT "",
 	description VARCHAR(1000) NOT NULL DEFAULT "",

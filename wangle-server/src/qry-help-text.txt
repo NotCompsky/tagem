@@ -53,8 +53,9 @@ INPUT DATA TYPES
 				duration                      f
 				md5                           f
 				sha                           f
-				time_origin                   f
+				time_origin                   f and t
 				time_recorded                 f
+				time_ended                    t
 				width                         f
 				height                        f
 				fps                           f
@@ -230,4 +231,6 @@ EXAMPLES
 		Files which have any associated thumbnail
 	f attr md5_of_path r "."
 		Files which have any associated md5_of_path (i.e. locally downloaded files with thumbnails)
+	t attr time_origin > 1 order a time_origin
+		List the oldest (by start date) tags, ignoring those with a time_origin of 0
 )========="

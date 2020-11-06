@@ -230,8 +230,8 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 	SELECT_TAGS_INFOS__BASE__BODY(__VA_ARGS__)
 #define SELECT_TAGS_INFOS__WITH_T_AND_DESCR__FROM_STUFF(...) \
 	SELECT_TAGS_INFOS__BASE__SELECT "," \
-		"t.t1," \
-		"t.t2," \
+		"t.t_origin," \
+		"t.t_ended," \
 		"t.description " \
 	SELECT_TAGS_INFOS__BASE__BODY(__VA_ARGS__)
 
@@ -1733,8 +1733,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			compsky::wangler::_r::flag::quote_and_escape, // name,
 			compsky::wangler::_r::flag::quote_and_escape, // thumb,
 			compsky::wangler::_r::flag::no_quote, // count
-			compsky::wangler::_r::flag::no_quote, // t1
-			compsky::wangler::_r::flag::no_quote, // t2
+			compsky::wangler::_r::flag::no_quote, // t_origin
+			compsky::wangler::_r::flag::no_quote, // t_ended
 			compsky::wangler::_r::flag::quote_and_json_escape // description
 		);
 		this->asciify(']');
