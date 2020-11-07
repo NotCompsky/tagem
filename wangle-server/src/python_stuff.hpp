@@ -122,9 +122,11 @@ PyObject* create_mysql_obj(const DatabaseInfo& db_info){
 }
 
 void import_view_remote_dir(const DatabaseInfo& db_info){
+	/*
 	PyObject* _module = PyImport_ImportModule("youtube_dl");
 	if (unlikely(_module == nullptr))
 		throw std::runtime_error("Python: Cannot import youtube_dl");
+	*/
 	
 	PyObj conn(create_mysql_obj(db_info), "cursor");
 	Py_INCREF(conn.obj);
