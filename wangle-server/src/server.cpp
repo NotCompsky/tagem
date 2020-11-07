@@ -490,10 +490,16 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			this->begin_json_response();
 		
 		const char* row = nullptr;
-		if (selected_field == sql_factory::selected_field::LIST){
+		if ((selected_field == sql_factory::selected_field::LIST) or (selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES) or (selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES)){
 			this->asciify('"');
-			while(this->mysql_assign_next_row(&row))
-				this->asciify(_f::esc, '"', row, "\\n");
+			while(this->mysql_assign_next_row(&row)){
+				if (
+					((selected_field == sql_factory::selected_field::LIST) and true) or
+					((selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES) and os::file_exists(row)) or
+					((selected_field == sql_factory::selected_field::DELETE_LOCAL_FILES) and not os::del_file(row))
+				)
+					this->asciify(_f::esc, '"', row, "\\n");
+			}
 			this->asciify('"');
 			return this->get_buf_as_string_view();
 		} else {

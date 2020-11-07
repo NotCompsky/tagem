@@ -178,6 +178,11 @@ OPTIONS
 				This returns the total size of all selected files
 			views
 				This returns the total number of views across all selected files
+			check_local
+				This lists files that exist and are accessible.
+				At the moment, it only lists files whose primary path is on an accessible local storage medium, however the plan is to also check backups.
+			del_local
+				This deletes all selected primary local files. In future, it will delete backups too.
 
 EXAMPLES
 	f order d id limit 1

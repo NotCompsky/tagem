@@ -83,6 +83,8 @@ namespace arg {
 		select_list,
 		select_total_size,
 		select_total_views,
+		select_check_local_files,
+		select_delete_local_files,
 		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
@@ -122,18 +124,23 @@ namespace attribute_name {
 }
 
 namespace selected_field {
+	// Array styles used to guarantee unique addresses
 	constexpr const char* x_id = "X.id";
 	constexpr const char* count = "COUNT(*)";
 	constexpr const char* list__file = "CONCAT(d.full_path, X.name)";
 	constexpr const char* list = "X.name";
 	constexpr const char* total_size = "SUM(IFNULL(X.size,0))";
 	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
+	constexpr const char check_local_files[]  = "CONCAT(d.full_path, X.name)";
+	constexpr const char delete_local_files[] = "CONCAT(d.full_path, X.name)";
 	selected_field::Type get_enum(const char* const str){
 		return
 		  (str == selected_field::x_id)  ? selected_field::X_ID
 		: (str == selected_field::count) ? selected_field::COUNT
 		: (str == selected_field::total_size)  ? selected_field::TOTAL_SIZE
 		: (str == selected_field::total_views) ? selected_field::TOTAL_VIEWS
+		: (str == selected_field::check_local_files)  ? selected_field::CHECK_LOCAL_FILES
+		: (str == selected_field::delete_local_files) ? selected_field::DELETE_LOCAL_FILES
 		: selected_field::LIST
 		;
 	}
@@ -1070,6 +1077,16 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					// TODO: Implement something for eras
 					return successness::invalid;
 				select_fields = (which_tbl == 'f') ? selected_field::list__file : selected_field::list;
+				break;
+			case arg::select_check_local_files:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::check_local_files;
+				break;
+			case arg::select_delete_local_files:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::delete_local_files;
 				break;
 			case arg::limit: {
 				if (++n_calls__limit == 2)

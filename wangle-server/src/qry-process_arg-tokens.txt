@@ -64,3 +64,7 @@ x >
 	return arg::select_total_size
 ?views >
 	return arg::select_total_views
+?del_local >
+	return arg::select_delete_local_files
+?check_local >
+	return arg::select_check_local_files
