@@ -580,7 +580,7 @@ void save_hash(const Duration file_type_flag,  const char* const hash_name,  con
 void and_dir_regexp(char*& itr,  const char* const dir_regexp){
 	compsky::asciify::asciify(
 		itr,
-		" AND d.full_path REGEXP \"", _f::esc, '"', dir_regexp, "\""
+		" AND d.full_path REGEXP BINARY \"", _f::esc, '"', dir_regexp, "\""
 	);
 #define ADD_DIR_REGEXP_SZ (23+128)
 }
@@ -591,7 +591,7 @@ void and_dir_regexp(char*&,  const std::nullptr_t){}
 void and_name_regexp(char*& itr,  const char* const file_ext_regexp){
 	compsky::asciify::asciify(
 		itr,
-		" AND f.name REGEXP '\\.", file_ext_regexp, "'"
+		" AND f.name REGEXP BINARY '\\.", file_ext_regexp, "'"
 	);
 #define ADD_NAME_REGEXP_SZ (23+128)
 }
@@ -732,7 +732,7 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"JOIN dir d ON d.id=f.dir "
 		"JOIN device D ON D.id=d.device "
 		"WHERE TRUE "
-		  "AND D.name REGEXP \"", opts.device_regexp, "\" "
+		  "AND D.name REGEXP BINARY \"", opts.device_regexp, "\" "
 		  "AND ",
 		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
 	);
