@@ -132,7 +132,7 @@ namespace selected_field {
 	constexpr const char* total_size = "SUM(IFNULL(X.size,0))";
 	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
 	constexpr const char check_local_files[]  = "CONCAT(d.full_path, X.name)";
-	constexpr const char delete_local_files[] = "CONCAT(d.full_path, X.name)";
+	constexpr const char delete_local_files[] = "X.id, CONCAT(d.full_path, X.name)";
 	selected_field::Type get_enum(const char* const str){
 		return
 		  (str == selected_field::x_id)  ? selected_field::X_ID

@@ -319,6 +319,10 @@ const char* get_str(const rapidjson::Value& v,  const char* k,  const char* defa
 }
 }
 
+namespace _f {
+	constexpr static Zip<2> zip2;
+}
+
 
 namespace compsky {
 namespace wangler {
@@ -486,17 +490,35 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		this->reset_buf_index();
 		
+		if (selected_field == sql_factory::selected_field::DELETE_LOCAL_FILES){
+			const char* path;
+			std::vector<uint64_t> file_ids;
+			file_ids.reserve(compsky::mysql::n_results<size_t>(this->res));
+			uint64_t file_id;
+			while(this->mysql_assign_next_row(&file_id, &path)){
+				if (not os::del_file(path))
+					file_ids.push_back(file_id);
+			}
+			this->mysql_exec(
+				"UPDATE file "
+				"SET status=66 "
+				"WHERE id IN (0",
+					_f::zip2, file_ids.size(), ',', file_ids,
+				")"
+			);
+			return compsky::wangler::_r::post_ok;
+		}
+		
 		if (selected_field != sql_factory::selected_field::X_ID)
 			this->begin_json_response();
 		
 		const char* row = nullptr;
-		if ((selected_field == sql_factory::selected_field::LIST) or (selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES) or (selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES)){
+		if ((selected_field == sql_factory::selected_field::LIST) or (selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES)){
 			this->asciify('"');
 			while(this->mysql_assign_next_row(&row)){
 				if (
 					((selected_field == sql_factory::selected_field::LIST) and true) or
-					((selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES) and os::file_exists(row)) or
-					((selected_field == sql_factory::selected_field::DELETE_LOCAL_FILES) and not os::del_file(row))
+					((selected_field == sql_factory::selected_field::CHECK_LOCAL_FILES) and os::file_exists(row))
 				)
 					this->asciify(_f::esc, '"', row, "\\n");
 			}
