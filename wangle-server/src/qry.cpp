@@ -928,10 +928,10 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				} else if (attribute_kind == attribute_kind::ersatz_many_to_one){
 					return successness::unimplemented;
 				} else {
-					where = "X.id";
+					where = "X.id ";
 					if (is_inverted)
-						where += "NOT";
-					where += " IN(SELECT file\n\tFROM file2";
+						where += "NOT ";
+					where += "IN(SELECT file\n\tFROM file2";
 					where += attribute_name;
 					where += "\n\tWHERE ";
 					where += attribute_field_name(attribute_name);
@@ -958,10 +958,13 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					derived_tbl += "\n\t)";
 					where += derived_tbl;
 					where += "\n)";
-					join_for_auto_ordering = "JOIN file2" + std::string(attribute_name) + " f2_order ON f2_order.file=X.id\nJOIN " + derived_tbl + " f2_derived ON f2_order.x=f2_derived.x\n";
-					auto_order_by = "f2_order.x DESC";
+					if (not is_inverted){
+						join_for_auto_ordering = "JOIN file2" + std::string(attribute_name) + " f2_order ON f2_order.file=X.id\nJOIN " + derived_tbl + " f2_derived ON f2_order.x=f2_derived.x\n";
+						auto_order_by = "f2_order.x DESC";
+					}
 				}
-				join = "";
+				if (not is_inverted)
+					join = "";
 				
 				bracket_depth = 0;
 				n_args_since_operator = 1;
@@ -1019,7 +1022,7 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					
 					where += " ersatz";
 					where += std::to_string(ersatz_count);
-					where += ".x";
+					where += ".x ";
 					
 					add_join_for_ersatz_attr(join, attribute_name, which_tbl, ersatz_count);
 				}
