@@ -43,6 +43,10 @@ size >
 	attribute_name = (which_tbl=='f') ? attribute_name::SIZE : attribute_name::ERSATZ_SIZE;
 	attribute_kind = (which_tbl=='f') ? attribute_kind::many_to_one : attribute_kind::ersatz_many_to_one;
 	return CHAR_IN(which_tbl,('f')('d')('t')('D')) ? successness::ok : successness::invalid
+status >
+	attribute_name = attribute_name::STATUS;
+	attribute_kind = attribute_kind::many_to_one;
+	return (which_tbl=='f') ? successness::ok : successness::invalid
 name >
 	attribute_name = attribute_name::NAME;
 	attribute_kind = attribute_kind::many_to_one;

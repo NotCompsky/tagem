@@ -107,6 +107,7 @@ namespace attribute_name {
 	constexpr static const char* const SHA256 = "sha256";
 	constexpr static const char* const THUMBNAIL = "thumbnail";
 	constexpr static const char* const SIZE = "size";
+	constexpr static const char* const STATUS = "status";
 	constexpr static const char* const ERSATZ_SIZE = "n";
 	constexpr static const char* const VIEWS    = "views";
 	constexpr static const char* const LIKES    = "likes";
@@ -336,7 +337,7 @@ const char* get_tbl_name_from_attr_name(const char* const attribute_name){
 #define X(_,n,data) or (attribute_name == attribute_name::data)
 static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
-	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(T_ORIGIN)(T_RECORDED)(WIDTH)(HEIGHT)(LIKES)(DISLIKES)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
+	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(STATUS)(T_ORIGIN)(T_RECORDED)(WIDTH)(HEIGHT)(LIKES)(DISLIKES)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
 }
 
 static
