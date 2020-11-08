@@ -211,6 +211,9 @@ EXAMPLES
 		Find files which are probably screenshots of movies
 	f same size 2-? limit 100 order d size
 		Find files that are probably duplicates, based only on their file sizes.
+	f "[.](mp4|webm|gif)$" same dct 2-? not same dct 5-? limit 1000
+		Find video files that have between 2 and 4 (inclusive) 'scenes' that look very similar.
+		The reasoning for ignoring too many similar 'scenes' is that movies have intros that encompass lots of different 'scenes' - an intro for each studio that helped produce it.
 	f d "^https://www.youtube.com/watch\?v=" same dct 2-? same size 2-? limit 100
 		Find files which have the same DCT hash and same size as a file from youtube.
 	d "." order d size
