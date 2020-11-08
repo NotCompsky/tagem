@@ -27,6 +27,7 @@ The absense of this copyright notices on some other files in this project does n
 #define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
 #define CHAR_IN(x,ls) IS_CONTAINED_IN_VARARGS(char,x,ls)
 #define STR_IN(x,ls) IS_CONTAINED_IN_VARARGS(const char*,x,ls)
+#define MAX_LIMIT 1000
 
 
 namespace sql_factory{
@@ -1096,8 +1097,8 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				limit = s2n<unsigned>(qry);
 				if (*qry != ' ')
 					return successness::invalid;
-				if (limit > 100)
-					limit = 100;
+				if (limit > MAX_LIMIT)
+					limit = MAX_LIMIT;
 				break;
 			}
 			case arg::offset: {
