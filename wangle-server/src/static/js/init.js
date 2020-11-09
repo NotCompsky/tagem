@@ -99,12 +99,12 @@ function $$$when_data_loaded(){
 }
 
 function $$$refetch_all_jsons(){
-	$$$refetch_json('D', '!!!MACRO!!!SERVER_ROOT_URL/a/D.json', $$$when_data_loaded);
-	$$$refetch_json('P', '!!!MACRO!!!SERVER_ROOT_URL/a/P.json', $$$when_data_loaded);
-	$$$refetch_json('t2p', '!!!MACRO!!!SERVER_ROOT_URL/a/t2p.json', $$$when_data_loaded);
-	$$$refetch_json('x', '!!!MACRO!!!SERVER_ROOT_URL/a/x.json', $$$when_data_loaded);
-	$$$refetch_json('mt', '!!!MACRO!!!SERVER_ROOT_URL/a/mt.json', $$$when_data_loaded);
-	$$$refetch_json('f2', '!!!MACRO!!!SERVER_ROOT_URL/a/f2.json', function(){
+	$$$refetch_json('D', 'a/D.json', $$$when_data_loaded);
+	$$$refetch_json('P', 'a/P.json', $$$when_data_loaded);
+	$$$refetch_json('t2p', 'a/t2p.json', $$$when_data_loaded);
+	$$$refetch_json('x', 'a/x.json', $$$when_data_loaded);
+	$$$refetch_json('mt', 'a/mt.json', $$$when_data_loaded);
+	$$$refetch_json('f2', 'a/f2.json', function(){
 		$$$f2_as_array = Object.entries($$$f2).sort(x => x[0]).reverse();
 		$$$f2_as_array.unshift(null); // Index begins at 1, to simplify server's SQL statement
 		$$$when_data_loaded();

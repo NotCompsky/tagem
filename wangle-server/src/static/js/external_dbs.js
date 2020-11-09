@@ -87,7 +87,7 @@ function $$$display_post_meta(_db_id, tpl){
 
 function $$$display_posts(_db_id, _user_id, _type){
 	// _type is either 'l' (for liked posts) or 'u' (for posts which they authored)
-	$$$ajax_GET_w_JSON_response('!!!MACRO!!!SERVER_ROOT_URL/a/x/u/p/'+_type+'/'+_db_id+'/'+_user_id, function(file_ids){
+	$$$ajax_GET_w_JSON_response('a/x/u/p/'+_type+'/'+_db_id+'/'+_user_id, function(file_ids){
 		if(file_ids.length === 0)
 			return;
 		$$$populate_f_table('id', file_ids.join(","), null, 0);
@@ -98,7 +98,7 @@ function $$$display_posts(_db_id, _user_id, _type){
 }
 
 function $$$view_post(_db_id, _post_id){
-	$$$ajax_GET_w_JSON_response("!!!MACRO!!!SERVER_ROOT_URL/a/x/p/i/"+_db_id+"/"+_post_id, function(data){
+	$$$ajax_GET_w_JSON_response("a/x/p/i/"+_db_id+"/"+_post_id, function(data){
 		$$$display_post_meta(_db_id, data[0]);
 		$$$display_cmnts(_db_id, data[1]);
 		$$$db_id = _db_id;
@@ -121,7 +121,7 @@ function $$$view_user(_db_id, _user_id){
 		$$$user_id = _user_id;
 		$$$db_id = _db_id;
 		$$$ajax_GET_w_JSON_response(
-			"!!!MACRO!!!SERVER_ROOT_URL/a/x/u/i/"+$$$db_id+"/"+_user_id,
+			"a/x/u/i/"+$$$db_id+"/"+_user_id,
 			function(data){
 				$$$set_profile_thumb($$$BLANK_IMG_SRC);
 				
@@ -148,7 +148,7 @@ function $$$view_user(_db_id, _user_id){
 function $$$view_likes(){
 	if ($$$file_id === undefined)
 		return;
-	$$$ajax_GET_w_JSON_response("!!!MACRO!!!SERVER_ROOT_URL/a/x/p/l/"+$$$db_id+"/"+$$$post_id, function(data){
+	$$$ajax_GET_w_JSON_response("a/x/p/l/"+$$$db_id+"/"+$$$post_id, function(data){
 		let _s = "";
 		for(const [id,name] of data){
 			_s += '<a class="user" onclick="$$$view_user(' + $$$db_id + ',\'' + id + '\')">' + name + '</a>';

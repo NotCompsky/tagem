@@ -33,7 +33,6 @@ option(BUILD_TESTS "Run compile-time tests" OFF)
 option(USE_LOCAL_JS "Use local JavaScript, except for youtube" OFF)
 option(USE_LOCAL_YT_JS "Use local Youtube JavaScript file at static/js/3rd-party/www.youtube.com/iframe_api, rather than fetching from youtube.com" OFF)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
-set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 

@@ -62,7 +62,7 @@ function $$$init_selects__ajax(var_name){
 		allowClear:true,
 		ajax:{
 			url: !!!MACRO!!!SELECT2_URL_ENDPOINT,
-			// Basically "!!!MACRO!!!SERVER_ROOT_URL/a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.
+			// Basically "a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.
 			dataType:"json",
 			data:function(params){
 				return ($$$use_regex) ? {'q': params.term} : {'q': $$$regexp_esc_for_mysql(params.term)}

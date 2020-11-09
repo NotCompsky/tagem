@@ -12,7 +12,7 @@
 function $$$view_tasks(){
 	$$$hide_all_except(['tasks-container']);
 	$.get({
-		url:"!!!MACRO!!!SERVER_ROOT_URL/a/exec.json",
+		url:"a/exec.json",
 		success:function(data){
 			let _s = "";
 			for(const [id,name,descr,content] of data){
