@@ -34,6 +34,13 @@ The absense of this copyright notices on some other files in this project does n
 #define ACTION_ON_DOCUMENT_LOAD PREPOPULATE1 PREPOPULATE2 PREPOPULATE3
 
 
+#ifdef USE_LOCAL_YT_JS
+# define USE_REMOTE_YT_JS__STR "false"
+#else
+# define USE_REMOTE_YT_JS__STR "true"
+#endif
+
+
 #ifndef SELECT2_URL_ENDPOINT
 	#define SELECT2_URL_ENDPOINT "\"" SERVER_ROOT_URL "/a/select2/regex/\"+var_name"
 #endif
@@ -606,11 +613,23 @@ R"=========(
 )========="
 
 
+#ifdef USE_LOCAL_JS
+#else
 "<script src=\"https://code.jquery.com/jquery-3.5.0.min.js\"></script>"
 "<script src=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js\"></script>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 "<script src=\"https://bgrins.github.com/spectrum/spectrum.js\"></script>"
+#endif
 "<script type=\"text/javascript\">"
+
+#ifdef USE_LOCAL_JS
+// NOTE: Must precede MINIMISED_JS_ALL
+# include "../static/js/3rd-party/jquery.js"
+# include "../static/js/3rd-party/select2.js"
+# include "../static/js/3rd-party/mousetrap.js"
+# include "../static/js/3rd-party/spectrum.js"
+#endif
+
 	MINIMISED_JS_ALL
 	
 	"window.addEventListener('popstate',  e => " MINIMISED_JS_DECL_load_page_from_a_hash_string "(e.state));"
@@ -622,6 +641,10 @@ R"=========(
 	"$(document).ready("
 		MINIMISED_JS_DECL_on_document_ready
 	");"
+	
+#ifdef USE_LOCAL_YT_JS
+# include "../static/js/3rd-party/www.youtube.com/iframe_api"
+#endif
 "</script>"
 
 

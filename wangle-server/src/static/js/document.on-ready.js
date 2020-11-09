@@ -21,11 +21,13 @@ function $$$on_document_ready(){
 	$$$init_selects('$$$users_dict');
 	$($$$document.body).on("change","#select-user-for-edit",$$$load_user_for_edit);
 	
+	if(!!!MACRO!!!USE_REMOTE_YT_JS__STR){
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
 	let node = document.createElement('script');
 	node.src = "https://www.youtube.com/iframe_api";
 	let firstScriptTag = $$$document_getElementsByTagName('script')[0];
 	firstScriptTag.parentNode.insertBefore(node, firstScriptTag);
+	}
 	
 	let css = $$$get_cookie("css");
 	if(css===undefined)
