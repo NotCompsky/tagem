@@ -100,7 +100,7 @@ function $$$view_yt_video(idstr){
 	$$$hide_all_views_except('yt-player');
 }
 function $$$try_to_pause_yt_video(){
-	if($$$yt_player.pauseVideo!==undefined)
+	if(($$$yt_player!==undefined)&&($$$yt_player.pauseVideo!==undefined))
 		$$$yt_player.pauseVideo();
 }
 function $$$next_video_from_yt_video(){
