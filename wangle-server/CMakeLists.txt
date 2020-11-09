@@ -30,27 +30,21 @@ option(DISPLAY_LICENSES_INLINE "Display static component licenses inline" ON)
 option(ENABLE_STATIC "Build static executable, rather than linked" OFF)
 option(ENABLE_LIMIT_WITHIN_GROUP_CONCAT "Allow the use of LIMIT statements within GROUP_CONCAT functions, disabling the workaround. Currently only MariaDB servers have fixed this bug, while all official MySQL versions require the workaround." OFF)
 option(BUILD_TESTS "Run compile-time tests" OFF)
-if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
-else()
-    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "true")
-endif()
-if(n_cached)
-    target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
-endif()
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 
+if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
+    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
+else()
+    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "true")
+endif()
+
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
 else()
 	set(MANGLE_JS_NAMES_ARGS "")
-endif()
-
-if(BUILD_TESTS)
-	target_compile_definitions(server PRIVATE TESTS)
 endif()
 
 find_package(fizz REQUIRED)
@@ -89,7 +83,6 @@ add_executable(
 	"${SRC_DIR}/curl_utils.cpp"
 	"${SRC_DIR}/db_info.cpp"
 	"${SRC_DIR}/initialise_tagem_db.cpp"
-	
 )
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	include(CheckIPOSupported)
@@ -128,6 +121,12 @@ if(EMBED_PYTHON)
 endif()
 if(ENABLE_LIMIT_WITHIN_GROUP_CONCAT)
 	target_compile_definitions(server PRIVATE LIMITS_WITHIN_GROUP_CONCATS)
+endif()
+if(BUILD_TESTS)
+	target_compile_definitions(server PRIVATE TESTS)
+endif()
+if(n_cached)
+    target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
 endif()
 
 
