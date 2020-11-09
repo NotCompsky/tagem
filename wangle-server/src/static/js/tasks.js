@@ -20,9 +20,9 @@ function $$$view_tasks(){
 					<div class='task'>
 						<h3 class='task-name'>` + name + `</h3>
 						<p class='task-descr'>` + descr + `</p>
-						<a onclick='$$$toggle("task-content` + id + `")'>Content</a>
-						<textedit id='task-content` + id + `' class='hidden task-content' contenteditable='true'></textedit>
-						<a onclick="$$$edit_task(` + id + `)">Submit edit</a>
+						<a onclick='$$$toggle_class("task`+id+`-toggle")'>Content</a>
+						<textedit id='task-content` + id + `' class='task`+id+`-toggle hidden task-content' contenteditable='true'></textedit>
+						<a onclick="$$$edit_task(` + id + `)" class='task`+id+`-toggle hidden'>Submit edit</a>
 						<a onclick='$$$exec_task(` + id + `)'>Exec</a>
 					</div>`;
 				// NOTE: The tab is there to ensure that whitespace is not preserved

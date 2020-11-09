@@ -15,6 +15,9 @@ function $$$hide_node(x){
 function $$$unhide_node(x){
 	x.classList.remove("hidden");
 }
+function $$$toggle_node(x){
+	x.classList.toggle("hidden");
+}
 
 function $$$hide(id){
 	$$$hide_node($$$document_getElementById(id));
@@ -118,5 +121,8 @@ function $$$is_visible(id){
 	return (!$$$document_getElementById(id).classList.contains('hidden'));
 }
 function $$$toggle(id){
-	$$$document_getElementById(id).classList.toggle("hidden");
+	$$$toggle_node($$$document_getElementById(id));
+}
+function $$$toggle_class(x){
+	$$$for_node_in_document_getElementsByClassName(x, $$$toggle_node);
 }
