@@ -3556,30 +3556,42 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->mysql_query(
 			"SELECT "
-				"DISTINCT f.id,"
-				"CONCAT(d.full_path,REGEXP_REPLACE(CAST(f.name AS CHAR),'[.][a-z34]{3,4}$',''))"
+				"IFNULL(f.size,0),"
+				"f.mimetype,"
+				"f.id,"
+				"CONCAT(d.full_path,REGEXP_REPLACE(f.name, BINARY '[.][a-z34]{3,4}$', BINARY '')),"
+				"CONCAT(d2.full_path,f2.name)"
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"LEFT JOIN mimetype m ON m.id=f.mimetype "
-			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
-			"LEFT JOIN tag t ON t.id=f2t.tag "
-			"WHERE d.full_path REGEXP BINARY '^https?://' "
-			  "AND NOT f.name REGEXP BINARY '[.][a-z34]{3,4}$' " // Direct file links
-			  "AND f.status=0 "
-			  "AND f.mimetype=0 "
+			"LEFT JOIN file_backup f2 ON f2.file=f.id AND d.full_path NOT LIKE '/%' "
+			"LEFT JOIN dir d2 ON d2.id=f2.dir AND d2.full_path LIKE '/%' "
+			"WHERE f.status=0 "
 			  "AND f.likes IS NULL " // TODO: Allow field to be specified? Some websites do not provide all fields. Might wish to simply get information for files rather than updating already satisfactory files.
 			"ORDER BY RAND()" // NOTE: It is best to randomise the order in order to minimise the number of consecutive calls to the same website.
 		);
 		
+		size_t file_size;
+		unsigned mimetype;
 		uint64_t fid;
 		const char* url;
-		while(this->mysql_assign_next_row(&fid, &url)){
-			if (unlikely(this->get_remote_video_metadata(user_id, fid, url))){
+		const char* backup_url;
+		while(this->mysql_assign_next_row(&file_size, &mimetype, &fid, &url, &backup_url)){
+			if ((mimetype == 0) and not os::is_local_file_or_dir(url) and python::is_valid_ytdl_url(url) and (unlikely(this->get_remote_video_metadata(user_id, fid, url)))){
 				this->mysql_exec(
 					"UPDATE file "
 					"SET status=1 "
 					"WHERE id=", fid
 				);
+			}
+			if ((file_size == 0) and (os::is_local_file_or_dir(url) or (backup_url != nullptr))){
+				const size_t sz = os::get_file_sz(backup_url ? backup_url : url);
+				if (sz != 0){
+					this->mysql_exec(
+						"UPDATE file "
+						"SET size=IFNULL(file.size,", sz, ")"
+						"WHERE id=", fid
+					);
+				}
 			}
 		}
 		
@@ -3784,7 +3796,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		tagem_module::file_path = nullptr;
 		
-		PyDict<8> opts(
+		PyDict<9> opts(
+			"max_downloads", PyLong_FromLong(1), // Do not get trapped into scraping multiple pages based on the url, for instance the url being a search page
 			"quiet", Py_True,
 			"ffmpeg_location", tagem_module::ffmpeg_location,
 			"forcefilename", Py_True,
@@ -3838,7 +3851,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		bool failed;
 		GILLock gillock();
 		{ // Ensures the GILLock destructor is called after all PyObj destructors
-		PyDict<4> opts(
+		PyDict<5> opts(
+			"max_downloads", PyLong_FromLong(1),
 			"quiet", Py_False,
 			"forcejson", Py_True,
 			"simulate", Py_True,

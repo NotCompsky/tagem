@@ -90,6 +90,35 @@ namespace tagem_module {
 }
 
 
+bool is_valid_ytdl_url(const char* const url){
+	PyDict<3> opts(
+		"quiet", Py_False,
+		"simulate", Py_True,
+		"skip_download", Py_True
+	);
+	Py_INCREF(Py_False);
+	Py_INCREF(Py_True);
+	Py_INCREF(Py_True);
+	
+	PyObj iterator(PyObject_GetIter(PyObj(ytdl_obj.call(opts.obj), "_ies").obj));
+	if (unlikely(iterator.obj == nullptr)){
+		log("Cannot validate ytdl URL");
+		return true;
+	}
+	PyStr pyurl(url);
+	while(true){
+		PyObj item(PyIter_Next(iterator.obj));
+		if (unlikely(item.obj == nullptr))
+			break;
+		if (strcmp(PyObj(item, "__name__").as_str(), "GenericIE") == 0)
+			continue;
+		if (item.call_fn_bool("suitable", pyurl.obj))
+			return true;
+	}
+	log("Invalid ytdl URL: ", url);
+}
+
+
 PyObject* attempt_import_failover(const char* const name){
 	log("Unable to import ", name);
 	abort();

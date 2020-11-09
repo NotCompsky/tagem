@@ -69,6 +69,13 @@ class PyObj {
 		Py_DECREF(this->call_fn(args...));
 	}
 	
+	template<typename... Args>
+	bool call_fn_bool(Args... args){
+		PyObject* res = this->call_fn(args...);
+		Py_DECREF(res);
+		return (res == Py_True);
+	}
+	
 	
 	const char* as_str() const {
 		return PyUnicode_AsUTF8(this->obj);
