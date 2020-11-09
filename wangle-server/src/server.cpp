@@ -3563,9 +3563,10 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"LEFT JOIN mimetype m ON m.id=f.mimetype "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			"LEFT JOIN tag t ON t.id=f2t.tag "
-			"WHERE d.full_path REGEXP '^https?://' "
+			"WHERE d.full_path REGEXP BINARY '^https?://' "
+			  "AND NOT f.name REGEXP BINARY '[.][a-z34]{3,4}$' " // Direct file links
 			  "AND f.status=0 "
-			  "AND (f.mimetype=0 OR m.name LIKE 'video/%')"
+			  "AND f.mimetype=0 "
 			  "AND f.likes IS NULL " // TODO: Allow field to be specified? Some websites do not provide all fields. Might wish to simply get information for files rather than updating already satisfactory files.
 			"ORDER BY RAND()" // NOTE: It is best to randomise the order in order to minimise the number of consecutive calls to the same website.
 		);
