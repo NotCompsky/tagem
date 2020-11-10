@@ -323,6 +323,11 @@ namespace _f {
 	constexpr static Zip<2> zip2;
 }
 
+namespace atomic_signal {
+	static
+	std::atomic<bool> stop_updating_video_metadatas = false;
+}
+
 
 namespace compsky {
 namespace wangler {
@@ -3575,6 +3580,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		uint64_t fid;
 		const char* url;
 		const char* backup_url;
+		unsigned i = 0;
 		while(this->mysql_assign_next_row(&file_size, &mimetype, &fid, &url, &backup_url)){
 			if ((mimetype == 0) and not os::is_local_file_or_dir(url) and python::is_valid_ytdl_url(url) and (unlikely(this->get_remote_video_metadata(user_id, fid, url)))){
 				this->mysql_exec(
@@ -3593,8 +3599,22 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					);
 				}
 			}
+			if (++i & 64){
+				// Every 64 iterations, check for 'kill signal'
+				if (unlikely(atomic_signal::stop_updating_video_metadatas.load(std::memory_order_acquire))){
+					mysql_free_result(this->res);
+				}
+			}
 		}
 		
+		return compsky::wangler::_r::post_ok;
+	}
+	
+	std::string_view stop_update_video_metadatas(const char* s){
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
+		
+		atomic_signal::stop_updating_video_metadatas.store(true, std::memory_order_acquire);
 		return compsky::wangler::_r::post_ok;
 	}
 	
