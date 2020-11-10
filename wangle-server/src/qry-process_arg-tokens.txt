@@ -60,6 +60,8 @@ x >
 	return arg::select_count
 ?list >
 	return arg::select_list
+?url-and-title-md >
+	return arg::select_url_and_title__markdown
 ?size >
 	return arg::select_total_size
 ?views >

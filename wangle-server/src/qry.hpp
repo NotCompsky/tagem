@@ -89,6 +89,7 @@ namespace selected_field {
 		INVALID,
 		X_ID,
 		LIST,
+		URL_AND_TITLE__MARKDOWN,
 		TOTAL_SIZE,
 		TOTAL_VIEWS,
 		DELETE_LOCAL_FILES,

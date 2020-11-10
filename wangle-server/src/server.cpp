@@ -321,6 +321,7 @@ const char* get_str(const rapidjson::Value& v,  const char* k,  const char* defa
 
 namespace _f {
 	constexpr static Zip<2> zip2;
+	constexpr static compsky::asciify::flag::Escape3 esc3;
 }
 
 namespace atomic_signal {
@@ -494,6 +495,17 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		this->reset_buf_index();
+		
+		if (selected_field == sql_factory::selected_field::URL_AND_TITLE__MARKDOWN){
+			this->asciify('"');
+			const char* url;
+			const char* title;
+			while(this->mysql_assign_next_row(&url, &title)){
+				this->asciify('[', _f::esc3, '"', '[', ']', title, ']', '(', _f::esc3, '(', ')', '"', url, ')', "  \\n");
+			}
+			this->asciify('"');
+			return this->get_buf_as_string_view();
+		}
 		
 		if (selected_field == sql_factory::selected_field::DELETE_LOCAL_FILES){
 			const char* path;

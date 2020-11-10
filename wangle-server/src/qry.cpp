@@ -82,6 +82,7 @@ namespace arg {
 		
 		select_count,
 		select_list,
+		select_url_and_title__markdown,
 		select_total_size,
 		select_total_views,
 		select_check_local_files,
@@ -131,6 +132,7 @@ namespace selected_field {
 	constexpr const char* count = "COUNT(*)";
 	constexpr const char* list__file = "CONCAT(d.full_path, X.name)";
 	constexpr const char* list = "X.name";
+	constexpr const char* url_and_title__markdown = "CONCAT(d.full_path, X.name), IFNULL(X.title,X.name)";
 	constexpr const char* total_size = "SUM(IFNULL(X.size,0))";
 	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
 	constexpr const char check_local_files[]  = "CONCAT(d.full_path, X.name)";
@@ -143,6 +145,7 @@ namespace selected_field {
 		: (str == selected_field::total_views) ? selected_field::TOTAL_VIEWS
 		: (str == selected_field::check_local_files)  ? selected_field::CHECK_LOCAL_FILES
 		: (str == selected_field::delete_local_files) ? selected_field::DELETE_LOCAL_FILES
+		: (str == selected_field::url_and_title__markdown) ? selected_field::URL_AND_TITLE__MARKDOWN
 		: selected_field::LIST
 		;
 	}
@@ -1082,6 +1085,11 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 					// TODO: Implement something for eras
 					return successness::invalid;
 				select_fields = (which_tbl == 'f') ? selected_field::list__file : selected_field::list;
+				break;
+			case arg::select_url_and_title__markdown:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::url_and_title__markdown;
 				break;
 			case arg::select_check_local_files:
 				if (which_tbl != 'f')
