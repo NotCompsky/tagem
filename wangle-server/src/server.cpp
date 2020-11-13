@@ -505,6 +505,9 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 			const char* title;
 			while(this->mysql_assign_next_row(&url, &title)){
 				this->asciify('[', _f::esc3, '"', '[', ']', title, ']', '(', _f::esc3, '(', ')', '"', url, ')', "  \\n");
+				// WARNING: This does not escape special unicode's "surrogate pairs" of quotes, for instance “
+				// This causes JSON issues because JSON, beyond all reasoning, decides that this unicode "Left Double Quotation Mark" terminates a string opened by an ASCII double quotation mark.
+				// This is not patched because knowing unicode there's probably a million such cases of visually similar quotation marks to patch.
 			}
 			this->asciify('"');
 			return this->get_buf_as_string_view();
