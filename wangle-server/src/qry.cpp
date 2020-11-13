@@ -27,7 +27,7 @@ The absense of this copyright notices on some other files in this project does n
 #define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
 #define CHAR_IN(x,ls) IS_CONTAINED_IN_VARARGS(char,x,ls)
 #define STR_IN(x,ls) IS_CONTAINED_IN_VARARGS(const char*,x,ls)
-#define MAX_LIMIT 1000
+#define MAX_LIMIT 100
 
 
 namespace sql_factory{
