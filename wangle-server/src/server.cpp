@@ -422,7 +422,9 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 	}
 	
 	void mysql_exec_using_buf_db_by_id(DatabaseInfo& db_info){
+		this->mysql_mutex.lock();
 		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
+		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_using_buf(){
