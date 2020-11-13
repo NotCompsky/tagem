@@ -4130,8 +4130,9 @@ int main(int argc,  const char* const* argv){
 	}
 	}
 	
+	
 	compsky::server::asio::io_service service;
-	compsky::server::Server<4, RTaggerHandler>().start(port_n);
+	compsky::server::Server<4, RTaggerHandler>(port_n).start();
 	
 	for (DatabaseInfo& db_info : db_infos){
 		db_info.close();
