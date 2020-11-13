@@ -754,9 +754,12 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 			while(this->mysql_assign_next_row2(&tag_id_str))
 				tag_ids += tag_id_str;
 			
+#ifdef PYTHON__NOTIMPLEMENTEDYET
+#else
 			args[++i] = era_start;
 			args[++i] = era_end;
 			args[++i] = url;
+#endif
 		} while(this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name));
 		args.back() = nullptr;
 		
