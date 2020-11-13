@@ -18,7 +18,7 @@ GET /a/t2p.json?>
 GET /a/mt.json?>
 	return this->get_mimetype_json(str)
 GET /a/x.json?>
-	return compsky::wangler::_r::external_db_json
+	return compsky::server::_r::external_db_json
 GET /a/exec.json >
 	return this->get_exec_json(str)
 
@@ -70,7 +70,7 @@ GET /a/x/p/l/>
 GET /i/f/>
 	return this->file_thumbnail(++str)
 GET /favicon.ico >
-	return compsky::wangler::_r::invalid_file
+	return compsky::server::_r::invalid_file
 
 GET /S/f/>
 	return this->stream_file(++str)
@@ -132,10 +132,10 @@ POST /d/t/>
 	return this->post__add_tags_to_dirs(++str)
 POST /d/t-/>
 	// TODO
-	return compsky::wangler::_r::not_implemented_yet
+	return compsky::server::_r::not_implemented_yet
 POST /x/u/t-/>
 	// TODO
-	return compsky::wangler::_r::not_implemented_yet
+	return compsky::server::_r::not_implemented_yet
 POST /q/ >
 	return this->parse_qry(++str)
 POST /login >
