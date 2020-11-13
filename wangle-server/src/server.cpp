@@ -4038,6 +4038,7 @@ int main(int argc,  const char* const* argv){
 	
 	DatabaseInfo tagem_db_info = db_infos.at(0);
 	initialise_tagem_db(tagem_db_info.mysql_obj);
+	tagem_db_info.exec_buffer("SET SESSION sql_mode='NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
 	
 #ifdef PYTHON
 	if (FILES_GIVEN_REMOTE_DIR != nullptr)
