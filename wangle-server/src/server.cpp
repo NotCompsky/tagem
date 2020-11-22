@@ -2448,7 +2448,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"FROM file f ",
 			(dir_id==0)?"":"JOIN file_backup f2 ON f2.file=f.id ",
 			"JOIN dir d ON d.id=f", (dir_id==0)?"":"2", ".dir "
-			"JOIN mimetype m ON m.id=f.mimetype "
+			"JOIN mimetype m ON m.id=f", (dir_id==0)?"":"2", ".mimetype "
 			"WHERE f.id=", id, " "
 			  "AND ", (dir_id==0)?"0=":"f2.dir=", dir_id, " "
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
