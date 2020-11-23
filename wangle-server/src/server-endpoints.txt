@@ -44,6 +44,9 @@ GET /a/f/$/>
 GET /a/d/id/>
 	return this->get__X_given_ids('d', ++str)
 
+GET /a/d/t/>
+	return this->dirs_given_tag(++str)
+
 GET /a/t/info/>
 	return this->get__tag_info__given_id(++str)
 GET /a/t/id/>

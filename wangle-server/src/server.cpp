@@ -1718,6 +1718,15 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			);
 	}
 	
+	std::string_view dirs_given_tag(const char* s){
+		GET_PAGE_N('/')
+		const uint64_t tag_id = a2n<uint64_t>(s);
+		
+		GET_USER_ID
+		
+		return this->X_given_ids<false>('d', user_id, page_n, "SELECT dir FROM dir2tag WHERE tag=", tag_id);
+	}
+	
 	template<typename... Args>
 	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		JoinArgsWrapper<const char*, Args..., const char*>
@@ -1802,7 +1811,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		this->asciify_tags_arr_or_dict(itr, compsky::wangler::_r::flag::arr);
 	}
 	
-	template<typename... Args>
+	template<bool is_ordered_by_field,  typename... Args>
 	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
@@ -1820,7 +1829,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 			"WHERE d.id IN (", ids_args..., ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"GROUP BY d.id "
-			"ORDER BY FIELD(d.id,", ids_args..., ")"
+			"ORDER BY ", is_ordered_by_field ? "FIELD(d.id," : "d.name -- ", ids_args..., ")\n"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
@@ -1855,7 +1864,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				this->eras_w_file_infos_given_ids(this->itr, user_id, 0, ids_args...);
 				break;
 			case 'd':
-				this->dirs_given_ids (this->itr, user_id, 0, ids_args...);
+				this->dirs_given_ids<is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
 				break;
 			case 't':
 				this->tags_given_ids<is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
