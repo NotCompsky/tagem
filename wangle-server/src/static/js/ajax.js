@@ -9,6 +9,17 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+function $$$delete_standard_request_header(xhr,x){
+	xhr.setRequestHeader(x," ");
+}
+
+function $$$ajax_prefilter(opts, orig_opts, xhr){
+	for(let x of ["Accept-Language","User-Agent","X-Requested-With"]){
+		$$$delete_standard_request_header(xhr,x);
+	}
+}
+// Assigned in document.on-ready.js
+
 function $$$ajax(mthd,resp_type,url,fn){
 	$.ajax({
 		type:mthd,

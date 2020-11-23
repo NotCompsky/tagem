@@ -10,6 +10,8 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
 function $$$on_document_ready(){
+	$.ajaxPrefilter($$$ajax_prefilter);
+	
 	$$$hide_all_except([]);
 	
 	const uname = $$$get_cookie("username");
