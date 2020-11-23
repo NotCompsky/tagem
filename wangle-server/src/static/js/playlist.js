@@ -29,13 +29,13 @@ function $$$playlist_listener(){
 	$$$view_file($$$playlist_file_ids[0]);
 }
 async function $$$playlist_listener_delayed(){
-	await $$$sleep($$$get_cookie('sleep_for_inanimate_media'));
+	await $$$sleep($$$local_storage_get('sleep_for_inanimate_media'));
 	$$$playlist_listener();
 }
 async function $$$on_media_error(){
 	// TODO: Iterate through backups (either remote or "existing" local devices), and only then move to next file in playlist
 	if($$$is_playlist_running()){
-		await $$$sleep($$$get_cookie('sleep_on_media_err'));
+		await $$$sleep($$$local_storage_get('sleep_on_media_err'));
 		$$$playlist_listener();
 	}
 }

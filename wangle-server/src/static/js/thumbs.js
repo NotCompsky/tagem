@@ -11,7 +11,7 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
 function $$$set_thumbnail_width(n){
-	$$$set_cookie_forever("w", n);
+	$$$local_storage_store("w", n);
 	const c = $$$document.styleSheets[0];
 	c.deleteRule(0),
 	c.insertRule('.thumbnail img{max-width:'+n+'px; max-height:'+n+'px;}', 0);

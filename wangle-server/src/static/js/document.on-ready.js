@@ -29,39 +29,39 @@ function $$$on_document_ready(){
 	firstScriptTag.parentNode.insertBefore(node, firstScriptTag);
 	}
 	
-	let css = $$$get_cookie("css");
-	if(css===undefined)
+	let css = $$$local_storage_get("css");
+	if(css===null)
 		css = $$$stylesheet_opts[0];
 	$$$switch_stylesheet(css);
 	
-	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_cookie__bool("use_regex",false);
-	$$$prioritise_local_autoplay = $$$get_and_set_default_user_setting_tofrom_cookie__bool("prioritise_local_autoplay",false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('thumbnail',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fname',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('ftitle',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('tags',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dateadded',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('date_origin',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('file_size',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('duration',false);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('w',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('h',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('views',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('likes',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('dislikes',true);
-	$$$get_and_set_default_user_setting_tofrom_cookie__tbl_f_hide_col('fps',true);
+	$$$use_regex = $$$get_and_set_default_user_setting_tofrom_storage__bool("use_regex",false);
+	$$$prioritise_local_autoplay = $$$get_and_set_default_user_setting_tofrom_storage__bool("prioritise_local_autoplay",false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('thumbnail',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('fname',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('ftitle',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('tags',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('dateadded',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('date_origin',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('file_size',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('duration',false);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('w',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('h',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('views',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('likes',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('dislikes',true);
+	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('fps',true);
 	
-	$$$set_css_colour("fg",$$$get_cookie("css_colour_fg"));
-	$$$set_css_colour("bg",$$$get_cookie("css_colour_bg"));
-	$$$set_css_colour("bg2",$$$get_cookie("css_colour_bg2"));
+	$$$set_css_colour("fg",$$$local_storage_get("css_colour_fg"));
+	$$$set_css_colour("bg",$$$local_storage_get("css_colour_bg"));
+	$$$set_css_colour("bg2",$$$local_storage_get("css_colour_bg2"));
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
-		const val2 = $$$get_cookie(key);
-		$$$set_user_setting_as(key,((val2===undefined)?val:val2));
+		const val2 = $$$local_storage_get(key);
+		$$$set_user_setting_as(key,((val2===null)?val:val2));
 	}
 	
-	let w = $$$get_cookie("w");
-	if(w===undefined)
+	let w = $$$local_storage_get("w");
+	if(w===null)
 		w=256;
 	$$$set_thumbnail_width(w);
 	

@@ -44,7 +44,7 @@ var f2; // CSV of file2 variable names that needs to be split into an array
 var $$$f2_as_array;
 var $$$yt_player;
 
-// User options stored in cookies
+// User options stored in localStorage
 var $$$use_regex;
 var $$$prioritise_local_autoplay;
 

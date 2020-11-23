@@ -16,10 +16,10 @@ function $$$switch_stylesheet(s){
 			e.classList.remove('tbl-'+c);
 		e.classList.add('tbl-'+s);
 	}
-	$$$set_cookie_forever("css", s);
+	$$$local_storage_store("css", s);
 }
 function $$$rotate_stylesheet(){
-	let i = $$$stylesheet_opts.indexOf($$$get_cookie("css")) + 1;
+	let i = $$$stylesheet_opts.indexOf($$$local_storage_get("css")) + 1;
 	if(i===$$$stylesheet_opts.length)
 		i=0;
 	$$$switch_stylesheet($$$stylesheet_opts[i]);
