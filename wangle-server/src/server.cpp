@@ -174,7 +174,7 @@ const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
 
 
 #define HIDDEN_TAGS_INNER(...) \
-		"SELECT t2pt.id " \
+		"SELECT 1 " \
 		"FROM tag2parent_tree t2pt " \
 		"JOIN user2hidden_tag u2ht ON u2ht.user=" __VA_ARGS__ " AND u2ht.tag=t2pt.parent AND u2ht.max_depth>=t2pt.depth"
 #define HIDDEN_TAGS(conditions, ...) \
