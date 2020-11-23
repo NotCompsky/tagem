@@ -36,12 +36,6 @@ set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and A
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 
-if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
-else()
-    set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "true")
-endif()
-
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
 else()
@@ -233,6 +227,4 @@ add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp qry__
 target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\""
 )
 target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\""
-)
-target_compile_definitions(server PRIVATE "GET_PARENT_AND_CHILD_TAGS_FROM_IDS=\"${GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE}\""
 )

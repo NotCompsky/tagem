@@ -13,8 +13,6 @@ GET /a/D.json?>
 	return this->get_device_json(str)
 GET /a/P.json?>
 	return this->get_protocol_json(str)
-GET /a/t2p.json?>
-	return this->get_tag2parent_json(str)
 GET /a/mt.json?>
 	return this->get_mimetype_json(str)
 GET /a/x.json?>
@@ -50,6 +48,10 @@ GET /a/t/info/>
 	return this->get__tag_info__given_id(++str)
 GET /a/t/id/>
 	return this->get__X_given_ids('t', ++str)
+GET /a/t/p/>
+	return this->get_parent_tags_of(++str)
+GET /a/t/c/>
+	return this->get_child_tags_of(++str)
 GET /a/t/f/>
 	return this->tags_given_file(++str)
 

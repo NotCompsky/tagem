@@ -94,18 +94,7 @@ function $$$set_var_to_json_then(var_name, url, fn){
 		return;
 	}
 	$$$ajax_GET_w_JSON_response(url, function(data){
-		const additions = $$$get_cookie(var_name + '_adds');
-		if (additions !== undefined){
-			$$$merge_into(data, JSON.parse(additions));
-		}
-		
-		const dels = $$$get_cookie(var_name + '_dels');
-		if (dels !== undefined){
-			$$$del_keys(data, JSON.parse(dels));
-		}
-		
 		$$$window[var_name] = data;
-		
 		fn();
 	});
 }

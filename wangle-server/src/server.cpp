@@ -302,7 +302,6 @@ const char* TAG__PART_OF_FILE__ID;
 static bool regenerate_mimetype_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
-static bool regenerate_tag2parent_json = true;
 
 
 namespace rapidjson {
@@ -337,14 +336,12 @@ std::vector<std::string> banned_client_addrs;
 
 namespace _r {
 	static const char* mimetype_json;
-	static const char* tag2parent_json;
 	static const char* external_db_json;
 	static const char* protocols_json;
 	static const char* devices_json;
 	static const char* protocol_json;
 	
 	std::mutex mimetype_json_mutex;
-	std::mutex tag2parent_json_mutex;
 	std::mutex external_db_json_mutex;
 	std::mutex protocols_json_mutex;
 	std::mutex devices_json_mutex;
@@ -562,7 +559,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		
 		this->itr[-1] = 0; // Overwrite trailing comma
 		
-		return this->X_given_ids(tbl_alias, user_id, 0, this->buf);
+		return this->X_given_ids<true>(tbl_alias, user_id, 0, this->buf);
 	}
 	
 	std::string_view file_thumbnail(const char* md5hex){
@@ -1794,11 +1791,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		return this->get_buf_as_string_view();
 	}
 	
-	template<typename... Args>
+	template<bool is_ordered_by_field,  typename... Args>
 	void tags_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query2(
 			TAGS_INFOS("", ids_args..., "")
-			"ORDER BY FIELD(t.id,", ids_args..., ")"
+			"ORDER BY ", is_ordered_by_field ? "FIELD(t.id," : "t.name -- ", ids_args..., ")\n"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
@@ -1846,7 +1843,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		compsky::asciify::asciify(itr, ']');
 	}
 	
-	template<typename... Args>
+	template<bool is_ordered_by_field,  typename... Args>
 	std::string_view X_given_ids(const char tbl_alias,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		char* const itr_init = this->itr;
 		this->begin_json_response(this->itr);
@@ -1861,7 +1858,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				this->dirs_given_ids (this->itr, user_id, 0, ids_args...);
 				break;
 			case 't':
-				this->tags_given_ids (this->itr, user_id, 0, ids_args...);
+				this->tags_given_ids<is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
 				break;
 			default:
 				abort();
@@ -1874,7 +1871,21 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		GET_PAGE_N('/')
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, ' ')
 		GET_USER_ID
-		return this->X_given_ids(tbl_alias, user_id, page_n, _f::strlen, ids, ids_len);
+		return this->X_given_ids<true>(tbl_alias, user_id, page_n, _f::strlen, ids, ids_len);
+	}
+	
+	std::string_view get_parent_tags_of(const char* s){
+		GET_PAGE_N('/')
+		GET_NUMBER_NONZERO(uint64_t,tag_id)
+		GET_USER_ID
+		return this->X_given_ids<false>('t', user_id, page_n, "SELECT parent FROM tag2parent WHERE id=", tag_id);
+	}
+	
+	std::string_view get_child_tags_of(const char* s){
+		GET_PAGE_N('/')
+		GET_NUMBER_NONZERO(uint64_t,tag_id)
+		GET_USER_ID
+		return this->X_given_ids<false>('t', user_id, page_n, "SELECT id FROM tag2parent WHERE parent=", tag_id);
 	}
 	
 	template<typename... Args>
@@ -2369,46 +2380,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		
 		return compsky::wangler::_r::post_ok;
-	}
-	
-	std::string_view get_tag2parent_json(const char* s){
-		GET_USER_ID
-		if (user_id != user_auth::SpecialUserID::guest){
-			this->mysql_query(
-				"SELECT t2p.id, t2p.parent "
-				"FROM tag2parent t2p "
-				"WHERE " NOT_HIDDEN_TAG("t2p.id OR t2pt.id=t2p.parent", user_id)
-				  "AND " NOT_DISALLOWED_TAG("t2p.id OR _t2pt.id=t2p.parent", user_id)
-			);
-			this->itr = this->buf;
-			this->init_json(
-				&this->itr,
-				compsky::wangler::_r::flag::arr,
-				nullptr,
-				compsky::wangler::_r::flag::quote_no_escape, // id,
-				compsky::wangler::_r::flag::quote_no_escape // id2
-			);
-			return this->get_buf_as_string_view();
-		}
-		
-		std::unique_lock lock(compsky::wangler::_r::tag2parent_json_mutex);
-		if (unlikely(regenerate_tag2parent_json)){
-			regenerate_tag2parent_json = false;
-			this->mysql_query_buf(
-				"SELECT t2p.id, t2p.parent "
-				"FROM tag2parent t2p "
-				"WHERE " NOT_HIDDEN_TAG__GUEST("t2p.id OR t2pt.id=t2p.parent")
-				  "AND " NOT_DISALLOWED_TAG__COMPILE_TIME("t2p.id OR _t2pt.id=t2p.parent", GUEST_ID_STR)
-			);
-			this->init_json(
-				nullptr,
-				compsky::wangler::_r::flag::arr,
-				&compsky::wangler::_r::tag2parent_json,
-				compsky::wangler::_r::flag::quote_no_escape, // id,
-				compsky::wangler::_r::flag::quote_no_escape // id2
-			);
-		}
-		return compsky::wangler::_r::tag2parent_json;
 	}
 	
 	std::string_view stream_file(const char* s){
@@ -3315,8 +3286,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 		);
 		
 		// TODO: Descendant tags etc
-		
-		regenerate_tag2parent_json = true;
 	}
 	
 	template<typename... ParentIDsArgs>
@@ -3370,8 +3339,6 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 					"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
 				);
 			}
-			
-			regenerate_tag2parent_json = true;
 		}
 	};
 	
