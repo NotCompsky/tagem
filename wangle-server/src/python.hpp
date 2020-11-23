@@ -20,12 +20,10 @@ class PyObj {
 	
 	
 	void set_attr(const char* const attr_name,  PyObject* const _obj){
-		log("Setting attribute: ", attr_name);
 		PyObject_SetAttrString(this->obj, attr_name, _obj);
 	}
 	
 	PyObject* get_attr(const char* const attr_name) const {
-		log("Getting attribute: ", attr_name);
 		PyObject* const rc = PyObject_GetAttrString(this->obj, attr_name);
 		PY_ASSERT_NOT_NULL(rc, "Cannot get attribute")
 		return rc;
@@ -36,7 +34,6 @@ class PyObj {
 	
 	template<typename... Args>
 	PyObject* call(Args... args){
-		this->print_as_str("Calling object: ");
 		PyObject* const result = PyObject_CallObject(this->obj, PyObj(PyTuple_Pack(sizeof...(args), args...)).obj);
 		PY_ASSERT_NOT_NULL(result, "Cannot call object")
 		return result;
@@ -54,8 +51,6 @@ class PyObj {
 	template<typename... Args>
 	PyObject* call_fn(const char* const fn_name,  Args... args){
 		PyObj fn(this->obj, fn_name);
-		log("Created fn");
-		fn.print_as_str("Calling function: ");
 		PyObject* const result = PyObject_CallFunctionObjArgs(fn.obj, args..., NULL);
 		if (unlikely(result == nullptr))
 			throw std::runtime_error("Python exception");
@@ -99,16 +94,12 @@ class PyObj {
 	PyObj(PyObject* const _obj)
 	: obj(_obj)
 	{
-		//PY_ASSERT_NOT_NULL(this->obj, "this->obj is NULL")
-		
 		this->print_as_str("Created: ");
 	}
 	
 	PyObj(PyObject* const _obj,  const char* const attr_name)
 	: PyObj(PyObject_GetAttrString(_obj, attr_name))
-	{
-		log("Created object from attribute: ", attr_name);
-	}
+	{}
 	
 	PyObj(PyObj& _obj,  const char* const attr_name)
 	: PyObj(_obj.obj, attr_name)
