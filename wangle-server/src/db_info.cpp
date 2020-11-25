@@ -123,6 +123,14 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 			this->bools[has_user2tag_tbl] = true;
 	}
 	
+	if (this->bools[has_cmnt_tbl]){
+		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM cmnt");
+		while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
+			if (streq("n_likes", name))
+				this->bools[has_cmnt_n_likes_column] = true;
+		}
+	}
+	
 	this->attempt_to_access_tbl("post");
 	this->attempt_to_access_tbl("user");
 	if (this->bools[has_cmnt_tbl])

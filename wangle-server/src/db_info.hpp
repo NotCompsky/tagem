@@ -35,6 +35,9 @@ struct DatabaseInfo {
 		// Post columns
 		has_n_likes_column,
 		
+		// Comment columns
+		has_cmnt_n_likes_column,
+		
 		has_follow_tbl,
 		has_cmnt_tbl,
 		has_post2mention_tbl,

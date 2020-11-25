@@ -34,10 +34,11 @@ function $$$get_external_db_id_from_name(s){
 function $$$display_cmnts(_db_id, ls){
 	// ls is an array of: [cmnt_id, parent_id, user_id, timestamp, cmnt_content], with parent_id==0 first (order by (parent_id=0) ASC)
 	let tree = {"0":["0",0,""]};
-	for (const [cmnt_id, parent_id, user_id, timestamp, username, cmnt_content] of ls){
+	for (const [cmnt_id, parent_id, n_likes, user_id, timestamp, username, cmnt_content] of ls){
 		const _s = '' +
 			'<div id="c' + cmnt_id + '" class="cmnt">' +
 				'<div class="head">' +
+					'<b>' + n_likes + '</b>' +
 					'<a class="user" onclick="$$$view_user(' + _db_id + ',\'' + user_id + '\')">' + username + '</a>' + // Encasing ID in quotes because Javascript rounds large numbers
 					'<time data-t="' + timestamp + '">' + $$$timestamp2dt(timestamp) + '</time>' +
 					'<button class="del" onclick="$$$rm_cmnt(' + _db_id + ',\'' + cmnt_id + '\')">Del</button>' +

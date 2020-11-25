@@ -10,16 +10,29 @@ NOW_BEGINS_PUSHSHIFT="<<PUSHSHIFT>>"
 get_cmnts(){
 	# Get comments from reddit.com, not pushshift
 	if [ -f /tmp/rscrape-submission.json ]; then
-		reddit-flatten-cmnts /tmp/rscrape-submission.json
+		cat /tmp/rscrape-submission.json | jq '.[1].data | 
+[ walk(if type=="object" and has("replies") and (.replies | type=="object")
+       then .id as $n | .replies.data.children |= map(.data.parent_id = $n)
+       else . end)
+  | ..
+  | select(type=="object" and has("body"))
+  | {id, ups, controversiality, parent_id, author, author_fullname, created, score, body}
+] | map(if .parent_id | startswith("t3_") then .parent_id="t3_" else .parent_id="t1_"+.parent_id end)[] | [.id, .author, .author_fullname, .created, .parent_id, .score, .body] | @csv' \
+		| sed 's/^"\|"$//g' \
+		| sed 's/\\"/"/g'
 		rm /tmp/rscrape-submission.json
+		echo "Done reddit results" >&2
+		sleep 10
 	fi
 	
 	echo "$NOW_BEGINS_PUSHSHIFT"
 	
-	cat /tmp/rscrape-submission.cmnts.json \
-	| jq '.data[] | [ .id, .author, .author_fullname, .created_utc, .parent_id, .body] | @csv' \
-	| sed 's/^"\|"$//g' \
-	| sed 's/\\"/"/g'
+	if [ "$PUSHSHIFT_TOO" ]; then
+		cat /tmp/rscrape-submission.cmnts.json \
+		| jq '.data[] | [ .id, .author, .author_fullname, .created_utc, .parent_id, .score, .body] | @csv' \
+		| sed 's/^"\|"$//g' \
+		| sed 's/\\"/"/g'
+	fi
 }
 
 if [ "$COOKIES" = "" ]; then
@@ -40,7 +53,8 @@ for url in "$@"; do
 	submission_id_str="$(echo "$url" | sed -E 's_^https?://[a-z]+\.reddit\.com/r/[^/]+/comments/([a-z0-9]+)/.*$_\1_g')"
 	submission_id="$(rscraper-str2id "$submission_id_str")"
 	
-	if [ "$(mysql -r -s --disable-column-names -e "SELECT id FROM post WHERE id=$submission_id" reddit)" = "" ]; then
+	# "$(mysql -r -s --disable-column-names -e "SELECT id FROM post WHERE id=$submission_id" reddit)" = ""
+	if [ true ]; then
 		echo "Getting submission data from reddit.com" >&2
 		curl "$url.json" -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-GB,en;q=0.5' --compressed -H 'Connection: keep-alive' -H "Cookie: ${COOKIES}" -H 'Upgrade-Insecure-Requests: 1' -H 'DNT: 1' -H 'Pragma: no-cache' -H 'Cache-Control: no-cache' -H 'TE: Trailers' -o /tmp/rscrape-submission.json
 		
@@ -71,12 +85,14 @@ ON DUPLICATE KEY UPDATE id=id
 	before_t="$(date +%s)"
 	
 	while true; do
-		echo "Getting results before $before_t" >&2
-		url="https://api.pushshift.io/reddit/comment/search?link_id=t3_${submission_id_str}&before=${before_t}&filter=id,author_fullname,author,parent_id,created_utc,body&size=${limit}"
-		echo "Getting $url" >&2
-		curl -s "$url" -o /tmp/rscrape-submission.cmnts.json
+		if [ "$PUSHSHIFT_TOO" ]; then
+			echo "Getting results before $before_t" >&2
+			url="https://api.pushshift.io/reddit/comment/search?link_id=t3_${submission_id_str}&before=${before_t}&filter=id,author_fullname,author,parent_id,created_utc,score,body&size=${limit}"
+			echo "Getting $url" >&2
+			curl -s "$url" -o /tmp/rscrape-submission.cmnts.json
+		fi
 		declare -i i=0
-		while IFS=',' read -r id username user_id_str t parent_id body; do
+		while IFS=',' read -r id username user_id_str t parent_id score body; do
 			if [ "$id" = "$NOW_BEGINS_PUSHSHIFT" ]; then
 				i=0
 				continue
@@ -103,10 +119,11 @@ ON DUPLICATE KEY UPDATE id=id
 		
 			mysql_exec "
 			INSERT INTO cmnt
-			(id,post,parent,user,t,content)
+			(id,post,parent,user,t,n_likes,content)
 			VALUES
-			($(rscraper-str2id "${id:1:-1}"), $submission_id, $parent_id, $user_id, $t, $body)
-			ON DUPLICATE KEY UPDATE id=id
+			($(rscraper-str2id "${id:1:-1}"), $submission_id, $parent_id, $user_id, $t, $score, $body)
+			AS A
+			ON DUPLICATE KEY UPDATE n_likes=A.n_likes
 			"
 		done < <(get_cmnts)
 		

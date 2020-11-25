@@ -1656,7 +1656,8 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				db_info,
 				"SELECT "
 					"c.id,"
-					"IFNULL(c.parent,0),"
+					"IFNULL(c.parent,0),",
+					(db_info.is_true(DatabaseInfo::has_cmnt_n_likes_column)) ? "c.n_likes" : "0", " AS likes,"
 					"c.user,"
 					"c.t,"
 					"u.name,"
@@ -1667,7 +1668,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				  "AND c.content IS NOT NULL "
 					// Ignore comments deleted through web interface
 					// TODO: Display some deleted comments that have some non-deleted children. Maybe SQL script to replace NULL with empty string?
-				"ORDER BY c.parent ASC" // Put parentless comments first
+				"ORDER BY c.parent ASC, likes DESC" // Put parentless comments first
 			);
 			
 			this->init_json_rows(
@@ -1675,6 +1676,7 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				compsky::wangler::_r::flag::arr,
 				compsky::wangler::_r::flag::quote_no_escape, // id,
 				compsky::wangler::_r::flag::quote_no_escape, // parent,
+				compsky::wangler::_r::flag::quote_no_escape, // n_likes,
 				compsky::wangler::_r::flag::quote_no_escape, // user,
 				compsky::wangler::_r::flag::no_quote, // timestamp,
 				compsky::wangler::_r::flag::quote_no_escape, // username,
