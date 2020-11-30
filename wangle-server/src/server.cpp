@@ -1824,10 +1824,11 @@ class RTaggerHandler : public compsky::wangler::CompskyHandler<handler_buf_sz,  
 				"d.name,"
 				"d.device,"
 				"IFNULL(GROUP_CONCAT(DISTINCT d2t.tag),\"\"),"
-				"COUNT(DISTINCT f.id)"
+				"IFNUlL(COUNT(DISTINCT f.id),0)+IFNULL(COUNT(DISTINCT d_child.id),0) AS n "
 			"FROM dir d "
 			"LEFT JOIN dir2tag d2t ON d2t.dir=d.id "
-			"JOIN file f ON f.dir=d.id "
+			"LEFT JOIN file f ON f.dir=d.id "
+			"LEFT JOIN dir d_child ON d_child.parent=d.id "
 			"WHERE d.id IN (", ids_args..., ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"GROUP BY d.id "
