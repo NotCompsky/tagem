@@ -57,7 +57,7 @@ function $$$get_id_of_user_currently_being_edited(){
 }
 
 function $$$user_tag_bl_row(id,name){
-	return "<div class='tr' data-id='"+id+"'><div class='td username'>"+name+"</div><div class='td' onclick='$$$rm_user_bl_tag(this.parentNode)'>Edit</div></div>";
+	return "<div class='tr' data-id='"+id+"'><div class='td username'>"+name+"</div><div class='td' onclick='$$$rm_user_bl_tag(this.parentNode)'>Remove</div></div>";
 }
 
 function $$$load_user_for_edit(){
