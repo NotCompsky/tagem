@@ -2,7 +2,7 @@
 
 
 #include <cstdlib> // for exit
-#include <compsky/asciify/asciify.hpp>
+#include "log.hpp"
 
 
 enum {
@@ -41,13 +41,6 @@ void handler(const int rc){
   #endif
 }
 
-template<typename... Args>
-void log(Args... args){
-	static char buf[1024];
-	compsky::asciify::asciify(buf, args..., '\0');
-	fprintf(stderr, "%s\n", buf);
-	fflush(stderr);
-}
 template<typename... Args>
 void handler(const int msg,  Args... args){
 	log(args...);
