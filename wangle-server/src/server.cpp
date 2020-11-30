@@ -4109,10 +4109,8 @@ int main(int argc,  const char* const* argv){
 	}
 	}
 	
-	wangle::ServerBootstrap<compsky::wangler::CompskyPipeline> server;
-	server.childPipeline(std::make_shared<compsky::wangler::CompskyPipelineFactory<handler_buf_sz,  RTaggerHandler>>());
-	server.bind(port_n);
-	server.waitForStop();
+	compsky::server::asio::io_service service;
+	compsky::server::Server<4, RTaggerHandler>().start(port_n);
 	
 	for (DatabaseInfo& db_info : db_infos){
 		db_info.close();
