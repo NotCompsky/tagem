@@ -13,7 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #pragma once
 
-#include "errors.hpp"
+#include "log.hpp"
 #include <compsky/mysql/mysql.hpp>
 #include <compsky/deasciify/a2n.hpp>
 
