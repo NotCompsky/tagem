@@ -18,7 +18,7 @@ To copy the binary from the image, you must create a dummy container and copy fr
 
 #### Required
 
-* Facebook's core C++ web stack: [wangle](https://github.com/facebook/wangle), [folly](https://github.com/facebook/folly) and [fizz](https://github.com/facebookincubator/fizz). I recommend building all of these by building [Proxygen](https://github.com/facebook/proxygen), for ease of installation.
+* Boost ASIO
 * Python 3 interpreter
 * CMake
 

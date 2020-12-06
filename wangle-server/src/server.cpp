@@ -40,11 +40,8 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/utils/is_str_dblqt_escaped.hpp>
 #include <compsky/deasciify/a2n.hpp>
 #include <compsky/deasciify/a2f.hpp>
-#include <compsky/server/handler.hpp>
 #include <compsky/server/server.hpp>
-
-#include <folly/init/Init.h>
-#include <wangle/bootstrap/ServerBootstrap.h>
+#include <compsky/server/response_generation.hpp>
 
 #include <mutex>
 
@@ -361,19 +358,34 @@ namespace cached_stuff {
 	};
 }
 
-constexpr size_t handler_buf_sz = 20 * 1024 * 1024;
+constexpr size_t handler_buf_sz = 11 * 1024 * 1024;
+constexpr size_t handler_req_buf_sz = 4096 * 2;
 
-class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerHandler> {
+class TagemResponseHandler : public compsky::server::ResponseGeneration {
  public:
-	std::string_view determine_response(std::string_view msg){
-		const char* str = msg.data();
+	TagemResponseHandler()
+	//: buf(new char[handler_buf_sz])
+	{
+		this->buf = new char[handler_buf_sz];
+		this->itr = this->buf;
+	}
+	
+	~TagemResponseHandler(){
+		free(this->buf);
+	}
+	
+	std::string_view handle_request_2(boost::array<char, handler_req_buf_sz>& req_buffer,  const size_t n_bytes_of_first_req_buffer){
+		const char* str = req_buffer.data();
 		--str;
 		#include "auto-generated/auto__server-determine-response.hpp"
 		return compsky::server::_r::not_found;
 	}
-	RTaggerHandler(compsky::server::asio::io_service& _service)
-	: compsky::server::Handler<handler_buf_sz, RTaggerHandler>(_service)
-	{}
+	
+	void handle_request(boost::array<char, handler_req_buf_sz>& req_buffer,  const size_t n_bytes_of_first_req_buffer,  std::vector<boost::asio::const_buffer>& response_buffers){
+		const std::string_view v = this->handle_request_2(req_buffer, n_bytes_of_first_req_buffer);
+		response_buffers.push_back(boost::asio::const_buffer(v.data(), v.size()));
+	}
+	
   private:
 	static std::mutex mysql_mutex;
 	
@@ -1253,13 +1265,13 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 	}
 	
 	struct SQLQuery {
-		RTaggerHandler* const thees;
+		TagemResponseHandler* const thees;
 		MYSQL_RES* res;
 		MYSQL_ROW row;
 		bool not_freed_results;
 		
 		template<typename... Args>
-		SQLQuery(RTaggerHandler* const _thees,  DatabaseInfo& db_info,  Args... args)
+		SQLQuery(TagemResponseHandler* const _thees,  DatabaseInfo& db_info,  Args... args)
 		: thees(_thees)
 		, not_freed_results(true)
 		{
@@ -1285,13 +1297,13 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 	
 	class StringFromSQLQuery_DB {
 	 private:
-		RTaggerHandler* const thees;
+		TagemResponseHandler* const thees;
 		MYSQL_RES* res;
 	 public:
 		const char* value;
 		
 		template<typename... Args>
-		StringFromSQLQuery_DB(RTaggerHandler* _thees,  DatabaseInfo& db_info,  Args... args)
+		StringFromSQLQuery_DB(TagemResponseHandler* _thees,  DatabaseInfo& db_info,  Args... args)
 		: thees(_thees)
 		, value(nullptr)
 		{
@@ -1311,7 +1323,7 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 	class StringFromSQLQuery : public StringFromSQLQuery_DB {
 	 public:
 		template<typename... Args>
-		StringFromSQLQuery(RTaggerHandler* _thees,  Args... args)
+		StringFromSQLQuery(TagemResponseHandler* _thees,  Args... args)
 		: StringFromSQLQuery_DB(_thees, db_infos.at(0), args...)
 		{}
 	};
@@ -1674,14 +1686,14 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 			
 			this->init_json_rows(
 				_itr_plus_offset,
-				compsky::wangler::_r::flag::arr,
-				compsky::wangler::_r::flag::quote_no_escape, // id,
-				compsky::wangler::_r::flag::quote_no_escape, // parent,
-				compsky::wangler::_r::flag::quote_no_escape, // n_likes,
-				compsky::wangler::_r::flag::quote_no_escape, // user,
-				compsky::wangler::_r::flag::no_quote, // timestamp,
-				compsky::wangler::_r::flag::quote_no_escape, // username,
-				compsky::wangler::_r::flag::quote_and_json_escape // content
+				compsky::server::_r::flag::arr,
+				compsky::server::_r::flag::quote_no_escape, // id,
+				compsky::server::_r::flag::quote_no_escape, // parent,
+				compsky::server::_r::flag::quote_no_escape, // n_likes,
+				compsky::server::_r::flag::quote_no_escape, // user,
+				compsky::server::_r::flag::no_quote, // timestamp,
+				compsky::server::_r::flag::quote_no_escape, // username,
+				compsky::server::_r::flag::quote_and_json_escape // content
 			);
 		} else {
 			compsky::asciify::asciify(_itr_plus_offset, "[]");
@@ -1924,7 +1936,7 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 				template<typename... FileIDsArgs>
 				static
 				void files_given_X(
-					RTaggerHandler* thees,
+					TagemResponseHandler* thees,
 					const UserIDIntType user_id,
 					const unsigned page_n,
 					const char* const select_fields,
@@ -1959,7 +1971,7 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 				
 				template<typename... Args>
 				static
-				std::string_view files_given_X__string_view(RTaggerHandler* thees,  Args... args){
+				std::string_view files_given_X__string_view(TagemResponseHandler* thees,  Args... args){
 					thees->begin_json_response();
 					files_given_X(thees, args...);
 					thees->asciify_file_info();
@@ -3306,7 +3318,7 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 		template<typename... ChildIDsArgs>
 		static
 		void tag_parentisation(
-			RTaggerHandler* thees,
+			TagemResponseHandler* thees,
 			const UserIDIntType user_id,
 			const bool update_descendants,
 			ParentIDsArgs... parent_ids_args,
@@ -3905,7 +3917,7 @@ class RTaggerHandler : public compsky::server::Handler<handler_buf_sz,  RTaggerH
 	}
 #endif
 };
-std::mutex RTaggerHandler::mysql_mutex;
+std::mutex TagemResponseHandler::mysql_mutex;
 
 int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
@@ -3970,9 +3982,6 @@ int main(int argc,  const char* const* argv){
 #ifdef PYTHON
 	python::init_ytdl();
 #endif
-	
-	int dummy_argc = 0;
-	folly::Init init(&dummy_argc, (char***)&argv_orig);
 	
 	if (mysql_library_init(0, NULL, NULL))
 		throw compsky::mysql::except::SQLLibraryInit();
@@ -4109,8 +4118,7 @@ int main(int argc,  const char* const* argv){
 	}
 	}
 	
-	compsky::server::asio::io_service service;
-	compsky::server::Server<4, RTaggerHandler>().start(port_n);
+	compsky::server::Server<4, handler_req_buf_sz, TagemResponseHandler>(port_n).run();
 	
 	for (DatabaseInfo& db_info : db_infos){
 		db_info.close();
