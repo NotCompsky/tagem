@@ -143,9 +143,7 @@ void init_ytdl(){
 }
 
 PyObject* create_mysql_obj(const DatabaseInfo& db_info){
-	PyObject* _module = PyImport_ImportModule("pymysql");
-	if (unlikely(_module == nullptr))
-		throw std::runtime_error("Python: Cannot import pymysql");
+	PyObject* const _module = attempt_import_failover("PyMySQL", "pymysql");
 	
 	return PyObj(_module, "connect").call(PyStr(db_info.host()).obj, PyStr(db_info.user()).obj, PyStr(db_info.pwrd()).obj, PyStr(db_info.name()).obj, PyInt(db_info.port()).obj, PyStr(db_info.path()).obj);
 }
