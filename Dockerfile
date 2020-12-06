@@ -61,11 +61,14 @@ RUN apk add --no-cache python3-dev=3.8.5-r0 \
 	&& make install \
 	\
 	&& mv /usr/include/python3.8/* /usr/include/ \
+	\
 	&& chmod +x /tagem/wangle-server/scripts/* \
 	&& ( \
 		rm -rf /tagem/build \
 		;  mkdir /tagem/build \
-	) && cd /tagem/build \
+	) && cd /tagem/wangle-server \
+	&& addlocalinclude \
+	&& cd /tagem/build \
 	&& LD_LIBRARY_PATH="/usr/local/lib64:$LD_LIBRARY_PATH" cmake \
 		\
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
