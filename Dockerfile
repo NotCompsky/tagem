@@ -18,7 +18,6 @@ WORKDIR /tagem
 COPY wangle-server /tagem/wangle-server
 COPY utils /tagem/utils
 COPY include /tagem/include
-# WARNING: -fpermissive is used because Facebook's wangle library currently has a line in its logging library that tries to convert void** to void*
 
 RUN apk add --no-cache python3-dev=3.8.5-r0 \
 	&& for d in /usr/lib/python3.*; do \
@@ -68,20 +67,16 @@ RUN apk add --no-cache python3-dev=3.8.5-r0 \
 		;  mkdir /tagem/build \
 	) && cd /tagem/build \
 	&& LD_LIBRARY_PATH="/usr/local/lib64:$LD_LIBRARY_PATH" cmake \
-		-DCMAKE_CXX_FLAGS_RELEASE='-fpermissive' \
 		\
 		-DWHICH_MYSQL_CLIENT=mariadbclient \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DENABLE_STATIC=ON \
 		-DEMBED_PYTHON=ON \
-		-Dwangle_DIR=/bob-the-builder/wangle/ \
-		-Dfolly_DIR=/bob-the-builder/folly/ \
-		-Dfizz_DIR=/bob-the-builder/fizz/ \
 		/tagem/wangle-server \
 	&& ( \
 		make server \
 		|| (\
-			/usr/local/bin/x86_64-linux-musl-g++ -flto -static -fpermissive  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/qry.cpp.o CMakeFiles/server.dir/src/curl_utils.cpp.o CMakeFiles/server.dir/src/db_info.cpp.o CMakeFiles/server.dir/src/initialise_tagem_db.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib/libwangle.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libfizz.a /usr/local/lib/libfolly.a /usr/local/lib64/libfmt.a /usr/local/lib64/liblz4.a /usr/local/lib64/libzstd.a /usr/local/lib64/libsnappy.a /usr/lib/libdwarf.a /usr/local/lib/libunwind.a /usr/local/lib/libsodium.a  /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libglog.a /usr/local/lib/libgflags.a /usr/local/lib/libevent.a /usr/local/lib64/libdouble-conversion.a -ldl /usr/lib/librt.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a     /usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.a          /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
+			/usr/local/bin/x86_64-linux-musl-g++ -flto -static  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/qry.cpp.o CMakeFiles/server.dir/src/curl_utils.cpp.o CMakeFiles/server.dir/src/db_info.cpp.o CMakeFiles/server.dir/src/initialise_tagem_db.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib64/libcurl.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libevent.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a     /usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.a          /usr/local/lib/libx264.a /usr/lib/libboost_context.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
 			&& strip --strip-all server \
 		) \
 	)

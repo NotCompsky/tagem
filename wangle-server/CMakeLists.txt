@@ -21,7 +21,7 @@ endif()
 
 find_package(Threads REQUIRED)
 find_package(Compsky REQUIRED)
-find_package(Boost REQUIRED COMPONENTS asio system)
+find_package(Boost REQUIRED)
 
 if(ENABLE_STATIC)
 	set(CURL_NAMES curl.a libcurl.a)
