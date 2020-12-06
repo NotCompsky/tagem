@@ -32,7 +32,7 @@ RUN apk add --no-cache python3-dev=3.8.5-r0 \
 	&& git apply /ffmpegthumbnailer-static.patch \
 	&& addlocalinclude() { \
 		mv CMakeLists.txt CMakeLists.old.txt \
-		&& echo 'include_directories("/usr/local/include")' > CMakeLists.txt \
+		&& echo 'include_directories("/usr/local/include" "/usr/include")' > CMakeLists.txt \
 		&& cat CMakeLists.old.txt >> CMakeLists.txt \
 		; \
 	} \
