@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS file_backup (
 	name VARBINARY(1024) NOT NULL,
 	mimetype INT UNSIGNED NOT NULL,
 	user INT UNSIGNED NOT NULL,
+	status INT UNSIGNED NOT NULL DEFAULT 0,
 	PRIMARY KEY (file, dir, name), -- NOTE: Debating the merits of allowing multiple files to reference the same backup file.
 	FOREIGN KEY (dir) REFERENCES file (id),
 	FOREIGN KEY (file) REFERENCES file (id),
