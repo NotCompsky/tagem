@@ -116,6 +116,7 @@ bool is_valid_ytdl_url(const char* const url){
 			return true;
 	}
 	log("Invalid ytdl URL: ", url);
+	return false;
 }
 
 
