@@ -374,7 +374,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view handle_request_2(boost::array<char, handler_req_buf_sz>& req_buffer,  const size_t n_bytes_of_first_req_buffer){
-		const char* str = req_buffer.data();
+		char* str = req_buffer.data();
+		str[n_bytes_of_first_req_buffer] = 0; // WARNING: Cannot handle n_bytes_of_first_req_buffer==handler_req_buf_sz - but neither can any of the following code, yet.
 		--str;
 		#include "auto-generated/auto__server-determine-response.hpp"
 		return compsky::server::_r::not_found;
