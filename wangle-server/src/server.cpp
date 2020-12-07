@@ -364,10 +364,9 @@ constexpr size_t handler_req_buf_sz = 4096 * 2;
 class TagemResponseHandler : public compsky::server::ResponseGeneration {
  public:
 	TagemResponseHandler()
-	//: buf(new char[handler_buf_sz])
 	{
 		this->buf = new char[handler_buf_sz];
-		this->itr = this->buf;
+		this->reset_buf_index();
 	}
 	
 	~TagemResponseHandler(){
