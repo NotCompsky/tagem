@@ -1,14 +1,8 @@
 custom_options: |
-    if(DONT_GET_PARENT_AND_CHILD_TAGS_FROM_IDS)
-        set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "false")
-    else()
-        set(GET_PARENT_AND_CHILD_TAGS_FROM_IDS__VALUE "true")
-    endif()
     if(n_cached)
         target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
     endif()
     set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
-    set(SERVER_ROOT_URL "" CACHE STRING "Root path of the server")
     set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 
 required_packages: []

@@ -208,5 +208,3 @@ add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp qry__
 
 target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\""
 )
-target_compile_definitions(server PRIVATE "SERVER_ROOT_URL=\"${SERVER_ROOT_URL}\""
-)
