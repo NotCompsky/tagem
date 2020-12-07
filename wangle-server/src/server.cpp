@@ -30,6 +30,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "read_request.hpp"
 #include "initialise_tagem_db.hpp"
 #include "errors.hpp"
+#include "handler_buf_pool.hpp"
 
 #define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
 #include <compsky/server/cache.hpp>
@@ -358,19 +359,20 @@ namespace cached_stuff {
 	};
 }
 
-constexpr size_t handler_buf_sz = 11 * 1024 * 1024;
 constexpr size_t handler_req_buf_sz = 4096 * 2;
+static
+HandlerBufPool handler_buf_pool;
 
 class TagemResponseHandler : public compsky::server::ResponseGeneration {
  public:
 	TagemResponseHandler()
 	{
-		this->buf = new char[handler_buf_sz];
+		this->buf = handler_buf_pool.get_buf();
 		this->reset_buf_index();
 	}
 	
 	~TagemResponseHandler(){
-		free(this->buf);
+		handler_buf_pool.free_buf(this->buf);
 	}
 	
 	std::string_view handle_request_2(boost::array<char, handler_req_buf_sz>& req_buffer,  const size_t n_bytes_of_first_req_buffer){
@@ -862,7 +864,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const bool failed = python::view_remote_dir(_buf, dir_path);
 #else
 			const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
-			const bool failed = (FILES_GIVEN_REMOTE_DIR != nullptr) and proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  handler_buf_sz - this->buf_indx());
+			const bool failed = (FILES_GIVEN_REMOTE_DIR != nullptr) and proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  HANDLER_BUF_SZ - this->buf_indx());
 #endif
 			if (unlikely(failed))
 				this->move_itr_to_trailing_null();
@@ -2411,7 +2413,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		constexpr static const size_t block_sz = 1024 * 1024 * 10;
 		constexpr static const size_t stream_block_sz = 1024 * 1024; // WARNING: Will randomly truncate responses, usually around several MiBs // TODO: Increase this buffer size.
 		constexpr static const size_t room_for_headers = 1000;
-		static_assert(handler_buf_sz  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
+		static_assert(HANDLER_BUF_SZ  >  block_sz + room_for_headers); // 1000 is to leave room for moving headers around
 		
 		GET_NUMBER_NONZERO(uint64_t, id)
 		
@@ -4118,7 +4120,7 @@ int main(int argc,  const char* const* argv){
 	}
 	}
 	
-	compsky::server::Server<4, handler_req_buf_sz, TagemResponseHandler>(port_n).run();
+	compsky::server::Server<N_THREADS, handler_req_buf_sz, TagemResponseHandler>(port_n).run();
 	
 	for (DatabaseInfo& db_info : db_infos){
 		db_info.close();

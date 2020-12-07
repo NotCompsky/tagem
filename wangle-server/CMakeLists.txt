@@ -12,6 +12,8 @@ option(USE_LOCAL_YT_JS "Use local Youtube JavaScript file at static/js/3rd-party
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
+set(N_THREADS "4" CACHE STRING "Number of threads the server will spawn")
+set(HANDLER_BUF_SZ "11534336" CACHE STRING "Size of the buffer given to each handler - the default is 11MiB")
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
@@ -79,7 +81,7 @@ set_target_properties(
 target_include_directories(server PRIVATE "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
 target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" "${CURL}" "${LIBCRYPTO}" "${BOOST_THREAD}" ${PTHREAD} "${FFMPEGTHUMBNAILER}")
 
-target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"")
+target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"" "N_THREADS=${N_THREADS}" "HANDLER_BUF_SZ=${HANDLER_BUF_SZ}")
 if(DNS_OVER_HTTPS_CLIENT_URL)
 	target_compile_definitions(server PRIVATE "DNS_OVER_HTTPS_CLIENT_URL=\"${DNS_OVER_HTTPS_CLIENT_URL}\"")
 endif()
