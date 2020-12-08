@@ -22,7 +22,7 @@ struct DatabaseInfo {
 	MYSQL* mysql_obj;
 	constexpr static const size_t buf_sz = 512;
 	char buf[buf_sz];
-	char* auth[6];
+	compsky::mysql::MySQLAuth auth;
 	
 	enum B : unsigned {
 		has_post_tbl,
@@ -61,22 +61,22 @@ struct DatabaseInfo {
 	void attempt_qry(const char* const qry) const;
 	
 	const char* host() const {
-		return auth[0];
+		return auth.host;
 	}
 	const char* path() const {
-		return auth[1];
+		return auth.path;
 	}
 	const char* user() const {
-		return auth[2];
+		return auth.user;
 	}
 	const char* pwrd() const {
-		return auth[3];
+		return auth.pwrd;
 	}
 	const char* name() const {
-		return auth[4];
+		return auth.dbnm;
 	}
 	unsigned port() const {
-		return a2n<unsigned>(auth[4]);
+		return a2n<unsigned>(auth.port);
 	}
 	MYSQL* connection() const {
 		return this->mysql_obj;
