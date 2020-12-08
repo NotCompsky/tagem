@@ -12,6 +12,7 @@ The absense of this copyright notices on some other files in this project does n
 */
 
 #include "db_info.hpp"
+#include "log.hpp"
 #include <compsky/mysql/query.hpp>
 #include <compsky/utils/streq.hpp>
 #include <compsky/mysql/except.hpp>
@@ -30,7 +31,7 @@ void DatabaseInfo::test_is_accessible_from_master_connection(MYSQL* const master
 		mysql_free_result(res);
 		this->bools[is_accessible_from_master_connection] = true;
 	} catch(const compsky::mysql::except::SQLExec&){
-		fprintf(stderr,  "Warning: Master is unable to access: %s\n",  this->name());
+		log("Warning: Master is unable to access: ",  this->name());
 	}
 }
 
@@ -67,7 +68,7 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 {
 	using namespace compsky::utils; // for streq
 	
-	compsky::mysql::init_auth(buf, buf_sz, auth, getenv(env_var_name));
+	compsky::mysql::init_auth(buf, auth, getenv(env_var_name));
 	compsky::mysql::login_from_auth(mysql_obj, auth);
 	
 	bool auto_reconnect = true;

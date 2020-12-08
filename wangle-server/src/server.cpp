@@ -31,6 +31,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "initialise_tagem_db.hpp"
 #include "errors.hpp"
 #include "handler_buf_pool.hpp"
+#include "log.hpp"
 
 #define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
 #include <compsky/server/cache.hpp>
@@ -3974,8 +3975,7 @@ int main(int argc,  const char* const* argv){
 		log("ERROR: Port not set");
 		
 		help:
-		fprintf(
-			stderr,
+		log(
 			#include "help.txt"
 		);
 		return 1;

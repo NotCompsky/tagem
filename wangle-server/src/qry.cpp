@@ -17,12 +17,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include <boost/preprocessor/seq/for_each.hpp>
 
-#ifndef NOTTDEBUG
-# include <cstdio>
-# define LOG(...) fprintf(stderr, ##__VA_ARGS__)
-#else
-# define LOG(...)
-#endif
+#include "log.hpp"
 
 #define ARGTYPE_IN(x,ls) IS_CONTAINED_IN_VARARGS(arg::ArgType,x,ls)
 #define CHAR_IN(x,ls) IS_CONTAINED_IN_VARARGS(char,x,ls)
@@ -285,7 +280,7 @@ bool is_valid_tbl2tbl_reference(const char which_tbl,  const arg::ArgType arg_to
 		or ((which_tbl=='e') and (arg_token==arg::file))
 	);
 	
-	LOG("is_valid_tbl2tbl_reference(%c,%c) == %s\n", which_tbl, tbl_arg_to_alias(arg_token), (b?"TRUE":"FALSE"));
+	log("is_valid_tbl2tbl_reference(", which_tbl, ",", tbl_arg_to_alias(arg_token), ") == ", (b?"TRUE":"FALSE"));
 	
 	return b;
 }
@@ -463,7 +458,7 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 
 static
 arg::ArgType process_arg(const char*& str){
-	LOG("process_arg %s\n", str);
+	log("process_arg ", str);
 	#include "auto-generated/qry-process_arg-tokens.hpp"
 	return arg::invalid;
 }
@@ -476,7 +471,7 @@ successness::ReturnType get_attribute_name(const char which_tbl,  const char*& s
 
 static
 successness::ReturnType process_name_list(std::string& where,  const char tbl_alias,  const char*& qry){
-	LOG("process_name_list %c %s\n", tbl_alias, qry);
+	log("process_name_list ", tbl_alias, qry);
 	const size_t where_length_orig = where.size();
 	where += " REGEXP BINARY "; // This is overwritten with " IN (   " if there is only one value in this list
 	const char* qry_begin = qry;
@@ -524,7 +519,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 
 static
 successness::ReturnType process_value_list(std::string& where,  const char*& qry){
-	LOG("process_value_list %s\n", qry);
+	log("process_value_list ", qry);
 	
 	Range range;
 	const auto rc = get_range<double>(qry, range);
@@ -574,7 +569,7 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 
 static
 successness::ReturnType process_order_by_var_name_list(std::string& join,  std::string& order_by,  std::string& order_by_end,  const char*& qry){
-	LOG("process_order_by_var_name_list %s\n", qry);
+	log("process_order_by_var_name_list ", qry);
 	
 	static
 	unsigned f2x_indx = 0;
@@ -633,7 +628,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 
 static
 successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  const char*& select_fields,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
-	LOG("process_args %c %s\n", which_tbl, qry);
+	log("process_args ", which_tbl, qry);
 	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
 	constexpr static const char* const _operator_or  = "\nOR";
@@ -1173,9 +1168,9 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 	compsky::asciify::asciify(filter, '\0');
 	const char* select_fields = selected_field::x_id;
 	if (process_args(connected_local_devices_str, itr, user_id, select_fields, join, where, order_by, limit, offset, which_tbl, qry) != successness::ok){
-		LOG("join == %s\n", join.c_str());
-		LOG("where == %s\n", where.c_str());
-		LOG("order_by == %s\n", order_by.c_str());
+		log("join == ", join.c_str());
+		log("where == ", where.c_str());
+		log("order_by == ", order_by.c_str());
 		return selected_field::INVALID;
 	}
 	
@@ -1215,7 +1210,7 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 		'\0'
 	);
 	
-	LOG("Query OK\n");
+	log("Query OK");
 	
 	return selected_field::get_enum(select_fields);
 }

@@ -34,8 +34,7 @@ void handler(const int rc){
 	// Do nothing on a bad test result in order for the test itself to be optimised out
   #ifdef TESTS
    #ifndef NO_EXCEPTIONS
-	fprintf(stderr, "%s\n", handler_msgs[rc]);
-	fflush(stderr);
+	compsky::os::write::write_to_stderr(handler_msgs[rc]);
    #endif
 	exit(rc);
   #endif

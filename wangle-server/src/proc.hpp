@@ -17,6 +17,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <sys/wait.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include "log.hpp"
 
 
 namespace proc {
@@ -45,7 +46,7 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 	pipe(pipefd);
 	const pid_t pid = fork();
 	if (unlikely(pid < 0)){
-		fprintf(stderr, "Forking failed\n");
+		log("Forking failed");
 		return true;
 	}
 	if (pid == 0){
@@ -54,7 +55,7 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 		dup2(pipefd[1], which_std_to_pipe);
 		
 		if (execvp(argv[0], (char**)argv)){
-			fprintf(stderr, "Cannot execute: %s\n", argv[0]);
+			log("Cannot execute: ", argv[0]);
 			exit(1);
 		}
 		
@@ -81,10 +82,9 @@ bool exec(int timeout,  const char* const* argv,  const int which_std_to_pipe,  
 	return false;
 	
 	print_args_and_return:
-	fprintf(stderr, "[%d] %s\nwhile executing: %s\n", status, which_err, argv[0]);
-	fprintf(stderr, "with args\n");
+	log("[", status, "] ", which_err, "\nwhile executing: ", argv[0], "\nwith args");
 	while(*(++argv) != nullptr){
-		fprintf(stderr, "\t%s\n", *argv);
+		log('\t', *argv);
 	}
 	return true;
 }
