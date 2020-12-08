@@ -31,7 +31,7 @@ void DatabaseInfo::test_is_accessible_from_master_connection(MYSQL* const master
 		mysql_free_result(res);
 		this->bools[is_accessible_from_master_connection] = true;
 	} catch(const compsky::mysql::except::SQLExec&){
-		log("Warning: Master is unable to access: ",  this->name());
+		this->logs("Warning: Unable to access database");
 	}
 }
 
@@ -44,7 +44,7 @@ void DatabaseInfo::attempt_to_access_tbl(const char* const tbl_name) const {
 		compsky::mysql::query(this->mysql_obj, res, buf, "SELECT * FROM ", tbl_name, " LIMIT 1");
 		mysql_free_result(res);
 	} catch(compsky::mysql::except::SQLExec& e){
-		log("Error while attempting to access table ", this->name(), ".", tbl_name, ": ", e.what());
+		this->logs("Error while attempting to access table ", tbl_name, ": ", e.what());
 		abort();
 	}
 }
@@ -57,7 +57,7 @@ void DatabaseInfo::attempt_qry(const char* const qry) const {
 		compsky::mysql::query_buffer(this->mysql_obj, res, qry);
 		mysql_free_result(res);
 	} catch(compsky::mysql::except::SQLExec& e){
-		log("Error while attempting qry on database: ", this->name(), ": ", e.what());
+		this->logs("Error while attempting qry: ", e.what());
 		abort();
 	}
 }

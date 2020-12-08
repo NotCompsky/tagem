@@ -86,7 +86,7 @@ struct DatabaseInfo {
 	
 	template<typename... Args>
 	void logs(Args... args) const {
-		log(this->name(), ": ", args...);
+		static_log(this->name(), ": ", args...);
 	}
 	
 	void query_buffer(MYSQL_RES*& res,  const char* const qry,  const size_t sz) const {

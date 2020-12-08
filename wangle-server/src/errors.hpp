@@ -22,9 +22,6 @@ constexpr static
 const char* const handler_msgs[] = {
 	"No error",
 	"Misc error",
-	
-	
-	
 	""
 };
 #endif

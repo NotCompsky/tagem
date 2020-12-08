@@ -492,6 +492,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->itr = itr_init;
 	}
 	
+	template<typename... Args>
+	void log(Args&&... args){
+		char* const itr_init = this->itr;
+		this->asciify(args..., '\n');
+		compsky::os::write_n_bytes(STDERR_FILE_ID, this->buf, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->itr = itr_init;
+	}
+	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){
 		return this->get_last_row_from_qry<bool>("SELECT 1 FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id));
 	}
@@ -596,7 +604,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		const size_t sz = os::get_file_sz(this->buf);
 		if (unlikely(sz == 0)){
-			log("No such file thumbnail: ", this->buf);
+			this->log("No such file thumbnail: ", this->buf);
 			return compsky::server::_r::invalid_file;
 		}
 		
@@ -1378,7 +1386,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"File already exists"
 				;
 			
-			log("Creating file: ", path.value);
+			this->log("Creating file: ", path.value);
 			if (unlikely(os::write_to_file(path.value, file_contents, strlen(file_contents))))
 				return compsky::server::_r::server_error;
 		}
@@ -2116,7 +2124,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->mysql_query_using_buf();
 		}catch(const compsky::mysql::except::SQLExec& e){
 			// NOTE: This appears to cause the server to hang on all *subsequent* queries involving SQL.
-			log(e.what());
+			this->log(e.what());
 			return compsky::server::_r::EMPTY_JSON_LIST;
 		}
 		if (unlikely(this->res == nullptr))
@@ -2461,7 +2469,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		const size_t f_sz = os::get_file_sz(file_path);
 		if (unlikely(f_sz == 0)){
-			log("Cannot open file: ", file_path);
+			this->log("Cannot open file: ", file_path);
 			return compsky::server::_r::server_error;
 		}
 		
@@ -2501,12 +2509,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl,  const bool is_audio_only){
 		if (unlikely(file_name[0] == 0)){
-			log("Empty file name");
+			this->log("Empty file name");
 			return FunctionSuccessness::server_error;
 		}
 		
 		if (in_str(file_name, os::unix_path_sep) and (file_id==nullptr) and not is_ytdl){
-			log("dl_or_cp_file rejected due to slash in file name: ", file_name);
+			this->log("dl_or_cp_file rejected due to slash in file name: ", file_name);
 			return FunctionSuccessness::server_error;
 		}
 		
@@ -2525,7 +2533,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		if (not endswith(dir_name.value, os::unix_path_sep)){
 			// TODO: Allow for this
-			log("dl_or_cp_file rejected due to dir name not ending in slash: ", dir_name.value);
+			this->log("dl_or_cp_file rejected due to dir name not ending in slash: ", dir_name.value);
 			return FunctionSuccessness::server_error;
 		}
 		
@@ -2536,7 +2544,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		// If YTDL, then file_path is the template of the path of the output file; else it is the path of the output file
 		compsky::asciify::asciify(file_path, dir_name.value, (is_ytdl or file_id==nullptr)?file_name:file_id, '\0');
 		
-		log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", file_path);
+		this->log("dl_file ", (overwrite_existing)?">":"+", ' ', dir_id, ' ', url, "\n        -> ", file_path);
 		
 		// WARNING: Appears to freeze if the directory is not accessible (e.g. an unmounted external drive)
 		// TODO: Check device is mounted
@@ -2589,7 +2597,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				} else {
 					replace_first_instance_of(file_path, '\n', file_extension, '\0');
 				}
-				log("YTDL to: ", file_path);
+				this->log("YTDL to: ", file_path);
 			} else
 				return curl::dl_file(user_headers, url, file_path, overwrite_existing, mimetype);
 		}
@@ -2872,7 +2880,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		
-		log("n_errors: ", n_errors);
+		this->log("n_errors: ", n_errors);
 		
 		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
 	}
@@ -3548,7 +3556,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view post__edit_tag_cmnt(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		
-		log("Edit tag cmnt:", tag_id, ": ", s);
+		this->log("Edit tag cmnt:", tag_id, ": ", s);
 		
 		return compsky::server::_r::post_ok;
 	}
@@ -3690,9 +3698,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				if (is_video){
 					try {
 						generate_thumbnail(file_path, thumbnail_filepath);
-						log("Generated video thumbnail: ", file_path, " -> ", thumbnail_filepath);
+						this->log("Generated video thumbnail: ", file_path, " -> ", thumbnail_filepath);
 					} catch(std::exception& e){
-						log("While generating thumbnail\n\tFile: ", file_path, "\n\tError:",  e.what());
+						this->log("While generating thumbnail\n\tFile: ", file_path, "\n\tError:",  e.what());
 					}
 					goto update_md5hash_then_continue;
 				}
@@ -3702,7 +3710,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				try {
 					img.load(file_path);
 				} catch(std::exception& e){
-					log("While generating thumbnail\n\tFile: ", file_path, "\n\tError: ",  e.what());
+					this->log("While generating thumbnail\n\tFile: ", file_path, "\n\tError: ",  e.what());
 					goto update_md5hash_then_continue;
 				}
 				const unsigned int w = (img.width() >= img.height())
@@ -3716,7 +3724,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				img.resize(w, h);
 				img.save(thumbnail_filepath);
 				}
-				log("Generated image thumbnail: ", thumbnail_filepath);
+				this->log("Generated image thumbnail: ", thumbnail_filepath);
 				
 				update_md5hash_then_continue:
 				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
@@ -3791,7 +3799,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		
-		log("t_origin == ", t_origin);
+		this->log("t_origin == ", t_origin);
 		
 		if ((t_origin == 0) and (dt != nullptr)){
 			struct tm time;
@@ -3966,16 +3974,16 @@ int main(int argc,  const char* const* argv){
 	
 	for (const char* const env_var : external_db_env_vars){
 		if (unlikely(getenv(env_var) == nullptr)){
-			log("ERROR: Environmental variable is not set: ", env_var);
+			static_log("ERROR: Environmental variable is not set: ", env_var);
 			goto help;
 		}
 	}
 	
 	if (unlikely(port_n == 0)){
-		log("ERROR: Port not set");
+		static_log("ERROR: Port not set");
 		
 		help:
-		log(
+		static_log(
 			#include "help.txt"
 		);
 		return 1;
@@ -4012,7 +4020,7 @@ int main(int argc,  const char* const* argv){
 		while(compsky::mysql::assign_next_row(res, &row, &id));
 		db_name2id_json += std::to_string(id) + std::string("\":\"") + db_info.name() + std::string("\",\"");
 		if (id == 0){
-			log("External database not recorded in external_db table: ", db_info.name());
+			static_log("External database not recorded in external_db table: ", db_info.name());
 			return 1;
 		}
 		db_indx2id[i] = id;
