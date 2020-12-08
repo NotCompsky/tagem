@@ -987,8 +987,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // md5_hash,
 			compsky::server::_r::flag::quote_no_escape, // dir_id,
-			compsky::server::_r::flag::quote_and_escape, // file_name,
-			compsky::server::_r::flag::quote_and_escape, // file_title,
+			compsky::server::_r::flag::quote_and_json_escape, // file_name,
+			compsky::server::_r::flag::quote_and_json_escape, // file_title,
 			compsky::server::_r::flag::quote_no_escape, // file_sz,
 			compsky::server::_r::flag::no_quote, // file_added_timestamp,
 			compsky::server::_r::flag::no_quote, // file_origin_timestamp,
@@ -1815,7 +1815,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id,
-			compsky::server::_r::flag::quote_and_escape, // name,
+			compsky::server::_r::flag::quote_and_json_escape, // name,
 			compsky::server::_r::flag::quote_and_escape, // thumb,
 			compsky::server::_r::flag::no_quote, // count
 			compsky::server::_r::flag::no_quote, // t_origin
@@ -2208,8 +2208,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::arr,
 			nullptr,
 			compsky::server::_r::flag::quote_no_escape, // id,
-			compsky::server::_r::flag::quote_and_escape, // name,
-			compsky::server::_r::flag::quote_and_escape, // description,
+			compsky::server::_r::flag::quote_and_json_escape, // name,
+			compsky::server::_r::flag::quote_and_json_escape, // description,
 			compsky::server::_r::flag::quote_and_json_escape // content
 		);
 		return this->get_buf_as_string_view();
