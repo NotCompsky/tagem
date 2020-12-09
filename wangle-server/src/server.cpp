@@ -33,9 +33,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "handler_buf_pool.hpp"
 #include "log.hpp"
 
-#define max_cache_item_size (1 + 20 + 1 + 2*64 + 1 + 20 + 1 + 2*20 + 3 + 2*20 + 1 + 1 + 1)
-#include <compsky/server/cache.hpp>
-
 #include <compsky/mysql/query.hpp>
 #include <compsky/mysql/qryqry.hpp>
 #include <compsky/mysql/alternating_qry.hpp>
@@ -346,20 +343,6 @@ namespace _r {
 }
 }
 
-namespace cached_stuff {
-	// WARNING: This is only for functions whose results are guaranteed to be shorter than the max_buf_len.
-	// TODO: Invalidate caches when necessary (after data is modified)
-	enum CacheID {
-		files_given_tag,
-		files_given_dir,
-		files_given_ids,
-		tags_given_file,
-		dir_info,
-		file_info,
-		n_fns
-	};
-}
-
 constexpr size_t handler_req_buf_sz = 4096 * 2;
 static
 HandlerBufPool handler_buf_pool;
@@ -652,12 +635,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view dir_info(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
-		
-#ifdef n_cached
-		if (const int indx = cached_stuff::from_cache(cached_stuff::dir_info, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-#endif
-		
 		GET_USER_ID
 		
 		this->begin_json_response();
@@ -724,10 +701,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		this->asciify(']');
 		*this->itr = 0;
-		
-#ifdef n_cached
-		this->add_buf_to_cache(cached_stuff::dir_info, id);
-#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -949,12 +922,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view file_info(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
-		
-#ifdef n_cached
-		if (const int indx = cached_stuff::from_cache(cached_stuff::file_info, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-#endif
-		
 		GET_USER
 		const UserIDIntType user_id = user->id;
 		
@@ -1134,23 +1101,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		this->asciify(']');
 		
-		
 		*this->itr = 0;
-		
-#ifdef n_cached
-		this->add_buf_to_cache(cached_stuff::file_info, id);
-#endif
 		
 		return this->get_buf_as_string_view();
 	}
 	
 	std::string_view tags_given_file(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
-		
-#ifdef n_cached
-		if (const int indx = cached_stuff::from_cache(cached_stuff::tags_given_file, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-#endif
 		
 		this->mysql_query(
 			"SELECT "
@@ -1161,10 +1118,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		
 		this->write_json_list_response_into_buf(compsky::server::_r::flag::quote_no_escape);
-		
-#ifdef n_cached
-		this->add_buf_to_cache(cached_stuff::tags_given_file, id);
-#endif
 		
 		return this->get_buf_as_string_view();
 	}
@@ -1720,11 +1673,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
 		
-#ifdef n_cached
-		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_tag, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-#endif
-		
 		GET_USER_ID
 		
 		return
@@ -1995,11 +1943,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view files_given_dir(const char* s){
 		GET_PAGE_N('/')
 		const uint64_t id = a2n<uint64_t>(s);
-		
-#ifdef n_cached
-		if (const int indx = cached_stuff::from_cache(cached_stuff::files_given_dir, id))
-			return std::string_view(cached_stuff::cache + ((indx - 1) * cached_stuff::max_buf_len), cached_stuff::cached_IDs[indx - 1].sz);
-#endif
 		
 		GET_USER_ID
 		

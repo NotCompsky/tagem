@@ -108,9 +108,6 @@ endif()
 if(USE_LOCAL_JS)
 	target_compile_definitions(server PRIVATE "USE_LOCAL_JS")
 endif()
-if(n_cached)
-    target_compile_definitions(server PRIVATE "n_cached=${n_cached}")
-endif()
 
 
 add_custom_target(
