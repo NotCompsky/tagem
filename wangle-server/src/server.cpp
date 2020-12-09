@@ -496,7 +496,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void log(Args&&... args){
 		char* const itr_init = this->itr;
 		this->asciify(args..., '\n');
-		compsky::os::write_n_bytes(STDERR_FILE_ID, this->buf, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		compsky::os::write_n_bytes(STDERR_FILE_ID, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
