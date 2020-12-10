@@ -2718,16 +2718,18 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		
-		if (offset == url_len)
-			// Directory that we are trying to add already existed
-			// Maybe we should still tag it...?
-			// NOTE: The behaviour for attempting to add existing files is to still tag them
-			return FunctionSuccessness::ok;
-		
 		const std::string_view f_name_sv(url + offset,  url_len - offset);
 		
-		// Add entry to primary table
-		if (which_tbl == 'd'){
+		if (offset == url_len){
+			// Directory that we are trying to add already existed
+			// NOTE: The behaviour for attempting to add existing files/dirs is to still tag them
+			
+			// Move offset down, as we are currently situated after the final slash
+			do {
+				--offset;
+			} while (url[offset] != '/');
+		} else if (which_tbl == 'd'){
+			// Add entry to primary table
 			this->mysql_exec(
 				"INSERT INTO dir "
 				"(parent, device, user, full_path, name)"
