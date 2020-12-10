@@ -626,7 +626,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->init_json_rows(
 			this->itr,
 			compsky::server::_r::flag::arr,
-			compsky::server::_r::flag::quote_and_escape // name
+			compsky::server::_r::flag::quote_and_json_escape // name
 		);
 		*this->itr = 0;
 		
@@ -649,7 +649,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (not this->init_json_rows(
 			this->itr,
 			compsky::server::_r::flag::arr,
-			compsky::server::_r::flag::quote_and_escape // name
+			compsky::server::_r::flag::quote_and_json_escape // name
 		))
 			return compsky::server::_r::unauthorised;
 		this->asciify(',');
@@ -667,7 +667,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id_str
-			compsky::server::_r::flag::quote_and_escape // name
+			compsky::server::_r::flag::quote_and_json_escape // name
 		);
 		this->asciify(',');
 		
@@ -683,7 +683,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id_str
-			compsky::server::_r::flag::quote_and_escape // name
+			compsky::server::_r::flag::quote_and_json_escape // name
 		);
 		this->asciify(',');
 		
@@ -1015,7 +1015,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // backup_dir_id,
-			compsky::server::_r::flag::quote_and_escape, // backup_file_name,
+			compsky::server::_r::flag::quote_and_json_escape, // backup_file_name,
 			compsky::server::_r::flag::no_quote // backup_mimetype
 		);
 		this->asciify(',');
@@ -1039,7 +1039,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // dir_id,
-			compsky::server::_r::flag::quote_and_escape, // dir_name,
+			compsky::server::_r::flag::quote_and_json_escape, // dir_name,
 			compsky::server::_r::flag::quote_no_escape // device_id
 		);
 		this->asciify(',');
@@ -1069,7 +1069,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->init_json_rows(
 			this->itr, compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // tag_id,
-			compsky::server::_r::flag::quote_and_escape // tag_name
+			compsky::server::_r::flag::quote_and_json_escape // tag_name
 		);
 		this->asciify(',');
 		
@@ -1130,7 +1130,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			itr,
 			f_arr_or_dict,
 			compsky::server::_r::flag::quote_no_escape, // id,
-			compsky::server::_r::flag::quote_and_escape, // name,
+			compsky::server::_r::flag::quote_and_json_escape, // name,
 			compsky::server::_r::flag::quote_and_escape, // thumb,
 			compsky::server::_r::flag::no_quote // count
 		);
@@ -1150,8 +1150,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // md5_hex thumbnail
 			compsky::server::_r::flag::quote_no_escape, // file_id
-			compsky::server::_r::flag::quote_and_escape, // file name
-			compsky::server::_r::flag::quote_and_escape, // file title
+			compsky::server::_r::flag::quote_and_json_escape, // file name
+			compsky::server::_r::flag::quote_and_json_escape, // file title
 			compsky::server::_r::flag::quote_no_escape, // file size
 			compsky::server::_r::flag::no_quote, // file added timestamp
 			compsky::server::_r::flag::no_quote, // file origin timestamp
@@ -1815,7 +1815,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id,
-			compsky::server::_r::flag::quote_and_escape, // name,
+			compsky::server::_r::flag::quote_and_json_escape, // name,
 			compsky::server::_r::flag::quote_no_escape, // device
 			compsky::server::_r::flag::quote_no_escape, // tag IDs
 			compsky::server::_r::flag::no_quote // count
@@ -2078,7 +2078,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::dict,
 			nullptr,
 			compsky::server::_r::flag::quote_no_escape, // id
-			compsky::server::_r::flag::quote_and_escape // name
+			compsky::server::_r::flag::quote_and_json_escape // name
 		);
 		return this->get_buf_as_string_view();
 	}
@@ -2107,7 +2107,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				compsky::server::_r::flag::dict,
 				nullptr,
 				compsky::server::_r::flag::quote_no_escape, // id,
-				compsky::server::_r::flag::quote_and_escape, // name,
+				compsky::server::_r::flag::quote_and_json_escape, // name,
 				compsky::server::_r::flag::quote_no_escape, // protocol,
 				compsky::server::_r::flag::quote_and_escape, // embed_pre,
 				compsky::server::_r::flag::quote_and_escape // embed_post
@@ -2128,7 +2128,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				compsky::server::_r::flag::dict,
 				&compsky::server::_r::devices_json,
 				compsky::server::_r::flag::quote_no_escape, // id,
-				compsky::server::_r::flag::quote_and_escape, // name,
+				compsky::server::_r::flag::quote_and_json_escape, // name,
 				compsky::server::_r::flag::quote_no_escape, // protocol,
 				compsky::server::_r::flag::quote_and_escape, // embed_pre,
 				compsky::server::_r::flag::quote_and_escape // embed_post
@@ -2214,7 +2214,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				compsky::server::_r::flag::dict,
 				&compsky::server::_r::protocol_json,
 				compsky::server::_r::flag::quote_no_escape, // id,
-				compsky::server::_r::flag::quote_and_escape, // name,
+				compsky::server::_r::flag::quote_and_json_escape, // name,
 				compsky::server::_r::flag::no_quote // dummy  // To deliver it as id:[name] rather than id:name // TODO: Tidy
 			);
 		}
@@ -2264,7 +2264,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->itr,
 			compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // id,
-			compsky::server::_r::flag::quote_and_escape, // name,
+			compsky::server::_r::flag::quote_and_json_escape, // name,
 			compsky::server::_r::flag::quote_no_escape, // boolean permission values as integer CSV
 			compsky::server::_r::flag::quote_no_escape // user2blacklist_tag id
 		);
