@@ -58,6 +58,8 @@ The absense of this copyright notices on some other files in this project does n
 # include <rapidjson/document.h>
 #endif
 
+#include <magic.h>
+
 /*
  * The following initial contents of YTDL_FORMAT are copyright TheFrenchGhostys (https://gitlab.com/TheFrenchGhosty)
  * Modified content from https://gitlab.com/TheFrenchGhosty/TheFrenchGhostys-YouTube-DL-Archivist-Scripts
@@ -65,6 +67,9 @@ The absense of this copyright notices on some other files in this project does n
  */
 const char* YTDL_FORMAT = "(bestvideo[vcodec^=av01][height=720][fps>30]/bestvideo[vcodec^=vp9.2][height=720][fps>30]/bestvideo[vcodec^=vp9][height=720][fps>30]/bestvideo[vcodec^=avc1][height=720][fps>30]/bestvideo[height=720][fps>30]/bestvideo[vcodec^=av01][height=720]/bestvideo[vcodec^=vp9.2][height=720]/bestvideo[vcodec^=vp9][height=720]/bestvideo[vcodec^=avc1][height=720]/bestvideo[height=720]/bestvideo[vcodec^=av01][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=480][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=480][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=480][fps>30]/bestvideo[height<720][height>=480][fps>30]/bestvideo[vcodec^=av01][height<720][height>=480]/bestvideo[vcodec^=vp9.2][height<720][height>=480]/bestvideo[vcodec^=vp9][height<720][height>=480]/bestvideo[vcodec^=avc1][height<720][height>=480]/bestvideo[height<720][height>=480]/bestvideo[vcodec^=av01][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=360][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=360][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=360][fps>30]/bestvideo[height<720][height>=360][fps>30]/bestvideo[vcodec^=av01][height<720][height>=360]/bestvideo[vcodec^=vp9.2][height<720][height>=360]/bestvideo[vcodec^=vp9][height<720][height>=360]/bestvideo[vcodec^=avc1][height<720][height>=360]/bestvideo[height<720][height>=360]/bestvideo[vcodec^=av01][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=240][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=240][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=240][fps>30]/bestvideo[height<720][height>=240][fps>30]/bestvideo[vcodec^=av01][height<720][height>=240]/bestvideo[vcodec^=vp9.2][height<720][height>=240]/bestvideo[vcodec^=vp9][height<720][height>=240]/bestvideo[vcodec^=avc1][height<720][height>=240]/bestvideo[height<720][height>=240]/bestvideo[vcodec^=av01][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9.2][height<720][height>=144][fps>30]/bestvideo[vcodec^=vp9][height<720][height>=144][fps>30]/bestvideo[vcodec^=avc1][height<720][height>=144][fps>30]/bestvideo[height<720][height>=144][fps>30]/bestvideo[vcodec^=av01][height<720][height>=144]/bestvideo[vcodec^=vp9.2][height<720][height>=144]/bestvideo[vcodec^=vp9][height<720][height>=144]/bestvideo[vcodec^=avc1][height<720][height>=144]/bestvideo[height<720][height>=144]/bestvideo)+(bestaudio[acodec^=opus]/bestaudio)/best";
 const char* FFMPEG_LOCATION = "/usr/bin/ffmpeg";
+
+static
+magic_t magique;
 
 #define NULL_IMG_SRC "\"data:,\""
 
@@ -3872,6 +3877,38 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return failed;
 	}
 #endif
+	const char* guess_mimetype(const char* const path) const {
+		return magic_file(magique, path);
+	}
+	
+	std::string_view guess_null_mimetypes(const char* s){
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
+		
+		this->mysql_query(
+			"SELECT f.id, CONCAT(d.full_path, f.name)"
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"WHERE f.mimetype=0 "
+			  "AND d.device IN (0", _f::zip2, connected_local_devices.size(), ',', connected_local_devices, ")"
+		);
+		uint64_t f_id;
+		const char* path;
+		while(this->mysql_assign_next_row(&f_id, &path)){
+			const char* const mimetype_guess = guess_mimetype(path);
+			if (unlikely(mimetype_guess == nullptr))
+				continue;
+			this->mysql_exec(
+				"UPDATE file f "
+				"JOIN mimetype m "
+				"SET f.mimetype=m.id "
+				"WHERE f.id=", f_id, " "
+				  "AND LEFT(\"", mimetype_guess, "\",LENGTH(m.name))=m.name" // WARNING: Not escaped
+			);
+		}
+		
+		return compsky::server::_r::post_ok;
+	}
 };
 std::mutex TagemResponseHandler::mysql_mutex;
 
@@ -3879,6 +3916,9 @@ int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
 	
 	curl::init();
+	
+	magique = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
+	magic_load(magique, nullptr);
 	
 	int port_n = 0;
 	std::vector<const char*> external_db_env_vars;
