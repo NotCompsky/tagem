@@ -3885,9 +3885,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
 		
 		const char* tbl_suffixes[] = {"", "_backup"};
-		for (const char* tbl_suffix : tbl_suffixes){
+		for (auto i = 0;  i < 2;  ++i){
+			const char* const tbl_suffix = tbl_suffixes[i];
 			this->mysql_query(
-				"SELECT f.id, CONCAT(d.full_path, f.name)"
+				"SELECT f.", (i==0)?"id":"file", ", CONCAT(d.full_path, f.name)"
 				"FROM file", tbl_suffix, " f "
 				"JOIN dir d ON d.id=f.dir "
 				"WHERE f.mimetype=0 "
@@ -3903,7 +3904,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"UPDATE file", tbl_suffix, " f "
 					"JOIN mimetype m "
 					"SET f.mimetype=m.id "
-					"WHERE f.id=", f_id, " "
+					"WHERE f.", (i==0)?"id":"file", "=", f_id, " "
 					"AND LEFT(\"", mimetype_guess, "\",LENGTH(m.name))=m.name" // WARNING: Not escaped
 				);
 			}
