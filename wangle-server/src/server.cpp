@@ -355,12 +355,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
  public:
 	TagemResponseHandler()
 	{
-		this->buf = handler_buf_pool.get_buf();
+		this->buf = handler_buf_pool.get();
 		this->reset_buf_index();
 	}
 	
 	~TagemResponseHandler(){
-		handler_buf_pool.free_buf(this->buf);
+		handler_buf_pool.free(this->buf);
 	}
 	
 	std::string_view handle_request_2(boost::array<char, handler_req_buf_sz>& req_buffer,  const size_t n_bytes_of_first_req_buffer){
