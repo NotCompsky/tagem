@@ -31,8 +31,13 @@ RUN apk add --no-cache python3-dev=3.8.5-r0 \
 	&& ./configure \
 		--enable-static \
 		--disable-shared \
-	&& make \
-	&& make install \
+	&& ( \
+		make && make install || ( \
+			echo "Tries to build linked executable despite options" \
+			&& mv src/.libs/libmagic.a /usr/local/lib/libmagic.a \
+			&& mv src/magic.h /usr/local/include/magic.h \
+		) \
+	) \
 	\
 	&& git clone --depth 1 https://github.com/Tencent/rapidjson \
 	&& mv rapidjson/include/rapidjson /usr/include/rapidjson \
