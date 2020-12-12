@@ -3884,28 +3884,30 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
 		
-		this->mysql_query(
-			"SELECT f.id, CONCAT(d.full_path, f.name)"
-			"FROM file f "
-			"JOIN dir d ON d.id=f.dir "
-			"WHERE f.mimetype=0 "
-			  "AND d.device IN (0", _f::zip2, connected_local_devices.size(), ',', connected_local_devices, ")"
-		);
-		uint64_t f_id;
-		const char* path;
-		while(this->mysql_assign_next_row(&f_id, &path)){
-			const char* const mimetype_guess = guess_mimetype(path);
-			if (unlikely(mimetype_guess == nullptr))
-				continue;
-			this->mysql_exec(
-				"UPDATE file f "
-				"JOIN mimetype m "
-				"SET f.mimetype=m.id "
-				"WHERE f.id=", f_id, " "
-				  "AND LEFT(\"", mimetype_guess, "\",LENGTH(m.name))=m.name" // WARNING: Not escaped
+		const char* tbl_suffixes[] = {"", "_backup"};
+		for (const char* tbl_suffix : tbl_suffixes){
+			this->mysql_query(
+				"SELECT f.id, CONCAT(d.full_path, f.name)"
+				"FROM file", tbl_suffix, " f "
+				"JOIN dir d ON d.id=f.dir "
+				"WHERE f.mimetype=0 "
+				"AND d.device IN (0", _f::zip2, connected_local_devices.size(), ',', connected_local_devices, ")"
 			);
+			uint64_t f_id;
+			const char* path;
+			while(this->mysql_assign_next_row(&f_id, &path)){
+				const char* const mimetype_guess = guess_mimetype(path);
+				if (unlikely(mimetype_guess == nullptr))
+					continue;
+				this->mysql_exec(
+					"UPDATE file", tbl_suffix, " f "
+					"JOIN mimetype m "
+					"SET f.mimetype=m.id "
+					"WHERE f.id=", f_id, " "
+					"AND LEFT(\"", mimetype_guess, "\",LENGTH(m.name))=m.name" // WARNING: Not escaped
+				);
+			}
 		}
-		
 		return compsky::server::_r::post_ok;
 	}
 };
