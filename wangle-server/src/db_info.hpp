@@ -14,12 +14,13 @@ The absense of this copyright notices on some other files in this project does n
 #pragma once
 
 #include "log.hpp"
+#include "thread_pool.hpp"
 #include <compsky/mysql/mysql.hpp>
 #include <compsky/deasciify/a2n.hpp>
 
 
-struct DatabaseInfo {
-	MYSQL* mysql_obj;
+class DatabaseInfo : public ThreadPool<MYSQL*, DatabaseInfo> {
+  public:
 	constexpr static const size_t buf_sz = 512;
 	char buf[buf_sz];
 	compsky::mysql::MySQLAuth auth;
@@ -57,8 +58,8 @@ struct DatabaseInfo {
 		return this->bools[enum_indx];
 	}
 	
-	void attempt_to_access_tbl(const char* const tbl_name) const;
-	void attempt_qry(const char* const qry) const;
+	void attempt_to_access_tbl(MYSQL* mysql_obj,  const char* const tbl_name) const;
+	void attempt_qry(MYSQL* mysql_obj,  const char* const qry) const;
 	
 	const char* host() const {
 		return auth.host;
@@ -78,9 +79,6 @@ struct DatabaseInfo {
 	unsigned port() const {
 		return a2n<unsigned>(auth.port);
 	}
-	MYSQL* connection() const {
-		return this->mysql_obj;
-	}
 	void close();
 	void test_is_accessible_from_master_connection(MYSQL* const master_connection,  char* buf);
 	
@@ -89,32 +87,39 @@ struct DatabaseInfo {
 		static_log(this->name(), ": ", args...);
 	}
 	
-	void query_buffer(MYSQL_RES*& res,  const char* const qry,  const size_t sz) const {
+	void query_buffer(MYSQL_RES*& res,  const char* const qry,  const size_t sz){
+		MYSQL* const mysql_obj = this->get();
 		try {
-			compsky::mysql::query_buffer(this->mysql_obj, res, qry, sz);
+			compsky::mysql::query_buffer(mysql_obj, res, qry, sz);
 		} catch(compsky::mysql::except::SQLExec& e){
-			this->logs("Bad SQL: ", mysql_error(this->mysql_obj));
+			this->logs("Bad SQL: ", mysql_error(mysql_obj));
 			throw(e);
 		}
+		this->free(mysql_obj);
 	}
 	
-	void query_buffer(MYSQL_RES*& res,  const char* const qry) const {
+	void query_buffer(MYSQL_RES*& res,  const char* const qry){
 		this->query_buffer(res, qry, strlen(qry));
 	}
 	
-	void exec_buffer(const char* const qry,  const size_t sz) const {
+	void exec_buffer(const char* const qry,  const size_t sz){
+		MYSQL* const mysql_obj = this->get();
 		try {
 			this->logs("exec_buffer");
-			compsky::mysql::exec_buffer(this->mysql_obj, qry, sz);
+			compsky::mysql::exec_buffer(mysql_obj, qry, sz);
 		} catch(compsky::mysql::except::SQLExec& e){
-			this->logs("Bad SQL: ", mysql_error(this->mysql_obj));
+			this->logs("Bad SQL: ", mysql_error(mysql_obj));
 			throw(e);
 		}
+		this->free(mysql_obj);
 	}
 	
-	void exec_buffer(const char* const qry) const {
+	void exec_buffer(const char* const qry){
 		this->exec_buffer(qry, strlen(qry));
 	}
+	
+	void new_obj(MYSQL*& mysql_obj) const;
+	void kill_obj(MYSQL* mysql_obj) const;
 	
 	DatabaseInfo(const char* const env_var_name,  const bool set_bools);
 };

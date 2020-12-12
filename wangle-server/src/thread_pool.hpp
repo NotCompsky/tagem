@@ -2,6 +2,7 @@
 
 #include <array>
 #include <mutex>
+#include <compsky/macros/likely.hpp>
 
 
 #define MAX_N_HANDLERS (N_THREADS * 2) // NOTE: Arbitrary
@@ -14,11 +15,23 @@ class ThreadPool {
 	std::array<bool, MAX_N_HANDLERS> is_in_use;
 	std::array<Obj, MAX_N_HANDLERS> bufs;
 	
+  protected:
+	void master_set(const Obj& obj,  const unsigned indx){
+		// Force set an array element without thread-safety
+		// Useful for when initialisation of a derived class involves the creation of such an element
+		this->bufs[indx] = obj;
+	}
+	
   public:
 	ThreadPool()
 	: is_in_use{}
 	, bufs{}
 	{}
+	
+	~ThreadPool(){
+		for (Obj& obj : this->bufs)
+			static_cast<Derived*>(this)->kill_obj(obj);
+	}
 	
 	Obj get(){
 		static std::mutex mutex;
@@ -33,7 +46,7 @@ class ThreadPool {
 		this->is_in_use[i] = true;
 		Obj buf = this->bufs[i];
 		if (unlikely(buf == nullptr)){
-			buf = static_cast<Derived*>(this)->new_obj();
+			static_cast<Derived*>(this)->new_obj(buf);
 			this->bufs[i] = buf;
 		}
 		return buf;

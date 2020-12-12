@@ -18,8 +18,20 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/mysql/except.hpp>
 
 
-void DatabaseInfo::close(){
+void DatabaseInfo::new_obj(MYSQL*& mysql_obj) const {
+	compsky::mysql::login_from_auth(mysql_obj, this->auth);
+	bool auto_reconnect = true;
+	mysql_options(mysql_obj, MYSQL_OPT_RECONNECT, &auto_reconnect);
+	compsky::mysql::exec_buffer(mysql_obj, "SET SESSION sql_mode='NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
+}
+
+
+void DatabaseInfo::kill_obj(MYSQL* mysql_obj) const {
 	mysql_close(mysql_obj);
+}
+
+
+void DatabaseInfo::close(){
 	compsky::mysql::wipe_auth(buf, buf_sz);
 }
 
@@ -36,12 +48,12 @@ void DatabaseInfo::test_is_accessible_from_master_connection(MYSQL* const master
 }
 
 
-void DatabaseInfo::attempt_to_access_tbl(const char* const tbl_name) const {
+void DatabaseInfo::attempt_to_access_tbl(MYSQL* mysql_obj,  const char* const tbl_name) const {
 	MYSQL_RES* res;
 	MYSQL_ROW  row;
 	static char buf[100];
 	try {
-		compsky::mysql::query(this->mysql_obj, res, buf, "SELECT * FROM ", tbl_name, " LIMIT 1");
+		compsky::mysql::query(mysql_obj, res, buf, "SELECT * FROM ", tbl_name, " LIMIT 1");
 		mysql_free_result(res);
 	} catch(compsky::mysql::except::SQLExec& e){
 		this->logs("Error while attempting to access table ", tbl_name, ": ", e.what());
@@ -50,11 +62,11 @@ void DatabaseInfo::attempt_to_access_tbl(const char* const tbl_name) const {
 }
 
 
-void DatabaseInfo::attempt_qry(const char* const qry) const {
+void DatabaseInfo::attempt_qry(MYSQL* mysql_obj,  const char* const qry) const {
 	MYSQL_RES* res;
 	MYSQL_ROW  row;
 	try {
-		compsky::mysql::query_buffer(this->mysql_obj, res, qry);
+		compsky::mysql::query_buffer(mysql_obj, res, qry);
 		mysql_free_result(res);
 	} catch(compsky::mysql::except::SQLExec& e){
 		this->logs("Error while attempting qry: ", e.what());
@@ -69,10 +81,10 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 	using namespace compsky::utils; // for streq
 	
 	compsky::mysql::init_auth(buf, auth, getenv(env_var_name));
-	compsky::mysql::login_from_auth(mysql_obj, auth);
 	
-	bool auto_reconnect = true;
-	mysql_options(this->mysql_obj, MYSQL_OPT_RECONNECT, &auto_reconnect);
+	MYSQL* mysql_obj;
+	this->new_obj(mysql_obj);
+	this->master_set(mysql_obj, 0);
 	
 	if (not set_bools)
 		return;
@@ -82,7 +94,7 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 	MYSQL_RES* res;
 	MYSQL_ROW  row;
 	
-	compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM user");
+	compsky::mysql::query_buffer(mysql_obj, res, "SHOW COLUMNS FROM user");
 	const char* name;
 	const char* type;
 	const char* nullable;
@@ -98,13 +110,13 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 			this->bools[has_n_followers_column] = true;
 	}
 	
-	compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM post");
+	compsky::mysql::query_buffer(mysql_obj, res, "SHOW COLUMNS FROM post");
 	while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
 		if (streq("n_likes", name))
 			this->bools[has_n_likes_column] = true;
 	}
 	
-	compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW TABLES");
+	compsky::mysql::query_buffer(mysql_obj, res, "SHOW TABLES");
 	while(compsky::mysql::assign_next_row(res, &row, &name)){
 		if (streq("follow", name))
 			this->bools[has_follow_tbl] = true;
@@ -125,16 +137,16 @@ DatabaseInfo::DatabaseInfo(const char* const env_var_name,  const bool set_bools
 	}
 	
 	if (this->bools[has_cmnt_tbl]){
-		compsky::mysql::query_buffer(this->mysql_obj, res, "SHOW COLUMNS FROM cmnt");
+		compsky::mysql::query_buffer(mysql_obj, res, "SHOW COLUMNS FROM cmnt");
 		while(compsky::mysql::assign_next_row(res, &row, &name, &type, &nullable, &key, &default_value, &extra)){
 			if (streq("n_likes", name))
 				this->bools[has_cmnt_n_likes_column] = true;
 		}
 	}
 	
-	this->attempt_to_access_tbl("post");
-	this->attempt_to_access_tbl("user");
+	this->attempt_to_access_tbl(mysql_obj, "post");
+	this->attempt_to_access_tbl(mysql_obj, "user");
 	if (this->bools[has_cmnt_tbl])
-		this->attempt_to_access_tbl("cmnt");
+		this->attempt_to_access_tbl(mysql_obj, "cmnt");
 	
 }

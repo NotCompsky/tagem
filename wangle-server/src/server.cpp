@@ -377,24 +377,16 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
   private:
-	static std::mutex mysql_mutex;
-	
 	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
-		this->mysql_mutex.lock();
 		db_info.query_buffer(this->res, _buf, _buf_sz);
-		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_query_buf_db_by_id2(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
-		this->mysql_mutex.lock();
 		db_info.query_buffer(this->res2, _buf, _buf_sz);
-		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
-		this->mysql_mutex.lock();
 		db_info.exec_buffer(_buf, _buf_sz);
-		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_buf(){
@@ -422,9 +414,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	void mysql_exec_using_buf_db_by_id(DatabaseInfo& db_info){
-		this->mysql_mutex.lock();
 		this->mysql_exec_buf_db_by_id(db_info, this->buf, this->buf_indx());
-		this->mysql_mutex.unlock();
 	}
 	
 	void mysql_exec_using_buf(){
@@ -1244,7 +1234,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		, not_freed_results(true)
 		{
 			char* _itr = thees->itr;
-			compsky::mysql::query(db_info.mysql_obj, this->res, _itr, args...);
+			MYSQL* const mysql_obj = db_info.get();
+			compsky::mysql::query(mysql_obj, this->res, _itr, args...);
+			db_info.free(mysql_obj);
 		}
 		
 		~SQLQuery(){
@@ -3912,7 +3904,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return compsky::server::_r::post_ok;
 	}
 };
-std::mutex TagemResponseHandler::mysql_mutex;
 
 int main(int argc,  const char* const* argv){
 	const char* const* const argv_orig = argv;
@@ -3993,16 +3984,19 @@ int main(int argc,  const char* const* argv){
 	std::string db_name2id_json = DB_NAME2ID_JSON_INIT;
 	MYSQL_RES* res;
 	MYSQL_ROW row;
+	MYSQL* tagem_mysql_obj;
 	for (unsigned i = 0;  i < external_db_env_vars.size();  ++i){
 		const char* const db_env_name = external_db_env_vars.at(i);
 		
 		DatabaseInfo& db_info = db_infos.emplace_back(db_env_name, (i!=0));
 		
-		if (i == 0)
+		if (i == 0){
+			tagem_mysql_obj = db_infos.at(0).get();
 			continue;
+		}
 		
 		char buf[200];
-		compsky::mysql::query(db_infos.at(0).mysql_obj, res, buf, "SELECT id FROM external_db WHERE name=\"", db_info.name(), "\"");
+		compsky::mysql::query(tagem_mysql_obj, res, buf, "SELECT id FROM external_db WHERE name=\"", db_info.name(), "\"");
 		unsigned id = 0;
 		while(compsky::mysql::assign_next_row(res, &row, &id));
 		db_name2id_json += std::to_string(id) + std::string("\":\"") + db_info.name() + std::string("\",\"");
@@ -4012,7 +4006,7 @@ int main(int argc,  const char* const* argv){
 		}
 		db_indx2id[i] = id;
 		
-		db_info.test_is_accessible_from_master_connection(db_infos.at(0).connection(),  buf);
+		db_info.test_is_accessible_from_master_connection(tagem_mysql_obj,  buf);
 	}
 	if (db_name2id_json.size() != std::char_traits<char>::length(DB_NAME2ID_JSON_INIT))
 		// If there is at least one element in this dictionary
@@ -4021,9 +4015,9 @@ int main(int argc,  const char* const* argv){
 	compsky::server::_r::external_db_json = db_name2id_json.c_str();
 	// NOTE: This appears to be bugged in docker builds, only returning the headers and '}'.
 	
-	DatabaseInfo tagem_db_info = db_infos.at(0);
-	initialise_tagem_db(tagem_db_info.mysql_obj);
-	tagem_db_info.exec_buffer("SET SESSION sql_mode='NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
+	DatabaseInfo& tagem_db_info = db_infos.at(0);
+	initialise_tagem_db(tagem_mysql_obj);
+	tagem_db_info.free(tagem_mysql_obj);
 	
 #ifdef PYTHON
 	if (FILES_GIVEN_REMOTE_DIR != nullptr)
