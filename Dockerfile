@@ -91,15 +91,7 @@ RUN apk add --no-cache python3-dev=3.8.5-r0 \
 		-DENABLE_STATIC=ON \
 		-DEMBED_PYTHON=ON \
 		/tagem/wangle-server \
-	&& ( \
-		make server \
-		|| (\
-			/usr/local/bin/x86_64-linux-musl-g++ -flto -static  -Wl,-Bstatic -s CMakeFiles/server.dir/src/server.cpp.o CMakeFiles/server.dir/src/qry.cpp.o CMakeFiles/server.dir/src/curl_utils.cpp.o CMakeFiles/server.dir/src/db_info.cpp.o CMakeFiles/server.dir/src/initialise_tagem_db.cpp.o  -o server  /usr/local/lib/mariadb/libmariadbclient.a /usr/local/lib64/libcurl.a /usr/local/lib64/libssl.a /usr/local/lib64/libcrypto.a /usr/local/lib64/libffmpegthumbnailer.a /usr/local/lib/libevent.a           /usr/local/lib/libavdevice.a                 /usr/local/lib/libavfilter.a  /usr/local/lib/libpostproc.a  /usr/local/lib/libavformat.a                /usr/local/lib/libavcodec.a  /usr/local/lib/libavutil.a     /usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.a          /usr/local/lib/libx264.a /usr/lib/libboost_context.a /usr/local/lib/libx264.a /usr/lib/libboost_thread.a /tagem/wangle-server/docker/fix-missing-symbol.monkeypatch.cpp \
-			&& strip --strip-all server \
-		) \
-	)
-
-# Final compile command, if make server fails, was constructed from the final command that it would normally execute, with numerous consecutive spaces indicating that arguments (linked libraries) were removed from the final command (compared with the CMake generated command) - e.g. libboost*.so
+	&& make server
 
 FROM alpine:latest
 COPY --from=intermediate /tagem/build/server /tagem-server

@@ -9,6 +9,7 @@ option(ENABLE_LIMIT_WITHIN_GROUP_CONCAT "Allow the use of LIMIT statements withi
 option(BUILD_TESTS "Run compile-time tests" OFF)
 option(USE_LOCAL_JS "Use local JavaScript, except for youtube" OFF)
 option(USE_LOCAL_YT_JS "Use local Youtube JavaScript file at static/js/3rd-party/www.youtube.com/iframe_api, rather than fetching from youtube.com" OFF)
+option(MONKEYPATCH_MY_SHA512 "Only for static builds. Linking against MariaDB requires this function to be defined, even though it is not used at all" ON)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
@@ -25,6 +26,12 @@ find_package(Threads REQUIRED)
 find_package(Compsky REQUIRED)
 find_package(Boost REQUIRED)
 
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
+set(AUTO_SRC_DIR "${SRC_DIR}/auto-generated")
+set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
+
+set(MONKEYPATCH_SOURCES)
 if(ENABLE_STATIC)
 	set(CURL_NAMES curl.a libcurl.a)
 	set(LIBCRYPTO_NAMES crypto.a libcrypto.a)
@@ -42,6 +49,9 @@ set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.
 	find_library(LIBPOSTPROC NAMES postproc.a libpostproc.a) # For adding movie symbols onto thumbnails
 	find_library(LIB264 NAMES x264.a libx264.a) # For thumbnailing MP4s
 	set(FFMPEG_THUMBNAILER_DEPS ${LIBAVDEVICE} ${LIBAVFILTER} ${LIBAVFORMAT} ${LIBAVCODEC} ${LIBAVUTIL} ${LIBPOSTPROC} ${LIB264})
+	if(MONKEYPATCH_MY_SHA512)
+		set(MONKEYPATCH_SOURCES "${SRC_DIR}/fix-missing-symbol.monkeypatch.cpp")
+	endif()
 else()
 	set(CURL_NAMES curl)
 	set(LIBCRYPTO_NAMES crypto)
@@ -60,11 +70,6 @@ find_library(FFMPEGTHUMBNAILER NAMES ${FFMPEGTHUMBNAILER_NAMES})
 find_library(MYSQL_CLIENT NAMES ${MYSQL_CLIENT_NAMES})
 find_library(LIBMAGIC NAMES ${LIBMAGIC_NAMES})
 
-set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
-set(AUTO_SRC_DIR "${SRC_DIR}/auto-generated")
-set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
-
 
 file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
 # Creates directory during build system generation
@@ -76,6 +81,7 @@ add_executable(
 	"${SRC_DIR}/curl_utils.cpp"
 	"${SRC_DIR}/db_info.cpp"
 	"${SRC_DIR}/initialise_tagem_db.cpp"
+	${MONKEYPATCH_SOURCES}
 )
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	include(CheckIPOSupported)
