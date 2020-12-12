@@ -1,6 +1,5 @@
 #pragma once
 
-#define COMPSKY_STD_STRING_VIEW
 #include <compsky/asciify/asciify.hpp>
 #include <compsky/os/write.hpp>
 
