@@ -19,10 +19,20 @@ COPY wangle-server /tagem/wangle-server
 COPY utils /tagem/utils
 COPY include /tagem/include
 
+ARG libmagic_version=5.39
+
 RUN apk add --no-cache python3-dev=3.8.5-r0 \
 	&& for d in /usr/lib/python3.*; do \
 		cp $(find "$d" -type f -name '*python*.a') /usr/lib/ \
 	; done \
+	\
+	&& curl -s ftp://ftp.astron.com/pub/file/file-${libmagic_version}.tar.gz | tar -xz \
+	&& cd file-${libmagic_version} \
+	&& ./configure \
+		--enable-static \
+		--disable-shared \
+	&& make \
+	&& make install \
 	\
 	&& git clone --depth 1 https://github.com/Tencent/rapidjson \
 	&& mv rapidjson/include/rapidjson /usr/include/rapidjson \
