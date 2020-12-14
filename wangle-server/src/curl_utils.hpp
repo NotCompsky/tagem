@@ -16,9 +16,6 @@ The absense of this copyright notices on some other files in this project does n
 #include <cstddef> // for size_t
 
 
-constexpr static const size_t MAX_MIMETYPE_SZ = 100;
-
-
 namespace curl {
 
 FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype);
