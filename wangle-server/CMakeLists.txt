@@ -10,6 +10,7 @@ option(BUILD_TESTS "Run compile-time tests" OFF)
 option(USE_LOCAL_JS "Use local JavaScript, except for youtube" OFF)
 option(USE_LOCAL_YT_JS "Use local Youtube JavaScript file at static/js/3rd-party/www.youtube.com/iframe_api, rather than fetching from youtube.com" OFF)
 option(MONKEYPATCH_MY_SHA512 "Only for static builds. Linking against MariaDB requires this function to be defined, even though it is not used at all" ON)
+option(ENABLE_SPREXER "Enables the info-extractor, which grabs information such as timestamp, author, title from web pages. Requires lexbor to be installed." ON)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
@@ -71,7 +72,11 @@ find_library(BOOST_THREAD NAMES ${BOOST_THREAD_NAMES})
 find_library(FFMPEGTHUMBNAILER NAMES ${FFMPEGTHUMBNAILER_NAMES})
 find_library(MYSQL_CLIENT NAMES ${MYSQL_CLIENT_NAMES})
 find_library(LIBMAGIC NAMES ${LIBMAGIC_NAMES})
-find_library(LEXBOR NAMES ${LEXBOR_NAMES}) # sprexer dependency
+if(ENABLE_SPREXER)
+	find_library(LEXBOR NAMES ${LEXBOR_NAMES}) # sprexer dependency
+else()
+	set(LEXBOR)
+endif()
 
 
 file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
@@ -105,11 +110,14 @@ set_target_properties(
 		LINK_FLAGS_RELEASE -s
 )
 target_include_directories(server PRIVATE "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
-target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" "${CURL}" "${LIBCRYPTO}" "${BOOST_THREAD}" ${PTHREAD} ${LIBSSL} "${FFMPEGTHUMBNAILER}" ${FFMPEG_THUMBNAILER_DEPS} "${LIBMAGIC}" "${LEXBOR}")
+target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" "${CURL}" "${LIBCRYPTO}" "${BOOST_THREAD}" ${PTHREAD} ${LIBSSL} "${FFMPEGTHUMBNAILER}" ${FFMPEG_THUMBNAILER_DEPS} "${LIBMAGIC}" ${LEXBOR})
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"" "N_THREADS=${N_THREADS}" "HANDLER_BUF_SZ=${HANDLER_BUF_SZ}")
 if(DNS_OVER_HTTPS_CLIENT_URL)
 	target_compile_definitions(server PRIVATE "DNS_OVER_HTTPS_CLIENT_URL=\"${DNS_OVER_HTTPS_CLIENT_URL}\"")
+endif()
+if(ENABLE_SPREXER)
+	target_compile_definitions(server PRIVATE ENABLE_SPREXER)
 endif()
 if(EMBED_PYTHON)
 	target_include_directories(server PRIVATE "/usr/include/python3.8") # TODO: Generalise

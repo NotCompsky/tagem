@@ -31,7 +31,9 @@ The absense of this copyright notices on some other files in this project does n
 #include "errors.hpp"
 #include "handler_buf_pool.hpp"
 #include "log.hpp"
-#include "info_extractor.hpp"
+#ifdef ENABLE_SPREXER
+# include "info_extractor.hpp"
+#endif
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/mysql/qryqry.hpp>
@@ -3769,8 +3771,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename FileIDType>
 	bool ytdl(const char* user_headers,  const UserIDIntType user_id,  const FileIDType file_id,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
+#ifdef ENABLE_SPREXER
 		if (not info_extractor::record_info(file_id, user_headers, this->itr, url))
 			return false;
+#endif
 		
 		using namespace python;
 		
