@@ -153,6 +153,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 					$$$unhide('text-editor');
 				});
 				break;
+			case "application":
 			case '':
 				// If no slash in the mimetype (probably "!!NONE!!")
 				$$$set_file_view_src('iframe', src, null);
