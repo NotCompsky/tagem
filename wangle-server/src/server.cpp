@@ -3761,7 +3761,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				"dislikes=IFNULL(file.dislikes,", dislikes, "),"
 				"size=IFNULL(file.size,", size, "),"
 				"title=IFNULL(file.title,LEFT(\"", _f::esc, '"', title, "\",100)),"
-				"description=LEFT(\"", _f::esc, '"', descr, "\",1000),"
+				"description=IFNULL(file.description,LEFT(\"", _f::esc, '"', descr, "\",1000)),"
 				"t_origin=IF(IFNULL(file.t_origin,0),file.t_origin,", t_origin, ")"
 			"WHERE id=", file_id
 		);
