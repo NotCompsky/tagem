@@ -8,12 +8,12 @@
 #define MAX_N_HANDLERS (N_THREADS * 2) // NOTE: Arbitrary
 
 
-template<typename Obj,  class Derived>
+template<typename Obj,  class Derived,  size_t max_objs = MAX_N_HANDLERS>
 class ThreadPool {
   private:
 	// Arrays are used because vectors cannot be made atomic
-	std::array<bool, MAX_N_HANDLERS> is_in_use;
-	std::array<Obj, MAX_N_HANDLERS> bufs;
+	std::array<bool, max_objs> is_in_use;
+	std::array<Obj, max_objs> bufs;
 	
   protected:
 	void master_set(const Obj& obj,  const unsigned indx){
@@ -37,10 +37,10 @@ class ThreadPool {
 		static std::mutex mutex;
 		
 		auto i = 0;
-		for (;  i < MAX_N_HANDLERS;  ++i)
+		for (;  i < max_objs;  ++i)
 			if (not this->is_in_use[i])
 				break;
-		if (unlikely(i == MAX_N_HANDLERS))
+		if (unlikely(i == max_objs))
 			// TODO: Do better
 			exit(6060);
 		this->is_in_use[i] = true;
@@ -54,10 +54,10 @@ class ThreadPool {
 	
 	void free(const Obj& buf){
 		auto i = 0;
-		for (;  i < MAX_N_HANDLERS;  ++i)
+		for (;  i < max_objs;  ++i)
 			if (this->bufs[i] == buf)
 				break;
-		// 0 <= i < MAX_N_HANDLERS is guaranteed
+		// 0 <= i < max_objs is guaranteed
 		this->is_in_use[i] = false;
 		// NOTE: This is safe, because it is guaranteed that it doesn't matter if this value is read in the mean time (if it is true it is ignored), and it is guaranteed that it is only written to by one thing at a time
 	}
