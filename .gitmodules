@@ -1,3 +1,6 @@
 [submodule "wangle-server/scripts"]
 	path = wangle-server/scripts
 	url = https://github.com/NotCompsky/wangler
+[submodule "wangle-server/src/sprexer"]
+	path = wangle-server/src/sprexer
+	url = https://github.com/NotCompsky/sprexer

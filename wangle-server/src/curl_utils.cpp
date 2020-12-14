@@ -45,6 +45,46 @@ bool copy_headers(const char* user_headers,  char user_agent_buf[1000],  struct 
 }
 
 
+size_t curl_write_callback(void* contents,  size_t size,  size_t nmemb,  void* buf_itr){
+	const size_t n_bytes = size * nmemb;
+	memcpy(*reinterpret_cast<char**>(buf_itr),  (char*)contents,  n_bytes);
+	*reinterpret_cast<char**>(buf_itr) += n_bytes;
+    return n_bytes;
+}
+
+
+FunctionSuccessness dl_buf(const char* user_headers,  const char* const url,  char* dst_buf){
+	FunctionSuccessness rc;
+	
+	CURL* const handle = curl_easy_init();
+	curl_easy_setopt(handle, CURLOPT_URL, url);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curl_write_callback);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &dst_buf);
+	curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, true);
+#ifdef DNS_OVER_HTTPS_CLIENT_URL
+	curl_easy_setopt(handle, CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL);
+#endif
+	
+	struct curl_slist* headers = nullptr;
+	char user_agent_buf[1000];
+	if (unlikely(copy_headers(user_headers, user_agent_buf, headers)))
+		return FunctionSuccessness::malicious_request;
+	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
+	
+	const CURLcode curl_rc = curl_easy_perform(handle);
+	if (unlikely(curl_rc != CURLE_OK)){
+		rc = FunctionSuccessness::server_error;
+		log("dl_file__curl error");
+	} else {
+		rc = FunctionSuccessness::ok;
+	}
+	
+	curl_easy_cleanup(handle);
+	
+	return rc;
+}
+
+
 FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
 	// NOTE: Overwrites dst_pth if it is empty.
 	

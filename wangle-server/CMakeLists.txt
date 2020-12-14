@@ -52,6 +52,7 @@ set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.
 	if(MONKEYPATCH_MY_SHA512)
 		set(MONKEYPATCH_SOURCES "${SRC_DIR}/fix-missing-symbol.monkeypatch.cpp")
 	endif()
+	set(LEXBOR_NAMES lexbor.a liblexbor.a)
 else()
 	set(CURL_NAMES curl)
 	set(LIBCRYPTO_NAMES crypto)
@@ -62,6 +63,7 @@ set(FFMPEGTHUMBNAILER_NAMES ffmpegthumbnailer)
 set(MYSQL_CLIENT_NAMES mariadbclient mysqlclient)
 	set(LIBSSL)
 	set(FFMPEG_THUMBNAILER_DEPS)
+	set(LEXBOR_NAMES lexbor)
 endif()
 find_library(CURL NAMES ${CURL_NAMES})
 find_library(LIBCRYPTO NAMES ${LIBCRYPTO_NAMES})
@@ -69,10 +71,13 @@ find_library(BOOST_THREAD NAMES ${BOOST_THREAD_NAMES})
 find_library(FFMPEGTHUMBNAILER NAMES ${FFMPEGTHUMBNAILER_NAMES})
 find_library(MYSQL_CLIENT NAMES ${MYSQL_CLIENT_NAMES})
 find_library(LIBMAGIC NAMES ${LIBMAGIC_NAMES})
+find_library(LEXBOR NAMES ${LEXBOR_NAMES}) # sprexer dependency
 
 
 file(MAKE_DIRECTORY "${AUTO_SRC_DIR}")
 # Creates directory during build system generation
+
+set(SPREXER_SOURCES "${SRC_DIR}/sprexer/element.cpp" "${SRC_DIR}/sprexer/parser.cpp")
 
 add_executable(
 	server
@@ -82,6 +87,7 @@ add_executable(
 	"${SRC_DIR}/db_info.cpp"
 	"${SRC_DIR}/initialise_tagem_db.cpp"
 	${MONKEYPATCH_SOURCES}
+	${SPREXER_SOURCES}
 )
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 	include(CheckIPOSupported)
@@ -99,7 +105,7 @@ set_target_properties(
 		LINK_FLAGS_RELEASE -s
 )
 target_include_directories(server PRIVATE "${COMPSKY_INCLUDE_DIRS}" "${PROJECT_INCLUDE_DIR}")
-target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" "${CURL}" "${LIBCRYPTO}" "${BOOST_THREAD}" ${PTHREAD} ${LIBSSL} "${FFMPEGTHUMBNAILER}" ${FFMPEG_THUMBNAILER_DEPS} "${LIBMAGIC}")
+target_link_libraries(server PRIVATE "${MYSQL_CLIENT}" "${CURL}" "${LIBCRYPTO}" "${BOOST_THREAD}" ${PTHREAD} ${LIBSSL} "${FFMPEGTHUMBNAILER}" ${FFMPEG_THUMBNAILER_DEPS} "${LIBMAGIC}" "${LEXBOR}")
 
 target_compile_definitions(server PRIVATE "MAX_CACHE_AGE=\"${MAX_CACHE_AGE}\"" "N_THREADS=${N_THREADS}" "HANDLER_BUF_SZ=${HANDLER_BUF_SZ}")
 if(DNS_OVER_HTTPS_CLIENT_URL)
@@ -134,6 +140,22 @@ add_custom_target(
 	auto__server_determine_response_hpp ALL
 	DEPENDS "${SRC_DIR}/server-endpoints.txt" # CMake does not seem to have an option to only rerun when dependency is modified
 	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/server-endpoints.txt" "${AUTO_SRC_DIR}/auto__server-determine-response.hpp"
+	BYPRODUCTS "${AUTO_SRC_DIR}/auto__server-determine-response.hpp"
+	COMMENT "Generating bigboi switch statement"
+)
+
+add_custom_target(
+	auto__infoextractor_verify_hpp ALL
+	DEPENDS "${SRC_DIR}/info_extractor-verify.txt" # CMake does not seem to have an option to only rerun when dependency is modified
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/info_extractor-verify.txt" "${AUTO_SRC_DIR}/auto__info_extractor-verify.hpp"
+	BYPRODUCTS "${AUTO_SRC_DIR}/auto__server-determine-response.hpp"
+	COMMENT "Generating bigboi switch statement"
+)
+
+add_custom_target(
+	auto__infoextractor_domainid_hpp ALL
+	DEPENDS "${SRC_DIR}/info_extractor-domainid.txt" # CMake does not seem to have an option to only rerun when dependency is modified
+	COMMAND ${PYTHON_EXECUTABLE} "${SCRIPTS_DIR}/triegen.py" "${SRC_DIR}/info_extractor-domainid.txt" "${AUTO_SRC_DIR}/auto__info_extractor-domainid.hpp"
 	BYPRODUCTS "${AUTO_SRC_DIR}/auto__server-determine-response.hpp"
 	COMMENT "Generating bigboi switch statement"
 )
@@ -220,7 +242,7 @@ endif()
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)
 
 
-add_dependencies(server auto__server_determine_response_hpp js_hpp svg_hpp qry__process_arg__tokens qry__get_attribute_name__tokens
+add_dependencies(server auto__server_determine_response_hpp auto__infoextractor_verify_hpp auto__infoextractor_domainid_hpp js_hpp svg_hpp qry__process_arg__tokens qry__get_attribute_name__tokens
  _SRC_DIR_static_js_3rd_party_php_date_formatter_js _SRC_DIR_static_js_3rd_party_datetimepicker_js _SRC_DIR_static_css_3rd_party_datetimepicker_css)
 
 target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\""

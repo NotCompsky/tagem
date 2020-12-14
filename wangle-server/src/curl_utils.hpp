@@ -23,6 +23,8 @@ namespace curl {
 
 FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype);
 
+FunctionSuccessness dl_buf (const char* user_headers,  const char* const url,  char* dst_buf);
+
 void init();
 
 void clean();
