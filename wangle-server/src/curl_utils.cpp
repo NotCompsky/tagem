@@ -53,8 +53,8 @@ size_t curl_write_callback(void* contents,  size_t size,  size_t nmemb,  void* b
 }
 
 
-FunctionSuccessness dl_buf(const char* user_headers,  const char* const url,  char* dst_buf){
-	FunctionSuccessness rc;
+size_t dl_buf(const char* user_headers,  const char* const url,  char* const dst_buf_orig){
+	char* dst_buf = dst_buf_orig;
 	
 	CURL* const handle = curl_easy_init();
 	curl_easy_setopt(handle, CURLOPT_URL, url);
@@ -68,15 +68,16 @@ FunctionSuccessness dl_buf(const char* user_headers,  const char* const url,  ch
 	struct curl_slist* headers = nullptr;
 	char user_agent_buf[1000];
 	if (unlikely(copy_headers(user_headers, user_agent_buf, headers)))
-		return FunctionSuccessness::malicious_request;
+		return 1;
 	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, headers);
 	
 	const CURLcode curl_rc = curl_easy_perform(handle);
+	size_t rc;
 	if (unlikely(curl_rc != CURLE_OK)){
-		rc = FunctionSuccessness::server_error;
+		rc = 0;
 		log("dl_file__curl error");
 	} else {
-		rc = FunctionSuccessness::ok;
+		rc = (uintptr_t)dst_buf - (uintptr_t)dst_buf_orig;
 	}
 	
 	curl_easy_cleanup(handle);
