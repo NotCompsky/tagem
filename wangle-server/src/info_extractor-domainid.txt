@@ -1,0 +1,7 @@
+THIS LINE HERE IS IMPORTANT DO NOT REMOVE
+www.bbc.co.uk/news/>
+	return BBCNews
+www.theguardian.co>
+	return Guardian
+www.telegraph.co>
+	return Telegraph
