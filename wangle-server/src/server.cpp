@@ -31,6 +31,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "errors.hpp"
 #include "handler_buf_pool.hpp"
 #include "log.hpp"
+#include "mimetype.hpp"
 #ifdef ENABLE_SPREXER
 # include "info_extractor.hpp"
 #endif
@@ -43,6 +44,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/deasciify/a2f.hpp>
 #include <compsky/server/server.hpp>
 #include <compsky/server/response_generation.hpp>
+#include <compsky/os/write.hpp>
 
 #include <mutex>
 
@@ -473,10 +475,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename... Args>
 	void log(Args&&... args){
-		char* const itr_init = this->itr;
+		/*char* const itr_init = this->itr;
 		this->asciify(args..., '\n');
 		compsky::os::write_n_bytes(STDERR_FILE_ID, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
-		this->itr = itr_init;
+		this->itr = itr_init;*/
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){

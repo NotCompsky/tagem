@@ -85,7 +85,7 @@ class DatabaseInfo : public ThreadPool<MYSQL*, DatabaseInfo> {
 	
 	template<typename... Args>
 	void logs(Args... args) const {
-		static_log(this->name(), ": ", args...);
+		//static_log(this->name(), ": ", args...);
 	}
 	
 	void query_buffer(MYSQL_RES*& res,  const char* const qry,  const size_t sz){
@@ -106,7 +106,6 @@ class DatabaseInfo : public ThreadPool<MYSQL*, DatabaseInfo> {
 	void exec_buffer(const char* const qry,  const size_t sz){
 		MYSQL* const mysql_obj = this->get();
 		try {
-			this->logs("exec_buffer");
 			compsky::mysql::exec_buffer(mysql_obj, qry, sz);
 		} catch(compsky::mysql::except::SQLExec& e){
 			this->logs("Bad SQL: ", mysql_error(mysql_obj));
