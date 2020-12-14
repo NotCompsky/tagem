@@ -130,13 +130,14 @@ std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selecto
 }
 
 template<typename FileIDType>
-bool record_info(const FileIDType file_id,  const char* user_headers,  char* const html_buf,  const char* url){
+bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const buf,  const char* url){
 	const auto domain_id = get_domain_id(url);
 	if (domain_id == NoDomain)
 		return true;
 	
 	sprexer::Parser* parser = html_parser_pool.get();
-	const size_t html_sz = curl::dl_buf(user_headers, url, html_buf);
+	char* html_buf = buf;
+	const size_t html_sz = curl::dl_buf(url, html_buf);
 	sprexer::Doc doc(*parser, html_buf, html_sz);
 	html_parser_pool.free(parser);
 	

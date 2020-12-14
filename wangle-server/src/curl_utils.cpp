@@ -11,6 +11,8 @@ This copyright notice should be included in any copy or substantial copy of the 
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
 
+#ifdef USE_LIBCURL
+
 #include "curl.hpp"
 #include "curl_utils.hpp"
 #include "read_request.hpp"
@@ -24,7 +26,7 @@ The absense of this copyright notices on some other files in this project does n
 namespace curl {
 
 
-size_t curl_write_callback(void* contents,  size_t size,  size_t nmemb,  void* buf_itr){
+size_t curl_write_callback(char* contents,  size_t size,  size_t nmemb,  void* buf_itr){
 	const size_t n_bytes = size * nmemb;
 	memcpy(*reinterpret_cast<char**>(buf_itr),  (char*)contents,  n_bytes);
 	*reinterpret_cast<char**>(buf_itr) += n_bytes;
@@ -32,7 +34,7 @@ size_t curl_write_callback(void* contents,  size_t size,  size_t nmemb,  void* b
 }
 
 
-size_t dl_buf(const char* user_headers,  const char* const url,  char* const dst_buf_orig){
+size_t dl_buf(const char* const url,  char*& dst_buf_orig){
 	char* dst_buf = dst_buf_orig;
 	
 	Curl curl(
@@ -44,26 +46,25 @@ size_t dl_buf(const char* user_headers,  const char* const url,  char* const dst
 #endif
 	);
 	
-	char user_agent_buf[1000];
-	if (unlikely(curl.copy_headers(user_headers, user_agent_buf)))
-		return 1;
-	
 	return curl.perform(url) ? 0 : ((uintptr_t)dst_buf - (uintptr_t)dst_buf_orig);
 }
 
 
-FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char* mimetype){
+bool dl_file(char*,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
+	// nonzero success
 	// NOTE: Overwrites dst_pth if it is empty.
 	
 	if (not overwrite_existing){
 		if (os::get_file_sz(dst_pth) != 0)
-			return FunctionSuccessness::ok;
+			return true;
 	}
+	
+	mimetype = nullptr;
 	
 	FILE* const f = fopen(dst_pth, "wb");
 	if (f == nullptr){
 		log("Cannot open file for writing: ",  dst_pth);
-		return FunctionSuccessness::server_error;
+		return false;
 	}
 	
 	Curl curl(
@@ -74,19 +75,14 @@ FunctionSuccessness dl_file(const char* user_headers,  const char* const url,  c
 #endif
 	);
 	
-	char user_agent_buf[1000];
-	if (unlikely(curl.copy_headers(user_headers, user_agent_buf)))
-		return FunctionSuccessness::malicious_request;
-	
 	const bool is_failed = curl.perform(url);
 	fclose(f);
 	if (unlikely(is_failed)){
 		os::del_file(dst_pth);
 		log("dl_file__curl error");
-		return FunctionSuccessness::server_error;
+		return false;
 	} else {
-		curl.copy_mimetype(mimetype);
-		return FunctionSuccessness::ok;
+		return true;
 	}
 }
 
@@ -102,3 +98,6 @@ void clean(){
 
 
 } // namespace curl
+
+
+#endif

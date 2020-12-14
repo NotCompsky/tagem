@@ -32,6 +32,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "handler_buf_pool.hpp"
 #include "log.hpp"
 #include "mimetype.hpp"
+#include "fn_successness.hpp"
 #ifdef ENABLE_SPREXER
 # include "info_extractor.hpp"
 #endif
@@ -2503,7 +2504,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					'\0'
 				);
 #ifdef PYTHON
-				if (this->ytdl(user_headers, user_id, file_id, file_path, url, is_audio_only))
+				if (this->ytdl(user_id, file_id, dir_name.value, file_path, url, is_audio_only))
 #else
 				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", (is_audio_only)?"bestaudio":YTDL_FORMAT, url, nullptr};
 				if (proc::exec(60, ytdl_args, STDERR_FILENO, file_path))
@@ -2539,7 +2540,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				}
 				this->log("YTDL to: ", file_path);
 			} else
-				return curl::dl_file(user_headers, url, file_path, overwrite_existing, mimetype);
+				return curl::dl_file(this->itr, url, file_path, overwrite_existing, mimetype) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		}
 		
 		return FunctionSuccessness::ok;
@@ -3772,9 +3773,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	
 	template<typename FileIDType>
-	bool ytdl(const char* user_headers,  const UserIDIntType user_id,  const FileIDType file_id,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
+	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  const char* dest_dir,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 #ifdef ENABLE_SPREXER
-		if (not info_extractor::record_info(file_id, user_headers, this->itr, url))
+		if (not info_extractor::record_info(file_id, dest_dir, this->itr, url))
 			return false;
 #endif
 		
