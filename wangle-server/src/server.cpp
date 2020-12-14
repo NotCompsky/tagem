@@ -585,7 +585,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			return compsky::server::_r::invalid_file;
 		}
 		
-		FILE* const f = fopen(this->buf, "rb");
+		compsky::os::ReadOnlyFile f(this->buf);
 		
 		this->reset_buf_index();
 		this->asciify(
@@ -596,10 +596,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			'\n'
 		);
 		
-		const size_t n_read = fread(itr, 1, sz, f);
-		
-		fclose(f);
-		
+		f.read_into_buf(itr, sz);
 		*(itr + sz) = 0;
 		
 		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
