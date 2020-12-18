@@ -13,3 +13,14 @@ old.reddit.com/r/>
 	return Reddit
 new.reddit.com/r/>
 	return Reddit
+www.reddit.com/user/>
+	return Reddit
+old.reddit.com/user/>
+	return Reddit
+new.reddit.com/user/>
+	return Reddit
+i.>
+	return DirectFile
+
+prospect.org/>
+	return TheAmericanProspect

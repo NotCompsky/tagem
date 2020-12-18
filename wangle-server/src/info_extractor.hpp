@@ -57,6 +57,8 @@ namespace _f {
 enum DomainID {
 	NoDomain,
 	
+	DirectFile,
+	
 	BBCNews,
 	Guardian,
 	Telegraph,
@@ -83,6 +85,7 @@ enum DomainID {
 	Forbes,
 	Politico,
 	TheVerge,
+	TheAmericanProspect,
 	
 	SCMP,
 	DieWelt,
@@ -169,6 +172,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	}
 	size_t html_sz = curl::dl_buf(url, html_buf);
 	switch(domain_id){
+		case DirectFile:
 		case Reddit:
 			html_sz = 0;
 			break;
@@ -178,6 +182,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	
 	std::string_view title = "";
 	std::string_view datetime = "";
+	std::string_view description = "";
 	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S.%fZ";
 		/* 
 		 * This default value is of the ISO datetime format
@@ -191,6 +196,9 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view link_url = null_str_view; // The linked article or video
 	
 	switch(domain_id){
+		case DirectFile:
+			link_url = std::string_view(url, strlen(url));
+			break;
 		case BBCNews: {
 			char _title[] = "*@h1#main-heading";
 			title = find_element_attr(doc, _title, ".");
@@ -234,6 +242,16 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
 			break;
 		}
+		case TheAmericanProspect: {
+			char _title[] = "*@div#title>@h1";
+			title = find_element_attr(doc, _title, ".");
+			char _datetime[] = "*@time:itemprop=datePublished";
+			datetime = find_element_attr(doc, _datetime, "datetime");
+			char _author[] = "*@a:itemprop=author";
+			author = find_element_attr(doc, _author, ".");
+			char _descr[] = "*@div#title>@p.subtitle>@span";
+			description = find_element_attr(doc, _descr, ".");
+		}
 	}
 	
 	set_to_string_literal_null_if_null(timestamp);
@@ -246,7 +264,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		"UPDATE file f "
 		"SET "
 			"f.title=IF(f.title IS NULL OR f.title=\"\",\"", _f::esc, '"', title, "\", f.title),"
-			"f.t_origin=IFNULL(f.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
+			"f.description=IF(f.description IS NULL OR f.description=\"\",\"", _f::esc, '"', description, "\", f.description),"
+			"f.t_origin=IF(f.t_origin,f.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
 			"f.likes=GREATEST(IFNULL(f.likes,0),", likes, "),"
 			"f.views=GREATEST(IFNULL(f.views,0),", views, "),"
 			"f.duration=GREATEST(IFNULL(f.duration,0),", duration, ")"
@@ -260,6 +279,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		compsky::asciify::asciify(_itr, dest_dir, file_id, '\0');
 		char* mimetype;
 		curl::dl_file(nullptr, link_url, resulting_fp_as_output, false, mimetype);
+	} else {
+		resulting_fp_as_output[0] = 0;
 	}
 }
 

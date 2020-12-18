@@ -2488,6 +2488,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				{
 					return FunctionSuccessness::server_error;
 				}
+				if (file_path[0] != 0){
 				file_path[4096-1] = 0;
 				char* const file_extension = skip_to_after<char>(file_path, "Requested formats are incompatible for merge and will be merged into ");
 				if (file_extension != nullptr){
@@ -2515,6 +2516,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					replace_first_instance_of(file_path, '\n', file_extension, '\0');
 				}
 				this->log("YTDL to: ", file_path);
+				}
 			} else
 				return curl::dl_file(this->itr, url, file_path, overwrite_existing, mimetype) ? FunctionSuccessness::ok : FunctionSuccessness::server_error;
 		}
@@ -2765,7 +2767,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				if (likely(successness == FunctionSuccessness::server_error)){
 					++n_errors;
 				} else {
-					this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, f_name_sv, "\"", basename__accepting_trailing_slash(file_path), "\"", user_id, mimetype);
+					if (file_path[0] != 0)
+						this->insert_file_backup(nullptr, parent_dir_id, dl_backup_into_dir_id, f_name_sv, "\"", basename__accepting_trailing_slash(file_path), "\"", user_id, mimetype);
 					
 					if (mimetype[0]){
 						this->mysql_exec(
@@ -3182,7 +3185,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::server::_r::not_found : compsky::server::_r::server_error;
 			
-			this->insert_file_backup(file_id_str, 0, dir_id, "!!!/NOSUCHNAME/!!!", "SUBSTR(\"", file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
+			if (file_path[0] != 0)
+				this->insert_file_backup(file_id_str, 0, dir_id, "!!!/NOSUCHNAME/!!!", "SUBSTR(\"", file_path, "\",LENGTH(d.full_path)+1)", user_id, mimetype);
 			// WARNING: The above will crash if there is no such extension in ext2mimetype
 			// This is deliberate, to tell me to add it to the DB.
 		}
