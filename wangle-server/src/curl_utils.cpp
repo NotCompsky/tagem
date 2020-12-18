@@ -50,43 +50,6 @@ size_t dl_buf(const char* const url,  char*& dst_buf_orig){
 }
 
 
-bool dl_file(char*,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
-	// nonzero success
-	// NOTE: Overwrites dst_pth if it is empty.
-	
-	if (not overwrite_existing){
-		if (os::get_file_sz(dst_pth) != 0)
-			return true;
-	}
-	
-	mimetype = nullptr;
-	
-	FILE* const f = fopen(dst_pth, "wb");
-	if (f == nullptr){
-		log("Cannot open file for writing: ",  dst_pth);
-		return false;
-	}
-	
-	Curl curl(
-		CURLOPT_WRITEDATA, f,
-		CURLOPT_FOLLOWLOCATION, true,
-#ifdef DNS_OVER_HTTPS_CLIENT_URL
-		CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
-#endif
-	);
-	
-	const bool is_failed = curl.perform(url);
-	fclose(f);
-	if (unlikely(is_failed)){
-		os::del_file(dst_pth);
-		log("dl_file__curl error");
-		return false;
-	} else {
-		return true;
-	}
-}
-
-
 void init(){
 	curl_global_init(CURL_GLOBAL_ALL);
 }

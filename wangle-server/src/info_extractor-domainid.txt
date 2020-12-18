@@ -7,3 +7,9 @@ www.telegraph.co>
 	return Telegraph
 twitter.com/>
 	return Twitter
+www.reddit.com/r/>
+	return Reddit
+old.reddit.com/r/>
+	return Reddit
+new.reddit.com/r/>
+	return Reddit

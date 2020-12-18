@@ -3750,7 +3750,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<typename FileIDType>
 	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  const char* dest_dir,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 #ifdef ENABLE_SPREXER
-		if (not info_extractor::record_info(file_id, dest_dir, this->itr, url))
+		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url))
 			return false;
 #endif
 		

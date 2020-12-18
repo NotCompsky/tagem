@@ -12,6 +12,7 @@ The absense of this copyright notices on some other files in this project does n
 */
 #pragma once
 
+#include "curl.hpp"
 #include "read_request.hpp"
 #include "str_utils.hpp"
 #include "user_agent.hpp" // TODO: Should be set by CMake, to allow different choices, but CMake is just so so so dumb and escaping the characters is such a pain
@@ -198,7 +199,48 @@ void clean(){}
 #else
 
 
-bool dl_file(char* buf,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype);
+template<typename Str>
+bool dl_file(char* buf,  const Str url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
+	// nonzero success
+	// NOTE: Overwrites dst_pth if it is empty.
+	
+	printf("dl_file\n"); fflush(stdout);
+	
+	if (not overwrite_existing){
+		if (os::get_file_sz(dst_pth) != 0)
+			return true;
+	}
+	
+	printf("didnt exist\n"); fflush(stdout);
+	
+	mimetype = nullptr;
+	
+	FILE* const f = fopen(dst_pth, "wb");
+	if (f == nullptr){
+		printf("FILE CANOT OPEN\n"); fflush(stdout);
+		//log("Cannot open file for writing: ",  dst_pth);
+		return false;
+	}
+	
+	Curl curl(
+		CURLOPT_WRITEDATA, f,
+		CURLOPT_FOLLOWLOCATION, true,
+#ifdef DNS_OVER_HTTPS_CLIENT_URL
+		CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
+#endif
+	);
+	
+	const bool is_failed = curl.perform(url);
+	fclose(f);
+	if (unlikely(is_failed)){
+		printf("dl_file__curl error\n"); fflush(stdout);
+		os::del_file(dst_pth);
+		//log("dl_file__curl error");
+		return false;
+	} else {
+		return true;
+	}
+}
 
 size_t dl_buf(const char* const url,  char*& dst_buf);
 

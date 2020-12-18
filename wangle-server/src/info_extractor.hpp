@@ -135,14 +135,26 @@ std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selecto
 }
 
 template<typename FileIDType>
-bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const buf,  const char* url){
+bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulting_fp_as_output,  char* const buf,  const char* url){
 	const auto domain_id = get_domain_id(url);
 	if (domain_id == NoDomain)
 		return true;
 	
 	sprexer::Parser* parser = html_parser_pool.get();
 	char* html_buf = buf;
-	const size_t html_sz = curl::dl_buf(url, html_buf);
+	switch(domain_id){
+		char new_url[200];
+		case Reddit:
+			compsky::asciify::asciify(new_url, url, ".json", '\0');
+			url = new_url;
+			break;
+	}
+	size_t html_sz = curl::dl_buf(url, html_buf);
+	switch(domain_id){
+		case Reddit:
+			html_sz = 0;
+			break;
+	}
 	sprexer::Doc doc(*parser, html_buf, html_sz);
 	html_parser_pool.free(parser);
 	
@@ -159,7 +171,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 	std::string_view likes = null_str_view;
 	std::string_view views = null_str_view;
 	std::string_view duration = null_str_view;
-	std::string_view video_url = null_str_view;
+	std::string_view link_url = null_str_view; // The linked article or video
 	
 	switch(domain_id){
 		case BBCNews: {
@@ -194,7 +206,13 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 			views = find_element_attr(doc, _views, "data-videoplays");
 			duration = find_element_attr(doc, _views, "data-duration");
 			char _video_url[] = "*@meta:property=og:video";
-			video_url = find_element_attr(doc, _video_url, "content");
+			link_url = find_element_attr(doc, _video_url, "content");
+		}
+		case Reddit: {
+			title = STRING_VIEW_FROM_UP_TO(12, ", \"title\": \"")(html_buf, '"');
+			author = STRING_VIEW_FROM_UP_TO(13 , ", \"author\": \"")(html_buf, '"'); // NOTE: Multiple matches, but the first is selected
+			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
+			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
 		}
 	}
 	
@@ -206,21 +224,25 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 	set_to_string_literal_zero_if_null(views);
 	set_to_string_literal_zero_if_null(duration);
 	
-	if ((dest_dir != nullptr) and (video_url != null_str_view)){
-		
-	}
-	
 	db_infos[0].exec(
 		html_buf + html_sz,
 		"UPDATE file f "
 		"SET "
 			"f.title=IFNULL(file.title,", title, "),"
-			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(", datetime, ',', datetime_fmt, ")))),"
+			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(", datetime, ",\"", datetime_fmt, "\")))),"
 			"f.n_likes=GREATEST(IFNULL(file.n_likes,0),", likes, "),"
 			"f.n_views=GREATEST(IFNULL(file.n_views,0),", views, "),"
 			"f.duration=GREATEST(IFNULL(file.duration,0),", duration, ")"
 		"WHERE f.id=", file_id
 	);
+	
+	if ((dest_dir != nullptr) and (link_url != null_str_view)){
+		// Download the linked file or web page
+		// NOTE: Overwrites html_buf
+		compsky::asciify::asciify(resulting_fp_as_output, dest_dir, file_id, '\0');
+		char* mimetype;
+		curl::dl_file(nullptr, link_url, resulting_fp_as_output, false, mimetype);
+	}
 }
 
 

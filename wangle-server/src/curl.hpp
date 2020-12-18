@@ -1,9 +1,13 @@
 #pragma once
 
+#ifdef USE_LIBCURL
+
 #include "mimetype.hpp"
 #include "read_request.hpp" // for SKIP_TO_HEADER
 #include <curl/curl.h>
 #include <cstring> // for memccpy
+#include <string_view>
+#include <compsky/asciify/asciify.hpp>
 
 
 template<size_t sz>
@@ -78,6 +82,12 @@ class Curl {
 		return this->perform();
 	}
 	
+	bool perform(const std::string_view v){
+		char url[200];
+		compsky::asciify::asciify(url, v, '\0');
+		this->perform(url);
+	}
+	
 	bool copy_mimetype(char* buf){
 		char* _mimetype = nullptr;
 		const auto curl_rc2 = curl_easy_getinfo(this->obj, CURLINFO_CONTENT_TYPE, &_mimetype);
@@ -109,3 +119,5 @@ class Curl {
 		return false;
 	}
 };
+
+#endif // USE_LIBCURL
