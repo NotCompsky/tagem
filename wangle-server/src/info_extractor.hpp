@@ -48,6 +48,12 @@ std::vector<DatabaseInfo> db_infos;
 namespace info_extractor {
 
 
+namespace _f {
+	using namespace compsky::asciify::flag;
+	constexpr Escape esc;
+}
+
+
 enum DomainID {
 	NoDomain,
 	
@@ -158,8 +164,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	sprexer::Doc doc(*parser, html_buf, html_sz);
 	html_parser_pool.free(parser);
 	
-	std::string_view title = null_str_view;
-	std::string_view datetime = null_str_view;
+	std::string_view title = "";
+	std::string_view datetime = "";
 	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S.%fZ";
 		/* 
 		 * This default value is of the ISO datetime format
@@ -216,10 +222,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		}
 	}
 	
-	set_to_string_literal_null_if_null(title);
-	set_to_string_literal_null_if_null(datetime);
 	set_to_string_literal_null_if_null(timestamp);
-	set_to_string_literal_null_if_null(author);
 	set_to_string_literal_zero_if_null(likes);
 	set_to_string_literal_zero_if_null(views);
 	set_to_string_literal_zero_if_null(duration);
@@ -228,10 +231,10 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		html_buf + html_sz,
 		"UPDATE file f "
 		"SET "
-			"f.title=IFNULL(file.title,", title, "),"
-			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(", datetime, ",\"", datetime_fmt, "\")))),"
-			"f.n_likes=GREATEST(IFNULL(file.n_likes,0),", likes, "),"
-			"f.n_views=GREATEST(IFNULL(file.n_views,0),", views, "),"
+			"f.title=IF(file.title IS NULL OR file.title=\"\",\"", _f::esc, '"', title, "\", file.title),"
+			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
+			"f.likes=GREATEST(IFNULL(file.likes,0),", likes, "),"
+			"f.views=GREATEST(IFNULL(file.views,0),", views, "),"
 			"f.duration=GREATEST(IFNULL(file.duration,0),", duration, ")"
 		"WHERE f.id=", file_id
 	);
