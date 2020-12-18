@@ -31,5 +31,5 @@ www.thecourier.co.uk/>
 	return TheCourier
 www.wbur.org/>
 	return WBUR
-apnews.com/>
+apnews.com/article/>
 	return APNews

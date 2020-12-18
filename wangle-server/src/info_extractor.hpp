@@ -186,6 +186,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view datetime = "";
 	std::string_view description = "";
 	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S.%fZ";
+	constexpr char* datetime_fmt_common_alt = "%Y-%m-%dT%H:%i:%SZ";
 		/* 
 		 * This default value is of the ISO datetime format
 		 * e.g. 2020-12-14T14:04:50.000Z
@@ -283,10 +284,11 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			break;
 		}
 		case APNews: {
-			char _title[] = "*@div.CardHeadline>@h1";
+			char _title[] = "*@div.CardHeadline>*@h1";
 			title = find_element_attr(doc, _title, ".");
 			char _datetime[] = "*@div.CardHeadline>*@span.Timestamp";
 			datetime = find_element_attr(doc, _datetime, "data-source");
+			datetime_fmt = datetime_fmt_common_alt;
 			break;
 		}
 	}
@@ -302,7 +304,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		"SET "
 			"f.title=IF(f.title IS NULL OR f.title=\"\",\"", _f::esc, '"', title, "\", f.title),"
 			"f.description=IF(f.description IS NULL OR f.description=\"\",\"", _f::esc, '"', description, "\", f.description),"
-			"f.t_origin=IF(f.t_origin,f.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
+			"f.t_origin=IF(f.t_origin,f.t_origin,IFNULL(UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")),", timestamp, ")),"
 			"f.likes=GREATEST(IFNULL(f.likes,0),", likes, "),"
 			"f.views=GREATEST(IFNULL(f.views,0),", views, "),"
 			"f.duration=GREATEST(IFNULL(f.duration,0),", duration, ")"
