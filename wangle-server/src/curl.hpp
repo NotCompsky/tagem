@@ -70,7 +70,7 @@ class Curl {
 	}
 	
 	bool perform() const {
-		return (curl_easy_perform(this->obj) == CURLE_OK);
+		return (curl_easy_perform(this->obj) != CURLE_OK);
 	}
 	
 	bool perform(const char* const url){
