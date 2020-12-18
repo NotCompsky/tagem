@@ -5,3 +5,5 @@ www.theguardian.co>
 	return Guardian
 www.telegraph.co>
 	return Telegraph
+twitter.com/>
+	return Twitter

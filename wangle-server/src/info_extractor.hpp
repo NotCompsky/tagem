@@ -122,6 +122,11 @@ void set_to_string_literal_null_if_null(std::string_view& v){
 		v = "NULL";
 }
 
+void set_to_string_literal_zero_if_null(std::string_view& v){
+	if (v == null_str_view)
+		v = "0";
+}
+
 std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selector_path,  const char* const attr){
 	sprexer::Element element(doc.get_element_from_class_selector_path(selector_path));
 	if (element.is_null())
@@ -151,12 +156,13 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 		 */
 	std::string_view timestamp = null_str_view;
 	std::string_view author = null_str_view;
-	
-	printf(">>>>>\n%.*s\n<<<<<", (int)html_sz, html_buf); fflush(stdout);
+	std::string_view likes = null_str_view;
+	std::string_view views = null_str_view;
+	std::string_view duration = null_str_view;
+	std::string_view video_url = null_str_view;
 	
 	switch(domain_id){
 		case BBCNews: {
-			printf("BBCNews\n"); fflush(stdout);
 			char _title[] = "*@h1#main-heading";
 			title = find_element_attr(doc, _title, ".");
 			char _dt[] = "*@h1#main-heading>^*@time";
@@ -164,12 +170,31 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 			break;
 		}
 		case Guardian: {
-			printf("Guardian\n"); fflush(stdout);
 			char _title[] = "*@h1";
 			title = find_element_attr(doc, _title, ".");
 			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"webPublicationDate\":")(html_buf, ',');
 			author = STRING_VIEW_FROM_UP_TO(10, ",\"byline\":")(html_buf, '"');
 			break;
+		}
+		case Twitter: {
+			char _likes[200] = "*@a:href=";
+			url += 18 + ((url[4] == 's') ? 1 : 0); // skip "httpS://twitter.com"
+			auto i = 0;
+			while(true){
+				_likes[i] = url[i];
+				if (unlikely(url[i] == 0))
+					break;
+				++i;
+			}
+			memcpy(_likes + i,  "/likes>>",  8);
+			likes = find_element_attr(doc, _likes, ".");
+		}
+		case Streamable: {
+			char _views[] = "*@script:data-id=player-instream";
+			views = find_element_attr(doc, _views, "data-videoplays");
+			duration = find_element_attr(doc, _views, "data-duration");
+			char _video_url[] = "*@meta:property=og:video";
+			video_url = find_element_attr(doc, _video_url, "content");
 		}
 	}
 	
@@ -177,6 +202,13 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 	set_to_string_literal_null_if_null(datetime);
 	set_to_string_literal_null_if_null(timestamp);
 	set_to_string_literal_null_if_null(author);
+	set_to_string_literal_zero_if_null(likes);
+	set_to_string_literal_zero_if_null(views);
+	set_to_string_literal_zero_if_null(duration);
+	
+	if ((dest_dir != nullptr) and (video_url != null_str_view)){
+		
+	}
 	
 	db_infos[0].exec(
 		html_buf + html_sz,
@@ -184,6 +216,9 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* const b
 		"SET "
 			"f.title=IFNULL(file.title,", title, "),"
 			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(", datetime, ',', datetime_fmt, ")))),"
+			"f.n_likes=GREATEST(IFNULL(file.n_likes,0),", likes, "),"
+			"f.n_views=GREATEST(IFNULL(file.n_views,0),", views, "),"
+			"f.duration=GREATEST(IFNULL(file.duration,0),", duration, ")"
 		"WHERE f.id=", file_id
 	);
 }
