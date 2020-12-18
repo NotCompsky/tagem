@@ -387,12 +387,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
   private:
+	template<size_t i = 0>
 	void mysql_query_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
-		db_info.query_buffer(this->res, _buf, _buf_sz);
-	}
-	
-	void mysql_query_buf_db_by_id2(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
-		db_info.query_buffer(this->res2, _buf, _buf_sz);
+		db_info.query_buffer(this->res[i], _buf, _buf_sz);
 	}
 	
 	void mysql_exec_buf_db_by_id(DatabaseInfo& db_info,  const char* const _buf,  const size_t _buf_sz){
@@ -411,16 +408,19 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->mysql_exec_buf_db_by_id(db_infos.at(0), _buf, std::char_traits<char>::length(_buf));
 	}
 	
+	template<size_t i = 0>
 	void mysql_query_buf(const char* const _buf,  const size_t _buf_sz){
-		this->mysql_query_buf_db_by_id(db_infos.at(0), _buf, _buf_sz);
+		this->mysql_query_buf_db_by_id<i>(db_infos.at(0), _buf, _buf_sz);
 	}
 	
+	template<size_t i = 0>
 	void mysql_query_buf(const char* const _buf){
-		this->mysql_query_buf_db_by_id(db_infos.at(0), _buf, std::char_traits<char>::length(_buf));
+		this->mysql_query_buf_db_by_id<i>(db_infos.at(0), _buf, std::char_traits<char>::length(_buf));
 	}
 	
+	template<size_t i = 0>
 	void mysql_query_using_buf(){
-		this->mysql_query_buf(this->buf, this->buf_indx());
+		this->mysql_query_buf<i>(this->buf, this->buf_indx());
 	}
 	
 	void mysql_exec_using_buf_db_by_id(DatabaseInfo& db_info){
@@ -431,19 +431,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->mysql_exec_using_buf_db_by_id(db_infos.at(0));
 	}
 	
-	template<typename... Args>
+	template<size_t i = 0,  typename... Args>
 	void mysql_query_db_by_id(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
-		this->itr = itr_init;
-	}
-	
-	template<typename... Args>
-	void mysql_query_db_by_id2(DatabaseInfo& db_info,  Args... args){
-		char* const itr_init = this->itr;
-		this->asciify(args...);
-		this->mysql_query_buf_db_by_id2(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_query_buf_db_by_id<i>(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
@@ -455,19 +447,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->itr = itr_init;
 	}
 	
-	template<typename... Args>
+	template<size_t i = 0,  typename... Args>
 	void mysql_query(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
-		this->itr = itr_init;
-	}
-	
-	template<typename... Args>
-	void mysql_query2(Args... args){
-		char* const itr_init = this->itr;
-		this->asciify(args...);
-		this->mysql_query_buf_db_by_id2(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_query_buf_db_by_id<i>(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
 		this->itr = itr_init;
 	}
 	
@@ -503,7 +487,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (unlikely(selected_field == sql_factory::selected_field::INVALID))
 			return compsky::server::_r::post_not_necessarily_malicious_but_invalid;
 		
-		this->mysql_query_buf(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
+		this->mysql_query_buf<0>(this->buf, strlen(this->buf)); // strlen used because this->itr is not set to the end
 		this->reset_buf_index();
 		
 		if (selected_field == sql_factory::selected_field::URL_AND_TITLE__MARKDOWN){
@@ -523,7 +507,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (selected_field == sql_factory::selected_field::DELETE_LOCAL_FILES){
 			const char* path;
 			std::vector<uint64_t> file_ids;
-			file_ids.reserve(compsky::mysql::n_results<size_t>(this->res));
+			file_ids.reserve(compsky::mysql::n_results<size_t>(this->res[0]));
 			uint64_t file_id;
 			while(this->mysql_assign_next_row(&file_id, &path)){
 				if (not os::del_file(path))
@@ -617,14 +601,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		// TODO: Add user permissions filter
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT name "
 			"FROM file "
 			"WHERE dir=", id
 		);
 		
 		this->begin_json_response();
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_and_json_escape // name
@@ -641,13 +625,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->begin_json_response();
 		this->asciify('[');
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT d.name "
 			"FROM dir d "
 			"WHERE d.id=", id, " "
 			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 		);
-		if (not this->init_json_rows(
+		if (not this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_and_json_escape // name
@@ -656,7 +640,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		// List of all parent directories
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT d.id, d.name "
 			"FROM dir d "
 			"JOIN dir2parent_tree dt ON dt.parent=d.id "
@@ -664,7 +648,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY depth DESC"
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id_str
@@ -673,14 +657,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		// List of all IMMEDIATE child directories
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT d.id, d.name "
 			"FROM dir d "
 			"WHERE d.parent=", id, " "
 			  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			"ORDER BY name ASC"
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id_str
@@ -688,13 +672,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		this->asciify(',');
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT tag "
 			"FROM dir2tag "
 			"WHERE dir=", id
 			// No tags are blacklisted, otherwise the directory would have been rejected above
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape // tag id
@@ -708,7 +692,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename... Args>
 	std::string_view ytdl_eras(const UserIDIntType user_id,  const uint64_t dest_dir,  const char* const eras,  const size_t eras_len,  Args... file_name_args){
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"CONCAT(d.full_path, f.name),"
 				"e.start,"
@@ -729,12 +713,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* era_end;
 		const char* dest;
 		const char* tag_name;
-		this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name);
+		this->mysql_assign_next_row<0>(&url, &era_start, &era_end, &dest, &tag_name);
 		if (unlikely(url == nullptr))
 			return compsky::server::_r::not_found;
 		
 		std::vector<const char*> args;
-		args.reserve(1 + 1 + 3 * compsky::mysql::n_results<size_t>(this->res) + 1);
+		args.reserve(1 + 1 + 3 * compsky::mysql::n_results<size_t>(this->res[0]) + 1);
 		
 		args[0] = EXTRACT_YTDL_ERA_SCRIPT_PATH;
 		args[1] = dest;
@@ -742,10 +726,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		std::string tag_ids = "0";
 		do {
 			this->add_t_to_db(user_auth::SpecialUserID::admin, TAG__PART_OF_FILE__ID, strlen(TAG__PART_OF_FILE__ID), tag_name, strlen(tag_name));
-			this->mysql_query2("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
+			this->mysql_query<1>("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
 			const char* tag_id_str;
 			tag_ids += ",";
-			while(this->mysql_assign_next_row2(&tag_id_str))
+			while(this->mysql_assign_next_row<1>(&tag_id_str))
 				tag_ids += tag_id_str;
 			
 #ifdef PYTHON__NOTIMPLEMENTEDYET
@@ -754,7 +738,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			args[++i] = era_end;
 			args[++i] = url;
 #endif
-		} while(this->mysql_assign_next_row(&url, &era_start, &era_end, &dest, &tag_name));
+		} while(this->mysql_assign_next_row<0>(&url, &era_start, &era_end, &dest, &tag_name));
 		args.back() = nullptr;
 		
 		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
@@ -934,7 +918,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify('[');
 		
 		--this->itr; // Removes the previous open bracket. This is because the following SQL query has only ONE response - an array would be appropriate if there were more
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.dir")
 				"f.mimetype,"
@@ -950,7 +934,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"GROUP BY f.id"
 		);
-		if(not this->init_json_rows(
+		if(not this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // md5_hash,
@@ -979,7 +963,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"e.id,"
 				"e.start,"
@@ -994,7 +978,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"GROUP BY e.id "
 			"HAVING COUNT(*)" // Ensure we don't get an empty result - (NULL,NULL,NULL) - when it really means we have no results
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // era ID
@@ -1005,14 +989,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT f.dir, f.name, f.mimetype "
 			"FROM file_backup f "
 			"JOIN dir d ON d.id=f.dir "
 			"WHERE f.file=", id, " "
 			  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // backup_dir_id,
@@ -1022,7 +1006,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT d.id, d.full_path, d.device "
 			"FROM dir d "
 			"JOIN("
@@ -1036,7 +1020,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			")A ON A.dir=d.id "
 			"WHERE " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // dir_id,
@@ -1046,7 +1030,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"DISTINCT t.id,"
 				"t.name "
@@ -1067,7 +1051,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_HIDDEN_TAG("t.id", user_id)
 			  "AND " NOT_DISALLOWED_TAG("b.id", user_id)
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr, compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // tag_id,
 			compsky::server::_r::flag::quote_and_json_escape // tag_name
@@ -1075,7 +1059,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"b.id,"
 				"b.frame_n,"
@@ -1090,7 +1074,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_DISALLOWED_TAG("b2t.tag", user_id)
 			"GROUP BY b.id"
 		);
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr, compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // box ID
 			compsky::server::_r::flag::no_quote,        // frame number
@@ -1110,7 +1094,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view tags_given_file(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,id)
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"tag "
 			"FROM file2tag "
@@ -1118,16 +1102,15 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"LIMIT 1000"
 		);
 		
-		this->write_json_list_response_into_buf(compsky::server::_r::flag::quote_no_escape);
+		this->write_json_list_response_into_buf<0>(compsky::server::_r::flag::quote_no_escape);
 		
 		return this->get_buf_as_string_view();
 	}
 	
-	template<typename ArrOrDict>
+	template<size_t i = 0,  typename ArrOrDict>
 	void asciify_tags_arr_or_dict(char*& itr,  const ArrOrDict f_arr_or_dict){
-		std::swap(this->res, this->res2); // Temporary workaround. TODO: use int template parameter to decide which set of results to use.
 		compsky::asciify::asciify(itr, compsky::server::_r::opener_symbol(f_arr_or_dict));
-		this->asciify_json_response_rows(
+		this->asciify_json_response_rows<i>(
 			itr,
 			f_arr_or_dict,
 			compsky::server::_r::flag::quote_no_escape, // id,
@@ -1136,17 +1119,16 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::no_quote // count
 		);
 		compsky::asciify::asciify(itr, compsky::server::_r::closer_symbol(f_arr_or_dict));
-		std::swap(this->res, this->res2);
 	}
 	
-	template<typename ArrOrDict>
+	template<size_t i = 0,  typename ArrOrDict>
 	void asciify_tags_arr_or_dict(const ArrOrDict f_arr_or_dict){
-		return this->asciify_tags_arr_or_dict(this->itr, f_arr_or_dict);
+		return this->asciify_tags_arr_or_dict<i>(this->itr, f_arr_or_dict);
 	}
 	
 	void asciify_file_info(char*& itr){
 		compsky::asciify::asciify(itr, "[\"0\",");
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // md5_hex thumbnail
@@ -1169,7 +1151,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::no_quote // era end
 		);
 		compsky::asciify::asciify(itr, ',');
-		this->asciify_tags_arr_or_dict(itr, compsky::server::_r::flag::dict);
+		this->asciify_tags_arr_or_dict<1>(itr, compsky::server::_r::flag::dict);
 		compsky::asciify::asciify(itr, "]");
 		*itr = 0;
 	}
@@ -1213,9 +1195,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->mysql_exec_buf();
 		
 		// Now return a map of name to ID
-		this->mysql_query("SELECT name, id FROM file WHERE dir=", dir_id, " AND name IN(", body, ")");
+		this->mysql_query<0>("SELECT name, id FROM file WHERE dir=", dir_id, " AND name IN(", body, ")");
 		this->reset_buf_index();
-		this->init_json(
+		this->init_json<0>(
 			&this->itr,
 			compsky::server::_r::flag::dict,
 			nullptr,
@@ -1270,11 +1252,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		: thees(_thees)
 		, value(nullptr)
 		{
-			MYSQL_RES* const _res_orig = thees->res;
-			thees->mysql_query_db_by_id(db_info, args...);
-			thees->mysql_assign_next_row(&this->value);
-			this->res = thees->res;
-			thees->res = _res_orig;
+			MYSQL_RES* const _res_orig = thees->res[0];
+			thees->mysql_query_db_by_id<0>(db_info, args...);
+			thees->mysql_assign_next_row<0>(&this->value);
+			this->res = thees->res[0];
+			thees->res[0] = _res_orig;
 		}
 		
 		~StringFromSQLQuery_DB(){
@@ -1413,7 +1395,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* const new_path__file_name = s;
 		
 		uint64_t new_dir_id;
-		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false, false);
+		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id<0>(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false, false);
 		if (unlikely(rc != FunctionSuccessness::ok))
 			return (rc == FunctionSuccessness::malicious_request) ? compsky::server::_r::not_found : compsky::server::_r::server_error;
 		
@@ -1556,12 +1538,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view external_post_likes(const char* s){
 		GET_DB_INFO
 		++s;
-		const uint64_t post_id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,post_id)
 		
 		if (not db_info.is_true(DatabaseInfo::has_post2like_tbl))
 			return compsky::server::_r::EMPTY_JSON_LIST;
 		
-		this->mysql_query_db_by_id(
+		this->mysql_query_db_by_id<0>(
 			db_info,
 			"SELECT "
 				"u.id,"
@@ -1570,7 +1552,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN post2like p2l ON p2l.user=u.id "
 			"WHERE p2l.post=", post_id
 		);
-		this->write_json_list_response_into_buf(
+		this->write_json_list_response_into_buf<0>(
 			compsky::server::_r::flag::quote_no_escape, // user_id
 			compsky::server::_r::flag::quote_no_escape // username
 		);
@@ -1694,6 +1676,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename... Args>
 	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
+		// WARNING: files_given_X uses both res[0] and res[1]
 		JoinArgsWrapper<const char*, Args..., const char*>
 		::template WhereArgsWrapper<const char*, Args..., const char*>
 		::template OrderArgsWrapper<const char*, Args..., const char*>
@@ -1741,16 +1724,17 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify_file_info(itr);
 	}
 	
+	template<size_t i = 0>
 	std::string_view get__tag_info__given_id(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		GET_USER_ID
-		this->mysql_query(
+		this->mysql_query<i>(
 			TAGS_INFOS__WITH_T_AND_DESCR("", tag_id, "")
 		);
 		this->reset_buf_index();
 		this->begin_json_response(this->itr);
 		this->asciify('[');
-		this->asciify_json_response_rows(
+		this->asciify_json_response_rows<i>(
 			this->itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id,
@@ -1765,23 +1749,23 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->get_buf_as_string_view();
 	}
 	
-	template<bool is_ordered_by_field,  typename... Args>
+	template<size_t i,  bool is_ordered_by_field,  typename... Args>
 	void tags_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2(
+		this->mysql_query<i>(
 			TAGS_INFOS("", ids_args..., "")
 			"ORDER BY ", is_ordered_by_field ? "FIELD(t.id," : "t.name -- ", ids_args..., ")\n"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
 		);
-		this->asciify_tags_arr_or_dict(itr, compsky::server::_r::flag::arr);
+		this->asciify_tags_arr_or_dict<i>(itr, compsky::server::_r::flag::arr);
 	}
 	
 	template<bool is_ordered_by_field,  typename... Args>
 	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		this->mysql_query2(
+		this->mysql_query<1>(
 			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
 		);
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"d.id,"
 				"d.name,"
@@ -1802,7 +1786,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		compsky::asciify::asciify(itr, '[');
 		
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			itr,
 			compsky::server::_r::flag::arr,
 			compsky::server::_r::flag::quote_no_escape, // id,
@@ -1813,7 +1797,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		compsky::asciify::asciify(itr, ',');
 		
-		this->asciify_tags_arr_or_dict(itr, compsky::server::_r::flag::dict);
+		this->asciify_tags_arr_or_dict<1>(itr, compsky::server::_r::flag::dict);
 		
 		compsky::asciify::asciify(itr, ']');
 	}
@@ -1833,7 +1817,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this->dirs_given_ids<is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
 				break;
 			case 't':
-				this->tags_given_ids<is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
+				this->tags_given_ids<0, is_ordered_by_field>(this->itr, user_id, 0, ids_args...);
 				break;
 			default:
 				abort();
@@ -1863,10 +1847,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->X_given_ids<false>('t', user_id, page_n, "SELECT id FROM tag2parent WHERE parent=", tag_id);
 	}
 	
-	template<typename... Args>
+	template<size_t i = 0,  typename... Args>
 	void qry_mysql_for_next_parent_dir(const UserIDIntType user_id,  const uint64_t child_dir_id,  Args... args){
 		// This function is to be used to traverse the dir table from the deepest ancestor to the immediate parent
-		this->mysql_query(
+		this->mysql_query<i>(
 			"SELECT d.id, LENGTH(d.name)"
 			"FROM dir d "
 			"WHERE LEFT(CAST(\"", _f::esc, '"', args..., "\" AS BINARY),LENGTH(name))=name "
@@ -1896,10 +1880,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					OrderArgs... order_args,
 					FileIDsArgs... file_ids_args
 				){
-					thees->mysql_query2(
+					thees->mysql_query<1>(
 						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
 					);
-					thees->mysql_query(
+					thees->mysql_query<0>(
 						"SELECT "
 							FILE_OVERVIEW_FIELDS("f.id"),
 							select_fields, " "
@@ -1958,10 +1942,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_FILE2_VAR_NAME(s)
 		const auto user_id = user->id;
 		
-		this->mysql_query2(
+		this->mysql_query<1>(
 			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", _f::strlen, file2_var_name, file2_var_name_len, ")")
 		);
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				FILE_OVERVIEW_FIELDS("f.id")
 				"0,"
@@ -1988,7 +1972,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view get_allowed_file2_vars_json(const char* s){
 		GET_USER
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT f2.id, name, f2.min, f2.max, f2.conversion "
 			"FROM file2 f2 "
 			"JOIN user2shown_file2 u2f2 ON u2f2.file2=f2.id "
@@ -2010,14 +1994,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view get_mimetype_json(const char* s){
-		this->mysql_query_buf("SELECT id, name FROM mimetype");
+		this->mysql_query_buf<0>("SELECT id, name FROM mimetype");
 		
 		std::unique_lock lock(compsky::server::_r::mimetype_json_mutex);
 		if (unlikely(regenerate_mimetype_json)){
 			// WARNING: Race condition since init_json uses global mysql objects
 			// TODO: Eliminate race with mutex
 			regenerate_mimetype_json = false;
-			this->init_json(
+			this->init_json<0>(
 				nullptr,
 				compsky::server::_r::flag::dict,
 				&compsky::server::_r::mimetype_json,
@@ -2063,7 +2047,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (unlikely(this->res == nullptr))
 			return compsky::server::_r::EMPTY_JSON_LIST;
 		this->reset_buf_index();
-		this->init_json(
+		this->init_json<0>(
 			&this->itr,
 			compsky::server::_r::flag::dict,
 			nullptr,
@@ -2086,13 +2070,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view get_device_json(const char* s){
 		GET_USER_ID
 		if (user_id != user_auth::SpecialUserID::guest){
-			this->mysql_query(
+			this->mysql_query<0>(
 				"SELECT D.id, D.name, D.protocol, D.embed_pre, D.embed_post "
 				"FROM device D "
 				"WHERE " NOT_DISALLOWED_DEVICE("D.id", user_id)
 			);
 			this->itr = this->buf;
-			this->init_json(
+			this->init_json<0>(
 				&this->itr,
 				compsky::server::_r::flag::dict,
 				nullptr,
@@ -2108,12 +2092,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		std::unique_lock lock(compsky::server::_r::devices_json_mutex);
 		if (unlikely(regenerate_device_json)){
 			regenerate_device_json = false;
-			this->mysql_query_buf(
+			this->mysql_query_buf<0>(
 				"SELECT D.id, D.name, D.protocol, D.embed_pre, D.embed_post "
 				"FROM device D "
 				"WHERE " NOT_DISALLOWED_DEVICE__COMPILE_TIME("D.id", GUEST_ID_STR)
 			);
-			this->init_json(
+			this->init_json<0>(
 				nullptr,
 				compsky::server::_r::flag::dict,
 				&compsky::server::_r::devices_json,
@@ -2131,12 +2115,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_unsafe_tasks")
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT id, name, description, content "
 			"FROM task"
 		);
 		this->itr = this->buf;
-		this->init_json(
+		this->init_json<0>(
 			&this->itr,
 			compsky::server::_r::flag::arr,
 			nullptr,
@@ -2183,7 +2167,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tasks")
 		SKIP_TO_BODY
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"UPDATE task "
 			"SET content=\"", _f::esc, '"', s, "\" "
 			"WHERE id=", task_id
@@ -2196,8 +2180,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		std::unique_lock lock(compsky::server::_r::protocol_json_mutex);
 		if (unlikely(regenerate_protocol_json)){
 			regenerate_protocol_json = false;
-			this->mysql_query_buf("SELECT id, name, 0 FROM protocol");
-			this->init_json(
+			this->mysql_query_buf<0>("SELECT id, name, 0 FROM protocol");
+			this->init_json<0>(
 				nullptr,
 				compsky::server::_r::flag::dict,
 				&compsky::server::_r::protocol_json,
@@ -2213,7 +2197,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_users")
 		
-		this->mysql_query_buf(
+		this->mysql_query_buf<0>(
 			"SELECT "
 				"u.id,"
 				"u.name,"
@@ -2248,7 +2232,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->begin_json_response();
 		this->asciify('[');
 		
-		this->init_json_rows(
+		this->init_json_rows<0>(
 			this->itr,
 			compsky::server::_r::flag::dict,
 			compsky::server::_r::flag::quote_no_escape, // id,
@@ -2258,7 +2242,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		this->asciify(',');
 		
-		this->mysql_query2(
+		this->mysql_query<1>(
 			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
 		);
 		this->asciify_tags_arr_or_dict(itr, compsky::server::_r::flag::dict);
@@ -2604,7 +2588,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this->itr[0] = 0;
 				++this->itr;
 			}
-			this->add_file_or_dir_to_db('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false, false);
+			this->add_file_or_dir_to_db<0>('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false, false);
 			// TODO: Use libmagic to guess mime type
 		}
 		
@@ -2640,7 +2624,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 			} else if (e->d_type == DT_REG){
 				// regular file
-				this->add_file_or_dir_to_db('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false, false);
+				this->add_file_or_dir_to_db<0>('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false, false);
 			}
 			
 			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
@@ -2649,21 +2633,22 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		os::close_dir(dir);
 	}
 	
-	template<typename... Args>
+	template<size_t i = 0,  typename... Args>
 	FunctionSuccessness add_file_or_dir_to_db(Args... args){
 		uint64_t dir_id;
-		return this->add_file_or_dir_to_db__w_parent_dir_id(dir_id, args...);
+		return this->add_file_or_dir_to_db__w_parent_dir_id<i>(dir_id, args...);
 	}
 	
+	template<size_t i = 0>
 	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
 		parent_dir_id = 0;
 		unsigned n_errors = 0;
 		while(true){
-			this->qry_mysql_for_next_parent_dir(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+			this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
 			size_t closest_parent_dir_length = 0;
-			while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
+			while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
 			if (unlikely(closest_parent_dir_length == 0)){
 				// No such directory was found. This is probably because the user does not have permission to view an ancestor directory.
 				return FunctionSuccessness::malicious_request;
@@ -2683,9 +2668,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				 *    watch?v=         3rd dir
 				 * This section accounts for the final dir, if it exists
 				 */
-				this->qry_mysql_for_next_parent_dir(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+				this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
 				size_t closest_parent_dir_length = 0;
-				while(this->mysql_assign_next_row(&parent_dir_id, &closest_parent_dir_length));
+				while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
 				offset += closest_parent_dir_length;
 				break;
 			}
@@ -3515,7 +3500,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
 		
-		this->mysql_query(
+		this->mysql_query<0>(
 			"SELECT "
 				"IFNULL(f.size,0),"
 				"f.mimetype,"
@@ -3537,7 +3522,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* url;
 		const char* backup_url;
 		unsigned i = 0;
-		while(this->mysql_assign_next_row(&file_size, &mimetype, &fid, &url, &backup_url)){
+		while(this->mysql_assign_next_row<0>(&file_size, &mimetype, &fid, &url, &backup_url)){
 			if ((mimetype == 0) and not os::is_local_file_or_dir(url) and python::is_valid_ytdl_url(url) and (unlikely(this->get_remote_video_metadata(user_id, fid, url)))){
 				this->mysql_exec(
 					"UPDATE file "
@@ -3558,7 +3543,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			if (++i & 64){
 				// Every 64 iterations, check for 'kill signal'
 				if (unlikely(atomic_signal::stop_updating_video_metadatas.load(std::memory_order_acquire))){
-					mysql_free_result(this->res);
+					mysql_free_result(this->res[0]);
 				}
 			}
 		}
@@ -3583,7 +3568,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		char* const thumbnail_filename = this->itr;
 		for (const bool using_backup : {false, true}){
 		for (const uint64_t device : connected_local_devices){
-			this->mysql_query(
+			this->mysql_query<0>(
 				"SELECT ",
 					(using_backup)?"f2.file":"f.id", ","
 					"d.full_path,",
@@ -3601,7 +3586,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const char* dir;
 			const char* file;
 			bool is_video;
-			while(this->mysql_assign_next_row(&fid, &dir, &file, &is_video)){
+			while(this->mysql_assign_next_row<0>(&fid, &dir, &file, &is_video)){
 				std::array<uint8_t, 16> hash;
 				this->md5_hash_local_file(hash.data(), dir, file);
 				char* thumbnail_filename_itr = thumbnail_filename;
@@ -3876,7 +3861,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* tbl_suffixes[] = {"", "_backup"};
 		for (auto i = 0;  i < 2;  ++i){
 			const char* const tbl_suffix = tbl_suffixes[i];
-			this->mysql_query(
+			this->mysql_query<0>(
 				"SELECT f.", (i==0)?"id":"file", ", CONCAT(d.full_path, f.name)"
 				"FROM file", tbl_suffix, " f "
 				"JOIN dir d ON d.id=f.dir "
@@ -3885,7 +3870,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 			uint64_t f_id;
 			const char* path;
-			while(this->mysql_assign_next_row(&f_id, &path)){
+			while(this->mysql_assign_next_row<0>(&f_id, &path)){
 				const char* const mimetype_guess = guess_mimetype(path);
 				if (unlikely(mimetype_guess == nullptr))
 					continue;
