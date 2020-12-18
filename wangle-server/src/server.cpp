@@ -156,6 +156,11 @@ magic_t magique;
 	if (unlikely(name == 0)) \
 		return compsky::server::_r::not_found;
 
+#define GET_NUMBER_NONZERO_NOTCONDITION(type,name,condition) \
+	GET_NUMBER(type,name) \
+	if (unlikely((name == 0)) or (condition)) \
+		return compsky::server::_r::not_found;
+
 #define GET_FLOAT(type,name) \
 	const type name = a2f<type>(&s); \
 	++s;
@@ -1174,12 +1179,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view post__record_files(const char* s){
-		uint64_t dir_id = a2n<uint64_t>(&s);
-		if ((*s != ' ') or (dir_id == 0))
-			return compsky::server::_r::not_found;
-		
+		GET_NUMBER_NONZERO_NOTCONDITION(uint64_t,dir_id,s[-1]!=' ')
 		CHECK_FOR_EXPECT_100_CONTINUE_HEADER
-		
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("add_files")
 		SKIP_TO_BODY
@@ -1291,15 +1292,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	};
 	
 	std::string_view post__create_file(const char* s){
-		uint64_t file_id = a2n<uint64_t>(&s);
-		if(*s != '/')
-			return compsky::server::_r::not_found;
+		uint64_t file_id = a2n<uint64_t>(&s); // NOTE: Can be zero
 		++s;
-		const uint64_t dir_id  = a2n<uint64_t>(&s);
-		if(*s != '/')
+		if(s[-1] != '/')
 			return compsky::server::_r::not_found;
-		++s;
-		
+		GET_NUMBER_NONZERO_NOTCONDITION(uint64_t,dir_id,s[-1]!='/')
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("create_files")
@@ -1445,12 +1442,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view external_user_posts(const char* s,  const unsigned required_db_info_bool_indx,  const char* const tbl_name,  const char* const col_name){
 		GET_DB_INFO
-		++s;
-		const uint64_t external_user_id = a2n<uint64_t>(s);
-		
-		if (not db_info.is_true(required_db_info_bool_indx))
+		if (unlikely(not db_info.is_true(required_db_info_bool_indx)))
 			return compsky::server::_r::not_found;
-		
+		++s;
+		GET_NUMBER_NONZERO(uint64_t,external_user_id)
 		GET_USER_ID
 		
 		const StringFromSQLQuery_DB post_ids(
@@ -1498,7 +1493,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		GET_DB_INFO
 		++s;
-		const uint64_t user_id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,user_id)
 		
 		SQLQuery qry1(
 			this,
@@ -1543,7 +1538,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view external_cmnt_rm(const char* s){
 		GET_DB_INFO
 		++s;
-		const uint64_t cmnt_id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,cmnt_id)
 		
 		if (not db_info.is_true(DatabaseInfo::has_cmnt_tbl))
 			return compsky::server::_r::not_found;
@@ -1590,7 +1585,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		GET_DB_INFO
 		++s;
-		const uint64_t post_id = a2n<uint64_t>(s);
+		GET_NUMBER_NONZERO(uint64_t,post_id)
 		
 		char* const _buf_plus_offset = this->buf + 300;
 		char* _itr_plus_offset = _buf_plus_offset;
@@ -1669,8 +1664,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view files_given_tag(const char* s){
 		GET_PAGE_N('/')
-		const uint64_t id = a2n<uint64_t>(s);
-		
+		GET_NUMBER_NONZERO(uint64_t,id)
 		GET_USER_ID
 		
 		return
@@ -1692,8 +1686,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view dirs_given_tag(const char* s){
 		GET_PAGE_N('/')
-		const uint64_t tag_id = a2n<uint64_t>(s);
-		
+		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		GET_USER_ID
 		
 		return this->X_given_ids<false>('d', user_id, page_n, "SELECT dir FROM dir2tag WHERE tag=", tag_id);
@@ -1940,8 +1933,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view files_given_dir(const char* s){
 		GET_PAGE_N('/')
-		const uint64_t id = a2n<uint64_t>(s);
-		
+		GET_NUMBER_NONZERO(uint64_t,id)
 		GET_USER_ID
 		
 		return
@@ -2157,8 +2149,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view exec_task(const char* s){
-		const unsigned task_id = a2n<unsigned>(s);
-		
+		GET_NUMBER_NONZERO(unsigned,task_id)
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_unsafe_tasks")
 		
@@ -2187,8 +2178,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view edit_task(const char* s){
-		const unsigned task_id = a2n<unsigned>(s);
-		
+		GET_NUMBER_NONZERO(unsigned,task_id)
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tasks")
 		SKIP_TO_BODY
