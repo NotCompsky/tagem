@@ -149,10 +149,22 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	sprexer::Parser* parser = html_parser_pool.get();
 	char* html_buf = buf;
 	switch(domain_id){
-		char new_url[200];
 		case Reddit:
-			compsky::asciify::asciify(new_url, url, ".json", '\0');
-			url = new_url;
+			/*char new_url[200];
+			// Strip HUMAN_TITLE/ out of https://www.reddit.com/r/SUBREDDIT/comments/POST_ID/HUMAN_TITLE/
+			// equivalent to following the 7th slash with a null byte
+			char* _itr = url;
+			char* _itr2 = new_url;
+			for(auto i = 0;  i < 7;  ){
+				*_itr2 = *_itr;
+				if (*_itr == '/')
+					++i;
+				++_itr;
+			}
+			*_itr = 0;*/
+			char* _itr = buf;
+			compsky::asciify::asciify(_itr, url, ".json", '\0');
+			url = buf;
 			break;
 	}
 	size_t html_sz = curl::dl_buf(url, html_buf);
