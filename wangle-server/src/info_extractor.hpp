@@ -66,6 +66,7 @@ enum DomainID {
 	DailyMail,
 	TheTimes,
 	SkyNews,
+	TheCourier,
 	
 	CNN,
 	TheHill,
@@ -86,6 +87,7 @@ enum DomainID {
 	Politico,
 	TheVerge,
 	TheAmericanProspect,
+	WBUR,
 	
 	SCMP,
 	DieWelt,
@@ -252,6 +254,40 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _descr[] = "*@div#title>@p.subtitle>@span";
 			description = find_element_attr(doc, _descr, ".");
+			break;
+		}
+		case NYT: {
+			char _title[] = "*@meta:property=og:title";
+			title = find_element_attr(doc, _title, "content");
+			char _descr[] = "*@meta:property=og:description";
+			description = find_element_attr(doc, _descr, "content");
+			char _author[] = "*@span.last-byline";
+			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@time:datetime";
+			datetime = find_element_attr(doc, _datetime, "datetime");
+			break;
+		}
+		case TheCourier: {
+			char _title[] = "*@h1.title";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@meta:property=og:description";
+			description = find_element_attr(doc, _descr, "content");
+			char _author[] = "*@span.byline__name";
+			author = find_element_attr(doc, _author, ".");
+			datetime = STRING_VIEW_FROM_UP_TO(18,  ",\"datePublished\":\"")(html_buf, '"');
+			break;
+		}
+		case WBUR: {
+			char _title[] = "*@h1.article-hdr";
+			title = find_element_attr(doc, _title, ".");
+			break;
+		}
+		case APNews: {
+			char _title[] = "*@div.CardHeadline>@h1";
+			title = find_element_attr(doc, _title, ".");
+			char _datetime[] = "*@div.CardHeadline>*@span.Timestamp";
+			datetime = find_element_attr(doc, _datetime, "data-source");
+			break;
 		}
 	}
 	

@@ -24,3 +24,12 @@ i.>
 
 prospect.org/>
 	return TheAmericanProspect
+www.nytimes.com/>
+	return NYT
+
+www.thecourier.co.uk/>
+	return TheCourier
+www.wbur.org/>
+	return WBUR
+apnews.com/>
+	return APNews
