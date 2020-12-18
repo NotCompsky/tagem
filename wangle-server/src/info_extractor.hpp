@@ -240,6 +240,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = STRING_VIEW_FROM_UP_TO(13 , ", \"author\": \"")(html_buf, '"'); // NOTE: Multiple matches, but the first is selected
 			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
 			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
+			timestamp = STRING_VIEW_FROM_UP_TO(17, ", \"created_utc\": ")(html_buf, '.');
 			break;
 		}
 		case TheAmericanProspect: {
@@ -254,7 +255,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		}
 	}
 	
-	set_to_string_literal_null_if_null(timestamp);
+	set_to_string_literal_zero_if_null(timestamp);
 	set_to_string_literal_zero_if_null(likes);
 	set_to_string_literal_zero_if_null(views);
 	set_to_string_literal_zero_if_null(duration);
