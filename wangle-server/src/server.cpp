@@ -304,11 +304,13 @@ size_t CACHE_DIR_STRLEN;
 const char* FILES_GIVEN_REMOTE_DIR = nullptr;
 const char* EXTRACT_YTDL_ERA_SCRIPT_PATH = nullptr;
 
-const char* TAG__PART_OF_FILE__ID;
+uint64_t TAG__PART_OF_FILE__ID;
 
 static bool regenerate_mimetype_json = true;
 static bool regenerate_device_json = true;
 static bool regenerate_protocol_json = true;
+
+uint64_t UPLOADER_TAG_ID;
 
 
 namespace rapidjson {
@@ -725,7 +727,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		size_t i = 1;
 		std::string tag_ids = "0";
 		do {
-			this->add_t_to_db(user_auth::SpecialUserID::admin, TAG__PART_OF_FILE__ID, strlen(TAG__PART_OF_FILE__ID), tag_name, strlen(tag_name));
+			this->add_t_to_db(user_auth::SpecialUserID::admin, TAG__PART_OF_FILE__ID, std::string_view(tag_name, strlen(tag_name)));
 			this->mysql_query<1>("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
 			const char* tag_id_str;
 			tag_ids += ",";
@@ -2527,24 +2529,25 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl, is_audio_only);
 	}
 	
-	void add_t_to_db(const UserIDIntType user_id,  const char* const parent_ids,  const size_t parent_ids_len,  const char* const tag_name,  const size_t tag_name_len){
+	template<typename Str1,  typename Str2>
+	void add_t_to_db(const UserIDIntType user_id,  const Str1 parent_ids,  const Str2 tag_name){
 		this->mysql_exec(
 			"INSERT INTO tag "
 			"(name,user)"
-			"SELECT \"", _f::esc, '"', _f::strlen,  tag_name_len,  tag_name, "\",", user_id, " "
+			"SELECT \"", _f::esc, '"', tag_name, "\",", user_id, " "
 			"FROM tag "
 			"WHERE NOT EXISTS"
-			"(SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len,  tag_name, "\")"
+			"(SELECT id FROM tag WHERE name=\"", _f::esc, '"', tag_name, "\")"
 			"LIMIT 1"
 		);
 		
-		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
+		ParentIDs<Str1>::
 		tag_parentisation(
 			this,
 			user_id,
 			false,
-			_f::strlen, parent_ids, parent_ids_len,
-			"SELECT id FROM tag WHERE name=\"", _f::esc, '"', _f::strlen, tag_name_len, tag_name, "\""
+			parent_ids,
+			"SELECT id FROM tag WHERE name=\"", _f::esc, '"', tag_name, "\""
 		);
 	}
 	
@@ -2946,7 +2949,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 						return compsky::server::_r::not_found;
 					break;
 				case 't':
-					this->add_t_to_db(user_id, tag_ids, tag_ids_len, url, url_len);
+					this->add_t_to_db(user_id, std::string_view(tag_ids, tag_ids_len), std::string_view(url, url_len));
 					break;
 			}
 			if (*s == 0)
@@ -3303,13 +3306,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		ParentIDs<compsky::asciify::flag::StrLen, const char*, size_t>::
+		ParentIDs<std::string_view>::
 		tag_parentisation(
 			this,
 			user_id,
 			true,
-			_f::strlen, parent_ids, parent_ids_len,
-			_f::strlen, child_ids,  child_ids_len
+			std::string_view(parent_ids, parent_ids_len),
+			std::string_view(child_ids,  child_ids_len)
 		);
 		
 		return compsky::server::_r::post_ok;
@@ -3653,6 +3656,29 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return compsky::server::_r::post_ok; // NOTE: this is likely to have timed out already on the client's side
 	}
 	
+	template<typename AuthorType,  typename FileIDType>
+	void add_new_uploader_tag_to_file(const UserIDIntType user_id,  const AuthorType uploader,  const FileIDType file_id){
+		char* _itr = this->itr;
+		
+		this->asciify("Uploader: ", uploader, '\0');
+		this->add_t_to_db(user_id, UPLOADER_TAG_ID, _itr);
+		
+		const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
+			"SELECT id "
+			"FROM tag "
+			"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
+			"LIMIT 1"
+		);
+		
+		this->itr = _itr;
+		
+		this->add_tags_to_files(
+			user_id,
+			tag_id,
+			"AND f.id=", file_id, " "
+		);
+	}
+	
 #ifdef PYTHON
 	template<typename FileIDType>
 	bool process_remote_video_metadata(const UserIDIntType user_id,  const FileIDType file_id,  const char* const json){
@@ -3680,30 +3706,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* const dt = get_str(d, "upload_date");
 		const char* const uploader = get_str(d, "uploader");
 		
-		if (uploader != nullptr){
-			this->mysql_exec(
-				"INSERT INTO tag"
-				"(name,user)"
-				"VALUES("
-					"\"Uploader: ", _f::esc, '"', uploader, "\",",
-					user_id,
-				")"
-				"ON DUPLICATE KEY UPDATE user=user"
-			);
-			
-			const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
-				"SELECT id "
-				"FROM tag "
-				"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
-				"LIMIT 1"
-			);
-			
-			this->add_tags_to_files(
-				user_id,
-				tag_id,
-				"AND f.id=", file_id, " "
-			);
-		}
+		if (uploader != nullptr)
+			this->add_new_uploader_tag_to_file(user_id, uploader, file_id);
 		
 		if ((thumbnail != nullptr) and (thumbnail[0] == 'h')){
 			this->mysql_exec(
@@ -3750,8 +3754,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<typename FileIDType>
 	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  const char* dest_dir,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 #ifdef ENABLE_SPREXER
-		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url))
+		std::string_view author{};
+		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url, author)){
+			if (not author.empty())
+				this->add_new_uploader_tag_to_file(user_id, author, file_id);
 			return false;
+		}
 #endif
 		
 		using namespace python;
@@ -4089,6 +4097,17 @@ int main(int argc,  const char* const* argv){
 	while(compsky::mysql::assign_next_row__no_free(res5, &row, &tbl_name)){
 		tables_referencing_file_id.push_back(tbl_name);
 	}
+	}
+	
+	{
+	MYSQL_RES* res5;
+	tagem_db_info.query_buffer(
+		res5,
+		"SELECT id "
+		"FROM tag "
+		"WHERE name=\"Uploader\""
+	);
+	while(compsky::mysql::assign_next_row__no_free(res5, &row, &UPLOADER_TAG_ID));
 	}
 	
 	compsky::server::Server<N_THREADS, handler_req_buf_sz, TagemResponseHandler>(port_n).run();

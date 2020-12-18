@@ -200,18 +200,15 @@ void clean(){}
 
 
 template<typename Str>
-bool dl_file(char* buf,  const Str url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
+bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
 	// nonzero success
 	// NOTE: Overwrites dst_pth if it is empty.
 	
-	printf("dl_file\n"); fflush(stdout);
-	
 	if (not overwrite_existing){
-		if (os::get_file_sz(dst_pth) != 0)
+		const size_t sz = os::get_file_sz(dst_pth);
+		if ((sz != 0) and (sz != -1))
 			return true;
 	}
-	
-	printf("didnt exist\n"); fflush(stdout);
 	
 	mimetype = nullptr;
 	

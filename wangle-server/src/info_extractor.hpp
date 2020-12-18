@@ -13,7 +13,7 @@
 	[](const char* str)->const char* { \
 		while(true){ \
 			if (likely(not IS_STR_EQL(str,length,name))) continue; \
-			return str; \
+			return str + 1; \
 		} \
 	}
 #define STRING_VIEW_FROM_UP_TO(length,name) \
@@ -141,7 +141,7 @@ std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selecto
 }
 
 template<typename FileIDType>
-bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulting_fp_as_output,  char* const buf,  const char* url){
+bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulting_fp_as_output,  char* const buf,  const char* url,  std::string_view& author){
 	const auto domain_id = get_domain_id(url);
 	if (domain_id == NoDomain)
 		return true;
@@ -173,7 +173,6 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		 * In UNIX format it would be "%Y-%m-%dT%H:%M:%S.%fZ";
 		 */
 	std::string_view timestamp = null_str_view;
-	std::string_view author = null_str_view;
 	std::string_view likes = null_str_view;
 	std::string_view views = null_str_view;
 	std::string_view duration = null_str_view;
@@ -206,6 +205,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			}
 			memcpy(_likes + i,  "/likes>>",  8);
 			likes = find_element_attr(doc, _likes, ".");
+			break;
 		}
 		case Streamable: {
 			char _views[] = "*@script:data-id=player-instream";
@@ -213,12 +213,14 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			duration = find_element_attr(doc, _views, "data-duration");
 			char _video_url[] = "*@meta:property=og:video";
 			link_url = find_element_attr(doc, _video_url, "content");
+			break;
 		}
 		case Reddit: {
 			title = STRING_VIEW_FROM_UP_TO(12, ", \"title\": \"")(html_buf, '"');
 			author = STRING_VIEW_FROM_UP_TO(13 , ", \"author\": \"")(html_buf, '"'); // NOTE: Multiple matches, but the first is selected
 			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
 			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
+			break;
 		}
 	}
 	
@@ -231,18 +233,19 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		html_buf + html_sz,
 		"UPDATE file f "
 		"SET "
-			"f.title=IF(file.title IS NULL OR file.title=\"\",\"", _f::esc, '"', title, "\", file.title),"
-			"f.t_origin=IFNULL(file.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
-			"f.likes=GREATEST(IFNULL(file.likes,0),", likes, "),"
-			"f.views=GREATEST(IFNULL(file.views,0),", views, "),"
-			"f.duration=GREATEST(IFNULL(file.duration,0),", duration, ")"
+			"f.title=IF(f.title IS NULL OR f.title=\"\",\"", _f::esc, '"', title, "\", f.title),"
+			"f.t_origin=IFNULL(f.t_origin,IFNULL(", timestamp, ",UNIX_TIMESTAMP(STR_TO_DATE(\"", datetime, "\",\"", datetime_fmt, "\")))),"
+			"f.likes=GREATEST(IFNULL(f.likes,0),", likes, "),"
+			"f.views=GREATEST(IFNULL(f.views,0),", views, "),"
+			"f.duration=GREATEST(IFNULL(f.duration,0),", duration, ")"
 		"WHERE f.id=", file_id
 	);
 	
 	if ((dest_dir != nullptr) and (link_url != null_str_view)){
 		// Download the linked file or web page
 		// NOTE: Overwrites html_buf
-		compsky::asciify::asciify(resulting_fp_as_output, dest_dir, file_id, '\0');
+		char* _itr = resulting_fp_as_output;
+		compsky::asciify::asciify(_itr, dest_dir, file_id, '\0');
 		char* mimetype;
 		curl::dl_file(nullptr, link_url, resulting_fp_as_output, false, mimetype);
 	}
