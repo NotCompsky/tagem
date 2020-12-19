@@ -93,6 +93,7 @@ enum DomainID {
 	GlobalNewsCA,
 	ReasonCom,
 	TheNation,
+	Pajiba,
 	
 	SCMP,
 	DieWelt,
@@ -344,6 +345,19 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _descr[] = "*@h2.subtitle";
 			description = find_element_attr(doc, _descr, ".");
 			char _author[] = "*@h2.author_name>@a";
+			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
+			CONVERT_TO_USUAL_DATETIME_FROM
+			author_title = "Journalist: ";
+			break;
+		}
+		case Pajiba: {
+			char _title[] = "*@h1";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@h2.subtitle";
+			description = find_element_attr(doc, _descr, ".");
+			char _author[] = "*@div#ad-desktop>@p>@a";
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
