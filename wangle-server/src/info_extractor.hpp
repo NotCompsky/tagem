@@ -181,6 +181,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	switch(domain_id){
 		case DirectFile:
 		case Reddit:
+		case InstagramPost:
+			// Avoid parsing the document
 			html_sz = 0;
 			break;
 	}
@@ -348,6 +350,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			likes = STRING_VIEW_FROM_UP_TO(36, ",\"edge_media_preview_like\":{\"count\":")(html_buf, ',');
 			author = STRING_VIEW_FROM_UP_TO(19, ",\"alternateName\":\"@")(html_buf, '"');
 			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"taken_at_timestamp\":")(html_buf, ',');
+			// link_url = STRING_VIEW_FROM_UP_TO(35,  "<meta property=\"og:image\" content=\"")(html_buf, '"');
+			// The first image
 			author_title = "insta @";
 			break;
 		}

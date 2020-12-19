@@ -3759,7 +3759,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  const char* dest_dir,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 #ifdef ENABLE_SPREXER
 		std::string_view author{};
-		const char* author_title;"
+		const char* author_title;
 		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url, author, author_title)){
 			if (not author.empty())
 				this->add_new_uploader_tag_to_file(user_id, author, author_title, file_id);
