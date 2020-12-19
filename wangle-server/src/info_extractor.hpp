@@ -88,6 +88,9 @@ enum DomainID {
 	TheVerge,
 	TheAmericanProspect,
 	WBUR,
+	GlobalNewsCA,
+	ReasonCom,
+	Digg,
 	
 	SCMP,
 	DieWelt,
@@ -289,6 +292,39 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _datetime[] = "*@div.CardHeadline>*@span.Timestamp";
 			datetime = find_element_attr(doc, _datetime, "data-source");
 			datetime_fmt = datetime_fmt_common_alt;
+			break;
+		}
+		case GlobalNewsCA: {
+			char _title[] = "*@h1.l-article__title";
+			title = find_element_attr(doc, _title, ".");
+			char _author[] = "*@a.c-byline__link";
+			author = find_element_attr(doc, _author, ".");
+			datetime = STRING_VIEW_FROM_UP_TO(17,  "\"datePublished\":\"")(html_buf, '"');
+			datetime_fmt = datetime_fmt_common_alt;
+			break;
+		}
+		case ReasonCom: {
+			char _title[] = "*@h1.entry-title>@a";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@h2.entry-subtitle";
+			description = find_element_attr(doc, _descr, ".");
+			char _author[] = "*@span.author>@a";
+			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
+			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			break;
+		}
+		case Digg: {
+			char _title[] = "*@h2.headline>@a";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@div.description";
+			description = find_element_attr(doc, _descr, ".");
+			char _author[] = "*@div.metadata>@a.author";
+			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@div.metadata>*@time:datetime";
+			datetime = find_element_attr(doc, _datetime, "datetime");
+			datetime_fmt =  "%Y-%m-%dT%H:%i:%SZ GMT";
 			break;
 		}
 	}

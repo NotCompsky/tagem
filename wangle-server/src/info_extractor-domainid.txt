@@ -33,3 +33,11 @@ www.wbur.org/>
 	return WBUR
 apnews.com/article/>
 	return APNews
+reason.com/>
+	return ReasonCom
+
+globalnews.ca/news/>
+	return GlobalNewsCA
+
+digg.com/>
+	return Digg
