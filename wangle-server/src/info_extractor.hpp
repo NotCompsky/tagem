@@ -91,7 +91,6 @@ enum DomainID {
 	GlobalNewsCA,
 	ReasonCom,
 	TheNation,
-	Digg,
 	
 	SCMP,
 	DieWelt,
@@ -105,6 +104,8 @@ enum DomainID {
 	Twitter,
 	Tumblr,
 	TikTok,
+	Digg,
+	InstagramPost,
 	
 	Streamable,
 	Gfycat,
@@ -338,6 +339,13 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
 			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			break;
+		}
+		case InstagramPost: {
+			title = STRING_VIEW_FROM_UP_TO(12, ",\"caption\":\"")(html_buf, '"');
+			likes = STRING_VIEW_FROM_UP_TO(36, ",\"edge_media_preview_like\":{\"count\":")(html_buf, ',');
+			author = STRING_VIEW_FROM_UP_TO(19, ",\"alternateName\":\"@")(html_buf, '"');
+			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"taken_at_timestamp\":")(html_buf, ',');
 			break;
 		}
 	}

@@ -43,3 +43,5 @@ globalnews.ca/news/>
 
 digg.com/>
 	return Digg
+www.instagram.com/p/>
+	return InstagramPost
