@@ -35,6 +35,8 @@ apnews.com/article/>
 	return APNews
 reason.com/>
 	return ReasonCom
+www.thenation.com/article/>
+	return TheNation
 
 globalnews.ca/news/>
 	return GlobalNewsCA

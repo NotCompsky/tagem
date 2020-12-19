@@ -90,6 +90,7 @@ enum DomainID {
 	WBUR,
 	GlobalNewsCA,
 	ReasonCom,
+	TheNation,
 	Digg,
 	
 	SCMP,
@@ -325,6 +326,18 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _datetime[] = "*@div.metadata>*@time:datetime";
 			datetime = find_element_attr(doc, _datetime, "datetime");
 			datetime_fmt =  "%Y-%m-%dT%H:%i:%SZ GMT";
+			break;
+		}
+		case TheNation: {
+			char _title[] = "*@h1.title";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@h2.subtitle";
+			description = find_element_attr(doc, _descr, ".");
+			char _author[] = "*@h2.author_name>@a";
+			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
+			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
 			break;
 		}
 	}
