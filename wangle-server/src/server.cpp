@@ -3661,16 +3661,16 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename AuthorType,  typename FileIDType>
-	void add_new_uploader_tag_to_file(const UserIDIntType user_id,  const AuthorType uploader,  const FileIDType file_id){
+	void add_new_uploader_tag_to_file(const UserIDIntType user_id,  const AuthorType author,  const char* const author_title,  const FileIDType file_id){
 		char* _itr = this->itr;
 		
-		this->asciify("Uploader: ", uploader, '\0');
+		this->asciify(author_title, author, '\0');
 		this->add_t_to_db(user_id, UPLOADER_TAG_ID, _itr);
 		
 		const uint64_t tag_id = this->get_last_row_from_qry<uint64_t>(
 			"SELECT id "
 			"FROM tag "
-			"WHERE name=\"Uploader: ", _f::esc, '"', uploader, "\" "
+			"WHERE name=\"", author_title, _f::esc, '"', author, "\" "
 			"LIMIT 1"
 		);
 		
@@ -3711,7 +3711,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* const uploader = get_str(d, "uploader");
 		
 		if (uploader != nullptr)
-			this->add_new_uploader_tag_to_file(user_id, uploader, file_id);
+			this->add_new_uploader_tag_to_file(user_id, uploader, "Uploader: ", file_id);
 		
 		if ((thumbnail != nullptr) and (thumbnail[0] == 'h')){
 			this->mysql_exec(
@@ -3759,9 +3759,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	bool ytdl(const UserIDIntType user_id,  const FileIDType file_id,  const char* dest_dir,  char* const out_fmt_as_input__resulting_fp_as_output,  const char* const url,  const bool is_audio_only){
 #ifdef ENABLE_SPREXER
 		std::string_view author{};
-		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url, author)){
+		const char* author_title;"
+		if (not info_extractor::record_info(file_id, dest_dir, out_fmt_as_input__resulting_fp_as_output, this->itr, url, author, author_title)){
 			if (not author.empty())
-				this->add_new_uploader_tag_to_file(user_id, author, file_id);
+				this->add_new_uploader_tag_to_file(user_id, author, author_title, file_id);
 			return false;
 		}
 #endif

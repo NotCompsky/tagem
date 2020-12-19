@@ -151,7 +151,7 @@ std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selecto
 }
 
 template<typename FileIDType>
-bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulting_fp_as_output,  char* const buf,  const char* url,  std::string_view& author){
+bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulting_fp_as_output,  char* const buf,  const char* url,  std::string_view& author,  const char*& author_title){
 	const auto domain_id = get_domain_id(url);
 	if (domain_id == NoDomain)
 		return true;
@@ -203,6 +203,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view duration = null_str_view;
 	std::string_view link_url = null_str_view; // The linked article or video
 	
+	author_title = "Uploader: ";
 	switch(domain_id){
 		case DirectFile:
 			link_url = std::string_view(url, strlen(url));
@@ -219,6 +220,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			title = find_element_attr(doc, _title, ".");
 			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"webPublicationDate\":")(html_buf, ',');
 			author = STRING_VIEW_FROM_UP_TO(10, ",\"byline\":")(html_buf, '"');
+			author_title = "Journalist: ";
 			break;
 		}
 		case Twitter: {
@@ -233,6 +235,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			}
 			memcpy(_likes + i,  "/likes>>",  8);
 			likes = find_element_attr(doc, _likes, ".");
+			author_title = "twitter @";
 			break;
 		}
 		case Streamable: {
@@ -249,6 +252,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
 			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
 			timestamp = STRING_VIEW_FROM_UP_TO(17, ", \"created_utc\": ")(html_buf, '.');
+			author_title = "/u/";
 			break;
 		}
 		case TheAmericanProspect: {
@@ -260,6 +264,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _descr[] = "*@div#title>@p.subtitle>@span";
 			description = find_element_attr(doc, _descr, ".");
+			author_title = "Journalist: ";
 			break;
 		}
 		case NYT: {
@@ -271,6 +276,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@time:datetime";
 			datetime = find_element_attr(doc, _datetime, "datetime");
+			author_title = "Journalist: ";
 			break;
 		}
 		case TheCourier: {
@@ -281,6 +287,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _author[] = "*@span.byline__name";
 			author = find_element_attr(doc, _author, ".");
 			datetime = STRING_VIEW_FROM_UP_TO(18,  ",\"datePublished\":\"")(html_buf, '"');
+			author_title = "Journalist: ";
 			break;
 		}
 		case WBUR: {
@@ -303,6 +310,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			datetime = STRING_VIEW_FROM_UP_TO(17,  "\"datePublished\":\"")(html_buf, '"');
 			datetime_fmt = datetime_fmt_common_alt;
+			author_title = "Journalist: ";
 			break;
 		}
 		case ReasonCom: {
@@ -315,6 +323,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
 			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			author_title = "Journalist: ";
 			break;
 		}
 		case Digg: {
@@ -339,6 +348,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
 			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			author_title = "Journalist: ";
 			break;
 		}
 		case InstagramPost: {
@@ -346,6 +356,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			likes = STRING_VIEW_FROM_UP_TO(36, ",\"edge_media_preview_like\":{\"count\":")(html_buf, ',');
 			author = STRING_VIEW_FROM_UP_TO(19, ",\"alternateName\":\"@")(html_buf, '"');
 			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"taken_at_timestamp\":")(html_buf, ',');
+			author_title = "insta @";
 			break;
 		}
 	}
