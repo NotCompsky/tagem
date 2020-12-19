@@ -24,6 +24,8 @@
 			++str; \
 		return std::string_view(begin,  (uintptr_t)str - (uintptr_t)begin); \
 	}
+#define CONVERT_TO_USUAL_DATETIME_FROM \
+	datetime = std::string_view(datetime.data(), std::char_traits<char>::length("2020-12-01T18:11:19"));
 
 
 // TODO: Change ThreadPool so that it allows non-pointers (and therefore avoids dynamic memory allocaitons)
@@ -192,7 +194,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view title = "";
 	std::string_view datetime = "";
 	std::string_view description = "";
-	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S.%fZ";
+	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S";
 	constexpr char* datetime_fmt_common_alt = "%Y-%m-%dT%H:%i:%SZ";
 		/* 
 		 * This default value is of the ISO datetime format
@@ -215,6 +217,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			title = find_element_attr(doc, _title, ".");
 			char _dt[] = "*@h1#main-heading>^*@time";
 			datetime = find_element_attr(doc, _dt, "datetime");
+			CONVERT_TO_USUAL_DATETIME_FROM
 			break;
 		}
 		case Guardian: {
@@ -254,6 +257,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			title = find_element_attr(doc, _title, ".");
 			char _datetime[] = "*@time:itemprop=datePublished";
 			datetime = find_element_attr(doc, _datetime, "datetime");
+			CONVERT_TO_USUAL_DATETIME_FROM
 			char _author[] = "*@a:itemprop=author";
 			author = find_element_attr(doc, _author, ".");
 			char _descr[] = "*@div#title>@p.subtitle>@span";
@@ -270,6 +274,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@time:datetime";
 			datetime = find_element_attr(doc, _datetime, "datetime");
+			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
 		}
@@ -281,6 +286,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _author[] = "*@span.byline__name";
 			author = find_element_attr(doc, _author, ".");
 			datetime = STRING_VIEW_FROM_UP_TO(18,  ",\"datePublished\":\"")(html_buf, '"');
+			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
 		}
@@ -294,7 +300,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			title = find_element_attr(doc, _title, ".");
 			char _datetime[] = "*@div.CardHeadline>*@span.Timestamp";
 			datetime = find_element_attr(doc, _datetime, "data-source");
-			datetime_fmt = datetime_fmt_common_alt;
+			CONVERT_TO_USUAL_DATETIME_FROM
 			break;
 		}
 		case GlobalNewsCA: {
@@ -303,7 +309,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _author[] = "*@a.c-byline__link";
 			author = find_element_attr(doc, _author, ".");
 			datetime = STRING_VIEW_FROM_UP_TO(17,  "\"datePublished\":\"")(html_buf, '"');
-			datetime_fmt = datetime_fmt_common_alt;
+			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
 		}
@@ -316,7 +322,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
-			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
 		}
@@ -329,7 +335,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@div.metadata>*@time:datetime";
 			datetime = find_element_attr(doc, _datetime, "datetime");
-			datetime_fmt =  "%Y-%m-%dT%H:%i:%SZ GMT";
+			CONVERT_TO_USUAL_DATETIME_FROM
 			break;
 		}
 		case TheNation: {
@@ -341,7 +347,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = find_element_attr(doc, _author, ".");
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
-			datetime_fmt =  "%Y-%m-%dT%H:%i:%S+00:00";
+			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
 		}
