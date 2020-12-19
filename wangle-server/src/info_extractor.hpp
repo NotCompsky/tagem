@@ -238,14 +238,6 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "twitter @";
 			break;
 		}
-		case Streamable: {
-			char _views[] = "*@script:data-id=player-instream";
-			views = find_element_attr(doc, _views, "data-videoplays");
-			duration = find_element_attr(doc, _views, "data-duration");
-			char _video_url[] = "*@meta:property=og:video";
-			link_url = find_element_attr(doc, _video_url, "content");
-			break;
-		}
 		case Reddit: {
 			title = STRING_VIEW_FROM_UP_TO(12, ", \"title\": \"")(html_buf, '"');
 			author = STRING_VIEW_FROM_UP_TO(13 , ", \"author\": \"")(html_buf, '"'); // NOTE: Multiple matches, but the first is selected
@@ -357,6 +349,16 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author = STRING_VIEW_FROM_UP_TO(19, ",\"alternateName\":\"@")(html_buf, '"');
 			timestamp = STRING_VIEW_FROM_UP_TO(22, ",\"taken_at_timestamp\":")(html_buf, ',');
 			author_title = "insta @";
+			break;
+		}
+		case Streamable: {
+			char _title[] = "*@title";
+			title = find_element_attr(doc, _title, ".");
+			views = STRING_VIEW_FROM_UP_TO(17, "data-videoplays=\"")(html_buf, '"');
+			char _metadata[] = "*@script:data-id=player-instream";
+			duration = find_element_attr(doc, _metadata, "data-duration");
+			char _link_url[] = "*@meta:property=og:video:secure_url";
+			link_url = find_element_attr(doc, _link_url, "content");
 			break;
 		}
 	}

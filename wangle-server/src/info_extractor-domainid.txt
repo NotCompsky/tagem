@@ -19,8 +19,12 @@ old.reddit.com/user/>
 	return Reddit
 new.reddit.com/user/>
 	return Reddit
+
 i.>
 	return DirectFile
+
+streamable.com/>
+	return Streamable
 
 prospect.org/>
 	return TheAmericanProspect
