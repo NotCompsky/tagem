@@ -14,9 +14,11 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "curl.hpp"
 #include "read_request.hpp"
-#include "str_utils.hpp"
 #include "user_agent.hpp" // TODO: Should be set by CMake, to allow different choices, but CMake is just so so so dumb and escaping the characters is such a pain
+#include "str_parsing_macros.hpp"
 #include <compsky/os/metadata.hpp>
+#include <compsky/os/write.hpp>
+#include <compsky/asciify/asciify.hpp>
 #include <cstddef> // for size_t
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -28,20 +30,34 @@ namespace curl {
 #ifndef USE_LIBCURL
 
 
-template<bool is_copying_to_file = false>
-size_t dl(const char* const url,  char*& dst_buf,  const char* const dst_pth,  char** mimetype){
+inline
+const std::string_view get_url_conn_data(const char* url,  bool& is_https){
+	const char* url_itr = url - 1;
+	is_https = (IS_STR_EQL(url_itr,5,"https"));
+	// url_itr is how either past https (if it is https://...) or past http (if it is http://)
+	const char* const host_start = url_itr + 1 + 3;
+	return std::string_view(host_start,  count_until(host_start, '/'));
+}
+
+inline
+const std::string_view get_url_conn_data(std::string_view const url,  bool& is_https){
+	return get_url_conn_data(url.data(), is_https);
+}
+
+template<typename Url,  typename Mimetype>
+size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype mimetype);
+
+template<typename Url,  typename Mimetype>
+size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype mimetype){
 	// dst_buf_orig is used to temporarily construct the request string, and stores the response string
+	
+	constexpr bool is_copying_to_file = std::is_same<char**, Mimetype>::value;
 	
 	char* dst_buf_orig = dst_buf;
 	
-	const char* url_itr = url - 1;
-	const bool is_https = (IS_STR_EQL(url_itr,5,"https"));
-	// url_itr is how either past https (if it is https://...) or past http (if it is http://)
+	bool is_https;
+	const std::string_view host = get_url_conn_data(url, is_https);
 	const std::string_view port = is_https ? "443" : "80";
-	
-	const char* const host_start = url_itr + 1 + 3;
-	
-	const std::string_view host(host_start,  count_until(host_start, '/'));
 	
 	boost::asio::io_service io_service;
 	boost::system::error_code err;
@@ -133,9 +149,10 @@ size_t dl(const char* const url,  char*& dst_buf,  const char* const dst_pth,  c
 						case '3':
 						case '4':
 						case '7':
-						case '8':
-							// TODO: Deal with redirect
-							return 0;
+						case '8': {
+							const std::string_view redirect_url = STRING_VIEW_FROM_UP_TO(12, "\r\nLocation: ")(response_itr, '\r');
+							return dl(redirect_url, dst_buf, dst_pth, mimetype);
+						}
 						default:
 							return 0;
 					}
@@ -149,7 +166,7 @@ size_t dl(const char* const url,  char*& dst_buf,  const char* const dst_pth,  c
 	
 	dst_buf_orig[n_bytes_read] = 0;
 	
-	char* start_of_content = const_cast<char*>(SKIP_TO_HEADER(2, "\r\n")(dst_buf_orig)); // NOTE: This function finds a string after a newline - so her effectively finds \r\n\r\n, assuming a well-formed HTTP response
+	char* const start_of_content = const_cast<char*>(SKIP_TO_HTTP_CONTENT(dst_buf_orig));
 	if constexpr (not is_copying_to_file)
 		dst_buf = start_of_content;
 	
@@ -178,13 +195,13 @@ bool dl_file(char* buf,  const char* const url,  const char* const dst_pth,  con
 		if (compsky::os::get_file_sz(dst_pth) != 0)
 			return true;
 	
-	return dl<true>(url, buf, dst_pth, &mimetype);
+	return dl(url, buf, dst_pth, &mimetype);
 }
 
 
 inline
 size_t dl_buf(const char* const url,  char*& dst_buf){
-	return dl<false>(url, dst_buf, nullptr, nullptr);
+	return dl(url, dst_buf, nullptr, nullptr);
 }
 
 

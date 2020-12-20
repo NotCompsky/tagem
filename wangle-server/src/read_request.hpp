@@ -13,23 +13,8 @@ The absense of this copyright notices on some other files in this project does n
 #pragma once
 
 #include "str_utils.hpp"
+#include "str_parsing_macros.hpp"
 #include <compsky/deasciify/a2n.hpp>
-
-
-#define TEST_IS_HEADER(length,name) \
-	likely(not IS_STR_EQL(str,length,name))
-
-#define SKIP_TO_HEADER(length,name) \
-	/* Returns a pointer to the character immediately BEFORE the cookies list (i.e. the space character in "Cookie: "). This is a silly little micro-optimistaion. */ \
-	[](const char* str)->const char* { \
-		while(*(++str) != 0){ \
-			if (*str != '\n') continue; \
-			if (TEST_IS_HEADER(length,name)) continue; \
-			if (unlikely(*str == 0)) continue; \
-			return str; \
-		} \
-		return nullptr; \
-	}
 
 
 enum GetRangeHeaderResult {

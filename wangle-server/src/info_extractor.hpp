@@ -2,28 +2,13 @@
 
 #include "db_info.hpp"
 #include "thread_pool.hpp"
+#include "str_parsing_macros.hpp"
 #include "sprexer/element.hpp"
 #include "sprexer/doc.hpp"
 #include "sprexer/parser.hpp"
 #include "sprexer/nullstr.hpp"
 
 
-#define SKIP_TO_AFTER_SUBSTR__NONULLTERMINATE(length,name) \
-	/* Returns a pointer to the character immediately AFTER the substr */ \
-	[](const char* str)->const char* { \
-		while(true){ \
-			if (likely(not IS_STR_EQL(str,length,name))) continue; \
-			return str + 1; \
-		} \
-	}
-#define STRING_VIEW_FROM_UP_TO(length,name) \
-	[](const char* str,  const char c)->const std::string_view { \
-		str = SKIP_TO_AFTER_SUBSTR__NONULLTERMINATE(length,name)(str); \
-		const char* const begin = str; \
-		while(*str != c) \
-			++str; \
-		return std::string_view(begin,  (uintptr_t)str - (uintptr_t)begin); \
-	}
 #define CONVERT_TO_USUAL_DATETIME_FROM \
 	datetime = std::string_view(datetime.data(), std::char_traits<char>::length("2020-12-01T18:11:19"));
 

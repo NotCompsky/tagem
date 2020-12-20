@@ -15,16 +15,8 @@ The absense of this copyright notices on some other files in this project does n
 #include "verify_str.hpp"
 #include "test.hpp"
 #include "os.hpp"
-#include <compsky/macros/likely.hpp>
-#include <compsky/macros/str2switch.hpp>
+#include "str_parsing_macros.hpp"
 #include <inttypes.h> // for uintptr_t
-
-
-#define IS_STR_EQL(str_to_be_tested,length,name) \
-	[](const char*& str)->bool { /* NOTE: str is guaranteed to be more than 0 characters long, as we have already guaranteed that it starts with the file id */ \
-		STR2SWITCH(length,name,return true;) \
-		return false; \
-	}(str_to_be_tested)
 
 
 constexpr
