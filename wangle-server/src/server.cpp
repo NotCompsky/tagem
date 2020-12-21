@@ -2244,10 +2244,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 		this->asciify(',');
 		
-		this->mysql_query<1>(
+		this->mysql_query<0>(
 			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
 		);
-		this->asciify_tags_arr_or_dict(itr, compsky::server::_r::flag::dict);
+		this->asciify_tags_arr_or_dict<0>(itr, compsky::server::_r::flag::dict);
 		
 		this->asciify(']');
 		*this->itr = 0;
