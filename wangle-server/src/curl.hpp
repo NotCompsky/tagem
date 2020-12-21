@@ -83,7 +83,7 @@ class Curl {
 	}
 	
 	bool perform(const std::string_view v){
-		char url[200];
+		char url[4000];
 		compsky::asciify::asciify(url, v, '\0');
 		this->perform(url);
 	}
