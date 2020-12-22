@@ -2046,7 +2046,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this->log(e.what());
 			return compsky::server::_r::EMPTY_JSON_LIST;
 		}
-		if (unlikely(this->res == nullptr))
+		if (unlikely(this->res[0] == nullptr))
 			return compsky::server::_r::EMPTY_JSON_LIST;
 		this->reset_buf_index();
 		this->init_json<0>(
