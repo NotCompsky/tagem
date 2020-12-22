@@ -5,6 +5,8 @@ www.theguardian.co>
 	return Guardian
 www.telegraph.co>
 	return Telegraph
+thetab.com/>
+	return TheTab
 twitter.com/>
 	return Twitter
 www.reddit.com/r/>
@@ -30,7 +32,8 @@ prospect.org/>
 	return TheAmericanProspect
 www.nytimes.com/>
 	return NYT
-
+www.pajiba.com/>
+	return Pajiba
 www.thecourier.co.uk/>
 	return TheCourier
 www.wbur.org/>
@@ -41,6 +44,8 @@ reason.com/>
 	return ReasonCom
 www.thenation.com/article/>
 	return TheNation
+rsf.org/en/news/>
+	return ReportersWithoutBorders
 
 globalnews.ca/news/>
 	return GlobalNewsCA

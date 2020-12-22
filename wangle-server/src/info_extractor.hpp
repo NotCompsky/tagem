@@ -54,6 +54,7 @@ enum DomainID {
 	TheTimes,
 	SkyNews,
 	TheCourier,
+	TheTab,
 	
 	CNN,
 	TheHill,
@@ -79,6 +80,7 @@ enum DomainID {
 	ReasonCom,
 	TheNation,
 	Pajiba,
+	ReportersWithoutBorders,
 	
 	SCMP,
 	DieWelt,
@@ -89,6 +91,7 @@ enum DomainID {
 	Wikipedia,
 	
 	Reddit,
+	RedditVideo,
 	Twitter,
 	Tumblr,
 	TikTok,
@@ -344,6 +347,28 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			description = find_element_attr(doc, _descr, ".");
 			char _author[] = "*@div#ad-desktop>@p>@a";
 			author = find_element_attr(doc, _author, ".");
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
+			CONVERT_TO_USUAL_DATETIME_FROM
+			author_title = "Journalist: ";
+			break;
+		}
+		case ReportersWithoutBorders: {
+			char _title[] = "*@h1.content-page__title";
+			title = find_element_attr(doc, _title, ".");
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
+			CONVERT_TO_USUAL_DATETIME_FROM
+			break;
+		}
+		case TheTab: {
+			char _title[] = "*@h1.article__title";
+			title = find_element_attr(doc, _title, ".");
+			char _descr[] = "*@div.article__excerpt>@p";
+			description = find_element_attr(doc, _descr, ".");
+			char _authors[] = "*@div.author-list>@a";
+			author = find_element_attr(doc, _authors, ".");
+			// NOTE: There are multiple authors, but we only record the first
 			char _datetime[] = "*@meta:property=article:published_time";
 			datetime = find_element_attr(doc, _datetime, "content");
 			CONVERT_TO_USUAL_DATETIME_FROM
