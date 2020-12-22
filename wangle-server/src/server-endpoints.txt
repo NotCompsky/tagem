@@ -159,8 +159,6 @@ POST /f/merge/>
 	return this->post__merge_files(++str)
 POST /f/backup/>
 	return this->post__backup_file(++str)
-POST /x/dl/reddit/p/>
-	return this->archive_reddit_post(++str)
 
 GET /a/select2/regex/d?q=>
 	return this->select2_regex('d', ++str)

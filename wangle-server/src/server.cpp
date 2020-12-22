@@ -2479,15 +2479,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"%(extractor)s-%(id)s.%(ext)s",
 					'\0'
 				);
-#ifdef PYTHON
 				if (this->ytdl(user_id, file_id, dir_name.value, file_path, url, is_audio_only))
-#else
-				const char* ytdl_args[] = {"youtube-dl", "-q", "-o", file_path, "-f", (is_audio_only)?"bestaudio":YTDL_FORMAT, url, nullptr};
-				if (proc::exec(60, ytdl_args, STDERR_FILENO, file_path))
-#endif
-				{
 					return FunctionSuccessness::server_error;
-				}
 				if (file_path[0] != 0){
 				file_path[4096-1] = 0;
 				char* const file_extension = skip_to_after<char>(file_path, "Requested formats are incompatible for merge and will be merged into ");
@@ -2501,14 +2494,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 						'\0'
 					);
 				}
-				
-#ifndef PYTHON
-				// Now run youtube-dl a second time, to paste the output filename into file_path, because it has no option to print the filename without only simulating
-				const char* ytdl2_args[] = {"youtube-dl", "--get-filename", "-o", file_path, "-f", YTDL_FORMAT, url, nullptr};
-				if (proc::exec(3600, ytdl2_args, STDOUT_FILENO, file_path)){
-					return FunctionSuccessness::server_error;
-				}
-#endif
 				
 				if (file_extension == nullptr){
 					replace_first_instance_of(file_path, '\n', '\0');
@@ -3040,30 +3025,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
 			"WHERE id=", tag_id
 		);
-		
-		return compsky::server::_r::post_ok;
-	}
-	
-	std::string_view archive_reddit_post(const char* s){
-		// WARNING: No permissions check
-		
-		const char* const permalink = s;
-		while((*s != 0) and (*s != ' '))
-			++s;
-		if(*s == 0)
-			return compsky::server::_r::not_found;
-		const size_t permalink_length = (uintptr_t)s - (uintptr_t)permalink;
-		
-		this->asciify(_f::strlen, permalink, permalink_length, '\0');
-		
-#ifdef PYTHON__NOTIMPLEMENTEDYET
-		const bool failed = python::archive_reddit_post(this->buf);
-#else
-		const char* args[] = {"record-reddit-post", this->buf, nullptr};
-		const bool failed = proc::exec(60,  args,  STDOUT_FILENO,  nullptr,  0);
-#endif
-		if (unlikely(failed))
-			return compsky::server::_r::server_error;
 		
 		return compsky::server::_r::post_ok;
 	}
