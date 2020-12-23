@@ -211,7 +211,7 @@ function $$$backup_files(){
 		$$$alert("No files selected");
 		return;
 	}
-	const _dir_id = $$$dirselect.value;
+	const _dir_id = $$$get_dirselect_value();
 	let url = $$$document_getElementById("add-f-backup-url").value;
 	if(_dir_id===""){
 		$$$alert("No directory selected");

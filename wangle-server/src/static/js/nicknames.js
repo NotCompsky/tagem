@@ -56,3 +56,7 @@ function $$$rm_class(s){
 	$$$for_node_in_document_getElementsByClassName_1args__reverse(s,$$$remove_node);
 	// NOTE: Must reverse order of iteration, else removing first node puts the 2nd node in the 1st node's place and skips its deletion
 }
+
+function $$$get_dirselect_value(){
+	return $$$dirselect.value;
+}

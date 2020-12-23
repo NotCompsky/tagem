@@ -83,7 +83,7 @@ function $$$get_dir_id_to_backup_into(){
 	const x = $$$document_getElementById_add_f_backup_toggle;
 	if($$$is_node_hidden(x)||(!x.checked))
 		return "0";
-	return $('#dirselect').val();
+	return $$$get_dirselect_value();
 }
 
 function $$$uncheck_dl_locally(){

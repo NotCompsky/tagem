@@ -34,7 +34,7 @@ function $$$text_editor_save(){
 		$$$alert("Must tag file");
 		return;
 	}
-	const _dir_id = $$$dirselect.value;
+	const _dir_id = $$$get_dirselect_value();
 	if((_dir_id === null)||(_dir_id==="")){
 		$$$alert("Must assign file to directory");
 		return;
