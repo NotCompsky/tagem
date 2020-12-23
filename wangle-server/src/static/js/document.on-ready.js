@@ -36,6 +36,8 @@ function $$$on_document_ready(){
 	$$$document_getElementById_eras_info_tbody = $$$document_getElementById("eras-info-tbody");
 	$$$recent_pages = $$$document_getElementById("recent-pages");
 	
+	$$$jquery_dirselect = $('#dirselect');
+	
 	$.ajaxPrefilter($$$ajax_prefilter);
 	
 	$$$hide_all_except([]);
