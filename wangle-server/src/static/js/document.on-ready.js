@@ -14,7 +14,7 @@ function $$$on_document_ready(){
 	$$$document_getElementById_username = $$$document_getElementById("username");
 	$$$document_getElementById_view = $$$document_getElementById("view");
 	$$$document_getElementById_values = $$$document_getElementById("values");
-	$$$document_getElementById_dirselect = $$$document_getElementById("dirselect");
+	$$$dirselect = $$$document_getElementById("dirselect");
 	$$$document_getElementById_f = $$$document_getElementById("f");
 	$$$document_getElementById_t = $$$document_getElementById("t");
 	$$$document_getElementById_d = $$$document_getElementById("d");

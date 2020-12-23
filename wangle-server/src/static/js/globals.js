@@ -74,13 +74,12 @@ var $$$tagselect_popup_fn; // Function that is called after user closes the tags
 var $$$document_getElementById_username;
 var $$$document_getElementById_view;
 var $$$document_getElementById_values;
-var $$$document_getElementById_dirselect;
+var $$$dirselect;
 var $$$document_getElementById_f;
 var $$$document_getElementById_t;
 var $$$document_getElementById_d;
 var $$$document_getElementById_cmnts;
 var $$$document_getElementById_autoplay;
-var $$$document_getElementById_username;
 var $$$document_getElementById_descr;
 var $$$document_getElementById_tasks;
 var $$$document_getElementById_qry;
