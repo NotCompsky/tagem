@@ -34,6 +34,8 @@ www.nytimes.com/>
 	return NYT
 www.pajiba.com/>
 	return Pajiba
+www.buzzfeednews.com/article/>
+	return BuzzFeedNews
 www.thecourier.co.uk/>
 	return TheCourier
 www.wbur.org/>
@@ -46,6 +48,12 @@ www.thenation.com/article/>
 	return TheNation
 rsf.org/en/news/>
 	return ReportersWithoutBorders
+www.jpost.com/>
+	return JPost
+www.theatlantic.com/>
+	return TheAtlantic
+www.reuters.com/article/>
+	return Reuters
 
 globalnews.ca/news/>
 	return GlobalNewsCA
@@ -54,3 +62,5 @@ digg.com/>
 	return Digg
 www.instagram.com/p/>
 	return InstagramPost
+threadreaderapp.com/thread/>
+	return ThreadReaderApp

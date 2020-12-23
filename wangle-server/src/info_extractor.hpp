@@ -66,7 +66,7 @@ enum DomainID {
 	Medium,
 	WashPost,
 	Reuters,
-	Atlantic,
+	TheAtlantic,
 	NBCNews,
 	CBSNews,
 	APNews,
@@ -80,7 +80,9 @@ enum DomainID {
 	ReasonCom,
 	TheNation,
 	Pajiba,
+	BuzzFeedNews,
 	ReportersWithoutBorders,
+	JPost,
 	
 	SCMP,
 	DieWelt,
@@ -93,6 +95,7 @@ enum DomainID {
 	Reddit,
 	RedditVideo,
 	Twitter,
+	ThreadReaderApp,
 	Tumblr,
 	TikTok,
 	Digg,
@@ -254,15 +257,26 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
-		case NYT: {
+		case NYT:
+		case Reuters:
+		case TheAtlantic: {
 			char _title[] = "*@meta:property=og:title";
 			title = find_element_attr(doc, _title, "content");
 			char _descr[] = "*@meta:property=og:description";
 			description = find_element_attr(doc, _descr, "content");
-			char _author[] = "*@span.last-byline";
-			author = find_element_attr(doc, _author, ".");
-			char _datetime[] = "*@time:datetime";
-			datetime = find_element_attr(doc, _datetime, "datetime");
+			switch(domain_id){
+				case NYT: {
+					char _author[] = "*@span.last-byline";
+					author = find_element_attr(doc, _author, ".");
+					break;
+				}
+				default: {
+					char _author[] = "*@meta:name=author";
+					author = find_element_attr(doc, _author, "content");
+				}
+			}
+			char _datetime[] = "*@meta:property=article:published_time";
+			datetime = find_element_attr(doc, _datetime, "content");
 			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
 			break;
@@ -353,6 +367,16 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
+		case BuzzFeedNews: {
+			char _title[] = "*@meta:name=title";
+			description = find_element_attr(doc, _title, "content");
+			char _descr[] = "*@meta:name=description";
+			description = find_element_attr(doc, _descr, "content");
+			char _author[] = "*@span.news-byline-full__name";
+			author = find_element_attr(doc, _author, ".");
+			timestamp = STRING_VIEW_FROM_UP_TO(14, ",\"published\":\"")(html_buf, '"');
+			break;
+		}
 		case ReportersWithoutBorders: {
 			char _title[] = "*@h1.content-page__title";
 			title = find_element_attr(doc, _title, ".");
@@ -373,6 +397,24 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			datetime = find_element_attr(doc, _datetime, "content");
 			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
+			break;
+		}
+		case JPost: {
+			char _title[] = "*@meta:property=og:title";
+			title = find_element_attr(doc, _title, "content");
+			char _descr[] = "*@meta:property=og:description";
+			description = find_element_attr(doc, _descr, "content");
+			datetime = STRING_VIEW_FROM_UP_TO(18, "\"datePublished\": \"")(html_buf, '"');
+			CONVERT_TO_USUAL_DATETIME_FROM
+			char _author[] = "*@span.article-reporter>@a";
+			author = find_element_attr(doc, _author, ".");
+			author_title = "Journalist: "; // NOTE: Already includes @
+			break;
+		}
+		case ThreadReaderApp: {
+			char _author[] = "*@meta:name=twitter:creator";
+			author = find_element_attr(doc, _author, "content");
+			author_title = "twitter "; // NOTE: Already includes @
 			break;
 		}
 		case InstagramPost: {
