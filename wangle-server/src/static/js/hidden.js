@@ -53,7 +53,7 @@ function $$$hide_all_except(ids,classes){
 	// More like 'page switch' event now
 	if(!ids.includes('file-info'))
 		$$$playlist_file_ids = undefined; // Destroy playlist
-	$$$document_getElementById('profile-img').removeAttribute('onclick');
+	$$$document_getElementById_profile_img.removeAttribute('onclick');
 	$$$hide_class('help');
 	for(const id of [
 		'qry-textarea',

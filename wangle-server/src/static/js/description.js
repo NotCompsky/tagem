@@ -1,7 +1,7 @@
 var $$$descr_contents; // NOTE: Only used within this file
 
 function $$$get_descr_obj(){
-	return $$$document_getElementById('descr');
+	return $$$document_getElementById_descr;
 }
 function $$$set_description(s){
 	// Called when displaying files, tags and dirs, not when the user edits it

@@ -15,14 +15,14 @@ function $$$login(){
 	if((uname==="")||(uname===null))
 		return;
 	$$$set_cookie_forever("username", uname); // Super 100% secure login with inbuilt blockchain neural networks
-	$$$document_getElementById('username').innerText = uname;
+	$$$document_getElementById_username.innerText = uname;
 	$$$refetch_all_jsons();
 }
 function $$$logout(){
 	if(!$$$logged_in())
 		return;
 	$$$unset_cookie("username");
-	$$$document_getElementById('username').innerText = "GUEST";
+	$$$document_getElementById_username.innerText = "GUEST";
 	$$$refetch_all_jsons();
 }
 

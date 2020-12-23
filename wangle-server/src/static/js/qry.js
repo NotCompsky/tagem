@@ -41,7 +41,7 @@ function $$$view_qry(s){
 }
 
 function $$$init_qry(){
-	$$$document_getElementById("qry").addEventListener("keyup", function(e){
+	$$$document_getElementById_qry.addEventListener("keyup", function(e){
 		e.preventDefault();
 		if (e.keyCode === 13){ // Enter
 			$$$view_qry(this.value);

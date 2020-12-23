@@ -147,7 +147,7 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 				break;
 			case 'text':
 				$$$ajax_GET_w_text_response(src,function(data){
-					const x = $$$document_getElementById('text-edit');
+					const x = $$$text_edit;
 					x.innerText = data;
 					$$$unhide_node(x);
 					$$$unhide('text-editor');
@@ -182,7 +182,7 @@ function $$$undisplay_this_file(){
 	$$$active_media = null;
 }
 function $$$autoplay(){
-	return $$$document_getElementById('autoplay').checked;
+	return $$$document_getElementById_autoplay.checked;
 }
 
 function $$$display_file2_var(name, value){
@@ -209,7 +209,7 @@ function $$$assign_value_to_file(){
 			select.val("").change(); // Deselect all
 			input.value = "";
 			if($$$is_visible('values'))
-				$$$document_getElementById('values').innerHTML += $$$display_file2_var($$$f2[f2_id][0], value);
+				$$$document_getElementById_values.innerHTML += $$$display_file2_var($$$f2[f2_id][0], value);
 		}
 	);
 }
@@ -313,7 +313,7 @@ function $$$view_file(_file_id_and_t){
 					if(file2_values[i] !== "0")
 						_vals += $$$display_file2_var($$$f2_as_array[i][1][0], file2_values[i]);
 				}
-				$$$document_getElementById('values').innerHTML = _vals;
+				$$$document_getElementById_values.innerHTML = _vals;
 				
 				$$$file_tags = (tag_ids==="") ? [] : $$$split_on_commas_but_make_empty_if_empty(tag_ids);
 				$$$display_tags($$$file_tags, "tags", "$$$unlink_this_tag_from_this", "f");
@@ -332,12 +332,12 @@ function $$$view_file(_file_id_and_t){
 					$$$display_this_file('',$$$mimetype);
 					$$$skip_to_era(_t);
 				}
-				$$$document_getElementById("view-btns").innerHTML = _s;
+				$$$view_btns.innerHTML = _s;
 				$$$view_file__hides();
 				
 				$$$set_description(description);
 				
-				$$$document_getElementById('eras-info-tbody').innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
+				$$$document_getElementById_eras_info_tbody.innerHTML = eras.map(x=>$$$create_era_info_row(x)).join("");
 				$$$column_id2name(t_dict,"eras-info", '$$$view_tag', 3);
 				
 				$$$boxes = boxes.map(x => [x[0],x[1],x[2],x[3],x[4],x[5],x[6].split(",").map(id => [id, t_dict[id]])]);

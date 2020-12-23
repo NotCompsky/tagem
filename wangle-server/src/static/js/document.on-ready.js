@@ -10,12 +10,38 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
 function $$$on_document_ready(){
+	// Initialise the variables from globals.js - which may be required in later steps within this function
+	$$$document_getElementById_username = $$$document_getElementById("username");
+	$$$document_getElementById_view = $$$document_getElementById("view");
+	$$$document_getElementById_values = $$$document_getElementById("values");
+	$$$document_getElementById_dirselect = $$$document_getElementById("dirselect");
+	$$$document_getElementById_f = $$$document_getElementById("f");
+	$$$document_getElementById_t = $$$document_getElementById("t");
+	$$$document_getElementById_d = $$$document_getElementById("d");
+	$$$document_getElementById_cmnts = $$$document_getElementById("cmnts");
+	$$$document_getElementById_autoplay = $$$document_getElementById("autoplay");
+	$$$document_getElementById_descr = $$$document_getElementById("descr");
+	$$$document_getElementById_tasks = $$$document_getElementById("tasks");
+	$$$document_getElementById_qry = $$$document_getElementById("qry");
+	
+	$$$document_getElementById_audio_only = $$$document_getElementById("audio-only");
+	$$$document_getElementById_add_f_backup_ytdl = $$$document_getElementById("add-f-backup-ytdl");
+	$$$document_getElementById_profile_name = $$$document_getElementById("profile-name");
+	$$$document_getElementById_view_img = $$$document_getElementById("view-img");
+	$$$document_getElementById_profile_img = $$$document_getElementById("profile-img");
+	$$$document_getElementById_post_user = $$$document_getElementById("post-user");
+	$$$document_getElementById_add_f_backup_toggle = $$$document_getElementById("add-f-backup-toggle");
+	$$$text_edit = $$$document_getElementById("text-edit");
+	$$$view_btns = $$$document_getElementById("view-btns");
+	$$$document_getElementById_eras_info_tbody = $$$document_getElementById("eras-info-tbody");
+	$$$recent_pages = $$$document_getElementById("recent-pages");
+	
 	$.ajaxPrefilter($$$ajax_prefilter);
 	
 	$$$hide_all_except([]);
 	
 	const uname = $$$get_cookie("username");
-	$$$document_getElementById('username').innerText = (uname === undefined)?"GUEST":uname;
+	$$$document_getElementById_username.innerText = (uname === undefined)?"GUEST":uname;
 	
 	$$$refetch_all_jsons();
 	$$$init_selects__ajax('d');
@@ -81,7 +107,7 @@ function $$$on_document_ready(){
 	for(node of $$$document_getElementsByClassName('css-colour-picker'))
 		node.addEventListener("change",$$$on_css_colour_picker_change);
 	
-	$$$document_getElementById('view-img').addEventListener('mousedown', $$$mousedown_on_image);
+	$$$document_getElementById_view_img.addEventListener('mousedown', $$$mousedown_on_image);
 	
 	$$$get_descr_obj().addEventListener("mousedown", $$$mousedown_on_descr);
 	$$$get_descr_obj().addEventListener("mouseleave", $$$mouseleave_descr);

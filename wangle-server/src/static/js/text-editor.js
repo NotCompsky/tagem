@@ -34,13 +34,12 @@ function $$$text_editor_save(){
 		$$$alert("Must tag file");
 		return;
 	}
-	const dir_inp = $$$document_getElementById("dirselect");
-	const _dir_id = dir_inp.value;
+	const _dir_id = $$$dirselect.value;
 	if((_dir_id === null)||(_dir_id==="")){
 		$$$alert("Must assign file to directory");
 		return;
 	}
-	const _dir_name = dir_inp.textContent;
+	const _dir_name = $$$dirselect.textContent;
 	if(!_dir_name.startsWith("/")){
 		const b = $$$confirm("Directory is not local.\nThe contents will be saved into the description field.\nStill continue?");
 		if(b!==true)
@@ -48,6 +47,6 @@ function $$$text_editor_save(){
 	}
 	$$$ajax_POST_data_w_text_response_generic_success(
 		"/f/save/"+(($$$is_editing_existing_file)?$$$file_id:0)+"/"+_dir_id+"/"+tag_ids.join(","),
-		title+"\n"+$$$document_getElementById('text-edit').innerText
+		title+"\n"+$$$text_edit.innerText
 	);
 }

@@ -12,11 +12,11 @@
 
 function $$$set_profile_name(s){
 	$$$document.title=s;
-	$$$document_getElementById('profile-name').innerText = s;
+	$$$document_getElementById_profile_name.innerText = s;
 }
 
 function $$$get_profile_name(){
-	return $$$document_getElementById('profile-name').innerText;
+	return $$$document_getElementById_profile_name.innerText;
 }
 
 function $$$set_profile_thumb(url){

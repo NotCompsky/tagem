@@ -27,7 +27,7 @@ function $$$view_tasks(){
 					</div>`;
 				// NOTE: The tab is there to ensure that whitespace is not preserved
 			}
-			$$$document_getElementById('tasks').innerHTML = _s;
+			$$$document_getElementById_tasks.innerHTML = _s;
 			for(const [id,name,descr,content] of data){
 				$$$document_getElementById('task-content'+id).innerText = content;
 			}

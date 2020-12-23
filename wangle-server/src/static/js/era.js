@@ -32,7 +32,7 @@ function $$$tag_era(){
 	$$$ajax_POST_w_text_response(
 		"/e/add/"+$$$file_id+"/"+$$$era_start+"-"+$$$era_end+"/"+tags.map(x => x.id).join(","),
 		function(){
-			$$$document_getElementById('eras-info-tbody').innerHTML += $$$create_era_info_row([0,$$$era_start,$$$era_end,tags.map(x => "<a onclick='$$$view_tag(\'" + x.id + "\')'>" + x.text + "</a>")]);
+			$$$document_getElementById_eras_info_tbody.innerHTML += $$$create_era_info_row([0,$$$era_start,$$$era_end,tags.map(x => "<a onclick='$$$view_tag(\'" + x.id + "\')'>" + x.text + "</a>")]);
 			$$$hide_tagselect_era();
 		}
 	);
@@ -49,13 +49,12 @@ function $$$setup_page_for_e_tbl(){
 }
 
 function $$$ytdl_era(node){
-	const dir_inp = $$$document_getElementById("dirselect");
-	if(dir_inp.value===""){
+	if($$$dirselect.value===""){
 		$$$alert("No directory selected");
 		return;
 	}
-	$$$ajax_POST_data_w_text_response("/e/dl/"+dir_inp.value+"/"+node.dataset.id,function(){
-		dir_inp.value = "";
+	$$$ajax_POST_data_w_text_response("/e/dl/"+$$$dirselect.value+"/"+node.dataset.id,function(){
+		$$$dirselect.value = "";
 		$$$alert("Saved to '" + $$$file_id + "@" + node.dataset.start + "-" + node.dataset.end + ".mkv'");
 	});
 }
@@ -74,7 +73,7 @@ function $$$create_era_info_row(era){
 }
 
 function $$$era_tagger_fn(ids,t_dict){
-	for(x of $$$document_getElementById('eras-info-tbody')){
+	for(x of $$$document_getElementById_eras_info_tbody){
 		if(!ids.includes(x.dataset.id))
 			continue;
 		x.getElementsByClassName('td')[3].innerHTML += "and some new tags";

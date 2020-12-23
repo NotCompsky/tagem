@@ -68,3 +68,33 @@ var $$$users_dict; // Only really used by functions in this file, but *referred 
 
 // fake async
 var $$$tagselect_popup_fn; // Function that is called after user closes the tagselect popup
+
+
+// Pointers to DOM objects (only those available in the root HTML; initialised after document loading)
+var $$$document_getElementById_username;
+var $$$document_getElementById_view;
+var $$$document_getElementById_values;
+var $$$document_getElementById_dirselect;
+var $$$document_getElementById_f;
+var $$$document_getElementById_t;
+var $$$document_getElementById_d;
+var $$$document_getElementById_cmnts;
+var $$$document_getElementById_autoplay;
+var $$$document_getElementById_username;
+var $$$document_getElementById_descr;
+var $$$document_getElementById_tasks;
+var $$$document_getElementById_qry;
+
+var $$$document_getElementById_audio_only;
+var $$$document_getElementById_add_f_backup_ytdl;
+var $$$document_getElementById_profile_name;
+var $$$document_getElementById_view_img;
+var $$$document_getElementById_profile_img;
+var $$$document_getElementById_post_user;
+var $$$document_getElementById_add_f_backup_toggle;
+var $$$text_edit;
+var $$$view_btns;
+var $$$document_getElementById_eras_info_tbody;
+var $$$recent_pages;
+
+// for f in *.js; do sed -i -E "s/([\$][\$][\$]document_getElementById)[(]['\"](eras-info-tbody)['\"][)]/\1_eras_info_tbody/g" "$f"; done

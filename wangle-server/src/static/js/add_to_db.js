@@ -80,26 +80,26 @@ function $$$add_to_db(obj_type){
 }
 
 function $$$get_dir_id_to_backup_into(){
-	const x = $$$document_getElementById("add-f-backup-toggle");
+	const x = $$$document_getElementById_add_f_backup_toggle;
 	if($$$is_node_hidden(x)||(!x.checked))
 		return "0";
 	return $('#dirselect').val();
 }
 
 function $$$uncheck_dl_locally(){
-	$$$document_getElementById('add-f-backup-toggle').checked = false;
+	$$$document_getElementById_add_f_backup_toggle.checked = false;
 }
 
 function $$$is_ytdl_checked(){
-	return $$$document_getElementById('add-f-backup-ytdl').checked ? 1 : 0;
+	return $$$document_getElementById_add_f_backup_ytdl.checked ? 1 : 0;
 }
 
 function $$$is_audio_only_checked(){
-	return $$$document_getElementById('audio-only').checked ? 1 : 0;
+	return $$$document_getElementById_audio_only.checked ? 1 : 0;
 }
 
 function $$$reset_audio_only_checked(){
-	$$$document_getElementById('audio-only').checked = false;
+	$$$document_getElementById_audio_only.checked = false;
 }
 
 function $$$add_to_db__append(obj_type){

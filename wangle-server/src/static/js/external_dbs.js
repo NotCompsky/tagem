@@ -73,15 +73,15 @@ function $$$display_cmnts(_db_id, ls){
 			delete tree[key];
 		}
 	}
-	$$$document_getElementById('cmnts').innerHTML = tree[0][2];
+	$$$document_getElementById_cmnts.innerHTML = tree[0][2];
 	$$$unhide("cmnts");
 }
 
 function $$$display_post_meta(_db_id, tpl){
 	const [user, t, n_likes, username, txt] = tpl[0];
-	$$$document_getElementById('post-user').dataset.db = _db_id;
-	$$$document_getElementById('post-user').dataset.user = user;
-	$$$document_getElementById('post-user').innerText = username;
+	$$$document_getElementById_post_user.dataset.db = _db_id;
+	$$$document_getElementById_post_user.dataset.user = user;
+	$$$document_getElementById_post_user.innerText = username;
 	$$$document_getElementById('post-time').innerHTML = $$$timestamp2dt(t);
 	$$$document_getElementById('post-text').innerText = txt;
 }

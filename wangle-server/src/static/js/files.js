@@ -65,8 +65,8 @@ function $$$display_f_tbl(datas){
 			
 		s += "</div>";
 	}
-	$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
-	$$$set_node_visibility($$$document_getElementById('f').getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
+	$$$set_node_visibility($$$document_getElementById_f.getElementsByClassName('next-page')[0], ($$$file_qry_page_n!==0));
+	$$$set_node_visibility($$$document_getElementById_f.getElementsByClassName('next-page')[1], (data.length===$$$MAX_RESULTS_PER_PAGE));
 	$$$get_tbl_body("f").innerHTML = s;
 	$$$column_id2name('x', "f", '$$$view_db', 3);
 	$$$column_id2name(tags,"f", '$$$view_tag', 4);
@@ -179,11 +179,11 @@ function $$$setup_page_for_f_tbl(){
 }
 
 function $$$toggle_dl_locally(){
-	const b = $$$document_getElementById('add-f-backup-toggle').checked;
+	const b = $$$document_getElementById_add_f_backup_toggle.checked;
 	for(let x of ['dirselect-container','add-f-backup-ytdl','audio-only']){
 		$$$set_visibility(x,b);
 	}
-	$$$document_getElementById('add-f-backup-ytdl').checked = false;
+	$$$document_getElementById_add_f_backup_ytdl.checked = false;
 	$$$reset_audio_only_checked();
 }
 
@@ -211,7 +211,7 @@ function $$$backup_files(){
 		$$$alert("No files selected");
 		return;
 	}
-	const _dir_id = $$$document_getElementById("dirselect").value;
+	const _dir_id = $$$dirselect.value;
 	let url = $$$document_getElementById("add-f-backup-url").value;
 	if(_dir_id===""){
 		$$$alert("No directory selected");

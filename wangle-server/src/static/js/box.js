@@ -64,7 +64,7 @@ function $$$draw_box(box){
 	
 	$$$make_resizeable(e);
 	why.prepend(e);
-	$$$document_getElementById("view").appendChild(why);
+	$$$document_getElementById_view.appendChild(why);
 }
 
 function $$$make_resizeable(box){
@@ -152,8 +152,8 @@ function $$$save_boxes(){
 function $$$create_box_from_dragging(e){
 	let x = $$$box_to_be_created__x1;
 	let y = $$$box_to_be_created__y1;
-	let X = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
-	let Y = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	let X = e.pageX - $$$document_getElementById_view.getBoundingClientRect().x;
+	let Y = e.pageY - $$$document_getElementById_view.getBoundingClientRect().y;
 	
 	// Guarantee x <= X etc
 	if (x > X)
@@ -162,8 +162,8 @@ function $$$create_box_from_dragging(e){
 		[y, Y] = [Y, y];
 	
 	if ((X > x + $$$min_box_size_px) && (Y > y + $$$min_box_size_px)){
-		const scaleX = $$$document_getElementById("view").scrollWidth;
-		const scaleY = $$$document_getElementById("view").scrollHeight;
+		const scaleX = $$$document_getElementById_view.scrollWidth;
+		const scaleY = $$$document_getElementById_view.scrollHeight;
 		$$$draw_box__init_dimensions([x/scaleX,y/scaleY,(X-x)/scaleX,(Y-y)/scaleY]);
 		window.removeEventListener('mousemove', $$$user_dragging_new_box_event);
 		window.removeEventListener('mouseup', $$$user_mouseup_event);
@@ -177,8 +177,8 @@ function $$$create_box_from_dragging(e){
 function $$$user_dragging_new_box_event(e){
 	let x = $$$box_to_be_created__x1;
 	let y = $$$box_to_be_created__y1;
-	let X = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
-	let Y = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	let X = e.pageX - $$$document_getElementById_view.getBoundingClientRect().x;
+	let Y = e.pageY - $$$document_getElementById_view.getBoundingClientRect().y;
 	
 	// Guarantee x <= X etc
 	if (x > X)
@@ -204,8 +204,8 @@ function $$$user_mouseup_event(e){
 }
 
 function $$$mousedown_on_image(e){
-	$$$box_to_be_created__x1 = e.pageX - $$$document_getElementById("view").getBoundingClientRect().x;
-	$$$box_to_be_created__y1 = e.pageY - $$$document_getElementById("view").getBoundingClientRect().y;
+	$$$box_to_be_created__x1 = e.pageX - $$$document_getElementById_view.getBoundingClientRect().x;
+	$$$box_to_be_created__y1 = e.pageY - $$$document_getElementById_view.getBoundingClientRect().y;
 	window.addEventListener('mousemove', $$$user_dragging_new_box_event);
 	window.addEventListener('mouseup', $$$user_mouseup_event);
 }
