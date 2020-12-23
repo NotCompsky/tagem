@@ -85,7 +85,7 @@ class Curl {
 	bool perform(const std::string_view v){
 		char url[4000];
 		compsky::asciify::asciify(url, v, '\0');
-		this->perform(url);
+		return this->perform(url);
 	}
 	
 	bool copy_mimetype(char* buf){
