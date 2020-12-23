@@ -60,3 +60,7 @@ function $$$rm_class(s){
 function $$$get_dirselect_value(){
 	return $$$dirselect.value;
 }
+
+function $$$unset_dirselect_value(){
+	$('#dirselect').val(null).trigger("change");
+}
