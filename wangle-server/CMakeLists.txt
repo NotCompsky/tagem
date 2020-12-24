@@ -54,7 +54,7 @@ set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.
 	if(MONKEYPATCH_MY_SHA512)
 		set(MONKEYPATCH_SOURCES "${SRC_DIR}/fix-missing-symbol.monkeypatch.cpp")
 	endif()
-	set(LEXBOR_NAMES lexbor.a liblexbor.a)
+	set(LEXBOR_NAMES lexbor.a liblexbor.a lexbor_static.a liblexbor_static.a)
 else()
 	set(CURL_NAMES curl)
 	set(LIBCRYPTO_NAMES crypto)
