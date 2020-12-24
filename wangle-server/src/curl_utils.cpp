@@ -40,9 +40,9 @@ size_t dl_buf(const char* const url,  char*& dst_buf_orig){
 	Curl curl(
 		CURLOPT_WRITEFUNCTION, curl_write_callback,
 		CURLOPT_WRITEDATA, &dst_buf,
-		CURLOPT_FOLLOWLOCATION, true,
+		CURLOPT_FOLLOWLOCATION, true
 #ifdef DNS_OVER_HTTPS_CLIENT_URL
-		CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
+		, CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
 #endif
 	);
 	

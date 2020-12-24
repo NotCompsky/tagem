@@ -238,9 +238,9 @@ bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool over
 	
 	Curl curl(
 		CURLOPT_WRITEDATA, f,
-		CURLOPT_FOLLOWLOCATION, true,
+		CURLOPT_FOLLOWLOCATION, true
 #ifdef DNS_OVER_HTTPS_CLIENT_URL
-		CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
+		, CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
 #endif
 	);
 	
