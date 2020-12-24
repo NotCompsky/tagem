@@ -23,7 +23,7 @@ ARG libmagic_version=5.39
 
 RUN git clone --depth 1 https://github.com/lexbor/lexbor \
 	\
-	&& apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/main/ python3-dev=3.8.5-r0 \
+	&& apk add --no-cache python3-dev \
 	&& for d in /usr/lib/python3.*; do \
 		cp $(find "$d" -type f -name '*python*.a') /usr/lib/ \
 	; done \
