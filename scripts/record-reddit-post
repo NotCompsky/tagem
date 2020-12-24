@@ -119,7 +119,10 @@ ON DUPLICATE KEY UPDATE id=id
 			VALUES
 			($(rscraper-str2id "${id:1:-1}"), $submission_id, $parent_id, $user_id, $t, $score, $body)
 			AS A
-			ON DUPLICATE KEY UPDATE n_likes=IF((ABS(cmnt.n_likes)>ABS(A.n_likes)),cmnt.n_likes,A.n_likes)
+			ON DUPLICATE KEY UPDATE
+				n_likes=IF((ABS(cmnt.n_likes)>ABS(A.n_likes)),cmnt.n_likes,A.n_likes),
+				content=IF(cmnt.content='[deleted]',A.content,cmnt.content),
+				user=IF(cmnt.user=0,A.user,cmnt.user)
 			"
 		done < <(get_cmnts)
 		
