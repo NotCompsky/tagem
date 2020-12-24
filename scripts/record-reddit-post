@@ -105,10 +105,6 @@ ON DUPLICATE KEY UPDATE id=id
 				parent_id=0
 			fi
 			user_id="$(rscraper-str2id "${user_id_str:4:-1}")"
-			if [ "$user_id" = 0 ]; then
-				# User ID of 0 will mean deleted or removed
-				continue
-			fi
 			mysql_exec "
 			INSERT INTO user
 			(id,name)
