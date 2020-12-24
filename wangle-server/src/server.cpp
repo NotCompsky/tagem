@@ -116,13 +116,14 @@ magic_t magique;
 	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
 		return compsky::server::_r::expect_100_continue;
 
-#define GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
-	BOOST_PP_IF(var_decl, const char* const,) var  = get_comma_separated_ints(&str_name, terminating_char); \
-	BOOST_PP_IF(var_decl, const size_t,) var_length  = (uintptr_t)str_name - (uintptr_t)var;
+#define GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
+	const char* const BOOST_PP_CAT(var, _begin) = get_comma_separated_ints(&str_name, terminating_char); \
+	const size_t BOOST_PP_CAT(var, _length)     = (uintptr_t)str_name - (uintptr_t)BOOST_PP_CAT(var, _begin); \
+	const std::string_view var(BOOST_PP_CAT(var, _begin), BOOST_PP_CAT(var, _length));
 
-#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var_decl, var, var_length, str_name, terminating_char) \
-	GET_COMMA_SEPARATED_INTS__NULLABLE(var_decl, var, var_length, str_name, terminating_char) \
-	if (var == nullptr) \
+#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, str_name, terminating_char) \
+	GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
+	if (BOOST_PP_CAT(var, _begin) == nullptr) \
 		return compsky::server::_r::not_found;
 
 #define GET_USER \
@@ -171,14 +172,15 @@ magic_t magique;
 		return compsky::server::_r::not_found;
 
 #define GET_FILE2_VAR_NAME(s) \
-	const char* const file2_var_name = s; \
+	const char* const file2_var_name__begin = s; \
 	while((*s != ' ') and (*s != 0)) \
 		++s; \
-	const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name; \
+	const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name__begin; \
 	/* No need to check for empty string - the later function does that*/ \
 	GET_USER \
-	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name, user->allowed_file2_vars_csv))) \
-		return compsky::server::_r::not_found;
+	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name__begin, user->allowed_file2_vars_csv))) \
+		return compsky::server::_r::not_found; \
+	const std::string_view file2_var_name(file2_var_name__begin, file2_var_name_len);
 
 
 #define HIDDEN_TAGS_INNER(...) \
@@ -693,7 +695,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename... Args>
-	std::string_view ytdl_eras(const UserIDIntType user_id,  const uint64_t dest_dir,  const char* const eras,  const size_t eras_len,  Args... file_name_args){
+	std::string_view ytdl_eras(const UserIDIntType user_id,  const uint64_t dest_dir,  const std::string_view eras,  Args... file_name_args){
 		this->mysql_query<0>(
 			"SELECT "
 				"CONCAT(d.full_path, f.name),"
@@ -705,7 +707,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN file f ON f.id=e.file "
 			"JOIN dir d ON d.id=f.dir "
 			"JOIN dir d2 ON d2.id=", dest_dir, " "
-			"WHERE e.id IN (", _f::strlen, eras, eras_len, ")"
+			"WHERE e.id IN (", eras, ")"
 			  "AND " NOT_DISALLOWED_ERA("e.id", "f.id", "d.id", "d.device", user_id)
 			  "AND " NOT_DISALLOWED_DIR("d2.id", "d2.device", user_id)
 		);
@@ -746,14 +748,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
 			return compsky::server::_r::server_error;
 		
-		this->add_file_or_dir_to_db('f', nullptr, user_id, tag_ids.data(), tag_ids.size(), dest, strlen(dest), 0, false, false);
+		this->add_file_or_dir_to_db('f', user_id, tag_ids, std::string_view(dest, strlen(dest)), 0, false, false);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__ytdl_eras(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,dest_dir)
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, eras, eras_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(eras, s, ' ')
 		GET_USER_ID
 		SKIP_TO_BODY
 		const char* const dest_file_name = s;
@@ -761,26 +763,26 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->ytdl_eras(
 			user_id,
 			dest_dir,
-			eras, eras_len,
+			eras,
 			'"', _f::esc, '"', dest_file_name, '"'
 		);
 	}
 	
 	std::string_view post__ytdl_era(const char* s){
 		GET_NUMBER_NONZERO(uint64_t,dest_dir)
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, eras, eras_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(eras, s, ' ')
 		GET_USER_ID
 		
 		return this->ytdl_eras(
 			user_id,
 			dest_dir,
-			eras, eras_len,
+			eras,
 			"f.id, '@', e.start, '-', e.end, '.mkv'"
 		);
 	}
 	
 	uint64_t get_dir_id_given_path__add_if_necessary(const UserIDIntType user_id,  const char* const path){
-		if (unlikely(this->add_file_or_dir_to_db('d', nullptr, user_id, "0", 1, path, strlen(path), 0, false, false) != FunctionSuccessness::ok))
+		if (unlikely(this->add_file_or_dir_to_db('d', user_id, "0", std::string_view(path, strlen(path)), 0, false, false) != FunctionSuccessness::ok))
 			return 0;
 		return this->get_last_row_from_qry<uint64_t>("SELECT id FROM dir WHERE full_path=\"", _f::esc, '"', path, "\" LIMIT 1");
 	}
@@ -1182,7 +1184,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			if(unlikely(not compsky::utils::is_str_dblqt_escaped(s, ',', '\0')))
 				return compsky::server::_r::not_found;
 			const size_t file_name_len = (uintptr_t)s - (uintptr_t)file_name_begin;
-			this->asciify('(', user_id, ',', dir_id, ',', _f::strlen, file_name_begin, file_name_len, ')', ',');
+			this->asciify('(', user_id, ',', dir_id, ',', std::string_view(file_name_begin, file_name_len), ')', ',');
 			if (*s == 0)
 				break;
 			++s; // Skip comma
@@ -1281,7 +1283,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if(s[-1] != '/')
 			return compsky::server::_r::not_found;
 		GET_NUMBER_NONZERO_NOTCONDITION(uint64_t,dir_id,s[-1]!='/')
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("create_files")
 		
@@ -1351,7 +1353,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		this->add_tags_to_files(
 			user_id,
-			std::string_view(tag_ids, tag_ids_len),
+			tag_ids,
 			"AND f.id=", file_id // File already permission checked
 		);
 		
@@ -1397,7 +1399,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* const new_path__file_name = s;
 		
 		uint64_t new_dir_id;
-		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id<0>(new_dir_id, 'f', nullptr, user_id, "0", 1, new_path__file_name, strlen(new_path__file_name), 0, false, false);
+		const auto rc = this->add_file_or_dir_to_db__w_parent_dir_id<0>(new_dir_id, 'f', user_id, "0", std::string_view(new_path__file_name, strlen(new_path__file_name)), 0, false, false);
 		if (unlikely(rc != FunctionSuccessness::ok))
 			return (rc == FunctionSuccessness::malicious_request) ? compsky::server::_r::not_found : compsky::server::_r::server_error;
 		
@@ -1830,9 +1832,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
 		GET_PAGE_N('/')
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(ids, s, ' ')
 		GET_USER_ID
-		return this->X_given_ids<true>(tbl_alias, user_id, page_n, _f::strlen, ids, ids_len);
+		return this->X_given_ids<true>(tbl_alias, user_id, page_n, ids);
 	}
 	
 	std::string_view get_parent_tags_of(const char* s){
@@ -1945,7 +1947,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const auto user_id = user->id;
 		
 		this->mysql_query<1>(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", _f::strlen, file2_var_name, file2_var_name_len, ")")
+			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", file2_var_name, ")")
 		);
 		this->mysql_query<0>(
 			"SELECT "
@@ -1954,7 +1956,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				"0 "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"JOIN file2", _f::strlen, file2_var_name, file2_var_name_len, " f2v ON f2v.file=f.id "
+			"JOIN file2", file2_var_name, " f2v ON f2v.file=f.id "
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id "
 			JOIN_FILE_THUMBNAIL
 			"LEFT JOIN file2post f2p ON f2p.file=f.id "
@@ -2538,18 +2540,18 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 	}
 	
-	bool add_D_to_db(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len){
+	bool add_D_to_db(const UserIDIntType user_id,  const std::string_view tag_ids,  const std::string_view url){
 		this->mysql_exec(
 			"INSERT INTO device "
 			"(protocol,name,user)"
 			"SELECT "
 				"id,"
-				"\"", _f::esc, '"', _f::strlen,  url_len,  url, "\",",
+				"\"", _f::esc, '"',  url, "\",",
 				user_id, " "
 			"FROM protocol "
-			"WHERE LEFT(\"", _f::esc, '"', _f::strlen,  url_len,  url,  "\",LENGTH(name))=name "
+			"WHERE LEFT(\"", _f::esc, '"',  url,  "\",LENGTH(name))=name "
 			  "AND NOT EXISTS"
-				"(SELECT id FROM device WHERE name=\"", _f::esc, '"', _f::strlen,  url_len,  url, "\")"
+				"(SELECT id FROM device WHERE name=\"", _f::esc, '"',  url, "\")"
 			"ORDER BY LENGTH(name) DESC "
 			"LIMIT 1"
 		);
@@ -2559,7 +2561,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__recursively_record_filesystem_dir(const char* s){
 		GET_NUMBER(unsigned, max_depth)
-		GET_COMMA_SEPARATED_INTS__NULLABLE(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS__NULLABLE(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("record_local_fs")
 		SKIP_TO_BODY
@@ -2570,7 +2572,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (unlikely(not os::dir_exists(this->buf)))
 			return compsky::server::_r::not_found;
 		
-		if (tag_ids != nullptr){
+		if (tag_ids_begin != nullptr){
 			// Tag the root directory the client chose
 			// TODO: Guess the mimetype
 			if (this->itr[-2] != os::unix_path_sep){
@@ -2578,7 +2580,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this->itr[0] = 0;
 				++this->itr;
 			}
-			this->add_file_or_dir_to_db<0>('d', nullptr, user_id, (tag_ids==nullptr)?"0":tag_ids, (tag_ids==nullptr)?1:tag_ids_len, this->buf, this->buf_indx(), 0, false, false);
+			this->add_file_or_dir_to_db<0>('d', user_id, (tag_ids_begin==nullptr)?"0":tag_ids, std::string_view(this->buf, this->buf_indx()), 0, false, false);
 			// TODO: Use libmagic to guess mime type
 		}
 		
@@ -2614,7 +2616,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					this->recursively_record_files_infilesystem(user_id,  max_depth - 1);
 			} else if (e->d_type == DT_REG){
 				// regular file
-				this->add_file_or_dir_to_db<0>('f', nullptr, user_id, "0", 1, this->buf, this->buf_indx()-1, 0, false, false);
+				this->add_file_or_dir_to_db<0>('f', user_id, "0", std::string_view(this->buf, this->buf_indx()-1), 0, false, false);
 			}
 			
 			this->itr = this->buf + dir_len + 1; // Account for the terminating null byte
@@ -2630,13 +2632,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<size_t i = 0>
-	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
+	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const UserIDIntType user_id,  const std::string_view tag_ids,  const std::string_view url,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
 		parent_dir_id = 0;
 		unsigned n_errors = 0;
 		while(true){
-			this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+			this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, std::string_view(url.data() + offset,  url.size() - offset));
 			size_t closest_parent_dir_length = 0;
 			while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
 			if (unlikely(closest_parent_dir_length == 0)){
@@ -2644,12 +2646,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				return FunctionSuccessness::malicious_request;
 			}
 			offset += closest_parent_dir_length;
-			size_t url_len_of_next_step = n_chars_until_char_in(url + offset, '/', '\n', '\0');
-			if (url[offset + url_len_of_next_step] == '/')
+			size_t url_len_of_next_step = n_chars_until_char_in(url.data() + offset, '/', '\n', '\0');
+			if (url.data()[offset + url_len_of_next_step] == '/')
 				// Include the trailing slash, if it exists
 				++url_len_of_next_step;
 			const size_t url_len_up_until_next_step = offset + url_len_of_next_step;
-			if (not in_str_not_at_end__where_end_marked_by(url + offset,  '/',  '\n', '\0')){
+			if (not in_str_not_at_end__where_end_marked_by(url.data() + offset,  '/',  '\n', '\0')){
 				/* The closest parent is also the immediate parent of the directory to add
 				 * Have one final check to find the largest prefix
 				 * E.g. parsing a YouTube video url "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
@@ -2658,7 +2660,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				 *    watch?v=         3rd dir
 				 * This section accounts for the final dir, if it exists
 				 */
-				this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, _f::strlen,  url_len - offset,  url + offset);
+				this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, std::string_view(url.data() + offset,  url.size() - offset));
 				size_t closest_parent_dir_length = 0;
 				while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
 				offset += closest_parent_dir_length;
@@ -2672,8 +2674,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"id,"
 					"device,",
 					user_id, ","
-					"\"", _f::esc, '"', _f::strlen, url_len_up_until_next_step, url, "\","
-					"\"", _f::esc, '"', _f::strlen, url_len_of_next_step, url+offset, "\" "
+					"\"", _f::esc, '"', _f::strlen, url_len_up_until_next_step, url.data(), "\","
+					"\"", _f::esc, '"', _f::strlen, url_len_of_next_step, url.data()+offset, "\" "
 				"FROM dir "
 				"WHERE id=", parent_dir_id, " "
 				// No need to check permissions, that has already been done in qry_mysql_for_next_parent_dir
@@ -2681,16 +2683,18 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		
-		const std::string_view f_name_sv(url + offset,  url_len - offset);
+		std::string_view f_name_sv(url.data() + offset,  url.size() - offset);
+		// A change of name to reflect that the path is now just the file name part of the url
 		
-		if (offset == url_len){
+		if (offset == url.size()){
 			// Directory that we are trying to add already existed
 			// NOTE: The behaviour for attempting to add existing files/dirs is to still tag them
 			
 			// Move offset down, as we are currently situated after the final slash
 			do {
 				--offset;
-			} while (url[offset] != '/');
+			} while (url.data()[offset] != '/');
+			f_name_sv = std::string_view(url.data() + offset,  url.size() - offset);
 		} else if (which_tbl == 'd'){
 			// Add entry to primary table
 			this->mysql_exec(
@@ -2700,7 +2704,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"id,",
 					"device,",
 					user_id, ","
-					"\"", _f::esc, '"', _f::strlen, url_len, url, "\","
+					"\"", _f::esc, '"', url, "\","
 					"\"", _f::esc, '"',  f_name_sv, "\" "
 				"FROM dir "
 				"WHERE id=", parent_dir_id
@@ -2732,7 +2736,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				char mimetype[MAX_MIMETYPE_SZ + 1] = {0};
 				char _buf[4096 + 1024];
 				char* _itr = _buf;
-				compsky::asciify::asciify(_itr, _f::strlen, url, url_len, '\0');
+				compsky::asciify::asciify(_itr, url, '\0');
 				get_file_name_and_ext__filename_ends_with_newline_or_null(_buf, file_name, ext);
 				if (unlikely(_itr[-1] == os::unix_path_sep)){
 					const size_t file_name_len = (uintptr_t)_itr - (uintptr_t)_buf - 1;
@@ -2773,17 +2777,17 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (which_tbl == 'd'){
 			this->add_tags_to_dirs(
 				user_id,
-				tag_ids, tag_ids_len,
-				  "AND d.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
+				tag_ids,
+				  "AND d.name=\"",  _f::esc, '"', f_name_sv, "\" "
 				  "AND d.parent=", parent_dir_id, " "
 				  "AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id)
 			);
 		} else /* if (which_tbl == 'f') */ {
 			this->add_tags_to_files(
 				user_id,
-				std::string_view(tag_ids, tag_ids_len),
+				tag_ids,
 				  "AND t.id != 0 "
-				  "AND f.name=\"",  _f::esc, '"', _f::strlen,  url_len - offset,  url + offset, "\" "
+				  "AND f.name=\"",  _f::esc, '"', f_name_sv, "\" "
 				  "AND f.dir=", parent_dir_id, " "
 				  "AND " NOT_DISALLOWED_DIR("f.dir", "d.device", user_id)
 			);
@@ -2824,7 +2828,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			GET_FLOAT(double,y)
 			GET_FLOAT(double,w)
 			GET_FLOAT(double,h)
-			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '\n')
+			GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '\n')
 			
 			uint64_t box_id_final = box_id;
 			
@@ -2882,7 +2886,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"t.id,",
 					user_id, " "
 				"FROM tag t "
-				"WHERE t.id IN(", _f::strlen, tag_ids, tag_ids_len, ")"
+				"WHERE t.id IN(", tag_ids, ")"
 				  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 				"ON DUPLICATE KEY UPDATE box=box"
 			);
@@ -2901,7 +2905,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view add_to_tbl(const char tbl,  const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
 		// NOTE: A tag_ids of "0" should be allowed, at least for adding directories.
 		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t,dir_id)
@@ -2920,10 +2924,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const size_t url_len = (uintptr_t)s - (uintptr_t)url;
 			if (url_len == 0)
 				return compsky::server::_r::not_found;
+			std::string_view url_view(url, url_len);
 			switch(tbl){
 				case 'f':
 				case 'd':
-					switch(this->add_file_or_dir_to_db(tbl, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl, is_audio_only)){
+					switch(this->add_file_or_dir_to_db(tbl, user_id, tag_ids, url_view, dir_id, is_ytdl, is_audio_only)){
 						case FunctionSuccessness::server_error:
 							return compsky::server::_r::server_error;
 						case FunctionSuccessness::malicious_request:
@@ -2931,11 +2936,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					}
 					break;
 				case 'D':
-					if (unlikely(this->add_D_to_db(user_id, tag_ids, tag_ids_len, url, url_len)))
+					if (unlikely(this->add_D_to_db(user_id, tag_ids, url_view)))
 						return compsky::server::_r::not_found;
 					break;
 				case 't':
-					this->add_t_to_db(user_id, std::string_view(tag_ids, tag_ids_len), std::string_view(url, url_len));
+					this->add_t_to_db(user_id, tag_ids, url_view);
 					break;
 			}
 			if (*s == 0)
@@ -2955,7 +2960,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			return compsky::server::_r::not_found;
 		++s; // Skip slash
 		
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("add_eras")
 		
@@ -2977,7 +2982,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		this->add_tag_to_era(
 			user_id,
-			tag_ids, tag_ids_len,
+			tag_ids,
 			  "AND e.file=",  file_id, " "
 			  "AND e.start=", era_start, 5, " "
 			  "AND e.end=",   era_end, 5
@@ -2987,7 +2992,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename... Args>
-	void add_tag_to_era(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
+	void add_tag_to_era(const UserIDIntType user_id,  const std::string_view tag_ids,  Args... where_args){
 		this->mysql_exec(
 			"INSERT INTO era2tag"
 			"(era, tag)"
@@ -2998,7 +3003,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN era e "
 			"JOIN file f ON f.id=e.file "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			"WHERE t.id IN (", tag_ids,  ")"
 			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 			  "AND " NOT_DISALLOWED_ERA("e.id", "e.file", "f.dir", "d.device", user_id),
 			  where_args..., " "
@@ -3009,18 +3014,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view update_tag_thumbnail(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, tag_id)
 		
-		const char* const url = s;
-		const size_t url_length = count_until(url, ' ');
-		
-		if(*s == 0)
-			return compsky::server::_r::not_found;
+		const std::string_view url = get_str_view_up_to(s, ' ');
 		
 		GET_USER_ID
 		BLACKLIST_GUEST
 		
 		this->mysql_exec(
 			"UPDATE tag "
-			"SET thumbnail=\"", _f::esc, '"', _f::strlen, url_length, url, "\" "
+			"SET thumbnail=\"", _f::esc, '"', url, "\" "
 			"WHERE id=", tag_id
 		);
 		
@@ -3100,38 +3101,38 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__merge_files(const char* s){
 		GET_NUMBER_NONZERO(uint64_t, orig_f_id)
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dupl_f_ids, dupl_f_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(dupl_f_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("merge_files")
 		
-		this->merge_files(user_id, orig_f_id, _f::strlen, dupl_f_ids, dupl_f_ids_len);
+		this->merge_files(user_id, orig_f_id, dupl_f_ids);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__backup_file(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
 		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
 		GET_NUMBER(bool, is_ytdl)
 		GET_NUMBER(bool, is_audio_only)
 		
-		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
-		const size_t url_length = count_until(url, ' ');
+		const std::string_view url = get_str_view_up_to(s, ' ');
+		// An URL which (if supplied) is used instead of the original file URL
 		
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		
 		// TODO: Hide this option for guests in the UI, and BLACKLIST_GUESTS in this function
 		
-		SQLQuery qry(this, db_infos.at(0), "SELECT f.id, d.full_path, f.name FROM file f JOIN dir d ON d.id=f.dir WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")");
+		SQLQuery qry(this, db_infos.at(0), "SELECT f.id, d.full_path, f.name FROM file f JOIN dir d ON d.id=f.dir WHERE f.id IN(", file_ids, ")");
 		char orig_file_path[4096];
 		const char* file_id_str;
 		const char* orig_dir_name;
 		const char* file_name;
 		while(qry.assign_next_row(&file_id_str, &orig_dir_name, &file_name)){
-			if ((url_length != 0) and not is_ytdl)
-				compsky::asciify::asciify(orig_file_path, _f::strlen, url, url_length, '\0');
+			if ((url.size() != 0) and not is_ytdl)
+				compsky::asciify::asciify(orig_file_path, url, '\0');
 			else
 				compsky::asciify::asciify(orig_file_path, orig_dir_name, file_name, '\0');
 			
@@ -3191,14 +3192,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 	}
 	
-	void tag_antiparentisation(const UserIDIntType user_id,  const char* const child_ids,  const char* const tag_ids,  const size_t child_ids_len,  const size_t tag_ids_len){
+	void tag_antiparentisation(const UserIDIntType user_id,  const std::string_view child_ids,  const std::string_view tag_ids){
 		this->mysql_exec(
 			"DELETE t2p "
 			"FROM tag2parent t2p "
 			"JOIN tag t ON t.id=t2p.id "
 			"JOIN tag p ON p.id=t2p.parent "
-			"WHERE t.id IN (", _f::strlen, child_ids, child_ids_len, ")"
-			  "AND p.id IN (", _f::strlen, tag_ids,   tag_ids_len,   ")"
+			"WHERE t.id IN (", child_ids, ")"
+			  "AND p.id IN (", tag_ids,   ")"
 			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 			  // "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id) // Unnecessary
 		);
@@ -3261,9 +3262,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	};
 	
 	std::string_view post__add_parents_to_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
@@ -3272,46 +3273,46 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this,
 			user_id,
 			true,
-			std::string_view(parent_ids, parent_ids_len),
-			std::string_view(child_ids,  child_ids_len)
+			parent_ids,
+			child_ids
 		);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__rm_parents_from_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, parent_ids, parent_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		this->tag_antiparentisation(user_id, tag_ids, parent_ids, tag_ids_len, parent_ids_len);
+		this->tag_antiparentisation(user_id, tag_ids, parent_ids);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__rm_children_from_tags(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, child_ids, child_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		this->tag_antiparentisation(user_id, child_ids, tag_ids, child_ids_len, tag_ids_len);
+		this->tag_antiparentisation(user_id, child_ids, tag_ids);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	template<typename... Args>
-	void add_tags_to_dirs(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... where_args){
+	void add_tags_to_dirs(const UserIDIntType user_id,  const std::string_view tag_ids,  Args... where_args){
 		this->mysql_exec(
 			"INSERT INTO dir2tag"
 			"(tag, dir, user)"
 			"SELECT t.id,d.id,", user_id, " "
 			"FROM tag t "
 			"JOIN dir d "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			"WHERE t.id IN (", tag_ids,  ")"
 			  "AND " NOT_DISALLOWED_TAG("t.id", user_id),
 			  where_args..., " "
 			"ON DUPLICATE KEY UPDATE dir=dir"
@@ -3335,21 +3336,21 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename... Args>
-	void rm_tags_from_files(const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  Args... file_ids_args){
+	void rm_tags_from_files(const UserIDIntType user_id,  const std::string_view tag_ids,  Args... file_ids_args){
 		this->mysql_exec(
 			"DELETE f2t "
 			"FROM file2tag f2t "
 			"JOIN tag t ON t.id=f2t.tag "
-			"WHERE t.id IN (", _f::strlen, tag_ids,  tag_ids_len,  ")"
+			"WHERE t.id IN (", tag_ids,  ")"
 			  "AND f2t.file IN (", file_ids_args..., ")"
 			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
 		);
 	}
 	
 	std::string_view post__rm_tags_from_files(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("unlink_tags")
 		
@@ -3357,63 +3358,63 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"SELECT 1 "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE f.id IN (", _f::strlen, file_ids, file_ids_len, ")"
+			"WHERE f.id IN (", file_ids, ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 		);
 		if (unlikely(not authorised))
 			return compsky::server::_r::not_found;
 		
-		this->rm_tags_from_files(user_id, tag_ids, tag_ids_len, _f::strlen, file_ids, file_ids_len);
+		this->rm_tags_from_files(user_id, tag_ids, file_ids);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__add_tags_to_eras(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, ids, ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
-		this->add_tag_to_era(user_id, tag_ids, tag_ids_len, "AND e.id IN(", _f::strlen, ids, ids_len, ")");
+		this->add_tag_to_era(user_id, tag_ids, "AND e.id IN(", ids, ")");
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__add_tags_to_dirs(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, dir_ids, dir_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(dir_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
 		this->add_tags_to_dirs(
 			user_id,
-			tag_ids, tag_ids_len,
-			"AND d.id IN(", _f::strlen, dir_ids, dir_ids_len, ")"
+			tag_ids,
+			"AND d.id IN(", dir_ids, ")"
 		);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__add_tag_to_file(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
 		++s; // Skip trailing slash
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, tag_ids, tag_ids_len, s, ' ')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
 		
 		this->add_tags_to_files(
 			user_id,
-			std::string_view(tag_ids, tag_ids_len),
-			"AND f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
+			tag_ids,
+			"AND f.id IN(", file_ids, ")"
 		);
 		
 		return compsky::server::_r::post_ok;
 	}
 	
 	std::string_view post__add_var_to_file(const char* s){
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(TRUE, file_ids, file_ids_len, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
 		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t, value)
 		GET_FILE2_VAR_NAME(s)
@@ -3422,12 +3423,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GREYLIST_GUEST
 		
 		this->mysql_exec(
-			"INSERT INTO file2", _f::strlen, file2_var_name, file2_var_name_len, " "
+			"INSERT INTO file2", file2_var_name, " "
 			"(file,x)"
 			"SELECT f.id,", value, " "
 			"FROM file f "
 			"JOIN dir d ON d.id=f.dir "
-			"WHERE f.id IN(", _f::strlen, file_ids, file_ids_len, ")"
+			"WHERE f.id IN(", file_ids, ")"
 			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id)
 			"ON DUPLICATE KEY UPDATE x=VALUES(x)"
 		);
@@ -3443,21 +3444,22 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return compsky::server::_r::post_ok;
 	}
 	
-	void md5_hash(uint8_t* const hash,  const char* const string,  const size_t string_len){
+	void md5_hash(uint8_t* const hash,  const std::string_view string){
 		MD5_CTX md5_ctx;
 		MD5_Init(&md5_ctx);
-		MD5_Update(&md5_ctx, string, string_len);
+		MD5_Update(&md5_ctx, string.data(), string.size());
 		MD5_Final(hash, &md5_ctx);
 	}
 	
 	void md5_hash(uint8_t* const hash,  const char* const string){
-		this->md5_hash(hash, string, strlen(string));
+		this->md5_hash(hash, std::string_view(string, strlen(string)));
 	}
 	
 	void md5_hash_local_file(uint8_t* const hash,  const char* const dir,  const char* const file){
 		char file_path[4096];
-		compsky::asciify::asciify(file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file, '\0');
-		this->md5_hash(hash, file_path);
+		char* itr = file_path;
+		compsky::asciify::asciify(file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file);
+		this->md5_hash(hash, std::string_view(file_path,  (uintptr_t)itr - (uintptr_t)file_path));
 	}
 	
 	std::string_view update_video_metadatas(const char* s){

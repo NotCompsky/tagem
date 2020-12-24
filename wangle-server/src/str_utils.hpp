@@ -17,6 +17,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "os.hpp"
 #include "str_parsing_macros.hpp"
 #include <inttypes.h> // for uintptr_t
+#include <string_view>
 
 
 constexpr
@@ -137,6 +138,11 @@ size_t count_until(const char* s,  const char c){
 	return n;
 }
 STATIC_ASSERT(count_until("foobar",'b')==3);
+
+constexpr
+std::string_view get_str_view_up_to(const char* const begin,  const char c){
+	return std::string_view(begin, count_until(begin, ' '));
+}
 
 constexpr
 bool matches__left_up_to_space__right_up_to_comma_or_null(const char* const A,  const char* b){
