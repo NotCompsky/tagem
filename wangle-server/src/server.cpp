@@ -327,10 +327,10 @@ const char* get_str(const rapidjson::Value& v,  const char* k,  const char* defa
 }
 }
 
-namespace _f = compsky::server::_f;
-namespace _f {
+namespace compsky::server::_f {
 	constexpr static compsky::asciify::flag::Escape3 esc3;
 }
+namespace _f = compsky::server::_f;
 
 namespace atomic_signal {
 	static
