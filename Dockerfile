@@ -1,7 +1,7 @@
 # Has to be in the root directory, otherwise the docker build system will not allow copying the necessary files from the host to the container
 # All the other Dockerfiles are under wangle-server/docker
 
-FROM notcompsky/static-wangle-ffmpeg:latest AS intermediate
+FROM notcompsky/amd64-static-mariadb-ffmpeg:latest AS intermediate
 WORKDIR /tagem
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
 COPY wangle-server/docker/ffmpegthumbnailer-static.patch /ffmpegthumbnailer-static.patch
