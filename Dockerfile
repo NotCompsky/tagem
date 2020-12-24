@@ -21,7 +21,9 @@ COPY include /tagem/include
 
 ARG libmagic_version=5.39
 
-RUN apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/main/ python3-dev=3.8.5-r0 \
+RUN git clone --depth 1 https://github.com/lexbor/lexbor \
+	\
+	&& apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/main/ python3-dev=3.8.5-r0 \
 	&& for d in /usr/lib/python3.*; do \
 		cp $(find "$d" -type f -name '*python*.a') /usr/lib/ \
 	; done \
@@ -73,6 +75,19 @@ RUN apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.12/m
 		-DMYSQL_IS_UNDER_MARIADB_DIR=1 \
 		-DMYSQL_UNDER_DIR_OVERRIDE=1 \
 		.. \
+	&& make install \
+	\
+	&& cd /tagem/lexbor \
+	&& cmake \
+		-DLEXBOR_BUILD_SHARED=OFF \
+		-DLEXBOR_BUILD_STATIC=ON \
+		-DLEXBOR_BUILD_TESTS=OFF \
+		-DLEXBOR_BUILD_TESTS_CPP=OFF \
+		-DLEXBOR_BUILD_UTILS=OFF \
+		-DLEXBOR_BUILD_EXAMPLES=OFF \
+		-DLEXBOR_BUILD_SEPARATELY=ON \
+		. \
+	&& make \
 	&& make install \
 	\
 	&& mv /usr/include/python3.8/* /usr/include/ \
