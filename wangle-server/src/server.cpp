@@ -2424,7 +2424,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
 	}
 	
-	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl,  const bool is_audio_only){
+	FunctionSuccessness dl_or_cp_file(char(&file_path)[4096],  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool is_ytdl,  const bool is_audio_only){
 		if (unlikely(file_name[0] == 0)){
 			this->log("Empty file name");
 			return FunctionSuccessness::server_error;
@@ -2509,11 +2509,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return FunctionSuccessness::ok;
 	}
 	
-	FunctionSuccessness dl_file(char(&file_path)[4096],  const char* user_headers,  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl,  const bool is_audio_only){
+	FunctionSuccessness dl_file(char(&file_path)[4096],  const UserIDIntType user_id,  const uint64_t dir_id,  const char* const file_id,  const char* const file_name,  const char* const url,  const bool overwrite_existing,  char* mimetype,  const bool force_remote,  const bool is_ytdl,  const bool is_audio_only){
 		if (os::is_local_file_or_dir(url) and force_remote)
 			return FunctionSuccessness::malicious_request;
 		
-		return this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl, is_audio_only);
+		return this->dl_or_cp_file(file_path, user_id, dir_id, file_id, file_name, url, overwrite_existing, mimetype, is_ytdl, is_audio_only);
 	}
 	
 	template<typename Str1,  typename Str2>
@@ -2630,7 +2630,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<size_t i = 0>
-	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const char* const user_headers,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
+	FunctionSuccessness add_file_or_dir_to_db__w_parent_dir_id(uint64_t& parent_dir_id,  const char which_tbl,  const UserIDIntType user_id,  const char* const tag_ids,  const size_t tag_ids_len,  const char* const url,  const size_t url_len,  const uint64_t dl_backup_into_dir_id,  const bool is_ytdl,  const bool is_audio_only,  const char* const mimetype = ""){
 		// Add ancestor directories
 		size_t offset = 0;
 		parent_dir_id = 0;
@@ -2744,7 +2744,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				const StringFromSQLQuery file_id(this, "SELECT id FROM file WHERE dir=", parent_dir_id, " AND name=\"", _f::esc, '"', f_name_sv, "\" LIMIT 1");
 				char file_path[4096];
 				
-				auto const successness = this->dl_file(file_path, user_headers, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl, is_audio_only);
+				auto const successness = this->dl_file(file_path, user_id, dl_backup_into_dir_id, file_id.value, file_name, _buf, is_html_file, mimetype, true, is_ytdl, is_audio_only);
 				
 				if (unlikely(successness == FunctionSuccessness::malicious_request))
 					return FunctionSuccessness::malicious_request;
@@ -2908,8 +2908,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_NUMBER(bool,is_ytdl)
 		GET_NUMBER(bool,is_audio_only)
 		
-		const char* const user_headers = s;
-		
 		GET_USER_ID
 		SKIP_TO_BODY
 		--s;
@@ -2925,7 +2923,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			switch(tbl){
 				case 'f':
 				case 'd':
-					switch(this->add_file_or_dir_to_db(tbl, user_headers, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl, is_audio_only)){
+					switch(this->add_file_or_dir_to_db(tbl, user_id, tag_ids, tag_ids_len, url, url_len, dir_id, is_ytdl, is_audio_only)){
 						case FunctionSuccessness::server_error:
 							return compsky::server::_r::server_error;
 						case FunctionSuccessness::malicious_request:
@@ -3121,8 +3119,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const char* const url = s; // An URL which (if supplied) is used instead of the original file URL
 		const size_t url_length = count_until(url, ' ');
 		
-		const char* const user_headers = s;
-		
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("backup_files")
 		
@@ -3141,7 +3137,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			
 			char mimetype[100] = {0};
 			char file_path[4096];
-			const auto rc = this->dl_or_cp_file(file_path, user_headers, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl, is_audio_only);
+			const auto rc = this->dl_or_cp_file(file_path, user_id, dir_id, file_id_str, file_name, orig_file_path, false, mimetype, is_ytdl, is_audio_only);
 			
 			if (rc != FunctionSuccessness::ok)
 				return (rc == FunctionSuccessness::malicious_request) ? compsky::server::_r::not_found : compsky::server::_r::server_error;
