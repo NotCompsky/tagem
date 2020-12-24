@@ -327,8 +327,8 @@ const char* get_str(const rapidjson::Value& v,  const char* k,  const char* defa
 }
 }
 
+namespace _f = compsky::server::_f;
 namespace _f {
-	constexpr static Zip<2> zip2;
 	constexpr static compsky::asciify::flag::Escape3 esc3;
 }
 
