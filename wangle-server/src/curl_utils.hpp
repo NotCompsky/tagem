@@ -16,6 +16,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "read_request.hpp"
 #include "user_agent.hpp" // TODO: Should be set by CMake, to allow different choices, but CMake is just so so so dumb and escaping the characters is such a pain
 #include "str_parsing_macros.hpp"
+#include "log.hpp"
 #include <compsky/os/metadata.hpp>
 #include <compsky/os/write.hpp>
 #include <compsky/asciify/asciify.hpp>

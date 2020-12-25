@@ -23,7 +23,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "user_auth.hpp"
 #include "proc.hpp"
 #include "curl_utils.hpp"
-#include "../../utils/src/thumbnailer.hpp"
+#include "thumbnailer.hpp"
 #include "get_cookies.hpp"
 #include "read_request.hpp"
 #include "initialise_tagem_db.hpp"
