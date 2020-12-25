@@ -4,7 +4,7 @@
 FROM notcompsky/amd64-static-mariadb-ffmpeg:latest AS intermediate
 WORKDIR /tagem
 # NOTE: libcompsky should be rebuilt every time, there is a reasonable chance that it is upgraded when tagem is
-COPY wangle-server/docker/ffmpegthumbnailer-static.patch /ffmpegthumbnailer-static.patch
+COPY ffmpegthumbnailer-static.patch /ffmpegthumbnailer-static.patch
 
 ENV PATH=$PATH:/usr/local/x86_64-linux-musl/lib
 ENV CC=/usr/local/bin/x86_64-linux-musl-gcc
