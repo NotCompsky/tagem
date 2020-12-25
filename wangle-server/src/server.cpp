@@ -2660,6 +2660,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				 *    watch?v=         3rd dir
 				 * This section accounts for the final dir, if it exists
 				 */
+				if (which_tbl == 'd')
+					break;
 				this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, std::string_view(url.data() + offset,  url.size() - offset));
 				size_t closest_parent_dir_length = 0;
 				while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
@@ -2686,16 +2688,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		std::string_view f_name_sv(url.data() + offset,  url.size() - offset);
 		// A change of name to reflect that the path is now just the file name part of the url
 		
-		if (offset == url.size()){
-			// Directory that we are trying to add already existed
-			// NOTE: The behaviour for attempting to add existing files/dirs is to still tag them
-			
-			// Move offset down, as we are currently situated after the final slash
-			do {
-				--offset;
-			} while (url.data()[offset] != '/');
-			f_name_sv = std::string_view(url.data() + offset,  url.size() - offset);
-		} else if (which_tbl == 'd'){
+		if (which_tbl == 'd'){
 			// Add entry to primary table
 			this->mysql_exec(
 				"INSERT INTO dir "
@@ -2707,7 +2700,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					"\"", _f::esc, '"', url, "\","
 					"\"", _f::esc, '"',  f_name_sv, "\" "
 				"FROM dir "
-				"WHERE id=", parent_dir_id
+				"WHERE id=", parent_dir_id, " "
+				"ON DUPLICATE KEY UPDATE device=VALUES(device)"
 				// NOTE: The user has been verified to have permission to access the parent directory.
 				// Guaranteed not to be a duplicate
 			);
