@@ -10,12 +10,8 @@ FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more de
 This copyright notice should be included in any copy or substantial copy of the tagem source code.
 The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 */
-#define CLI_ONLY
-#include "basename.hpp"
-#include "protocol.hpp"
 
 #include <compsky/mysql/query.hpp>
-#include <boost/regex.hpp>
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
@@ -600,118 +596,18 @@ void and_name_regexp(char*&,  const std::nullptr_t){}
 
 
 struct Options {
-	char* directory;
 	char* device_regexp;
 	bool recursive;
 	
 	Options()
-	: directory(nullptr)
 	, device_regexp(".")
 	, recursive(false)
 	{}
 };
 
 
-constexpr
-bool check_regex(const std::nullptr_t regex,  const char* const file_name,  const size_t file_name_len){
-	return true;
-}
-
-bool check_regex(const boost::regex* regex,  const char* const file_name,  const size_t file_name_len){
-	static boost::match_results<const char*> what;
-	return (boost::regex_search(file_name,  file_name + strlen(file_name),  what,  *regex));
-}
-
-
-template<typename FileType,  typename BoostRegex,  typename RelationType>
-void hash_all_from_dir(const char* const dir_name,  const bool recursive,  const BoostRegex regex,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
-	static char file_path[4096];
-	static size_t dir_prefix_len = 0;
-	
-	const size_t dir_len = strlen(dir_name);
-	memcpy(file_path + dir_prefix_len,  dir_name,  dir_len);
-	dir_prefix_len += dir_len;
-	file_path[dir_prefix_len] = '/';
-	++dir_prefix_len;
-	file_path[dir_prefix_len] = 0;
-	
-	DIR* dir = opendir(file_path);
-	if (dir == nullptr)
-		return;
-	struct dirent* e;
-	while((e = readdir(dir)) != nullptr){
-		const char* const ename = e->d_name;
-		if (ename == nullptr)
-			continue;
-		if (
-			(ename[0] == '.') &&
-			(ename[1] == 0)   || (ename[1] == '.'  &&  ename[2] == 0)
-		)
-			// Skip . and ..
-			continue;
-		
-		if (e->d_type == DT_DIR){
-			if (recursive)
-				hash_all_from_dir(ename, recursive, regex, file_type_flag, hash_name, which_relation);
-			continue;
-		}
-		
-		if (e->d_type == DT_LNK)
-			continue;
-		
-		if (!(check_regex(regex,  ename,  strlen(ename)))){
-			fprintf(logfile, "Failed regex: %s\n", ename);
-			continue;
-		}
-		
-		static char buf[128 + 4*4096];
-		
-		file_path[dir_prefix_len] = 0;
-		insert_file_from_path_pair(file_path, ename, protocol::local_filesystem);
-		
-		compsky::mysql::query(
-			_mysql::obj,
-			RES1,
-			buf,
-			"SELECT f.id "
-			"FROM file f "
-			"JOIN dir d ON d.id=f.dir "
-			"WHERE d.full_path=\"", _f::esc, '"', file_path, "\" "
-			  "AND f.name=\"", _f::esc, '"', ename, "\" "
-			  "AND ", which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
-		);
-		memcpy(file_path + dir_prefix_len,  ename,  strlen(ename) + 1);
-		const char* file_id;
-		while(compsky::mysql::assign_next_row(RES1, &ROW1, &file_id)){
-			// This can only have 0 or 1 iterations
-			save_hash(file_type_flag, hash_name, file_id, 0, false, file_path, which_relation);
-		}
-	}
-	closedir(dir);
-	dir_prefix_len -= (dir_len + 1);
-}
-
-
-template<typename FileType,  typename RelationType>
-void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const char* const file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
-	boost::regex regex(file_ext_regexp, boost::regex::extended); // POSIX extended is the MySQL regex engine
-	hash_all_from_dir(dirpath, recursive, &regex, file_type_flag, hash_name, which_relation);
-}
-
-
-template<typename FileType,  typename RelationType>
-void hash_all_from_dir_root(const char* const dirpath,  const bool recursive,  const std::nullptr_t file_ext_regexp,  const FileType file_type_flag,  const char* const hash_name,  const RelationType& which_relation){
-	hash_all_from_dir(dirpath, recursive, nullptr, file_type_flag, hash_name, which_relation);
-}
-
-
 template<typename FileType,  typename String1,  typename String2,  typename RelationType>
 void hash_all_from(const Options opts,  const FileType file_type_flag,  const String1 dir_regexp,  const String2 file_ext_regexp,  const char* const hash_name,  const RelationType& which_relation){
-	if (opts.directory != nullptr){
-		hash_all_from_dir_root(opts.directory, opts.recursive, file_ext_regexp, file_type_flag, hash_name, which_relation);
-		return;
-	}
-	
 	const char* _id;
 	const char* _fp;
 	uint64_t _dir_id;
@@ -767,15 +663,6 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 };
 
 
-void ensure_endswith_slash(char* str){
-	while(*str != 0)
-		++str;
-	--str;
-	if (*str == '/')
-		*str = 0;
-}
-
-
 int main(const int argc,  char* const* argv){
 	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
 	
@@ -819,10 +706,6 @@ int main(const int argc,  char* const* argv){
 		if (arg[0] != '-')
 			break;
 		switch(arg[1]){
-			case 'd':
-				opts.directory = *(++argv);
-				ensure_endswith_slash(opts.directory);
-				break;
 			case 'D':
 				opts.device_regexp = *(++argv);
 				break;

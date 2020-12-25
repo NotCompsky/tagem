@@ -17,7 +17,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "os.hpp"
 #include "skip_to_body.hpp"
 #include "qry.hpp"
-#include "protocol.hpp"
 #include "verify_str.hpp"
 #include "str_utils.hpp"
 #include "db_info.hpp"
