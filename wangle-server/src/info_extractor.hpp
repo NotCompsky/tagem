@@ -238,10 +238,10 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		case Reddit: {
 			title = STRING_VIEW_FROM_UP_TO(12, ", \"title\": \"")(html_buf, '"');
 			author = STRING_VIEW_FROM_UP_TO(13 , ", \"author\": \"")(html_buf, '"'); // NOTE: Multiple matches, but the first is selected
-			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
 			likes = STRING_VIEW_FROM_UP_TO(11, ", \"score\": ")(html_buf, ',');
 			timestamp = STRING_VIEW_FROM_UP_TO(17, ", \"created_utc\": ")(html_buf, '.');
 			author_title = "/u/";
+			link_url = STRING_VIEW_FROM_UP_TO(10, ", \"url\": \"")(html_buf, '"');
 			break;
 		}
 		case TheAmericanProspect: {
