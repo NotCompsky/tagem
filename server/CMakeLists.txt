@@ -39,8 +39,8 @@ if(ENABLE_STATIC)
 	set(LIBCRYPTO_NAMES crypto.a libcrypto.a)
 	set(BOOST_THREAD_NAMES boost_thread.a libboost_thread.a)
 	set(PTHREAD)
-set(FFMPEGTHUMBNAILER_NAMES ffmpegthumbnailer.a libffmpegthumbnailer.a)
-set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.a mariadb/libmariadbclient.a mysqlclient.a libmysqlclient.a mysql/mysqlclient.a mysql/libmysqlclient.a)
+	set(FFMPEGTHUMBNAILER_NAMES ffmpegthumbnailer.a libffmpegthumbnailer.a)
+	set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.a mariadb/libmariadbclient.a mysqlclient.a libmysqlclient.a mysql/mysqlclient.a mysql/libmysqlclient.a)
 	set(LIBMAGIC_NAMES magic.a libmagic.a)
 	set(LIBSSL_NAMES ssl.a libssl.a openssl.a libopenssl.a)
 	find_library(LIBAVDEVICE NAMES avdevice.a libavdevice.a)
@@ -61,8 +61,8 @@ else()
 	set(BOOST_THREAD_NAMES boost_thread)
 	set(LIBMAGIC_NAMES magic)
 	find_library(PTHREAD NAMES pthread)
-set(FFMPEGTHUMBNAILER_NAMES ffmpegthumbnailer)
-set(MYSQL_CLIENT_NAMES mariadbclient mysqlclient)
+	set(FFMPEGTHUMBNAILER_NAMES ffmpegthumbnailer)
+	set(MYSQL_CLIENT_NAMES mariadbclient mysqlclient)
 	set(LIBSSL_NAMES ssl openssl)
 	set(FFMPEG_THUMBNAILER_DEPS)
 	set(LEXBOR_NAMES lexbor)
@@ -191,30 +191,27 @@ add_custom_target(
 	COMMENT "Generating SVG icons header"
 )
 
+add_custom_target(
+	_SRC_DIR_static_js_3rd_party_php_date_formatter_js ALL
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js" "https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js" 
+	BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js"
+	COMMENT "Downloading datetimepicker.css"
+)
 
-			add_custom_target(
-				_SRC_DIR_static_js_3rd_party_php_date_formatter_js ALL
-				COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js" "https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js" 
-				BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js"
-				COMMENT "Downloading datetimepicker.css"
-			)
-		
+add_custom_target(
+	_SRC_DIR_static_js_3rd_party_datetimepicker_js ALL
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/datetimepicker.js" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js" 
+	BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
+	COMMENT "Downloading datetimepicker.css"
+)
 
-			add_custom_target(
-				_SRC_DIR_static_js_3rd_party_datetimepicker_js ALL
-				COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/datetimepicker.js" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js" 
-				BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
-				COMMENT "Downloading datetimepicker.css"
-			)
-		
+add_custom_target(
+	_SRC_DIR_static_css_3rd_party_datetimepicker_css ALL
+	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/css/3rd-party/datetimepicker.css" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css" 
+	BYPRODUCTS "${SRC_DIR}/static/css/3rd-party/datetimepicker.css"
+	COMMENT "Downloading datetimepicker.css"
+)
 
-			add_custom_target(
-				_SRC_DIR_static_css_3rd_party_datetimepicker_css ALL
-				COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/css/3rd-party/datetimepicker.css" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css" 
-				BYPRODUCTS "${SRC_DIR}/static/css/3rd-party/datetimepicker.css"
-				COMMENT "Downloading datetimepicker.css"
-			)
-		
 
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
 set_property(TARGET qry PROPERTY CXX_STANDARD 17)
@@ -259,8 +256,6 @@ endif()
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)
 
 
-add_dependencies(server auto__server_determine_response_hpp auto__infoextractor_verify_hpp auto__infoextractor_domainid_hpp js_hpp svg_hpp qry__process_arg__tokens qry__get_attribute_name__tokens
- _SRC_DIR_static_js_3rd_party_php_date_formatter_js _SRC_DIR_static_js_3rd_party_datetimepicker_js _SRC_DIR_static_css_3rd_party_datetimepicker_css)
+add_dependencies(server auto__server_determine_response_hpp auto__infoextractor_verify_hpp auto__infoextractor_domainid_hpp js_hpp svg_hpp qry__process_arg__tokens qry__get_attribute_name__tokens _SRC_DIR_static_js_3rd_party_php_date_formatter_js _SRC_DIR_static_js_3rd_party_datetimepicker_js _SRC_DIR_static_css_3rd_party_datetimepicker_css)
 
-target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\""
-)
+target_compile_definitions(server PRIVATE "TABLE_LIMIT=\"${TABLE_LIMIT}\"")
