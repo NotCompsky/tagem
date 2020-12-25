@@ -5,10 +5,16 @@ find_package(Compsky REQUIRED)
 
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type")
 option(TAGEM_HASH "Build the tagem-hash utility" ON)
-set(WHICH_MYSQL_CLIENT "mysqlclient" CACHE STRING "Which MySQL or MariaDB client to use")
 
 set(TGTS)
 set(CXX17_TGTS tagem-init)
+
+if(ENABLE_STATIC)
+	set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.a mariadb/libmariadbclient.a mysqlclient.a libmysqlclient.a mysql/mysqlclient.a mysql/libmysqlclient.a)
+else()
+	set(MYSQL_CLIENT_NAMES mariadbclient mysqlclient)
+endif()
+find_library(MYSQL_CLIENT NAMES ${MYSQL_CLIENT_NAMES})
 
 if(OpenCV_FOUND)
 	set(TGTS "${TGTS};tagem-instances")
@@ -21,7 +27,7 @@ if(OpenCV_FOUND)
 			LINK_FLAGS_RELEASE -s
 	)
     target_include_directories(tagem-instances PRIVATE ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(tagem-instances PRIVATE "${WHICH_MYSQL_CLIENT}" opencv_core opencv_imgcodecs opencv_highgui)
+    target_link_libraries(tagem-instances PRIVATE "${MYSQL_CLIENT}" opencv_core opencv_imgcodecs opencv_highgui)
     target_compile_definitions(tagem-instances PRIVATE ${MY_DEFINES})
 else()
     message(WARNING "OpenCV not found, so tagem-instances will not be built")
@@ -31,15 +37,8 @@ set(PROJECT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_executable(tagem-init src/init.cpp)
 target_include_directories(tagem-init PRIVATE ${COMPSKY_INCLUDE_DIRS})
-target_link_libraries(tagem-init compsky_mysql_create_config "${WHICH_MYSQL_CLIENT}")
+target_link_libraries(tagem-init compsky_mysql_create_config "${MYSQL_CLIENT}")
 set_property(TARGET tagem-init PROPERTY CXX_STANDARD 17)
-
-if(ENABLE_STATIC)
-	set(MYSQL_CLIENT_NAMES mariadbclient.a libmariadbclient.a mariadb/mariadbclient.a mariadb/libmariadbclient.a mysqlclient.a libmysqlclient.a mysql/mysqlclient.a mysql/libmysqlclient.a)
-else()
-	set(MYSQL_CLIENT_NAMES mariadbclient mysqlclient)
-endif()
-find_library(MYSQL_CLIENT NAMES ${MYSQL_CLIENT_NAMES})
 
 if(TAGEM_HASH)
 	if(NOT PHASH_INCLUDE_DIR)
