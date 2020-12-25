@@ -2651,7 +2651,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				// Include the trailing slash, if it exists
 				++url_len_of_next_step;
 			const size_t url_len_up_until_next_step = offset + url_len_of_next_step;
-			if (not in_str_not_at_end__where_end_marked_by(url.data() + offset,  '/',  '\n', '\0')){
+			const bool terminatedyish = not in_str_not_at_end__where_end_marked_by(url.data() + offset,  '/',  '\n', '\0');
+			if (terminatedyish and (which_tbl == 'f')){
 				/* The closest parent is also the immediate parent of the directory to add
 				 * Have one final check to find the largest prefix
 				 * E.g. parsing a YouTube video url "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
@@ -2660,8 +2661,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				 *    watch?v=         3rd dir
 				 * This section accounts for the final dir, if it exists
 				 */
-				if (which_tbl == 'd')
-					break;
 				this->qry_mysql_for_next_parent_dir<i>(user_id, parent_dir_id, std::string_view(url.data() + offset,  url.size() - offset));
 				size_t closest_parent_dir_length = 0;
 				while(this->mysql_assign_next_row<i>(&parent_dir_id, &closest_parent_dir_length));
@@ -2683,29 +2682,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				// No need to check permissions, that has already been done in qry_mysql_for_next_parent_dir
 				"ON DUPLICATE KEY UPDATE device=VALUES(device)"
 			);
+			if (terminatedyish)
+				break;
 		}
 		
 		std::string_view f_name_sv(url.data() + offset,  url.size() - offset);
 		// A change of name to reflect that the path is now just the file name part of the url
 		
-		if (which_tbl == 'd'){
-			// Add entry to primary table
-			this->mysql_exec(
-				"INSERT INTO dir "
-				"(parent, device, user, full_path, name)"
-				"SELECT "
-					"id,",
-					"device,",
-					user_id, ","
-					"\"", _f::esc, '"', url, "\","
-					"\"", _f::esc, '"',  f_name_sv, "\" "
-				"FROM dir "
-				"WHERE id=", parent_dir_id, " "
-				"ON DUPLICATE KEY UPDATE device=VALUES(device)"
-				// NOTE: The user has been verified to have permission to access the parent directory.
-				// Guaranteed not to be a duplicate
-			);
-		} else /* == 'f' */ {
+		if (which_tbl == 'f'){
 			this->mysql_exec(
 				"INSERT INTO file "
 				"(dir, name, user, mimetype)"
