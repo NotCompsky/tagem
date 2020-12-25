@@ -96,7 +96,7 @@ See [INSTALL.md](INSTALL.md).
 
 You'll probably want to add the [scripts](scripts/) directory to your `PATH` environmental variable, or perhaps just copy the scripts to `/usr/local/bin`.
 
-The [Reddit userscript](wangle-server/client/userscripts/reddit.js) can be added the usual way you add userscripts.
+The [Reddit userscript](server/client/userscripts/reddit.js) can be added the usual way you add userscripts.
 
 ## Roadmap
 

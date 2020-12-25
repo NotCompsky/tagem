@@ -1,5 +1,4 @@
 # Has to be in the root directory, otherwise the docker build system will not allow copying the necessary files from the host to the container
-# All the other Dockerfiles are under wangle-server/docker
 
 FROM notcompsky/amd64-static-mariadb-ffmpeg:latest AS intermediate
 WORKDIR /tagem
@@ -15,7 +14,7 @@ ENV CFLAGS="-static"
 ENV CXXFLAGS="-static"
 
 WORKDIR /tagem
-COPY wangle-server /tagem/wangle-server
+COPY server /tagem/server
 COPY utils /tagem/utils
 COPY include /tagem/include
 
@@ -92,11 +91,11 @@ RUN git clone --depth 1 https://github.com/lexbor/lexbor \
 	\
 	&& mv /usr/include/python3.8/* /usr/include/ \
 	\
-	&& chmod +x /tagem/wangle-server/scripts/* \
+	&& chmod +x /tagem/server/scripts/* \
 	&& ( \
 		rm -rf /tagem/build \
 		;  mkdir /tagem/build \
-	) && cd /tagem/wangle-server \
+	) && cd /tagem/server \
 	&& addlocalinclude \
 	&& cd /tagem/build \
 	&& LD_LIBRARY_PATH="/usr/local/lib64:$LD_LIBRARY_PATH" cmake \
@@ -105,7 +104,7 @@ RUN git clone --depth 1 https://github.com/lexbor/lexbor \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DENABLE_STATIC=ON \
 		-DEMBED_PYTHON=ON \
-		/tagem/wangle-server \
+		/tagem/server \
 	&& make server
 
 FROM alpine:latest

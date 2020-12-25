@@ -42,7 +42,7 @@ Try to use readable JavaScript, not complex one-liners. This is partly because t
 
 ### Code Style
 
-It's hard to describe hard-and-fast rules for code linting, just try to copy that of the files you are modifying. If adding new files, copy the coding style in [server.cpp](wangle-server/src/server.cpp).
+It's hard to describe hard-and-fast rules for code linting, just try to copy that of the files you are modifying. If adding new files, copy the coding style in [server.cpp](server/src/server.cpp).
 
 In particular:
 * Use tabs for left indentaiton, and spaces for right indentation.

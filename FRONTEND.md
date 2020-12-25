@@ -17,7 +17,7 @@ What is really written:
 
 ## JavaScript
 
-The JavaScript passes through [minjs.py](wangle-server/scripts/minjs.py), which minimises the names beginning with `$$$`, and performs a limited number of checks on them (for instance, ensuring that every such variable that is used is defined somewhere). With that code generator, JavaScript files can be added to the directory without needing to be explicitly referenced in any build files, and they will still appear in the final JavaScript.
+The JavaScript passes through [minjs.py](server/scripts/minjs.py), which minimises the names beginning with `$$$`, and performs a limited number of checks on them (for instance, ensuring that every such variable that is used is defined somewhere). With that code generator, JavaScript files can be added to the directory without needing to be explicitly referenced in any build files, and they will still appear in the final JavaScript.
 
 ## CSS
 
@@ -25,7 +25,7 @@ The CSS is included in the HTML in basically its written form - the double quote
 
 ## SVG
 
-The text files contain a license, followed by a list of labelled SVG files subject to that license. They pass through [svggen.py](wangle-server/scripts/svggen.py), which takes all the SVGs listed, optionally attaches the license to each, optionally attaches a license (or even replaces the icon with the label), and pastes the SVGs into a C++ header file, which defines them as macros for inlined inclusion into the HTML.
+The text files contain a license, followed by a list of labelled SVG files subject to that license. They pass through [svggen.py](server/scripts/svggen.py), which takes all the SVGs listed, optionally attaches the license to each, optionally attaches a license (or even replaces the icon with the label), and pastes the SVGs into a C++ header file, which defines them as macros for inlined inclusion into the HTML.
 
 ## HTML
 
