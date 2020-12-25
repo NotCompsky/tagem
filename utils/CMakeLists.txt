@@ -62,10 +62,6 @@ if(TAGEM_HASH)
 	target_link_libraries(tagem-hash pHash "${MYSQL_CLIENT}" ssl crypto avformat avcodec boost_regex)
 endif()
 
-#add_executable(tagem-mk-playlist src/mk_playlist.cpp)
-#target_include_directories(tagem-mk-playlist PRIVATE ${COMPSKY_INCLUDE_DIRS})
-#target_link_libraries(tagem-mk-playlist compsky_mysql avformat avcodec avutil)
-
 set_target_properties(
 	${CXX17_TGTS}
 	PROPERTIES
