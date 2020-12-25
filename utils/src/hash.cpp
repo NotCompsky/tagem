@@ -12,6 +12,7 @@ The absense of this copyright notices on some other files in this project does n
 */
 
 #include <compsky/mysql/query.hpp>
+#include <compsky/os/metadata.hpp>
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
@@ -384,17 +385,7 @@ uint64_t get_hash_of_image(const char* const fp){
 
 template<typename RelationType>
 void save_hash(const Size file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
-	FILE* f = fopen(fp, "rb");
-	if (f == nullptr){
-		fprintf(logfile,  "Cannot read file: %s\n",  fp);
-		return;
-	}
-	
-	fseek(f, 0, SEEK_END);
-	const size_t sz = ftell(f);
-	
-	fclose(f);
-	
+	const size_t sz = compsky::os::get_file_sz(fp);
 	insert_hashes_into_db<0>(file_type_flag, file_id, dir_id, is_backup_tbl, &sz, hash_name, 1, which_relation);
 }
 
