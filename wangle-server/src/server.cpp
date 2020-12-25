@@ -469,10 +469,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename... Args>
 	void log(Args&&... args){
-		/*char* const itr_init = this->itr;
+		char* const itr_init = this->itr;
 		this->asciify(args..., '\n');
 		compsky::os::write_n_bytes(STDERR_FILE_ID, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
-		this->itr = itr_init;*/
+		this->itr = itr_init;
 	}
 	
 	bool user_can_access_dir(const UserIDIntType user_id, const uint64_t dir_id){

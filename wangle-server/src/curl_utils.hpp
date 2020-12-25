@@ -231,8 +231,7 @@ bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool over
 	
 	FILE* const f = fopen(dst_pth, "wb");
 	if (f == nullptr){
-		printf("FILE CANOT OPEN\n"); fflush(stdout);
-		//log("Cannot open file for writing: ",  dst_pth);
+		log("Cannot open file for writing: ",  dst_pth);
 		return false;
 	}
 	
@@ -247,9 +246,8 @@ bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool over
 	const bool is_failed = curl.perform(url);
 	fclose(f);
 	if (unlikely(is_failed)){
-		printf("dl_file__curl error\n"); fflush(stdout);
 		os::del_file(dst_pth);
-		//log("dl_file__curl error");
+		log("dl_file__curl error");
 		return false;
 	} else {
 		return true;
