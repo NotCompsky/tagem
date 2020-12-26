@@ -329,7 +329,8 @@ const char* get_str(const rapidjson::Value& v,  const char* k,  const char* defa
 }
 
 namespace compsky::server::_f {
-	constexpr static compsky::asciify::flag::Escape3 esc3;
+	using namespace compsky::asciify::flag;
+	constexpr static esc::Null esc_nulls;
 }
 namespace _f = compsky::server::_f;
 
@@ -498,7 +499,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const char* url;
 			const char* title;
 			while(this->mysql_assign_next_row(&url, &title)){
-				this->asciify('[', _f::esc3, '"', '[', ']', title, ']', '(', _f::esc3, '(', ')', '"', url, ')', "  \\n");
+				this->asciify('[', _f::esc, '"', '[', ']', title, ']', '(', _f::esc, '(', ')', '"', url, ')', "  \\n");
 				// WARNING: This does not escape special unicode's "surrogate pairs" of quotes, for instance “
 				// This causes JSON issues because JSON, beyond all reasoning, decides that this unicode "Left Double Quotation Mark" terminates a string opened by an ASCII double quotation mark.
 				// This is not patched because knowing unicode there's probably a million such cases of visually similar quotation marks to patch.
@@ -862,7 +863,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			
 			--count;
 			
-			this->md5_hash_local_file(hash.data(), dir_path, ename);
+			this->md5_hash_local_file(hash.data(),  dir_path,  ename,  this->itr);
 			
 			char file_path[4096];
 			compsky::asciify::asciify(file_path, dir_path, ename, '\0');
@@ -3432,11 +3433,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->md5_hash(hash, std::string_view(string, strlen(string)));
 	}
 	
-	void md5_hash_local_file(uint8_t* const hash,  const char* const dir,  const char* const file){
-		char file_path[4096];
-		char* itr = file_path;
-		compsky::asciify::asciify(file_path, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file);
-		this->md5_hash(hash, std::string_view(file_path,  (uintptr_t)itr - (uintptr_t)file_path));
+	void md5_hash_local_file(uint8_t* const hash,  const char* const dir,  const char* const file,  char* const buf){
+		char* itr = buf;
+		compsky::asciify::asciify(itr, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file);
+		// NOTE: This file path format is not used by other functions
+		this->md5_hash(hash, std::string_view(buf,  (uintptr_t)itr - (uintptr_t)buf));
 	}
 	
 	std::string_view update_video_metadatas(const char* s){
@@ -3531,24 +3532,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			bool is_video;
 			while(this->mysql_assign_next_row<0>(&fid, &dir, &file, &is_video)){
 				std::array<uint8_t, 16> hash;
-				this->md5_hash_local_file(hash.data(), dir, file);
 				char* thumbnail_filename_itr = thumbnail_filename;
+				this->md5_hash_local_file(hash.data(), dir, file, thumbnail_filename_itr);
 				compsky::asciify::asciify(thumbnail_filename_itr, _f::lower_case, _f::hex, hash, ".png", '\0');
-				
-				char* const _buf = thumbnail_filename_itr;
-				compsky::asciify::asciify(thumbnail_filename_itr,
-					"UPDATE file "
-					"SET md5_of_path=\""
-				);
-				for (auto i = 0;  i < 16;  ++i){
-					char c = static_cast<char>(hash.at(i));
-					if ((c == 0) or (c == '\\') or (c == '"'))
-						compsky::asciify::asciify(thumbnail_filename_itr, '\\');
-					if (c == 0)
-						c = '0';
-					compsky::asciify::asciify(thumbnail_filename_itr, c);
-				}
-				compsky::asciify::asciify(thumbnail_filename_itr, "\" WHERE id=", fid);
 				
 				if (os::file_exists(thumbnail_filepath))
 					goto update_md5hash_then_continue;
@@ -3588,7 +3574,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this->log("Generated image thumbnail: ", thumbnail_filepath);
 				
 				update_md5hash_then_continue:
-				this->mysql_exec_buf(_buf,  (uintptr_t)thumbnail_filename_itr - (uintptr_t)_buf);
+				this->mysql_exec(
+					"UPDATE file "
+					"SET md5_of_path=\"", _f::esc, '"', _f::esc_nulls, hash, "\" "
+					"WHERE id=", fid
+				);
 			}
 		}
 		}
