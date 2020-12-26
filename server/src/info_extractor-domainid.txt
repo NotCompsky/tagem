@@ -54,6 +54,8 @@ www.theatlantic.com/>
 	return TheAtlantic
 www.reuters.com/article/>
 	return Reuters
+www.scmp.com/>
+	return SCMP
 
 globalnews.ca/news/>
 	return GlobalNewsCA

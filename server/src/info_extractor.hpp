@@ -257,6 +257,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
+		case SCMP:
 		case NYT:
 		case Reuters:
 		case TheAtlantic: {
@@ -268,6 +269,11 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 				case NYT: {
 					char _author[] = "*@span.last-byline";
 					author = find_element_attr(doc, _author, ".");
+					break;
+				}
+				case SCMP: {
+					char _author[] = "*@meta:name=cse_author";
+					author = find_element_attr(doc, _author, "content");
 					break;
 				}
 				default: {
