@@ -13,12 +13,12 @@ The absense of this copyright notices on some other files in this project does n
 
 #ifdef USE_LIBCURL
 
-#include "curl.hpp"
 #include "curl_utils.hpp"
 #include "read_request.hpp"
 #include "str_utils.hpp"
 #include "os.hpp"
 #include "errors.hpp"
+#include <compsky/dl/curl.hpp>
 #include <cstdio> // for fopen
 #include <cstring> // for memccpy
 

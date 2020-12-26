@@ -12,7 +12,6 @@ The absense of this copyright notices on some other files in this project does n
 */
 #pragma once
 
-#include "curl.hpp"
 #include "read_request.hpp"
 #include "user_agent.hpp" // TODO: Should be set by CMake, to allow different choices, but CMake is just so so so dumb and escaping the characters is such a pain
 #include "str_parsing_macros.hpp"
@@ -20,6 +19,9 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/os/metadata.hpp>
 #include <compsky/os/write.hpp>
 #include <compsky/asciify/asciify.hpp>
+#ifdef USE_LIBCURL
+# include <compsky/dl/curl.hpp>
+#endif
 #include <cstddef> // for size_t
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -236,7 +238,7 @@ bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool over
 		return false;
 	}
 	
-	Curl curl(
+	compsky::dl::Curl curl(
 		CURLOPT_WRITEDATA, f,
 		CURLOPT_FOLLOWLOCATION, true
 #ifdef DNS_OVER_HTTPS_CLIENT_URL
