@@ -2,7 +2,7 @@
 
 #include "db_info.hpp"
 #include "thread_pool.hpp"
-#include "str_parsing_macros.hpp"
+#include <compsky/str/parse.hpp>
 #include "sprexer/element.hpp"
 #include "sprexer/doc.hpp"
 #include "sprexer/parser.hpp"

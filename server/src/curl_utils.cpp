@@ -14,7 +14,6 @@ The absense of this copyright notices on some other files in this project does n
 #ifdef USE_LIBCURL
 
 #include "curl_utils.hpp"
-#include "read_request.hpp"
 #include "str_utils.hpp"
 #include "os.hpp"
 #include "errors.hpp"
@@ -37,7 +36,7 @@ size_t curl_write_callback(char* contents,  size_t size,  size_t nmemb,  void* b
 size_t dl_buf(const char* const url,  char*& dst_buf_orig){
 	char* dst_buf = dst_buf_orig;
 	
-	Curl curl(
+	compsky::dl::Curl curl(
 		CURLOPT_WRITEFUNCTION, curl_write_callback,
 		CURLOPT_WRITEDATA, &dst_buf,
 		CURLOPT_FOLLOWLOCATION, true

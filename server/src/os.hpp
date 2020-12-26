@@ -206,13 +206,5 @@ size_t read_from_file_at_offset(const char* const fp,  char* buf,  const size_t 
 #endif
 }
 
-inline
-bool del_file(const char* const path){
-#ifdef _WIN32
-#else
-	return remove(path);
-#endif
-}
-
 
 } // namespace os

@@ -15,7 +15,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "verify_str.hpp"
 #include "test.hpp"
 #include "os.hpp"
-#include "str_parsing_macros.hpp"
+#include <compsky/str/parse.hpp>
 #include <inttypes.h> // for uintptr_t
 #include <string_view>
 
@@ -90,58 +90,8 @@ STATIC_ASSERT(endswith("foo",'o'));
 STATIC_ASSERT(not endswith("bar",'o'));
 
 constexpr
-void replace_first_instance_of(char* str,  const char a,  const char b){
-	// str is guaranteed to be max characters long
-	while(*str != 0){
-		if(*str == a){
-			*str = b;
-			return;
-		}
-		++str;
-	}
-}
-
-template<size_t N>
-void replace_first_instance_of(char(&str)[N],  const char a,  const char b){
-	// str is guaranteed to be max characters long
-	for(size_t i = 0;  i < N;  ++i){
-		if(str[i] == a){
-			str[i] = b;
-			return;
-		}
-	}
-}
-
-constexpr
-void replace_first_instance_of(char* str,  const char a,  const char* b,  const char c){
-	// str is guaranteed to be max characters long
-	while(*str != 0){
-		if(*str == a){
-			while(*b != 0){
-				*(str++) = *(b++);
-			}
-			// WARNING: No bounds checking (laziness)
-			*str = c;
-			return;
-		}
-	}
-}
-
-constexpr
-size_t count_until(const char* s,  const char c){
-	// NOTE: Not inclusive
-	size_t n = 0;
-	while((*s != c) and (*s != 0)){
-		++s;
-		++n;
-	}
-	return n;
-}
-STATIC_ASSERT(count_until("foobar",'b')==3);
-
-constexpr
 std::string_view get_str_view_up_to(const char* const begin,  const char c){
-	return std::string_view(begin, count_until(begin, ' '));
+	return std::string_view(begin, compsky::str::count_until(begin, ' '));
 }
 
 constexpr

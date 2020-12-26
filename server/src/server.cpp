@@ -25,7 +25,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "curl_utils.hpp"
 #include "thumbnailer.hpp"
 #include "get_cookies.hpp"
-#include "read_request.hpp"
 #include "initialise_tagem_db.hpp"
 #include "errors.hpp"
 #include "handler_buf_pool.hpp"
@@ -45,6 +44,8 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/server/server.hpp>
 #include <compsky/server/response_generation.hpp>
 #include <compsky/os/write.hpp>
+#include <compsky/os/del.hpp>
+#include <compsky/http/parse.hpp>
 
 #include <mutex>
 
@@ -514,7 +515,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			file_ids.reserve(compsky::mysql::n_results<size_t>(this->res[0]));
 			uint64_t file_id;
 			while(this->mysql_assign_next_row(&file_id, &path)){
-				if (not os::del_file(path))
+				if (not compsky::os::del_file(path))
 					file_ids.push_back(file_id);
 			}
 			this->mysql_exec(
@@ -2356,8 +2357,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		size_t from;
 		size_t to;
-		const GetRangeHeaderResult rc = get_range(s, from, to);
-		if (unlikely(rc == GetRangeHeaderResult::invalid)){
+		const compsky::http::header::GetRangeHeaderResult rc = compsky::http::header::get_range(s, from, to);
+		if (unlikely(rc == compsky::http::header::GetRangeHeaderResult::invalid)){
 			return compsky::server::_r::not_found;
 		}
 		
@@ -2392,14 +2393,14 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			return compsky::server::_r::server_error;
 		}
 		
-		const size_t bytes_to_read = (rc == GetRangeHeaderResult::none) ? block_sz : ((to) ? (to - from) : stream_block_sz);
+		const size_t bytes_to_read = (rc == compsky::http::header::GetRangeHeaderResult::none) ? block_sz : ((to) ? (to - from) : stream_block_sz);
 		const size_t bytes_read = os::read_from_file_at_offset(file_path,  this->buf + room_for_headers,  from,  bytes_to_read);
 		
 		const size_t end_byte = from + bytes_read;
 		
 		this->reset_buf_index();
 		
-		if (rc == GetRangeHeaderResult::none){
+		if (rc == compsky::http::header::GetRangeHeaderResult::none){
 			// Both Firefox and Chrome send a range header for videos, neither for images
 			this->asciify(
 				"HTTP/1.1 200 OK\n"
@@ -2487,7 +2488,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				file_path[4096-1] = 0;
 				char* const file_extension = skip_to_after<char>(file_path, "Requested formats are incompatible for merge and will be merged into ");
 				if (file_extension != nullptr){
-					replace_first_instance_of(file_extension, '.', '\0');
+					compsky::str::replace_first_instance_of(file_extension, '.', '\0');
 					
 					compsky::asciify::asciify(
 						file_path,
@@ -2498,9 +2499,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				}
 				
 				if (file_extension == nullptr){
-					replace_first_instance_of(file_path, '\n', '\0');
+					compsky::str::replace_first_instance_of(file_path, '\n', '\0');
 				} else {
-					replace_first_instance_of(file_path, '\n', file_extension, '\0');
+					compsky::str::replace_first_instance_of(file_path, '\n', file_extension, '\0');
 				}
 				this->log("YTDL to: ", file_path);
 				}
