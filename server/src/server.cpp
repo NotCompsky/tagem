@@ -574,9 +574,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(
 			CACHE_DIR,
 			_f::strlen, md5hex, 32,
-			".png"
+			".png",
+			'\0'
 		);
-		*this->itr = 0;
 		
 		const size_t sz = os::get_file_sz(this->buf);
 		if (unlikely(sz == 0)){
