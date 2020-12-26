@@ -35,7 +35,24 @@ namespace curl {
 
 template<typename Url,  typename Mimetype>
 size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype mimetype){
-	compsky::dl::asio::dl(url, dst_buf, dst_path, mimetype);
+	char* itr = dst_buf;
+	compsky::asciify::asciify(
+		itr,
+		"GET ", url, " HTTP/1.1\r\n",
+		"Host: ", host, "\r\n"
+		"Accept: */*\r\n"
+		"Connection: close\r\n"
+		"User-Agent: " USER_AGENT "\r\n"
+		"Accept-Language: en-GB,en;q=0.5\r\n"
+		// TODO: Accept gzip, which makes it less obviously automated. "Accept-Encoding: gzip, deflate, br\r\n"
+		"Upgrade-Insecure-Requests: 1\r\n"
+		"DNT: 1\r\n"
+		"Pragma: no-cache\r\n"
+		"Cache-Control: no-cache\r\n"
+		"TE: Trailers\r\n"
+		"\r\n"
+	);
+	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  (uintptr_t)itr - (uintptr_t)dst_buf),  dst_buf,  dst_path,  mimetype);
 }
 
 
