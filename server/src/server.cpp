@@ -3533,9 +3533,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			bool is_video;
 			while(this->mysql_assign_next_row<0>(&fid, &dir, &file, &is_video)){
 				std::array<uint8_t, 16> hash;
-				char* thumbnail_filename_itr = thumbnail_filename;
-				this->md5_hash_local_file(hash.data(), dir, file, thumbnail_filename_itr);
-				compsky::asciify::asciify(thumbnail_filename_itr, _f::lower_case, _f::hex, hash, ".png", '\0');
+				this->md5_hash_local_file(hash.data(), dir, file, thumbnail_filename);
+				char* _dummy = thumbnail_filename;
+				compsky::asciify::asciify(_dummy, _f::lower_case, _f::hex, hash, ".png", '\0');
 				
 				if (os::file_exists(thumbnail_filepath))
 					goto update_md5hash_then_continue;
@@ -3577,7 +3577,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				update_md5hash_then_continue:
 				this->mysql_exec(
 					"UPDATE file "
-					"SET md5_of_path=\"", _f::esc, '"', _f::esc_nulls, hash, "\" "
+					"SET md5_of_path=UNHEX(\"", _f::hex, hash, "\")"
 					"WHERE id=", fid
 				);
 			}
