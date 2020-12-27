@@ -33,13 +33,34 @@ namespace curl {
 #ifndef USE_LIBCURL
 
 
+namespace _detail {
+
+inline
+const std::string_view get_host(std::string_view url){
+	// NOTE: Assuming that url begins with http
+	url.remove_suffix( (url.at(4) == 's') ? 5 : 4 );
+	const size_t new_len = url.find_first_of('/');
+	return std::string_view(url.data(), new_len);
+}
+
+inline
+const std::string_view get_host(const char* url){
+	// NOTE: Assuming that url begins with http
+	url += (url[4] == 's') ? 5 : 4;
+	const size_t new_len = compsky::str::count_until(url, '/');
+	return std::string_view(url, new_len);
+}
+
+} // namespace _detail
+
+
 template<typename Url,  typename Mimetype>
 size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype mimetype){
 	char* itr = dst_buf;
 	compsky::asciify::asciify(
 		itr,
 		"GET ", url, " HTTP/1.1\r\n",
-		"Host: ", host, "\r\n"
+		"Host: ", _detail::get_host(url), "\r\n"
 		"Accept: */*\r\n"
 		"Connection: close\r\n"
 		"User-Agent: " USER_AGENT "\r\n"
@@ -52,12 +73,12 @@ size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype 
 		"TE: Trailers\r\n"
 		"\r\n"
 	);
-	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  (uintptr_t)itr - (uintptr_t)dst_buf),  dst_buf,  dst_path,  mimetype);
+	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  (uintptr_t)itr - (uintptr_t)dst_buf),  dst_buf,  dst_pth,  mimetype);
 }
 
 
-inline
-bool dl_file(char* buf,  const char* const url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
+template<typename Url>
+bool dl_file(char* buf,  const Url url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype){
 	// nonzero success
 	
 	if (not overwrite_existing)

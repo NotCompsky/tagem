@@ -84,6 +84,7 @@ enum DomainID {
 	ReportersWithoutBorders,
 	JPost,
 	Algemeiner,
+	TimesOfIsrael,
 	
 	SCMP,
 	DieWelt,
