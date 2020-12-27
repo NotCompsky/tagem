@@ -83,6 +83,7 @@ enum DomainID {
 	BuzzFeedNews,
 	ReportersWithoutBorders,
 	JPost,
+	Algemeiner,
 	
 	SCMP,
 	DieWelt,
@@ -257,6 +258,9 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
+		case JPost:
+		case Algemeiner:
+		case TimesOfIsrael:
 		case SCMP:
 		case NYT:
 		case Reuters:
@@ -266,6 +270,21 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			char _descr[] = "*@meta:property=og:description";
 			description = find_element_attr(doc, _descr, "content");
 			switch(domain_id){
+				case JPost: {
+					char _author[] = "*@span.article-reporter>@a";
+					author = find_element_attr(doc, _author, ".");
+					break;
+				}
+				case Algemeiner: {
+					char _author[] = "*@a.authorLink";
+					author = find_element_attr(doc, _author, ".");
+					break;
+				}
+				case TimesOfIsrael: {
+					char _author[] = "*@span.byline>@a";
+					author = find_element_attr(doc, _author, ".");
+					break;
+				}
 				case NYT: {
 					char _author[] = "*@span.last-byline";
 					author = find_element_attr(doc, _author, ".");
@@ -281,9 +300,34 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 					author = find_element_attr(doc, _author, "content");
 				}
 			}
-			char _datetime[] = "*@meta:property=article:published_time";
-			datetime = find_element_attr(doc, _datetime, "content");
-			CONVERT_TO_USUAL_DATETIME_FROM
+			switch(domain_id){
+				case JPost: {
+					datetime = STRING_VIEW_FROM_UP_TO(18, "\"datePublished\": \"")(html_buf, '"');
+					CONVERT_TO_USUAL_DATETIME_FROM
+					break;
+				}
+				case Algemeiner: {
+					char _datetime[] = "*@div.date";
+					datetime = find_element_attr(doc, _datetime, ".");
+					datetime_fmt = "%M %d, %Y %h:%i %p";
+					break;
+				}
+				case TimesOfIsrael: {
+					char _datetime[] = "*@span.date";
+					datetime = find_element_attr(doc, _datetime, ".");
+					datetime_fmt = "%d %M %Y, %h:%i %p";
+					break;
+				}
+				case SCMP:
+				case NYT:
+				case Reuters:
+				case TheAtlantic:
+				default: {
+					char _datetime[] = "*@meta:property=article:published_time";
+					datetime = find_element_attr(doc, _datetime, "content");
+					CONVERT_TO_USUAL_DATETIME_FROM
+				}
+			}
 			author_title = "Journalist: ";
 			break;
 		}
@@ -403,18 +447,6 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			datetime = find_element_attr(doc, _datetime, "content");
 			CONVERT_TO_USUAL_DATETIME_FROM
 			author_title = "Journalist: ";
-			break;
-		}
-		case JPost: {
-			char _title[] = "*@meta:property=og:title";
-			title = find_element_attr(doc, _title, "content");
-			char _descr[] = "*@meta:property=og:description";
-			description = find_element_attr(doc, _descr, "content");
-			datetime = STRING_VIEW_FROM_UP_TO(18, "\"datePublished\": \"")(html_buf, '"');
-			CONVERT_TO_USUAL_DATETIME_FROM
-			char _author[] = "*@span.article-reporter>@a";
-			author = find_element_attr(doc, _author, ".");
-			author_title = "Journalist: "; // NOTE: Already includes @
 			break;
 		}
 		case ThreadReaderApp: {

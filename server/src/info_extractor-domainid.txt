@@ -56,6 +56,8 @@ www.reuters.com/article/>
 	return Reuters
 www.scmp.com/>
 	return SCMP
+https://www.algemeiner.com/>
+	return Algemeiner
 
 globalnews.ca/news/>
 	return GlobalNewsCA
