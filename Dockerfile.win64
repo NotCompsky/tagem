@@ -16,6 +16,13 @@ RUN apt update \
 	&& cd /mxe \
 	&& make libgnurx \
 	\
+	&& echo "First make Python of the same version for the host, which is required to cross-compile Python" \
+	&& curl -s https://www.python.org/ftp/python/${python_version}/Python-${python_version}.tgz \
+	| tar xz \
+	&& cd Python-${python_version} \
+	&& ./configure \
+	&& make altinstall \
+	\
 	&& curl -s https://www.python.org/ftp/python/${python_version}/Python-${python_version}.tgz \
 	| tar xz \
 	&& cd Python-${python_version} \
