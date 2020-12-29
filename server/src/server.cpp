@@ -81,7 +81,9 @@ magic_t magique;
 #define FILE_THUMBNAIL "IFNULL(IFNULL(f2tn.x, CONCAT('/i/f/', LOWER(HEX(f.md5_of_path)))), " NULL_IMG_SRC "),"
 #define JOIN_FILE_THUMBNAIL "LEFT JOIN file2thumbnail f2tn ON f2tn.file=f.id "
 #define DISTINCT_F2P_DB_AND_POST_IDS "IFNULL(GROUP_CONCAT(DISTINCT CONCAT(f2p.db,\":\",f2p.post),\"\"), \"\")"
-#define DISTINCT_F2T_TAG_IDS "IFNULL(GROUP_CONCAT(DISTINCT f2t.tag),\"\")"
+#define DISTINCT_X2T_TAG_IDS(x) "IFNULL(GROUP_CONCAT(DISTINCT " x "2t.tag),\"\")"
+#define DISTINCT_F2T_TAG_IDS DISTINCT_X2T_TAG_IDS("f")
+#define DISTINCT_F2T_TAG_IDS__ERAS "CONCAT(" DISTINCT_F2T_TAG_IDS "," DISTINCT_X2T_TAG_IDS("e") ")"
 #define BLANK_IF_NULL(column) "IFNULL(" column ",\"\"),"
 #define NULL_IF_NULL(column) "IFNULL(" column ",\"null\"),"
 #define FILE_OVERVIEW_FIELDS(file_or_dir_id) \
@@ -101,6 +103,23 @@ magic_t magique;
 	NULL_IF_NULL("f.fps") \
 	DISTINCT_F2P_DB_AND_POST_IDS "," \
 	DISTINCT_F2T_TAG_IDS ","
+#define FILE_OVERVIEW_FIELDS__ERAS(file_or_dir_id) \
+	FILE_THUMBNAIL \
+	file_or_dir_id "," \
+	"f.name," \
+	BLANK_IF_NULL("f.title") \
+	NULL_IF_NULL("f.size") \
+	"UNIX_TIMESTAMP(f.added_on)," \
+	"f.t_origin," \
+	NULL_IF_NULL("f.duration") \
+	NULL_IF_NULL("f.w") \
+	NULL_IF_NULL("f.h") \
+	NULL_IF_NULL("f.views") \
+	NULL_IF_NULL("f.likes") \
+	NULL_IF_NULL("f.dislikes") \
+	NULL_IF_NULL("f.fps") \
+	DISTINCT_F2P_DB_AND_POST_IDS "," \
+	DISTINCT_F2T_TAG_IDS__ERAS ","
 
 #define TRUE 1
 #define FALSE 0
@@ -1082,8 +1101,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->asciify_tags_arr_or_dict<i>(this->itr, f_arr_or_dict);
 	}
 	
+	template<size_t n_tag_rows = 1>
 	void asciify_file_info(char*& itr){
 		compsky::asciify::asciify(itr, "[\"0\",");
+		constexpr compsky::server::_r::flag::Union<n_tag_rows> f_n_unions;
 		this->init_json_rows<0>(
 			itr,
 			compsky::server::_r::flag::arr,
@@ -1102,6 +1123,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			compsky::server::_r::flag::no_quote, // dislikes
 			compsky::server::_r::flag::no_quote, // fps
 			compsky::server::_r::flag::quote_no_escape, // external db and post IDs
+			f_n_unions,
 			compsky::server::_r::flag::quote_no_escape, // tag IDs CSV
 			compsky::server::_r::flag::no_quote, // era start
 			compsky::server::_r::flag::no_quote // era end
@@ -1619,7 +1641,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this,
 				user_id,
 				page_n,
-				"0,0",
+				FILE_OVERVIEW_FIELDS("f.id") "0,0",
 				"f.id",
 				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 				"AND EXISTS (SELECT file FROM file2tag WHERE file=f.id AND tag=", id, ")",
@@ -1639,31 +1661,24 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<typename... Args>
 	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		// WARNING: files_given_X uses both res[0] and res[1]
-		JoinArgsWrapper<const char*, Args..., const char*>
+		JoinArgsWrapper<const char*>
 		::template WhereArgsWrapper<const char*, Args..., const char*>
 		::template OrderArgsWrapper<const char*, Args..., const char*>
 		::files_given_X(
 			this,
 			user_id,
 			page_n,
-			"e.start,e.end",
+			FILE_OVERVIEW_FIELDS__ERAS("f.id") "e.start,e.end",
 			"e.id",
 			"JOIN era e ON e.file=f.id "
-			"LEFT JOIN("
-				"SELECT era, tag "
-				"FROM era2tag "
-				"WHERE era IN(", ids_args..., ")"
-				"UNION "
-				"SELECT e.id, f2t.tag "
-				"FROM file2tag f2t "
-				"JOIN era e ON e.file=f2t.file"
-			")f2t ON f2t.era=e.id",
+			"LEFT JOIN file2tag f2t ON f2t.file=e.file "
+			"LEFT JOIN era2tag e2t ON e2t.era=e.id ",
 			"AND e.id IN(", ids_args..., ")",
 			"ORDER BY FIELD(e.id,", ids_args..., ")",
 			"SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args...
 		);
 		
-		this->asciify_file_info(itr);
+		this->asciify_file_info<2>(itr);
 	}
 	
 	template<typename... Args>
@@ -1675,7 +1690,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			this,
 			user_id,
 			page_n,
-			"0,0",
+			FILE_OVERVIEW_FIELDS("f.id") "0,0",
 			"f.id",
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 			"AND f.id IN(", ids_args..., ")",
@@ -1846,9 +1861,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
 					);
 					thees->mysql_query<0>(
-						"SELECT "
-							FILE_OVERVIEW_FIELDS("f.id"),
-							select_fields, " "
+						"SELECT ", select_fields, " "
 						"FROM file f "
 						"JOIN dir d ON d.id=f.dir "
 						JOIN_FILE_THUMBNAIL
@@ -1890,7 +1903,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				this,
 				user_id,
 				page_n,
-				"0,0",
+				FILE_OVERVIEW_FIELDS("f.id") "0,0",
 				"f.id",
 				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
 				"AND f.dir=", id,
