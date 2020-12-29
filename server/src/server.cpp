@@ -303,7 +303,6 @@ std::string connected_local_devices_str = "";
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
-const char* FILES_GIVEN_REMOTE_DIR = nullptr;
 const char* EXTRACT_YTDL_ERA_SCRIPT_PATH = nullptr;
 
 uint64_t TAG__PART_OF_FILE__ID;
@@ -828,20 +827,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->begin_json_response();
 		this->asciify("[");
 		
-		if (not is_local){
-			char* const _buf = this->itr;
-			char* _itr = _buf;
-			compsky::asciify::asciify(_itr, page_n, '\0');
-#ifdef PYTHON
-			const bool failed = python::view_remote_dir(_buf, dir_path);
-#else
-			const char* args[] = {FILES_GIVEN_REMOTE_DIR, _buf, dir_path, nullptr};
-			const bool failed = (FILES_GIVEN_REMOTE_DIR != nullptr) and proc::exec(60,  args,  STDOUT_FILENO,  this->itr,  HANDLER_BUF_SZ - this->buf_indx());
-#endif
-			if (unlikely(failed))
-				this->move_itr_to_trailing_null();
-		} else {
-		
 		this->begin_json_response();
 		const uint64_t dir_id = this->get_dir_id_given_path__add_if_necessary(user_id, dir_path);
 		this->asciify("[\"", dir_id, "\",[");
@@ -896,8 +881,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		os::close_dir(dir);
-		
-		}
 		
 		if (this->last_char_in_buf() == ',')
 			--this->itr;
@@ -3857,9 +3840,6 @@ int main(int argc,  const char* const* argv){
 				CACHE_DIR = *(++argv);
 				CACHE_DIR_STRLEN = strlen(CACHE_DIR);
 				break;
-			case 'd':
-				FILES_GIVEN_REMOTE_DIR = *(++argv);
-				break;
 			case 'f':
 				FFMPEG_LOCATION = *(++argv);
 				break;
@@ -3946,11 +3926,6 @@ int main(int argc,  const char* const* argv){
 	DatabaseInfo& tagem_db_info = db_infos.at(0);
 	initialise_tagem_db(tagem_mysql_obj);
 	tagem_db_info.free(tagem_mysql_obj);
-	
-#ifdef PYTHON
-	if (FILES_GIVEN_REMOTE_DIR != nullptr)
-		python::import_view_remote_dir(tagem_db_info);
-#endif
 	
 	UserIDIntType user_id;
 	uint64_t id;

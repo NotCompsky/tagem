@@ -31,7 +31,6 @@ namespace python {
 // MODULE     INSTANTIATION      FUNCTION
 
 static PyObj ytdl_obj;
-static PyObj view_remote_dir__parse_url_fn;
 
 namespace tagem_module {
 	static PyObject* to_stdout;
@@ -147,21 +146,6 @@ PyObject* create_mysql_obj(const DatabaseInfo& db_info){
 	PyObject* const _module = attempt_import_failover("PyMySQL", "pymysql");
 	
 	return PyObj(_module, "connect").call(PyStr(db_info.host()).obj, PyStr(db_info.user()).obj, PyStr(db_info.pwrd()).obj, PyStr(db_info.name()).obj, PyInt(db_info.port()).obj, PyStr(db_info.path()).obj);
-}
-
-void import_view_remote_dir(const DatabaseInfo& db_info){
-	/*
-	PyObject* _module = PyImport_ImportModule("youtube_dl");
-	if (unlikely(_module == nullptr))
-		throw std::runtime_error("Python: Cannot import youtube_dl");
-	*/
-	
-	PyObj conn(create_mysql_obj(db_info), "cursor");
-	Py_INCREF(conn.obj);
-}
-
-bool view_remote_dir(char* buf,  const char* const url){
-	return false;
 }
 
 } // namespace python
