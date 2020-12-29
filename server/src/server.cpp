@@ -46,6 +46,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/os/write.hpp>
 #include <compsky/os/del.hpp>
 #include <compsky/http/parse.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 
 #include <mutex>
 
@@ -118,7 +119,7 @@ magic_t magique;
 
 #define GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
 	const char* const BOOST_PP_CAT(var, _begin) = get_comma_separated_ints(&str_name, terminating_char); \
-	const size_t BOOST_PP_CAT(var, _length)     = (uintptr_t)str_name - (uintptr_t)BOOST_PP_CAT(var, _begin); \
+	const size_t BOOST_PP_CAT(var, _length)     = ptrdiff(str_name, BOOST_PP_CAT(var, _begin)); \
 	const std::string_view var(BOOST_PP_CAT(var, _begin), BOOST_PP_CAT(var, _length));
 
 #define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, str_name, terminating_char) \
@@ -175,7 +176,7 @@ magic_t magique;
 	const char* const file2_var_name__begin = s; \
 	while((*s != ' ') and (*s != 0)) \
 		++s; \
-	const size_t file2_var_name_len = (uintptr_t)s - (uintptr_t)file2_var_name__begin; \
+	const size_t file2_var_name_len = ptrdiff(s, file2_var_name__begin); \
 	/* No need to check for empty string - the later function does that*/ \
 	GET_USER \
 	if (unlikely(not matches__left_up_to_space__right_up_to_comma_or_null(file2_var_name__begin, user->allowed_file2_vars_csv))) \
@@ -312,6 +313,9 @@ static bool regenerate_protocol_json = true;
 uint64_t UPLOADER_TAG_ID;
 
 
+using compsky::utils::ptrdiff;
+
+
 namespace rapidjson {
 uint64_t get_int(const rapidjson::Value& v,  const char* k){
 	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetInt() : 0;
@@ -437,7 +441,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void mysql_query_db_by_id(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id<i>(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_query_buf_db_by_id<i>(db_info, itr_init, ptrdiff(this->itr, itr_init));
 		this->itr = itr_init;
 	}
 	
@@ -445,7 +449,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void mysql_exec_db_by_id(DatabaseInfo& db_info,  Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_exec_buf_db_by_id(db_info, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_exec_buf_db_by_id(db_info, itr_init, ptrdiff(this->itr, itr_init));
 		this->itr = itr_init;
 	}
 	
@@ -453,7 +457,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void mysql_query(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_query_buf_db_by_id<i>(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_query_buf_db_by_id<i>(db_infos.at(0),  itr_init,  ptrdiff(this->itr, itr_init));
 		this->itr = itr_init;
 	}
 	
@@ -461,7 +465,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void mysql_exec(Args... args){
 		char* const itr_init = this->itr;
 		this->asciify(args...);
-		this->mysql_exec_buf_db_by_id(db_infos.at(0),  itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		this->mysql_exec_buf_db_by_id(db_infos.at(0),  itr_init,  ptrdiff(this->itr, itr_init));
 		this->itr = itr_init;
 	}
 	
@@ -469,7 +473,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	void log(Args&&... args){
 		char* const itr_init = this->itr;
 		this->asciify(args..., '\n');
-		compsky::os::write_n_bytes(STDERR_FILE_ID, itr_init, (uintptr_t)this->itr - (uintptr_t)itr_init);
+		compsky::os::write_n_bytes(STDERR_FILE_ID, itr_init, ptrdiff(this->itr, itr_init));
 		this->itr = itr_init;
 	}
 	
@@ -595,7 +599,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		f.read_into_buf(itr, sz);
 		*(itr + sz) = 0;
 		
-		return std::string_view(this->buf,  sz + (uintptr_t)itr - (uintptr_t)this->buf);
+		return std::string_view(this->buf,  sz + ptrdiff(itr, this->buf));
 	}
 	
 	std::string_view get_all_file_names_given_dir_id(const char* s){
@@ -1131,7 +1135,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const char* const file_name_begin = s;
 			if(unlikely(not compsky::utils::is_str_dblqt_escaped(s, ',', '\0')))
 				return compsky::server::_r::not_found;
-			const size_t file_name_len = (uintptr_t)s - (uintptr_t)file_name_begin;
+			const size_t file_name_len = ptrdiff(s, file_name_begin);
 			this->asciify('(', user_id, ',', dir_id, ',', std::string_view(file_name_begin, file_name_len), ')', ',');
 			if (*s == 0)
 				break;
@@ -1242,7 +1246,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		const char* const file_name = s;
 		const char* const b4_file_contents = skip_to(s, '\n');
-		const size_t file_name_length = (uintptr_t)b4_file_contents - (uintptr_t)file_name;
+		const size_t file_name_length = ptrdiff(b4_file_contents, file_name);
 		
 		if(unlikely(b4_file_contents == nullptr))
 			return compsky::server::_r::not_found;
@@ -1599,7 +1603,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		*_itr_plus_offset = 0;
 		
-		return std::string_view(_buf_plus_offset,  (uintptr_t)_itr_plus_offset - (uintptr_t)_buf_plus_offset);
+		return std::string_view(_buf_plus_offset,  ptrdiff(_itr_plus_offset, _buf_plus_offset));
 	}
 	
 	std::string_view files_given_tag(const char* s){
@@ -1781,7 +1785,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				abort();
 		}
 		*this->itr = 0;
-		return std::string_view(itr_init,  (uintptr_t)this->itr - (uintptr_t)itr_init);
+		return std::string_view(itr_init,  ptrdiff(this->itr, itr_init));
 	}
 	
 	std::string_view get__X_given_ids(const char tbl_alias,  const char* s){
@@ -2110,7 +2114,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		while(true){
 			while((*content_end != 0) and (*content_end != ';'))
 				++content_end;
-			this->mysql_exec_buf(content.value,  (uintptr_t)content_end - (uintptr_t)content.value);
+			this->mysql_exec_buf(content.value,  ptrdiff(content_end, content.value));
 			if(*content_end == 0)
 				break;
 			content.value = ++content_end;
@@ -2374,7 +2378,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			);
 		}
 		
-		const size_t headers_len = (uintptr_t)this->itr - (uintptr_t)this->buf;
+		const size_t headers_len = ptrdiff(this->itr, this->buf);
 		memcpy(this->buf + room_for_headers - headers_len,  this->buf,  headers_len);
 		
 		return std::string_view(this->buf + room_for_headers - headers_len,  headers_len + bytes_read);
@@ -2671,7 +2675,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				compsky::asciify::asciify(_itr, url, '\0');
 				get_file_name_and_ext__filename_ends_with_newline_or_null(_buf, file_name, ext);
 				if (unlikely(_itr[-1] == os::unix_path_sep)){
-					const size_t file_name_len = (uintptr_t)_itr - (uintptr_t)_buf - 1;
+					const size_t file_name_len = ptrdiff(_itr, _buf) - 1;
 					file_name = _itr;
 					compsky::asciify::asciify(_itr, _f::strlen, file_name, file_name_len, '\0');
 				}
@@ -2853,7 +2857,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			const char* const url = s;
 			while ((*s != 0) and (*s != '\n'))
 				++s;
-			const size_t url_len = (uintptr_t)s - (uintptr_t)url;
+			const size_t url_len = ptrdiff(s, url);
 			if (url_len == 0)
 				return compsky::server::_r::not_found;
 			std::string_view url_view(url, url_len);
@@ -3391,7 +3395,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		char* itr = buf;
 		compsky::asciify::asciify(itr, "file://", _f::esc_spaces_and_non_ascii, dir, _f::esc_spaces_and_non_ascii, file);
 		// NOTE: This file path format is not used by other functions
-		this->md5_hash(hash, std::string_view(buf,  (uintptr_t)itr - (uintptr_t)buf));
+		this->md5_hash(hash, std::string_view(buf,  ptrdiff(itr, buf)));
 	}
 	
 	std::string_view update_video_metadatas(const char* s){

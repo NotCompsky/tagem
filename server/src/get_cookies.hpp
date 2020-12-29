@@ -14,6 +14,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "nullable_string_view.hpp"
 #include <compsky/macros/str2switch.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 
 
 constexpr
@@ -36,7 +37,7 @@ NullableStringView get_cookie(const char* headers,  const char* const cookie_nam
 		// Skip to next cookie name
 		while((*cookies != ';') and (*cookies != 0) and (*cookies != '\r'))
 			++cookies;
-		desired_cookie.sz = (uintptr_t)cookies - (uintptr_t)desired_cookie.data;
+		desired_cookie.sz = compsky::utils::ptrdiff(cookies, desired_cookie.data);
 		switch(*cookies){
 			case 0:
 				// Probably invalid end of headers
