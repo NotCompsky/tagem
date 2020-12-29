@@ -21,7 +21,6 @@ The absense of this copyright notices on some other files in this project does n
 #include "str_utils.hpp"
 #include "db_info.hpp"
 #include "user_auth.hpp"
-#include "proc.hpp"
 #include "curl_utils.hpp"
 #include "thumbnailer.hpp"
 #include "get_cookies.hpp"
@@ -717,7 +716,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_DISALLOWED_DIR("d2.id", "d2.device", user_id)
 		);
 		
-		this->add_file_or_dir_to_db('f', user_id, tag_ids, std::string_view(dest, strlen(dest)), 0, false, false);
+		// this->add_file_or_dir_to_db('f', user_id, tag_ids, std::string_view(dest, strlen(dest)), 0, false, false);
 		
 		return compsky::server::_r::post_ok;
 	}
