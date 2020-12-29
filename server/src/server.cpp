@@ -303,8 +303,6 @@ std::string connected_local_devices_str = "";
 const char* CACHE_DIR = nullptr;
 size_t CACHE_DIR_STRLEN;
 
-const char* EXTRACT_YTDL_ERA_SCRIPT_PATH = nullptr;
-
 uint64_t TAG__PART_OF_FILE__ID;
 
 static bool regenerate_mimetype_json = true;
@@ -696,6 +694,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<typename... Args>
 	std::string_view ytdl_eras(const UserIDIntType user_id,  const uint64_t dest_dir,  const std::string_view eras,  Args... file_name_args){
+		return compsky::server::_r::not_implemented_yet;
+		
 		this->mysql_query<0>(
 			"SELECT "
 				"CONCAT(d.full_path, f.name),"
@@ -711,42 +711,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  "AND " NOT_DISALLOWED_ERA("e.id", "f.id", "d.id", "d.device", user_id)
 			  "AND " NOT_DISALLOWED_DIR("d2.id", "d2.device", user_id)
 		);
-		
-		const char* url = nullptr;
-		const char* era_start;
-		const char* era_end;
-		const char* dest;
-		const char* tag_name;
-		this->mysql_assign_next_row<0>(&url, &era_start, &era_end, &dest, &tag_name);
-		if (unlikely(url == nullptr))
-			return compsky::server::_r::not_found;
-		
-		std::vector<const char*> args;
-		args.reserve(1 + 1 + 3 * compsky::mysql::n_results<size_t>(this->res[0]) + 1);
-		
-		args[0] = EXTRACT_YTDL_ERA_SCRIPT_PATH;
-		args[1] = dest;
-		size_t i = 1;
-		std::string tag_ids = "0";
-		do {
-			this->add_t_to_db(user_auth::SpecialUserID::admin, TAG__PART_OF_FILE__ID, std::string_view(tag_name, strlen(tag_name)));
-			this->mysql_query<1>("SELECT id FROM tag WHERE name=\"", tag_name, "\" LIMIT 1");
-			const char* tag_id_str;
-			tag_ids += ",";
-			while(this->mysql_assign_next_row<1>(&tag_id_str))
-				tag_ids += tag_id_str;
-			
-#ifdef PYTHON__NOTIMPLEMENTEDYET
-#else
-			args[++i] = era_start;
-			args[++i] = era_end;
-			args[++i] = url;
-#endif
-		} while(this->mysql_assign_next_row<0>(&url, &era_start, &era_end, &dest, &tag_name));
-		args.back() = nullptr;
-		
-		if (proc::exec(60,  args.data(),  STDOUT_FILENO,  nullptr,  0))
-			return compsky::server::_r::server_error;
 		
 		this->add_file_or_dir_to_db('f', user_id, tag_ids, std::string_view(dest, strlen(dest)), 0, false, false);
 		
@@ -3842,10 +3806,6 @@ int main(int argc,  const char* const* argv){
 				break;
 			case 'f':
 				FFMPEG_LOCATION = *(++argv);
-				break;
-			case '^':
-				// TODO: Use better arg parsing
-				EXTRACT_YTDL_ERA_SCRIPT_PATH = *(++argv);
 				break;
 			case 'x':
 				external_db_env_vars.push_back(*(++argv));
