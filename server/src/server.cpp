@@ -317,8 +317,9 @@ using compsky::utils::ptrdiff;
 
 
 namespace rapidjson {
-uint64_t get_int(const rapidjson::Value& v,  const char* k){
-	return v.HasMember(k) and not v[k].IsNull() ? v[k].GetInt() : 0;
+template<typename T = size_t>
+T get_int(const rapidjson::Value& v,  const char* k){
+	return static_cast<T>(v.HasMember(k) and not v[k].IsNull() ? v[k].GetInt() : 0);
 }
 
 float get_flt(const rapidjson::Value& v,  const char* k){
@@ -3578,15 +3579,15 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if (d.Parse(json).HasParseError())
 			return true;
 		
-		const unsigned w = get_int(d, "width");
-		const unsigned h = get_int(d, "height");
+		const unsigned w = get_int<unsigned>(d, "width");
+		const unsigned h = get_int<unsigned>(d, "height");
 		const float duration = get_flt(d, "duration");
 		const float fps = get_flt(d, "fps");
-		const unsigned views = get_int(d, "view_count");
-		const unsigned likes = get_int(d, "like_count");
-		const unsigned dislikes = get_int(d, "dislike_count");
-		unsigned t_origin = (unsigned)get_flt(d, "timestamp");
-		const size_t size = get_int(d, "size");
+		const unsigned views = get_int<unsigned>(d, "view_count");
+		const unsigned likes = get_int<unsigned>(d, "like_count");
+		const unsigned dislikes = get_int<unsigned>(d, "dislike_count");
+		time_t t_origin = (time_t)get_flt(d, "timestamp");
+		const size_t size = get_int<size_t>(d, "size");
 		
 		const char* const title = get_str(d, "title", "");
 		const char* const thumbnail = get_str(d, "thumbnail");
