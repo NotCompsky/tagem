@@ -18,6 +18,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "os.hpp"
 #include "errors.hpp"
 #include <compsky/dl/curl.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 #include <cstdio> // for fopen
 #include <cstring> // for memccpy
 
@@ -45,7 +46,7 @@ size_t dl_buf(const char* const url,  char*& dst_buf_orig){
 #endif
 	);
 	
-	return curl.perform(url) ? 0 : ((uintptr_t)dst_buf - (uintptr_t)dst_buf_orig);
+	return curl.perform(url) ? 0 : (compsky::utils::ptrdiff(dst_buf, dst_buf_orig));
 }
 
 

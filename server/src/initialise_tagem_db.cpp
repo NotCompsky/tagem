@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include "initialise_tagem_db.hpp"
 #include <compsky/mysql/query.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 
 
 void initialise_tagem_db(MYSQL* mysql_obj){
@@ -34,7 +35,7 @@ void initialise_tagem_db(MYSQL* mysql_obj){
 	const char* last_stmt = stmts;
 	for (const char* itr = stmts;  *itr != 0;  ++itr){
 		if (unlikely(*itr == ';')){
-			compsky::mysql::exec_buffer(mysql_obj,  last_stmt,  (uintptr_t)itr - (uintptr_t)last_stmt);
+			compsky::mysql::exec_buffer(mysql_obj,  last_stmt,  compsky::utils::ptrdiff(itr, last_stmt));
 			last_stmt = itr + 1;
 		}
 	}

@@ -18,6 +18,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/mysql/mysql.hpp>
 #include <compsky/deasciify/a2n.hpp>
 #include <compsky/asciify/asciify.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 
 
 class DatabaseInfo : public ThreadPool<MYSQL*, DatabaseInfo> {
@@ -122,7 +123,7 @@ class DatabaseInfo : public ThreadPool<MYSQL*, DatabaseInfo> {
 	void exec(char* const buf,  Args&&... args){
 		char* itr = buf;
 		compsky::asciify::asciify(itr, args...);
-		this->exec_buffer(buf,  (uintptr_t)itr - (uintptr_t)buf);
+		this->exec_buffer(buf,  compsky::utils::ptrdiff(itr, buf));
 	}
 	
 	void new_obj(MYSQL*& mysql_obj) const;

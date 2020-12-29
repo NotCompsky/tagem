@@ -19,6 +19,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/os/write.hpp>
 #include <compsky/os/del.hpp>
 #include <compsky/asciify/asciify.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 #ifdef USE_LIBCURL
 # include <compsky/dl/curl.hpp>
 #else
@@ -73,7 +74,7 @@ size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype 
 		"TE: Trailers\r\n"
 		"\r\n"
 	);
-	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  (uintptr_t)itr - (uintptr_t)dst_buf),  dst_buf,  dst_pth,  mimetype);
+	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  compsky::utils::ptrdiff(itr, dst_buf)),  dst_buf,  dst_pth,  mimetype);
 }
 
 

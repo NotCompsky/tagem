@@ -16,7 +16,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "test.hpp"
 #include "os.hpp"
 #include <compsky/str/parse.hpp>
-#include <inttypes.h> // for uintptr_t
+#include <compsky/utils/ptrdiff.hpp>
 #include <string_view>
 
 
@@ -151,7 +151,7 @@ size_t n_chars_until_char_in(const char* const str_orig,  Args... args){
 	const char* str = str_orig;
 	while(not char_in(*str, args...))
 		++str;
-	return (uintptr_t)str - (uintptr_t)str_orig;
+	return compsky::utils::ptrdiff(str, str_orig);
 }
 
 STATIC_ASSERT(n_chars_until_char_in("foo/bar/ree/gee/", '/') == 3);

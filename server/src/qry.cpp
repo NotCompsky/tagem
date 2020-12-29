@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 #include "qry.hpp"
 #include <compsky/asciify/asciify.hpp>
 #include <compsky/macros/is_contained_in_varargs.hpp>
+#include <compsky/utils/ptrdiff.hpp>
 #include <cstddef> // for size_t
 
 #include <boost/preprocessor/seq/for_each.hpp>
@@ -369,10 +370,10 @@ struct Range {
 	const char* max_start;
 	const char* max_end;
 	std::string_view min() const {
-		return std::string_view(min_start,  (uintptr_t)min_end - (uintptr_t)min_start);
+		return std::string_view(min_start,  compsky::utils::ptrdiff(min_end, min_start));
 	}
 	std::string_view max() const {
-		return std::string_view(max_start,  (uintptr_t)max_end - (uintptr_t)max_start);
+		return std::string_view(max_start,  compsky::utils::ptrdiff(max_end, max_start));
 	}
 };
 
@@ -452,7 +453,7 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 	}
 	if (*(++qry) != ' ')
 		return successness::invalid;
-	result.append(qry_orig,  (uintptr_t)qry - (uintptr_t)qry_orig);
+	result.append(qry_orig,  compsky::utils::ptrdiff(qry, qry_orig));
 	return successness::ok;
 }
 
@@ -489,7 +490,7 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 					}
 					if (c == '"'){
 						where += '"';
-						where.append(start,  (uintptr_t)qry - (uintptr_t)start);
+						where.append(start,  compsky::utils::ptrdiff(qry, start));
 						where += '"';
 						where += ',';
 						if (*(++qry) != ' ')
@@ -542,7 +543,7 @@ successness::ReturnType process_value_list(std::string& where,  const char*& qry
 					}
 					if (c == '"'){
 						where += "SELECT file FROM file2";
-						where.append(start,  (uintptr_t)qry - (uintptr_t)start);
+						where.append(start,  compsky::utils::ptrdiff(qry, start));
 						where += " WHERE x>=";
 						where += std::string_view(range.min());
 						where += " AND x<=";
@@ -590,7 +591,7 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 						continue;
 					}
 					if (c == '"'){
-						const size_t sz = (uintptr_t)qry - (uintptr_t)start;
+						const size_t sz = compsky::utils::ptrdiff(qry, start);
 						
 						if (*(++qry) != ' ')
 							return successness::invalid;
