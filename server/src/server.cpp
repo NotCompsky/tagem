@@ -1859,7 +1859,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 						  "AND " NOT_DISALLOWED_TAG( "f2t.tag", user_id)
 						  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id),
 						where_args..., " "
-						"GROUP BY f.id ",
+						"GROUP BY ", group_by, " ",
 						order_args..., " "
 						"LIMIT " TABLE_LIMIT " "
 						"OFFSET ", 100*page_n
