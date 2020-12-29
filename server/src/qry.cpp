@@ -629,7 +629,6 @@ successness::ReturnType process_order_by_var_name_list(std::string& join,  std::
 static
 successness::ReturnType process_args(const std::string& connected_local_devices_str,  const char* const user_disallowed_X_tbl_filter_inner_pre,  const unsigned user_id,  const char*& select_fields,  std::string& join,  std::string& where,  std::string& order_by,  unsigned& limit,  unsigned& offset,  const char which_tbl,  const char* qry){
 	log("process_args ", which_tbl, qry);
-	unsigned f2x_indx = 0;
 	constexpr size_t max_bracket_depth = 16; // Arbitrary limit
 	constexpr static const char* const _operator_or  = "\nOR";
 	constexpr static const char* const _operator_and = "\nAND";
@@ -654,8 +653,6 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 	
 	const char* attribute_name;
 	attribute_kind::AttributeKind attribute_kind;
-	unsigned min;
-	unsigned max;
 	successness::ReturnType rc;
 	
 	while(true){

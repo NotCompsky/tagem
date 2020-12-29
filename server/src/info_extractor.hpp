@@ -192,7 +192,6 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view datetime = "";
 	std::string_view description = "";
 	const char* datetime_fmt = "%Y-%m-%dT%H:%i:%S";
-	constexpr char* datetime_fmt_common_alt = "%Y-%m-%dT%H:%i:%SZ";
 		/* 
 		 * This default value is of the ISO datetime format
 		 * e.g. 2020-12-14T14:04:50.000Z
