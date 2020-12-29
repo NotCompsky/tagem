@@ -16,7 +16,6 @@ ENV CXXFLAGS="-static"
 WORKDIR /tagem
 COPY server /tagem/server
 COPY utils /tagem/utils
-COPY include /tagem/include
 
 ARG libmagic_version=5.39
 
