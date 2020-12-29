@@ -129,10 +129,10 @@ if(ENABLE_SPREXER)
 	target_compile_definitions(server PRIVATE ENABLE_SPREXER)
 endif()
 if(EMBED_PYTHON)
-	target_include_directories(server PRIVATE "/usr/include/python3.8") # TODO: Generalise
+	target_include_directories(server PRIVATE "/usr/include/python3.5" "/usr/include/python3.6" "/usr/include/python3.7" "/usr/include/python3.8" "/usr/include/python3.9" "/usr/include/python3.10")
 	target_compile_definitions(server PRIVATE "PYTHON")
 	if(ENABLE_STATIC)
-		set(LIBPYTHON_NAMES "python3.10.a" "libpython3.10.a" "python3.9.a" "libpython3.9.a" "python3.8.a" "libpython3.8.a" "python3.7.a" "libpython3.7.a" "python3.6.a" "libpython3.6.a")
+		set(LIBPYTHON_NAMES "python3.10.a" "libpython3.10.a" "python3.9.a" "libpython3.9.a" "python3.8.a" "libpython3.8.a" "python3.7.a" "libpython3.7.a" "python3.6.a" "libpython3.6.a" "python3.5.a" "libpython3.5.a")
 	else()
 		set(LIBPYTHON_NAMES "python3.10" "python3.9" "python3.8" "python3.7" "python3.6" "python3.5") # WARNING: I have not tested any versions prior to python3.8
 	endif()
