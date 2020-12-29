@@ -36,7 +36,7 @@ class ThreadPool {
 	Obj get(){
 		static std::mutex mutex;
 		
-		auto i = 0;
+		size_t i = 0;
 		for (;  i < max_objs;  ++i)
 			if (not this->is_in_use[i])
 				break;
@@ -53,7 +53,7 @@ class ThreadPool {
 	}
 	
 	void free(const Obj& buf){
-		auto i = 0;
+		size_t i = 0;
 		for (;  i < max_objs;  ++i)
 			if (this->bufs[i] == buf)
 				break;

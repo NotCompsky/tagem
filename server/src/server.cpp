@@ -3785,15 +3785,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 };
 
-int main(int argc,  const char* const* argv){
-	const char* const* const argv_orig = argv;
-	
+int main(int,  const char* const* argv){
 	curl::init();
 	
 	magique = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
 	magic_load(magique, nullptr);
 	
-	int port_n = 0;
+	unsigned port_n = 0;
 	std::vector<const char*> external_db_env_vars;
 	external_db_env_vars.reserve(1);
 	external_db_env_vars.push_back("TAGEM_MYSQL_CFG");
@@ -3910,7 +3908,7 @@ int main(int argc,  const char* const* argv){
 	user_auth::users.reserve(compsky::mysql::n_results<size_t>(res));
 	char* allowed_file2_vars;
 	while(compsky::mysql::assign_next_row__no_free(res, &row, &user_id, &name, &allowed_file2_vars))
-		const user_auth::User& user = user_auth::users.emplace_back(name, user_id, allowed_file2_vars);
+		user_auth::users.emplace_back(name, user_id, allowed_file2_vars);
 	
 	MYSQL_RES* res2;
 	tagem_db_info.query_buffer(
