@@ -155,7 +155,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	sprexer::Parser* parser = html_parser_pool.get();
 	char* html_buf = buf;
 	switch(domain_id){
-		case Reddit:
+		case Reddit: {
 			/*char new_url[200];
 			// Strip HUMAN_TITLE/ out of https://www.reddit.com/r/SUBREDDIT/comments/POST_ID/HUMAN_TITLE/
 			// equivalent to following the 7th slash with a null byte
@@ -172,6 +172,8 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			compsky::asciify::asciify(_itr, url, ".json", '\0');
 			url = buf;
 			break;
+		}
+		default: break;
 	}
 	size_t html_sz = curl::dl_buf(url, html_buf);
 	switch(domain_id){
@@ -181,6 +183,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			// Avoid parsing the document
 			html_sz = 0;
 			break;
+		default: break;
 	}
 	sprexer::Doc doc(*parser, html_buf, html_sz);
 	html_parser_pool.free(parser);
