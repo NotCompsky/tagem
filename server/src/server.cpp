@@ -1337,6 +1337,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			 * Else if file exists on DB:    file is created on FS and DB, and tagged
 			 * Else if file not exist:       file is created on DB, and tagged
 			 */
+			try {
 			this->mysql_exec(
 				"INSERT INTO file "
 				"(dir,user,mimetype,name,description)"
@@ -1348,6 +1349,11 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					'"', _f::esc, '"', description, '"',
 				")"
 			);
+			} catch(const compsky::mysql::except::SQLExec& e){
+				// Most likely because the file already recorded in the database
+				// TODO: Decide on whether to update file or not
+				return compsky::server::_r::server_error;
+			}
 			
 			file_id = this->get_last_row_from_qry<uint64_t>("SELECT id FROM file WHERE dir=", dir_id, " AND name=\"", _f::esc, '"', _f::strlen, file_name_length, file_name, "\" LIMIT 1");
 		}
