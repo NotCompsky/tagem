@@ -242,17 +242,16 @@ magic_t magique;
 	"FROM tag t " \
  	"JOIN tag2parent_tree t2pt ON t2pt.id=t.id " \
 	"JOIN tag p ON p.id=t2pt.parent " \
-	"LEFT JOIN(" \
-		"SELECT f2t.tag, COUNT(*) AS n " \
-		"FROM file2tag f2t " \
+	"JOIN(" \
+		"SELECT t.id AS tag, COUNT(f2t.file) AS n " \
+		"FROM tag t " \
+		"LEFT JOIN file2tag f2t ON f2t.tag=t.id " \
 		/* NOTE: MySQL doesn't seem to optimise this often - usually faster if duplicate the limitations within this subquery */ \
-		"JOIN file f ON f.id=f2t.file " \
-		"JOIN dir d ON d.id=f.dir " \
-		"WHERE f2t.tag IN(" \
-			__VA_ARGS__ \
-		")" \
+		"LEFT JOIN file f ON f.id=f2t.file " \
+		"LEFT JOIN dir d ON d.id=f.dir " \
+		__VA_ARGS__ " " \
 		"AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id) \
-		"GROUP BY tag" \
+		"GROUP BY t.id" \
 	")A ON A.tag=t.id "
 #define SELECT_TAGS_INFOS_FROM_STUFF(...) \
 	SELECT_TAGS_INFOS__BASE__SELECT \
@@ -264,25 +263,24 @@ magic_t magique;
 		"t.description " \
 	SELECT_TAGS_INFOS__BASE__BODY(__VA_ARGS__)
 
-#define WHERE_TAGS_INFOS(...) \
-	"WHERE t.id IN(" __VA_ARGS__ ")" \
-	"AND (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
+#define WHERE_TAGS_INFOS \
+	"WHERE (t2pt.depth=0 OR p.thumbnail IS NOT NULL)" \
 	"AND " NOT_DISALLOWED_TAG("t.id", user_id) \
 	"AND " NOT_HIDDEN_TAG("t.id", user_id) \
 	/* "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id)  Unnecessary */
 #define TAGS_INFOS(...) \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
-	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	WHERE_TAGS_INFOS \
 	"GROUP BY t.id "
 #define TAGS_INFOS__WITH_T_AND_DESCR(...) \
 	SELECT_TAGS_INFOS__WITH_T_AND_DESCR__FROM_STUFF(__VA_ARGS__) \
-	WHERE_TAGS_INFOS(__VA_ARGS__) \
+	WHERE_TAGS_INFOS \
 	"GROUP BY t.id "
 #define TAGS_INFOS__WTH_DUMMY_WHERE_THING(...) \
 	/* See NOTE #dkgja */ \
 	SELECT_TAGS_INFOS_FROM_STUFF(__VA_ARGS__) \
-	WHERE_TAGS_INFOS(__VA_ARGS__) \
-	"AND t.id>0 " \
+	WHERE_TAGS_INFOS \
+	"AND t.id>0\n" \
 	"GROUP BY t.id "
 
 #define GREYLIST_USERS_WITHOUT_PERMISSION(field_name) \
@@ -1706,7 +1704,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		GET_USER_ID
 		this->mysql_query<i>(
-			TAGS_INFOS__WITH_T_AND_DESCR("", tag_id, "")
+			TAGS_INFOS__WITH_T_AND_DESCR("WHERE t.id=", tag_id, "")
 		);
 		this->reset_buf_index();
 		this->begin_json_response(this->itr);
@@ -1729,7 +1727,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<size_t i,  bool is_ordered_by_field,  typename... Args>
 	void tags_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query<i>(
-			TAGS_INFOS("", ids_args..., "")
+			TAGS_INFOS("WHERE t.id IN(", ids_args..., ")")
 			"ORDER BY ", is_ordered_by_field ? "FIELD(t.id," : "t.name -- ", ids_args..., ")\n"
 			"LIMIT 100 "
 			"OFFSET ", 100*page_n
@@ -1740,7 +1738,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<bool is_ordered_by_field,  typename... Args>
 	void dirs_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		this->mysql_query<1>(
-			TAGS_INFOS("SELECT DISTINCT tag FROM dir2tag WHERE dir IN(", ids_args..., ")")
+			TAGS_INFOS("WHERE EXISTS(SELECT 1 FROM dir2tag d2t WHERE d2t.dir IN(", ids_args..., ") AND d2t.tag=t.id)")
 		);
 		this->mysql_query<0>(
 			"SELECT "
@@ -1858,7 +1856,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 					FileIDsArgs... file_ids_args
 				){
 					thees->mysql_query<1>(
-						TAGS_INFOS__WTH_DUMMY_WHERE_THING("SELECT DISTINCT tag FROM file2tag WHERE file IN(", file_ids_args..., ")")
+						TAGS_INFOS__WTH_DUMMY_WHERE_THING("WHERE EXISTS(SELECT 1 FROM file2tag _f2t WHERE _f2t.tag=t.id AND _f2t.file IN(", file_ids_args..., "))")
 					);
 					thees->mysql_query<0>(
 						"SELECT ", select_fields, " "
@@ -1918,7 +1916,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		const auto user_id = user->id;
 		
 		this->mysql_query<1>(
-			TAGS_INFOS("SELECT DISTINCT tag FROM file2tag WHERE file IN(SELECT DISTINCT file FROM file2", file2_var_name, ")")
+			TAGS_INFOS("WHERE EXISTS(SELECT 1 FROM file2tag _f2t JOIN file2", file2_var_name, " x2 ON x2.file=_f2t.file WHERE _f2t.tag=t.id)")
 		);
 		this->mysql_query<0>(
 			"SELECT "
@@ -2218,7 +2216,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->asciify(',');
 		
 		this->mysql_query<0>(
-			TAGS_INFOS("SELECT DISTINCT tag FROM user2blacklist_tag")
+			TAGS_INFOS("WHERE EXISTS(SELECT 1 user2blacklist_tag WHERE tag=t.id)")
 		);
 		this->asciify_tags_arr_or_dict<0>(itr, compsky::server::_r::flag::dict);
 		
