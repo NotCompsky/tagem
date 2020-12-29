@@ -3504,7 +3504,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				if (is_video){
 					try {
 						generate_thumbnail(file_path, thumbnail_filepath);
-						this->log("Generated video thumbnail: ", file_path, " -> ", thumbnail_filepath);
 					} catch(std::exception& e){
 						this->log("While generating thumbnail\n\tFile: ", file_path, "\n\tError:",  e.what());
 					}
@@ -3609,8 +3608,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				"ON DUPLICATE KEY UPDATE file=file"
 			);
 		}
-		
-		this->log("t_origin == ", t_origin);
 		
 		if ((t_origin == 0) and (dt != nullptr)){
 			struct tm time;
