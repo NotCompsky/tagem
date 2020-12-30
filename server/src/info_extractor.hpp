@@ -6,7 +6,7 @@
 #include "sprexer/element.hpp"
 #include "sprexer/doc.hpp"
 #include "sprexer/parser.hpp"
-#include "sprexer/nullstr.hpp"
+#include <compsky/utils/nullstrview.hpp>
 
 
 #define CONVERT_TO_USUAL_DATETIME_FROM \
@@ -130,19 +130,19 @@ DomainID get_domain_id(const char* str){
 }
 
 void set_to_string_literal_null_if_null(std::string_view& v){
-	if (v == null_str_view)
+	if (v == compsky::utils::nullstrview)
 		v = "NULL";
 }
 
 void set_to_string_literal_zero_if_null(std::string_view& v){
-	if (v == null_str_view)
+	if (v == compsky::utils::nullstrview)
 		v = "0";
 }
 
 std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selector_path,  const char* const attr){
 	sprexer::Element element(doc.get_element_from_class_selector_path(selector_path));
 	if (element.is_null())
-		return null_str_view;
+		return compsky::utils::nullstrview;
 	return element.get_value(attr);
 }
 
@@ -197,11 +197,11 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		 * e.g. 2020-12-14T14:04:50.000Z
 		 * In UNIX format it would be "%Y-%m-%dT%H:%M:%S.%fZ";
 		 */
-	std::string_view timestamp = null_str_view;
-	std::string_view likes = null_str_view;
-	std::string_view views = null_str_view;
-	std::string_view duration = null_str_view;
-	std::string_view link_url = null_str_view; // The linked article or video
+	std::string_view timestamp = compsky::utils::nullstrview;
+	std::string_view likes = compsky::utils::nullstrview;
+	std::string_view views = compsky::utils::nullstrview;
+	std::string_view duration = compsky::utils::nullstrview;
+	std::string_view link_url = compsky::utils::nullstrview; // The linked article or video
 	
 	author_title = "Uploader: ";
 	switch(domain_id){
@@ -498,7 +498,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		"WHERE f.id=", file_id
 	);
 	
-	if ((dest_dir != nullptr) and (link_url != null_str_view)){
+	if ((dest_dir != nullptr) and (link_url != compsky::utils::nullstrview)){
 		// Download the linked file or web page
 		// NOTE: Overwrites html_buf
 		char* _itr = resulting_fp_as_output;
