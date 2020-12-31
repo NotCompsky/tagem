@@ -143,7 +143,8 @@ magic_t magique;
 #define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, str_name, terminating_char) \
 	GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
 	if (BOOST_PP_CAT(var, _begin) == nullptr) \
-		return compsky::server::_r::not_found;
+		return compsky::server::_r::not_found; \
+	++str_name
 
 #define GET_USER \
 	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
@@ -2854,7 +2855,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	std::string_view add_to_tbl(const char tbl,  const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
 		// NOTE: A tag_ids of "0" should be allowed, at least for adding directories.
-		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t,dir_id)
 		GET_NUMBER(bool,is_ytdl)
 		GET_NUMBER(bool,is_audio_only)
@@ -3059,7 +3059,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__backup_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
-		++s; // Skip slash
 		GET_NUMBER_NONZERO(uint64_t, dir_id)
 		GET_NUMBER(bool, is_ytdl)
 		GET_NUMBER(bool, is_audio_only)
@@ -3210,7 +3209,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__add_parents_to_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
@@ -3229,7 +3227,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__rm_parents_from_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
@@ -3241,7 +3238,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__rm_children_from_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
@@ -3296,7 +3292,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__rm_tags_from_files(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("unlink_tags")
@@ -3318,7 +3313,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__add_tags_to_eras(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
@@ -3330,7 +3324,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__add_tags_to_dirs(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(dir_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
@@ -3346,7 +3339,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__add_tag_to_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("link_tags")
@@ -3362,7 +3354,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__add_var_to_file(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(file_ids, s, '/')
-		++s; // Skip trailing slash
 		GET_NUMBER(uint64_t, value)
 		GET_FILE2_VAR_NAME(s)
 		
