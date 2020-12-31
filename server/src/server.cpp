@@ -145,7 +145,7 @@ magic_t magique;
 	GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
 	if (BOOST_PP_CAT(var, _begin) == nullptr) \
 		return compsky::server::_r::not_found; \
-	++str_name
+	++str_name;
 
 #define GET_USER \
 	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
