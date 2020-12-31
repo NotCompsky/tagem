@@ -29,6 +29,7 @@ function $$$after_tagged_this_file(ids, tags){
 
 
 function $$$hide_all_views_except(except){
+	$$$select2_ids = $$$select2_ids_default;
 	for(let type of ['img','video','audio','iframe','object','yt-player']){
 		const node = $$$document_getElementById('view-'+type);
 		if(type === except){
