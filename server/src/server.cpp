@@ -46,6 +46,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/os/del.hpp>
 #include <compsky/http/parse.hpp>
 #include <compsky/utils/ptrdiff.hpp>
+#include <compsky/dl/asio.hpp>
 #include <compsky/utils/count.hpp>
 #include <compsky/str/verify.hpp>
 

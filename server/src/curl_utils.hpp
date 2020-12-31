@@ -57,10 +57,8 @@ const std::string_view get_host(const char* url){
 
 template<typename Url,  typename Mimetype>
 size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype mimetype){
-	char* itr = dst_buf;
-	compsky::asciify::asciify(
-		itr,
-		"GET ", url, " HTTP/1.1\r\n",
+	return compsky::dl::asio::dl(url,  std::string_view(dst_buf,  compsky::utils::ptrdiff(itr, dst_buf)),  dst_buf,  dst_pth,  mimetype,
+		"GET", url, nullptr,
 		"Host: ", _detail::get_host(url), "\r\n"
 		"Accept: */*\r\n"
 		"Connection: close\r\n"
@@ -74,7 +72,6 @@ size_t dl(Url const url,  char*& dst_buf,  const char* const dst_pth,  Mimetype 
 		"TE: Trailers\r\n"
 		"\r\n"
 	);
-	compsky::dl::asio::dl(url,  std::string_view(dst_buf,  compsky::utils::ptrdiff(itr, dst_buf)),  dst_buf,  dst_pth,  mimetype);
 }
 
 
