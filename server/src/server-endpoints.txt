@@ -80,6 +80,9 @@ GET /favicon.ico >
 GET /S/f/>
 	return this->stream_file(++str)
 
+GET /i/reverse/>
+	return this->get_reverse_search_img(++str)
+
 
 POST /record-local-dir/>
 	return this->post__recursively_record_filesystem_dir(++str)

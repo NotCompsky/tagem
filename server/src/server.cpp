@@ -2770,12 +2770,29 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return (n_errors) ? FunctionSuccessness::server_error : FunctionSuccessness::ok;
 	}
 	
+	template<typename... Args>
+	char* buf_backed_str(Args&&... args){
+		char* begin = this->itr;
+		this->asciify(args..., '\0');
+		return begin;
+	}
+	
 	template<typename T,  typename... Args>
 	T get_last_row_from_qry(Args... args){
+		// WARNING: T must not be string (or any type with an allocation)
+		// TODO: Enforce (unfortunately C++ simply refuses to allow non-class partial specialisation, which would have been a nice way to do it)
 		SQLQuery qry(this, db_infos.at(0), args...);
 		T t = 0;
 		qry.assign_next_row(&t);
 		return t;
+	}
+	
+	template<typename... Args>
+	const char* get_last_row_from_qry__str(Args... args){
+		SQLQuery qry(this, db_infos.at(0), args...);
+		const char* str = nullptr;
+		qry.assign_next_row(&str);
+		return str ? this->buf_backed_str(str) : nullptr;
 	}
 	
 	std::string_view post__add_boxes(const char* s){
@@ -3590,6 +3607,120 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			tag_id,
 			"AND f.id=", file_id, " "
 		);
+	}
+	
+	std::string_view get_reverse_search_img(const char* s){
+		GET_NUMBER_NONZERO(uint64_t, file_id)
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("exec_safe_tasks")
+		
+		return this->reverse_search_img(file_id);
+	}
+	
+	std::string_view reverse_search_img(const uint64_t file_id){
+		char* html;
+		size_t html_sz;
+		#define YANDEX_USER_AGENT "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:84.0) Gecko/20100101 Firefox/84.0"
+		#define YANDEX_ACCEPT_LANG "fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5"
+		#define YANDEX_BOUNDARY "---------------------------2085185490552937068115993161"
+		#define YANDEX_GGGG \
+			YANDEX_BOUNDARY "\r\n" \
+			"Content-Disposition: form-data; name=\"upfile\"; filename=\"lgrey.png\"\r\n" \
+			"Content-Type: "
+		
+		html = this->buf;
+#ifdef USE_LIBCURL___
+		html_sz = curl::dl_buf("https://yandex.com/images/search", html);
+#else
+		html_sz = compsky::dl::asio::dl(
+			this->buf, HANDLER_BUF_SZ, html, nullptr, nullptr,
+			"GET", true, "yandex.com", "/images/search", nullptr,
+			"Host: yandex.com\r\n"
+			"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\n"
+			"Connection: close\r\n"
+			"User-Agent: " YANDEX_USER_AGENT "\r\n"
+			"Accept-Language: " YANDEX_ACCEPT_LANG "\r\n"
+			"Upgrade-Insecure-Requests: 1\r\n"
+			"DNT: 1\r\n"
+			"Pragma: no-cache\r\n"
+			"Cache-Control: no-cache\r\n"
+			"TE: Trailers\r\n"
+			"\r\n"
+		);
+#endif
+		html[html_sz] = 0;
+		printf("looking for serpid\n"); fflush(stdout);
+		const std::string_view serpid = STRING_VIEW_FROM_UP_TO(10, "\"serpid\":\"")(html, '"');
+		if (unlikely(serpid == compsky::utils::nullstrview))
+			return compsky::server::_r::server_error;
+		printf("serpid == %.*s\n", (int)serpid.size(), serpid.data()); fflush(stdout);
+		
+		this->reset_buf_index();
+		this->mysql_query(
+			"SELECT "
+				"CONCAT(d.full_path, f.name),"
+				"m.name "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			"JOIN mimetype m ON m.id=f.mimetype "
+			"WHERE f.id=", file_id
+		);
+		
+		const char* file_path = nullptr;
+		const char* mimetype;
+		while(this->mysql_assign_next_row(&file_path, &mimetype)){
+		
+#ifdef USE_LIBCURL___
+		
+#else
+		if (unlikely(compsky::os::get_file_sz(file_path) > HANDLER_BUF_SZ + 4096))
+			return compsky::server::_r::server_error;
+		html_sz = compsky::dl::asio::dl(
+			this->buf, HANDLER_BUF_SZ, html, nullptr, nullptr,
+			"POST", true, "yandex.com", std::tuple<const char*, std::string_view, const char*>("/images/search?serpid=", serpid, "&serpListType=horizontal&thumbSnippet=0&uinfo=sw-1920-sh-1080-ww-1920-wh-612-pd-1-wp-16x9_1920x1080&rpt=imageview&format=json&request=%7B%22blocks%22%3A%5B%7B%22block%22%3A%22cbir-controller__upload%3Aajax%22%7D%5D%7D"), nullptr,
+			"Host: yandex.com\r\n"
+			"Accept: application/json, text/javascript, */*; q=0.01\r\n"
+			"Connection: close\r\n"
+			"User-Agent: " YANDEX_USER_AGENT "\r\n"
+			"Accept-Language: " YANDEX_ACCEPT_LANG "\r\n"
+			"X-Requested-With: XMLHttpRequest\r\n"
+			"Content-Type: multipart/form-data; boundary=" YANDEX_BOUNDARY "\r\n"
+			"Origin: https://yandex.com\r\n"
+			"Referer: https://yandex.com/images/search\r\n"
+			"DNT: 1\r\n"
+			"Pragma: no-cache\r\n"
+			"Cache-Control: no-cache\r\n"
+			"TE: Trailers\r\n"
+			"Content-Length: ",
+				  std::char_traits<char>::length(YANDEX_GGGG)
+				+ strlen(mimetype)
+				+ std::char_traits<char>::length("\r\n\r\n")
+				+ compsky::os::get_file_sz(file_path)
+				+ std::char_traits<char>::length("\r\n" YANDEX_BOUNDARY "--\r\n")
+				, "\r\n"
+			"\r\n"
+				YANDEX_GGGG, mimetype, "\r\n"
+				"\r\n",
+				compsky::os::ReadOnlyFile(file_path), "\r\n"
+				YANDEX_BOUNDARY "--\r\n"
+		);
+#endif
+		printf("html>>>\n%.*s\n<<<\n", (int)html_sz, html);
+		
+		}
+		
+		if (unlikely(file_path == nullptr))
+			return compsky::server::_r::not_found;
+		
+		return compsky::server::_r::post_ok;
+		
+		const char* urls = SKIP_TO_AFTER_SUBSTR(18, "\"preview\":[{\"url\":")(html) - 8; // TODO: Maybe 7 will work
+		std::string_view img_url;
+		while((img_url = STRING_VIEW_FROM_UP_TO(8, "{\"url\":\"")(urls, '"')) != compsky::utils::nullstrview){
+			printf("img_url == %.*s\n", (int)img_url.size(), img_url.data()); fflush(stdout);
+		}
+		
+		return compsky::server::_r::post_ok;
 	}
 	
 #ifdef PYTHON
