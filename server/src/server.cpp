@@ -137,16 +137,19 @@ magic_t magique;
 	if(SKIP_TO_HEADER(8,"Expect: ")(s) != nullptr) \
 		return compsky::server::_r::expect_100_continue;
 
-#define GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
-	const char* const BOOST_PP_CAT(var, _begin) = compsky::str::get_int_csv<',', terminating_char>(str_name); \
+#define GET_INT_CSV__NULLABLE(var, str_name, separator, terminating_char) \
+	const char* const BOOST_PP_CAT(var, _begin) = compsky::str::get_int_csv<separator, terminating_char>(str_name); \
 	const size_t BOOST_PP_CAT(var, _length)     = ptrdiff(str_name, BOOST_PP_CAT(var, _begin)); \
 	const std::string_view var(BOOST_PP_CAT(var, _begin), BOOST_PP_CAT(var, _length));
 
-#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, str_name, terminating_char) \
-	GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
+#define GET_INT_CSV__NOTNULL(var, str_name, separator, terminator) \
+	GET_INT_CSV__NULLABLE(var, str_name, separator, terminator) \
 	if (BOOST_PP_CAT(var, _begin) == nullptr) \
 		return compsky::server::_r::not_found; \
 	++str_name;
+
+#define GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(var, str_name, terminating_char) \
+	GET_INT_CSV__NOTNULL(var, str_name, ',', terminating_char)
 
 #define GET_USER \
 	user_auth::User* user = user_auth::get_user(get_cookie(s, "username=")); \
@@ -2048,7 +2051,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view select2_regex(const char tbl_alias,  const char* s){
 		// NOTE: ids can be 0, to "pre-fill" tag selection box before selecting files
-		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(ids, s, '+')
+		// 'a' is the terminating character of the IDs because even + and . are escaped into 3 characters
+		GET_INT_CSV__NOTNULL(ids, s, 'a', 'b')
 		const char* const qry = s;
 		
 		GET_USER_ID
@@ -2548,7 +2552,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	std::string_view post__recursively_record_filesystem_dir(const char* s){
 		GET_NUMBER(unsigned, max_depth)
-		GET_COMMA_SEPARATED_INTS__NULLABLE(tag_ids, s, ' ')
+		GET_INT_CSV__NULLABLE(tag_ids, s, ',', ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("record_local_fs")
 		SKIP_TO_BODY

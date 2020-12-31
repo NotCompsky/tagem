@@ -70,7 +70,8 @@ function $$$init_selects__ajax(var_name){
 			dataType:"json",
 			data:function(params){
 				// The server filters out tags that are already applied to all ids
-				return ($$$use_regex) ? {'q': $$$select2_ids()+'+'+params.term} : {'q': $$$select2_ids()+'+'+$$$regexp_esc_for_mysql(params.term)}
+				const ids = $$$select2_ids().replace(',','a')+'b'; // Separator and terminator cannot be 'special' characters like commas or plus signs, in order to avoid being escaped
+				return ($$$use_regex) ? {'q': ids+params.term} : {'q': ids+$$$regexp_esc_for_mysql(params.term)}
 			},
 			processResults:function(data){
 				return{
