@@ -1994,7 +1994,8 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<typename... Args>
 	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  const std::string_view ids,  Args... name_args){
 		// The server filters out tags that are already applied to all ids
-		const unsigned n_ids = compsky::utils::count_occurances(ids, ',');
+		const unsigned n_ids = compsky::utils::count_occurances(ids, 'a') + 1;
+		constexpr compsky::asciify::flag::Replace<char,char> _f_replace;
 		
 		this->reset_buf_index();
 		this->asciify(
@@ -2008,16 +2009,17 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				break;
 			default: /*case 't'*/
 				this->asciify(NOT_DISALLOWED_TAG("X.id", user_id));
-				this->asciify(
-					"AND NOT EXISTS("
-						"SELECT 1 "
-						"tag2file "
-						"WHERE file IN(", ids, ")"
-						  "AND tag=X.id "
-						"GROUP BY tag "
-						"HAVING COUNT(*)=", n_ids,
-					")"
-				);
+				if ((ids.size() != 1) or (ids.at(0) != '0'))
+					this->asciify(
+						"AND NOT EXISTS("
+							"SELECT 1 "
+							"FROM file2tag "
+							"WHERE file IN(", _f_replace, 'a', ',', ids, ")"
+							"AND tag=X.id "
+							"GROUP BY tag "
+							"HAVING COUNT(*)=", n_ids,
+						")"
+					);
 				break;
 		}
 		this->asciify(
