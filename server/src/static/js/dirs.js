@@ -35,6 +35,7 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$dir_tagger_fn = $$$after_tagged_this_dir;
+	$$$select2_ids = $$$select2_ids_default;
 	$$$get_file_ids = $$$get_selected_file_ids;
 	$$$get_dir_ids = $$$get_this_dir_id;
 
@@ -110,6 +111,7 @@ function $$$view_dirs(ids){
 function $$$setup_page_for_d_tbl(){
 	$$$hide_all_except(['d']);
 	$$$dir_tagger_fn = $$$after_tagged_selected_dirs;
+	$$$select2_ids = $$$select2_ids_default;
 	$$$get_dir_ids = $$$get_selected_dir_ids;
 }
 

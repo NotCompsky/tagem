@@ -209,6 +209,7 @@ function $$$view_tag(_tag_id,page){
 	$$$document_getElementById_profile_img.onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
+	$$$select2_ids = $$$select2_ids_default;
 	$$$get_file_ids = $$$get_selected_file_ids;
 	$$$get_tag_ids = $$$get_this_tag_id;
 	

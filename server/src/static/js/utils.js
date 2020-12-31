@@ -9,6 +9,10 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+function $$$select2_ids_default(){
+	return '0';
+}
+
 function $$$is_integer(x){
 	return Number.isInteger(x);
 }
@@ -65,7 +69,8 @@ function $$$init_selects__ajax(var_name){
 			// Basically "a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.
 			dataType:"json",
 			data:function(params){
-				return ($$$use_regex) ? {'q': params.term} : {'q': $$$regexp_esc_for_mysql(params.term)}
+				// The server filters out tags that are already applied to all ids
+				return ($$$use_regex) ? {'q': $$$select2_ids()+'+'+params.term} : {'q': $$$select2_ids()+'+'+$$$regexp_esc_for_mysql(params.term)}
 			},
 			processResults:function(data){
 				return{

@@ -277,6 +277,7 @@ function $$$view_file(_file_id_and_t){
 	$$$hide('add-f-backup');
 	
 	$$$file_tagger_fn = $$$after_tagged_this_file;
+	$$$select2_ids = $$$get_file_id;
 	$$$get_file_ids = $$$get_file_id;
 	
 	$$$set_window_location_hash(

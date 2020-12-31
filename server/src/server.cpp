@@ -46,6 +46,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/os/del.hpp>
 #include <compsky/http/parse.hpp>
 #include <compsky/utils/ptrdiff.hpp>
+#include <compsky/utils/count.hpp>
 
 #include <mutex>
 
@@ -1987,7 +1988,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename... Args>
-	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  Args... name_args){
+	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  const std::string_view ids,  Args... name_args){
+		// The server filters out tags that are already applied to all ids
+		const unsigned n_ids = compsky::utils::count_occurances(ids, ',');
+		
 		this->reset_buf_index();
 		this->asciify(
 			"SELECT X.id, X.", (tbl_alias=='d')?"full_path ":"name ",
@@ -2000,6 +2004,16 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				break;
 			default: /*case 't'*/
 				this->asciify(NOT_DISALLOWED_TAG("X.id", user_id));
+				this->asciify(
+					"AND NOT EXISTS("
+						"SELECT 1 "
+						"tag2file "
+						"WHERE file IN(", ids, ")"
+						  "AND tag=X.id "
+						"GROUP BY tag "
+						"HAVING COUNT(*)=", n_ids,
+					")"
+				);
 				break;
 		}
 		this->asciify(
@@ -2032,11 +2046,13 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	std::string_view select2_regex(const char tbl_alias,  const char* s){
+		// NOTE: ids can be 0, to "pre-fill" tag selection box before selecting files
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(ids, s, '+')
 		const char* const qry = s;
 		
 		GET_USER_ID
 		
-		return this->select2(tbl_alias, user_id, "REGEXP BINARY \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
+		return this->select2(tbl_alias, user_id, ids, "REGEXP BINARY \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
 		// NOTE: AFAIK, in URLs, one should have spaces as %20 before the ? and + after.
 		// However, select2 encodes spaces as %20, not +, even though they are passed as URL parameters.
 	}
