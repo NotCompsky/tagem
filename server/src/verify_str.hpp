@@ -23,8 +23,3 @@ bool is_valid_hex_char(const char c){
 			return false;
 	}
 }
-
-constexpr
-bool is_integer(const char c){
-	return ((c >= '0')  and  (c <= '9'));
-}

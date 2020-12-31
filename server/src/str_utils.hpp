@@ -47,25 +47,6 @@ Char* skip_to_after(Char* s,  const char(&A)[sz]){
 }
 
 constexpr
-const char* get_comma_separated_ints(const char** str,  const char separator){
-	const char* const start = *str;
-	while(true){
-		if (not is_integer(**str))
-			return nullptr;
-		do {
-			++(*str);
-		} while (is_integer(**str));
-		
-		if (**str == ','){
-			++(*str);
-			continue;
-		}
-		
-		return (**str == separator) ? start : nullptr;
-	}
-}
-
-constexpr
 bool in_str(const char* str,  const char c){
 	while(*str != 0){
 		if (*str == c)

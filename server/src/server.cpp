@@ -47,6 +47,7 @@ The absense of this copyright notices on some other files in this project does n
 #include <compsky/http/parse.hpp>
 #include <compsky/utils/ptrdiff.hpp>
 #include <compsky/utils/count.hpp>
+#include <compsky/str/verify.hpp>
 
 #include <mutex>
 
@@ -137,7 +138,7 @@ magic_t magique;
 		return compsky::server::_r::expect_100_continue;
 
 #define GET_COMMA_SEPARATED_INTS__NULLABLE(var, str_name, terminating_char) \
-	const char* const BOOST_PP_CAT(var, _begin) = get_comma_separated_ints(&str_name, terminating_char); \
+	const char* const BOOST_PP_CAT(var, _begin) = compsky::str::get_int_csv<',', terminating_char>(str_name); \
 	const size_t BOOST_PP_CAT(var, _length)     = ptrdiff(str_name, BOOST_PP_CAT(var, _begin)); \
 	const std::string_view var(BOOST_PP_CAT(var, _begin), BOOST_PP_CAT(var, _length));
 
