@@ -70,7 +70,10 @@ function $$$init_selects__ajax(var_name){
 			dataType:"json",
 			data:function(params){
 				// The server filters out tags that are already applied to all ids
-				const ids = $$$select2_ids().replace(',','a')+'b'; // Separator and terminator cannot be 'special' characters like commas or plus signs, in order to avoid being escaped
+				let ids = $$$select2_ids().replace(',','a')+'b'; // Separator and terminator cannot be 'special' characters like commas or plus signs, in order to avoid being escaped
+				if(ids==="b")
+					// This happens only if the user has done a file qry and attempts to select tags without any files selected.
+					ids="0b";
 				return ($$$use_regex) ? {'q': ids+params.term} : {'q': ids+$$$regexp_esc_for_mysql(params.term)}
 			},
 			processResults:function(data){
