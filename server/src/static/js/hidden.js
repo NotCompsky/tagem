@@ -51,6 +51,7 @@ function $$$is_node_hidden(node){
 
 function $$$hide_all_except(ids,classes){
 	// More like 'page switch' event now
+	$$$select2_ids = $$$select2_ids_default;
 	if(!ids.includes('file-info'))
 		$$$playlist_file_ids = undefined; // Destroy playlist
 	$$$document_getElementById_profile_img.removeAttribute('onclick');

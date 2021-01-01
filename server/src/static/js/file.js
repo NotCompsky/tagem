@@ -29,7 +29,6 @@ function $$$after_tagged_this_file(ids, tags){
 
 
 function $$$hide_all_views_except(except){
-	$$$select2_ids = $$$select2_ids_default;
 	for(let type of ['img','video','audio','iframe','object','yt-player']){
 		const node = $$$document_getElementById('view-'+type);
 		if(type === except){
@@ -278,7 +277,6 @@ function $$$view_file(_file_id_and_t){
 	$$$hide('add-f-backup');
 	
 	$$$file_tagger_fn = $$$after_tagged_this_file;
-	$$$select2_ids = $$$get_file_id;
 	$$$get_file_ids = $$$get_file_id;
 	
 	$$$set_window_location_hash(
@@ -351,6 +349,8 @@ function $$$view_file(_file_id_and_t){
 		$$$view_file__hides();
 		$$$set_profile_name($$$file_title);
 	}
+	
+	$$$select2_ids = $$$get_file_id;
 }
 
 function $$$create__view_dir_and_filename_w_filename_playable(id,mime,fname){
