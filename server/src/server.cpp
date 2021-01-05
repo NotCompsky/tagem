@@ -3148,7 +3148,55 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			  // "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id) // Unnecessary
 		);
 		
-		// TODO: Descendant tags etc
+		// Regenerate the related parts of tag2parent_tree:
+		
+		// Delete ancestry of all descendant tags, except for the link between those tags and $child_ids
+		// i.e. delete the links between $child_ids's descendants and their descendants
+		/* Cannot use EXISTS() with same table as deleting/updating from, but the following is equivalent to:
+		 * 
+			SELECT *
+			FROM tag2parent_tree t2pt
+			WHERE EXISTS(
+				SELECT 1
+				FROM tag2parent_tree A
+				WHERE A.parent=t2pt.parent
+				AND A.id IN(86983)
+				AND A.depth!=0
+			)
+			AND EXISTS(
+				SELECT 1
+				FROM tag2parent_tree B
+				WHERE B.id=t2pt.id
+				AND B.parent IN(86983)
+				AND B.depth!=0
+			)
+		 */
+		this->mysql_exec(
+			"DELETE t2pt "
+			"FROM tag2parent_tree t2pt "
+			"JOIN tag2parent_tree A ON A.parent=t2pt.parent AND A.id IN(", child_ids, ")AND A.depth!=0 "
+			"JOIN tag2parent_tree B ON     B.id=t2pt.id AND B.parent IN(", child_ids, ")AND B.depth!=0 "
+		);
+		
+		// Delete direct ancesetry of $child_ids
+		// NOTE: Obviously must happen after the previous query
+		this->mysql_exec(
+			"DELETE t2pt "
+			"FROM tag2parent_tree t2pt "
+			"WHERE t2pt.id IN(", child_ids, ")"
+			//  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id) // MySQL error: "You can't specify target table 't2pt' for update in FROM clause"
+		);
+		
+		this->update_tag2parenttree<true>(
+			user_id,
+			child_ids,
+			"EXISTS("
+				"SELECT 1 "
+				"FROM tag2parent "
+				"WHERE id=t.id "
+				  "AND parent=t2pt.id"
+			")"
+		);
 	}
 	
 	template<bool update_descendants,  typename Children,  typename... ParentsCondition>
@@ -3188,6 +3236,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<bool update_descendants,  typename Children,  typename... ParentsCondition>
 	void tag_parentisation(const UserIDIntType user_id,  Children children,  ParentsCondition... parents_condition){
+		// TODO: Check for disallowed tags (and ban if so) to avoid having to do so later on
 		this->mysql_exec(
 			"INSERT INTO tag2parent (id, parent, user) "
 			"SELECT t.id, p.id,", user_id, " "
