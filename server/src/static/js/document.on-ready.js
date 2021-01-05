@@ -26,6 +26,7 @@ function $$$on_document_ready(){
 	
 	$$$parent_tags_ls = $$$document_getElementById("parents");
 	$$$child_tags_ls = $$$document_getElementById("children");
+	$$$sibling_tags_ls = $$$document_getElementById("siblings");
 	
 	$$$document_getElementById_audio_only = $$$document_getElementById("audio-only");
 	$$$document_getElementById_add_f_backup_ytdl = $$$document_getElementById("add-f-backup-ytdl");

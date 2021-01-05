@@ -86,6 +86,7 @@ function $$$hide_all_except(ids,classes){
 		'values-container',
 		'tags-container',
 		'parents-container',
+		'siblings-container',
 		'children-container',
 		'dirselect-container',
 		'tagselect-files-container',

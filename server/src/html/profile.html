@@ -434,7 +434,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</div>"
 "</div>"
 
-BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",MINIMISED_JS_DECL_add_parent_tags"()")("tagselect-self-c","Add Child Tags",MINIMISED_JS_DECL_add_child_tags"()")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",MINIMISED_JS_DECL_add_parent_tags"()")("tagselect-self-c","Add Child Tags",MINIMISED_JS_DECL_add_child_tags"()")("tagselect-self-s","Add Sibling Tags",MINIMISED_JS_DECL_add_sibling_tags"()")))
 
 "<div id=\"user-info\">"
 	"<h3 id=\"user-fullname\"></h3>"
@@ -609,7 +609,7 @@ R"=========(
 		"<div class=\"side-title\">" elem "</div>" \
 		"<div id=\"" elem "\"></div>" \
 	"</div>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("values")("parents")("children")("tags"))
+BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("values")("parents")("siblings")("children")("tags"))
 R"=========(
   </div>
 </div>

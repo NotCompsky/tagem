@@ -215,6 +215,15 @@ CREATE TABLE IF NOT EXISTS tag2parent_tree (
 	FOREIGN KEY (parent) REFERENCES tag (id),
 	PRIMARY KEY (tag, parent)
 );
+CREATE TABLE IF NOT EXISTS tag2tag (
+	-- Siblings
+	a BIGINT UNSIGNED NOT NULL,
+	b BIGINT UNSIGNED NOT NULL,
+	FOREIGN KEY (a) REFERENCES tag (id),
+	FOREIGN KEY (b) REFERENCES tag (id),
+	PRIMARY KEY (a, b)
+	-- No directions; but for uniqueness, a < b
+);
 
 CREATE TABLE IF NOT EXISTS user2blacklist_tag (
 	-- Anything tagged with any of these tags are invisible to the user

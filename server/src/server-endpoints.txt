@@ -52,9 +52,11 @@ GET /a/t/info/>
 GET /a/t/id/>
 	return this->get__X_given_ids('t', ++str)
 GET /a/t/p/>
-	return this->get_parent_tags_of(++str)
+	return this->get_related_tags_given_id(++str, "SELECT parent FROM tag2parent WHERE id=")
+GET /a/t/s/>
+	return this->get_sibling_tags_of(++str)
 GET /a/t/c/>
-	return this->get_child_tags_of(++str)
+	return this->get_related_tags_given_id(++str, "SELECT id FROM tag2parent WHERE parent=")
 GET /a/t/f/>
 	return this->tags_given_file(++str)
 
@@ -122,6 +124,10 @@ POST /t/p/>
 	return this->post__add_parents_to_tags(++str)
 POST /t/p-/>
 	return this->post__rm_parents_from_tags(++str)
+POST /t/s/>
+	return this->post__add_siblings_to_tags(++str)
+POST /t/s-/>
+	return this->post__rm_siblings_from_tags(++str)
 POST /task/exec/>
 	return this->exec_task(++str)
 POST /task/edit/>

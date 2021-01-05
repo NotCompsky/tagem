@@ -100,6 +100,9 @@ function $$$unlink_this_parent_tag_from_this_tag(node){
 function $$$unlink_this_child_tag_from_this_tag(node){
 	$$$unlink_tag_from_this_tag(node,'c');
 }
+function $$$unlink_this_sibling_tag_from_this_tag(node){
+	$$$unlink_tag_from_this_tag(node,'s');
+}
 function $$$display_tag(id, name, thumb, fn_name, alias){
 	return "<div class='tag' data-id=\"" + id + "\">"
 			+ ((thumb===null)?"":"<img src='" + ((thumb===null)?$$$BLANK_IMG_SRC:thumb) + "' class='icon'/>")
@@ -149,36 +152,37 @@ function $$$display_parent_tags(_tag_id){
 function $$$display_child_tags(_tag_id){
 	$$$display_tags_from_url("c/0/"+_tag_id,$$$child_tags_ls,  "$$$unlink_this_child_tag_from_this_tag");
 }
+function $$$display_sibling_tags(_tag_id){
+	$$$display_tags_from_url("s/0/"+_tag_id,$$$sibling_tags_ls,"$$$unlink_this_sibling_tag_from_this_tag");
 }
 
 // Functions used in HTML
-function $$$add_child_tags(fn){
-	const tagselect = $('#tagselect-self-c');
+function $$$add_related_tags(rel1,rel2,reversed,relfn,fn){
+	const tagselect = $('#tagselect-self-'+rel1);
 	$$$ajax_POST_w_text_response(
-		"/t/p/" + tagselect.val().join(",") + "/" + $$$get_tag_ids(),
+		"/t/"+rel2+"/" + (
+			reversed
+			? (tagselect.val().join(",") + "/" + $$$get_tag_ids())
+			: ($$$get_tag_ids() + "/" + tagselect.val().join(","))
+		),
 		function(){
 			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
 			if($$$get_tag_ids!==$$$get_this_tag_id)
 				// if not currently displaying the tag page
 				return;
-			$$$display_child_tags(ls);
+			relfn(ls);
 			tagselect.val("").change(); // Deselect all
 		}
 	);
 }
+function $$$add_child_tags(fn){
+	$$$add_related_tags('c','p',0,$$$display_child_tags,fn);
+}
+function $$$add_sibling_tags(fn){
+	$$$add_related_tags('s','s',0,$$$display_sibling_tags,fn);
+}
 function $$$add_parent_tags(fn){
-	const tagselect = $('#tagselect-self-p');
-	$$$ajax_POST_w_text_response(
-		"/t/p/" + $$$get_tag_ids() + "/" + tagselect.val().join(","),
-		function(){
-			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
-			if($$$get_tag_ids!==$$$get_this_tag_id)
-				// if not currently displaying the tag page
-				return;
-			$$$display_parent_tags(ls);
-			tagselect.val("").change(); // Deselect all
-		}
-	);
+	$$$add_related_tags('p','p',1,$$$display_parent_tags,fn);
 }
 
 function $$$update_tag_thumb(){
@@ -206,7 +210,7 @@ function $$$get_selected_tag_ids(){
 }
 
 function $$$view_tag(_tag_id,page){
-	$$$hide_all_except(['parents-container','children-container','f','d','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn','meta','t1','t2','descr']);
+	$$$hide_all_except(['parents-container','siblings-container','children-container','f','d','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn','meta','t1','t2','descr']);
 	$$$document_getElementById_profile_img.onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
@@ -238,6 +242,7 @@ function $$$view_tag(_tag_id,page){
 	);
 	
 	$$$display_parent_tags($$$tag_id);
+	$$$display_sibling_tags($$$tag_id);
 	$$$display_child_tags($$$tag_id);
 }
 function $$$setup_page_for_t_tbl(){

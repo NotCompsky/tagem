@@ -1809,18 +1809,18 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->X_given_ids<true>(tbl_alias, user_id, page_n, ids);
 	}
 	
-	std::string_view get_parent_tags_of(const char* s){
+	std::string_view get_related_tags_given_id(const char* s,  const char* const qry_pre){
 		GET_PAGE_N('/')
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		GET_USER_ID
-		return this->X_given_ids<false>('t', user_id, page_n, "SELECT parent FROM tag2parent WHERE id=", tag_id);
+		return this->X_given_ids<false>('t', user_id, page_n, qry_pre, tag_id);
 	}
 	
-	std::string_view get_child_tags_of(const char* s){
+	std::string_view get_sibling_tags_of(const char* s){
 		GET_PAGE_N('/')
 		GET_NUMBER_NONZERO(uint64_t,tag_id)
 		GET_USER_ID
-		return this->X_given_ids<false>('t', user_id, page_n, "SELECT id FROM tag2parent WHERE parent=", tag_id);
+		return this->X_given_ids<false>('t', user_id, page_n, "SELECT IF(a=", tag_id, ",b,a) FROM tag2tag WHERE (a=", tag_id, " OR b=", tag_id, ")");
 	}
 	
 	template<size_t i = 0,  typename... Args>
@@ -3297,6 +3297,47 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			return compsky::server::_r::not_found;
 		
 		this->tag_antiparentisation(user_id, child_ids, tag_ids);
+		
+		return compsky::server::_r::post_ok;
+	}
+	
+	std::string_view post__add_siblings_to_tags(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids_1, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids_2, s, ' ')
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
+		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids_1, tag_ids_2)))
+			return compsky::server::_r::not_found;
+		
+		this->mysql_exec(
+			"INSERT INTO tag2tag"
+			"(a,b)"
+			"SELECT GREATEST(a.id,b.id), LEAST(a.id,b.id)"
+			"FROM tag a "
+			"JOIN tag b "
+			"WHERE a.id IN(", tag_ids_1, ")"
+			  "AND b.id IN(", tag_ids_2, ")"
+			"ON DUPLICATE KEY UPDATE a=a"
+		);
+		
+		return compsky::server::_r::post_ok;
+	}
+	
+	std::string_view post__rm_siblings_from_tags(const char* s){
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids_1, s, '/')
+		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(tag_ids_2, s, ' ')
+		GET_USER_ID
+		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
+		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids_1, tag_ids_2)))
+			return compsky::server::_r::not_found;
+		
+		this->mysql_exec(
+			"DELETE FROM tag2tag "
+			"WHERE (a IN(", tag_ids_1, ") AND b IN(", tag_ids_2, "))"
+			   "OR (a IN(", tag_ids_2, ") AND b IN(", tag_ids_1, "))"
+		);
 		
 		return compsky::server::_r::post_ok;
 	}
