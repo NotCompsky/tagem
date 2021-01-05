@@ -3261,7 +3261,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, parent_ids)))
+		if (unlikely(not this->user_can_access_all_tags(user_id, child_ids, parent_ids)))
 			return compsky::server::_r::not_found;
 		
 		this->tag_parentisation<true>(
@@ -3293,7 +3293,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, parent_ids)))
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, child_ids)))
 			return compsky::server::_r::not_found;
 		
 		this->tag_antiparentisation(user_id, child_ids, tag_ids);
