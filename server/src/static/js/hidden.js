@@ -98,6 +98,8 @@ function $$$hide_all_except(ids,classes){
 		'tagselect-self-p-btn',
 		'tagselect-self-c-container',
 		'tagselect-self-c-btn',
+		'tagselect-self-s-container',
+		'tagselect-self-s-btn',
 		'add-t-dialog',
 		'add-f-dialog',
 		'add-d-dialog',
