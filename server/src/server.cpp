@@ -1638,21 +1638,16 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_NUMBER_NONZERO(uint64_t,id)
 		GET_USER_ID
 		
-		return
-			JoinArgsWrapper<const char*>
-			::WhereArgsWrapper<const char*, uint64_t, const char*>
-			::OrderArgsWrapper<const char*>
-			::files_given_X__string_view(
-				this,
-				user_id,
-				page_n,
-				FILE_OVERVIEW_FIELDS("f.id") "0,0",
-				"f.id",
-				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
-				"AND EXISTS (SELECT file FROM file2tag WHERE file=f.id AND tag=", id, ")",
-				"ORDER BY NULL",
-				"SELECT DISTINCT file FROM file2tag WHERE tag=", id
-			);
+		return this->files_given_X__string_view(
+			user_id,
+			page_n,
+			FILE_OVERVIEW_FIELDS("f.id") "0,0",
+			"f.id",
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id",
+			std::tuple<const char*,  uint64_t,  const char*>("AND EXISTS (SELECT file FROM file2tag WHERE file=f.id AND tag=", id, ")"),
+			"ORDER BY NULL",
+			"SELECT DISTINCT file FROM file2tag WHERE tag=", id
+		);
 	}
 	
 	std::string_view dirs_given_tag(const char* s){
@@ -1666,11 +1661,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	template<typename... Args>
 	void eras_w_file_infos_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
 		// WARNING: files_given_X uses both res[0] and res[1]
-		JoinArgsWrapper<const char*>
-		::template WhereArgsWrapper<const char*, Args..., const char*>
-		::template OrderArgsWrapper<const char*, Args..., const char*>
-		::files_given_X(
-			this,
+		this->files_given_X(
 			user_id,
 			page_n,
 			FILE_OVERVIEW_FIELDS__ERAS("f.id") "e.start,e.end",
@@ -1678,31 +1669,25 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN era e ON e.file=f.id "
 			"LEFT JOIN file2tag f2t ON f2t.file=e.file "
 			"LEFT JOIN era2tag e2t ON e2t.era=e.id ",
-			"AND e.id IN(", ids_args..., ")",
-			"ORDER BY FIELD(e.id,", ids_args..., ")",
+			std::tuple<const char*, Args..., const char*>("AND e.id IN(", ids_args..., ")"),
+			std::tuple<const char*, Args..., const char*>("ORDER BY FIELD(e.id,", ids_args..., ")"),
 			"SELECT DISTINCT file FROM era WHERE id IN(", ids_args..., "))UNION SELECT DISTINCT tag FROM era2tag WHERE era IN(", ids_args...
 		);
-		
 		this->asciify_file_info<2>(itr);
 	}
 	
 	template<typename... Args>
 	void files_given_ids(char*& itr,  const UserIDIntType user_id,  const unsigned page_n,  Args... ids_args){
-		JoinArgsWrapper<const char*>
-		::WhereArgsWrapper<const char*, Args..., const char*>
-		::template OrderArgsWrapper<const char*, Args..., const char*>
-		::files_given_X(
-			this,
+		this->files_given_X(
 			user_id,
 			page_n,
 			FILE_OVERVIEW_FIELDS("f.id") "0,0",
 			"f.id",
 			"LEFT JOIN file2tag f2t ON f2t.file=f.id",
-			"AND f.id IN(", ids_args..., ")",
-			"ORDER BY FIELD(f.id,", ids_args..., ")",
+			std::tuple<const char*, Args..., const char*>("AND f.id IN(", ids_args..., ")"),
+			std::tuple<const char*, Args..., const char*>("ORDER BY FIELD(f.id,", ids_args..., ")"),
 			ids_args...
 		);
-		
 		this->asciify_file_info(itr);
 	}
 	
@@ -1843,78 +1828,53 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		);
 	}
 	
-	template<typename... JoinArgs>
-	struct JoinArgsWrapper {
-		template<typename... WhereArgs>
-		struct WhereArgsWrapper {
-			template<typename... OrderArgs>
-			struct OrderArgsWrapper {
-				template<typename... FileIDsArgs>
-				static
-				void files_given_X(
-					TagemResponseHandler* thees,
-					const UserIDIntType user_id,
-					const unsigned page_n,
-					const char* const select_fields,
-					const char* const group_by,
-					JoinArgs... join_args,
-					WhereArgs... where_args,
-					OrderArgs... order_args,
-					FileIDsArgs... file_ids_args
-				){
-					thees->mysql_query<1>(
-						TAGS_INFOS__WTH_DUMMY_WHERE_THING("WHERE EXISTS(SELECT 1 FROM file2tag _f2t WHERE _f2t.tag=t.id AND _f2t.file IN(", file_ids_args..., "))")
-					);
-					thees->mysql_query<0>(
-						"SELECT ", select_fields, " "
-						"FROM file f "
-						"JOIN dir d ON d.id=f.dir "
-						JOIN_FILE_THUMBNAIL
-						"LEFT JOIN file2post f2p ON f2p.file=f.id ",
-						join_args..., " "
-						"WHERE TRUE "
-						  "AND " NOT_DISALLOWED_TAG( "f2t.tag", user_id)
-						  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id),
-						where_args..., " "
-						"GROUP BY ", group_by, " ",
-						order_args..., " "
-						"LIMIT " TABLE_LIMIT " "
-						"OFFSET ", 100*page_n
-					);
-				}
-				
-				template<typename... Args>
-				static
-				std::string_view files_given_X__string_view(TagemResponseHandler* thees,  Args... args){
-					thees->begin_json_response();
-					files_given_X(thees, args...);
-					thees->asciify_file_info();
-					return thees->get_buf_as_string_view();
-				}
-			};
-		};
-	};
+	template<typename Join,  typename Where,  typename Order,  typename... FileIDsArgs>
+	void files_given_X(const UserIDIntType user_id,  const unsigned page_n,  const char* const select_fields,  const char* const group_by,  Join join,  Where where,  Order order,  FileIDsArgs... file_ids_args){
+		this->mysql_query<1>(
+			TAGS_INFOS__WTH_DUMMY_WHERE_THING("WHERE EXISTS(SELECT 1 FROM file2tag _f2t WHERE _f2t.tag=t.id AND _f2t.file IN(", file_ids_args..., "))")
+		);
+		
+		this->mysql_query<0>(
+			"SELECT ", select_fields, " "
+			"FROM file f "
+			"JOIN dir d ON d.id=f.dir "
+			JOIN_FILE_THUMBNAIL
+			"LEFT JOIN file2post f2p ON f2p.file=f.id ",
+			join, " "
+			"WHERE TRUE "
+			  "AND " NOT_DISALLOWED_TAG( "f2t.tag", user_id)
+			  "AND " NOT_DISALLOWED_FILE("f.id", "f.dir", "d.device", user_id),
+			where, " "
+			"GROUP BY ", group_by, " ",
+			order, " "
+			"LIMIT " TABLE_LIMIT " "
+			"OFFSET ", 100*page_n
+		);
+	}
+	
+	template<typename... Args>
+	std::string_view files_given_X__string_view(Args... args){
+		this->begin_json_response();
+		this->files_given_X(args...);
+		this->asciify_file_info();
+		return this->get_buf_as_string_view();
+	}
 	
 	std::string_view files_given_dir(const char* s){
 		GET_PAGE_N('/')
 		GET_NUMBER_NONZERO(uint64_t,id)
 		GET_USER_ID
 		
-		return
-			JoinArgsWrapper<const char*>
-			::WhereArgsWrapper<const char*, uint64_t>
-			::OrderArgsWrapper<const char*>
-			::files_given_X__string_view(
-				this,
-				user_id,
-				page_n,
-				FILE_OVERVIEW_FIELDS("f.id") "0,0",
-				"f.id",
-				"LEFT JOIN file2tag f2t ON f2t.file=f.id",
-				"AND f.dir=", id,
-				"ORDER BY NULL",
-				"SELECT DISTINCT id FROM file WHERE dir=", id
-			);
+		return this->files_given_X__string_view(
+			user_id,
+			page_n,
+			FILE_OVERVIEW_FIELDS("f.id") "0,0",
+			"f.id",
+			"LEFT JOIN file2tag f2t ON f2t.file=f.id",
+			std::tuple<const char*, uint64_t>("AND f.dir=", id),
+			"ORDER BY NULL",
+			"SELECT DISTINCT id FROM file WHERE dir=", id
+		);
 	}
 	
 	std::string_view files_given_value(const char* s){
@@ -2524,13 +2484,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"LIMIT 1"
 		);
 		
-		ParentIDs<Str1>::
-		tag_parentisation(
-			this,
+		this->tag_parentisation<false>(
 			user_id,
-			false,
-			parent_ids,
-			"SELECT id FROM tag WHERE name=\"", _f::esc, '"', tag_name, "\""
+			std::tuple<const char*,  decltype(_f::esc),  const char,  const Str2,  const char*>("SELECT id FROM tag WHERE name=\"", _f::esc, '"', tag_name, "\""),
+			"p.id IN(", parent_ids, ")"
 		);
 	}
 	
@@ -3194,59 +3151,55 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		// TODO: Descendant tags etc
 	}
 	
-	template<typename... ParentIDsArgs>
-	struct ParentIDs {
-		template<typename... ChildIDsArgs>
-		static
-		void tag_parentisation(
-			TagemResponseHandler* thees,
-			const UserIDIntType user_id,
-			const bool update_descendants,
-			ParentIDsArgs... parent_ids_args,
-			ChildIDsArgs... child_ids_args
-		){
-			thees->mysql_exec(
-				"INSERT INTO tag2parent (id, parent, user) "
-				"SELECT t.id, p.id,", user_id, " "
+	template<bool update_descendants,  typename Children,  typename... ParentsCondition>
+	void update_tag2parenttree(const UserIDIntType user_id,  Children children,  ParentsCondition... parents_condition){
+		this->mysql_exec(
+			"INSERT INTO tag2parent_tree (id, parent, depth)"
+			"SELECT * "
+			"FROM("
+				"SELECT id AS id, id AS parent, 0 AS depth "
+				"FROM tag "
+				"WHERE id IN(", children, ")"
+				"UNION "
+				"SELECT t.id, t2pt.parent, t2pt.depth+1 "
 				"FROM tag t "
-				"JOIN tag p "
-				"WHERE t.id IN (", child_ids_args..., ")"
-				  "AND p.id IN (", parent_ids_args...,   ")"
-				  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=p.id", user_id)
-				"ON DUPLICATE KEY UPDATE parent=parent"
+				"JOIN tag2parent_tree t2pt "
+				"JOIN tag p ON p.id=t2pt.id "
+				"WHERE t.id IN(", children, ")"
+				  "AND (", parents_condition..., ")"
+				  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=t2pt.id", user_id)
+			")A "
+			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
+		);
+		
+		if constexpr (update_descendants){
+			this->mysql_exec(
+				"INSERT INTO tag2parent_tree (id, parent, depth) "
+				"SELECT t2pt.id, t2pt2.parent, t2pt.depth+t2pt2.depth "
+				"FROM tag2parent_tree t2pt "
+				"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
+				"JOIN tag p ON p.id=t2pt2.parent "
+				"WHERE t2pt.parent IN(", children, ")"
+				  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id)
+				"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+t2pt2.depth)"
 			);
-			
-			thees->mysql_exec(
-				"INSERT INTO tag2parent_tree (id, parent, depth)"
-				"SELECT * "
-				"FROM("
-					"SELECT id AS id, id AS parent, 0 AS depth "
-					"FROM tag "
-					"WHERE id IN(", child_ids_args..., ")"
-					"UNION "
-					"SELECT t.id, t2pt.parent, t2pt.depth+1 "
-					"FROM tag t "
-					"JOIN tag2parent_tree t2pt "
-					"WHERE t.id IN(", child_ids_args..., ")"
-					  "AND t2pt.parent IN (", parent_ids_args...,   ")"
-					  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=t2pt.id", user_id)
-				")A "
-				"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
-			);
-			
-			if (update_descendants){
-				thees->mysql_exec(
-					"INSERT INTO tag2parent_tree (id, parent, depth) "
-					"SELECT t2pt.id, t2pt2.parent, t2pt.depth+1 "
-					"FROM tag2parent_tree t2pt "
-					"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
-					"WHERE t2pt.id IN (", parent_ids_args..., ")"
-					  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id)
-					"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+1)"
-				);
-			}
 		}
-	};
+	}
+	
+	template<bool update_descendants,  typename Children,  typename... ParentsCondition>
+	void tag_parentisation(const UserIDIntType user_id,  Children children,  ParentsCondition... parents_condition){
+		this->mysql_exec(
+			"INSERT INTO tag2parent (id, parent, user) "
+			"SELECT t.id, p.id,", user_id, " "
+			"FROM tag t "
+			"JOIN tag p "
+			"WHERE t.id IN (", children, ")"
+			  "AND (", parents_condition..., ")"
+			  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=p.id", user_id)
+			"ON DUPLICATE KEY UPDATE parent=parent"
+		);
+		this->update_tag2parenttree<update_descendants>(user_id, children, parents_condition...);
+	}
 	
 	std::string_view post__add_parents_to_tags(const char* s){
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, '/')
@@ -3254,13 +3207,10 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
-		ParentIDs<std::string_view>::
-		tag_parentisation(
-			this,
+		this->tag_parentisation<true>(
 			user_id,
-			true,
-			parent_ids,
-			child_ids
+			child_ids,
+			"p.id IN(", parent_ids, ")"
 		);
 		
 		return compsky::server::_r::post_ok;
