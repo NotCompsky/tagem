@@ -505,6 +505,15 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->get_last_row_from_qry<bool>("SELECT 1 FROM dir d WHERE d.id=", dir_id, " AND " NOT_DISALLOWED_DIR("d.id", "d.device", user_id));
 	}
 	
+	bool user_can_access_all_tags(const UserIDIntType user_id,  const std::string_view tag_ids){
+		// NOTE: These functions allow access to tags that do not exist - such tags should have no effect
+		return not this->get_last_row_from_qry<bool>("SELECT COUNT(*) FROM tag t WHERE t.id IN(", tag_ids, ") AND NOT ", NOT_DISALLOWED_TAG("t.id", user_id), " LIMIT 1");
+	}
+	
+	bool user_can_access_all_tags(const UserIDIntType user_id,  const std::string_view tag_ids1,  const std::string_view tag_ids2){
+		return not this->get_last_row_from_qry<bool>("SELECT COUNT(*) FROM tag t WHERE t.id IN(", tag_ids1, ',', tag_ids2, ") AND NOT ", NOT_DISALLOWED_TAG("t.id", user_id), " LIMIT 1");
+	}
+	
 	std::string_view parse_qry(const char* s){
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_qry")
@@ -2861,6 +2870,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		SKIP_TO_BODY
 		--s;
 		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids)))
+			return compsky::server::_r::not_found;
+		
 		do {
 			++s; // Skip trailing newline
 			const char* const url = s;
@@ -3144,8 +3156,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN tag p ON p.id=t2p.parent "
 			"WHERE t.id IN (", child_ids, ")"
 			  "AND p.id IN (", tag_ids,   ")"
-			  "AND " NOT_DISALLOWED_TAG("t.id", user_id)
-			  // "AND p.id NOT IN" USER_DISALLOWED_TAGS(user_id) // Unnecessary
 		);
 		
 		// Regenerate the related parts of tag2parent_tree:
@@ -3184,7 +3194,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"DELETE t2pt "
 			"FROM tag2parent_tree t2pt "
 			"WHERE t2pt.id IN(", child_ids, ")"
-			//  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id) // MySQL error: "You can't specify target table 't2pt' for update in FROM clause"
 		);
 		
 		this->update_tag2parenttree<true>(
@@ -3215,7 +3224,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				"JOIN tag p ON p.id=t2pt.id "
 				"WHERE t.id IN(", children, ")"
 				  "AND (", parents_condition..., ")"
-				  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=t2pt.id", user_id)
 			")A "
 			"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, A.depth)"
 		);
@@ -3228,7 +3236,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 				"JOIN tag2parent_tree t2pt2 ON t2pt2.id=t2pt.parent "
 				"JOIN tag p ON p.id=t2pt2.parent "
 				"WHERE t2pt.parent IN(", children, ")"
-				  "AND " NOT_DISALLOWED_TAG("t2pt.id", user_id)
 				"ON DUPLICATE KEY UPDATE depth=LEAST(tag2parent_tree.depth, t2pt.depth+t2pt2.depth)"
 			);
 		}
@@ -3236,7 +3243,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	
 	template<bool update_descendants,  typename Children,  typename... ParentsCondition>
 	void tag_parentisation(const UserIDIntType user_id,  Children children,  ParentsCondition... parents_condition){
-		// TODO: Check for disallowed tags (and ban if so) to avoid having to do so later on
 		this->mysql_exec(
 			"INSERT INTO tag2parent (id, parent, user) "
 			"SELECT t.id, p.id,", user_id, " "
@@ -3244,7 +3250,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 			"JOIN tag p "
 			"WHERE t.id IN (", children, ")"
 			  "AND (", parents_condition..., ")"
-			  "AND " NOT_DISALLOWED_TAG("t.id OR _t2pt.id=p.id", user_id)
 			"ON DUPLICATE KEY UPDATE parent=parent"
 		);
 		this->update_tag2parenttree<update_descendants>(user_id, children, parents_condition...);
@@ -3255,6 +3260,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(parent_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
+		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, parent_ids)))
+			return compsky::server::_r::not_found;
 		
 		this->tag_parentisation<true>(
 			user_id,
@@ -3271,6 +3279,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
 		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, parent_ids)))
+			return compsky::server::_r::not_found;
+		
 		this->tag_antiparentisation(user_id, tag_ids, parent_ids);
 		
 		return compsky::server::_r::post_ok;
@@ -3281,6 +3292,9 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		GET_COMMA_SEPARATED_INTS_AND_ASSERT_NOT_NULL(child_ids, s, ' ')
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("edit_tags")
+		
+		if (unlikely(not this->user_can_access_all_tags(user_id, tag_ids, parent_ids)))
+			return compsky::server::_r::not_found;
 		
 		this->tag_antiparentisation(user_id, child_ids, tag_ids);
 		
