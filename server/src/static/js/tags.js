@@ -125,8 +125,8 @@ function $$$display_tags_onto_node_from_url(url,node,fn_name,alias){
 		}
 	);
 }
-function $$$display_tags_from_url(url,node_id,fn_name,alias){
-	$$$display_tags_onto_node_from_url(url,$$$document_getElementById(node_id),fn_name,alias);
+function $$$display_tags_from_url(url,node,fn_name,alias){
+	$$$display_tags_onto_node_from_url(url,node,fn_name,alias);
 }
 function $$$display_tags_onto_node(tag_ids, node, fn_name, alias){
 	if(tag_ids.length===0){
@@ -144,10 +144,11 @@ function $$$display_tags_add(tags, node_id, fn_name, alias){
 	$$$document_getElementById(node_id).innerHTML += arr.join("");
 }
 function $$$display_parent_tags(_tag_id){
-	$$$display_tags_from_url("p/0/"+_tag_id,"parents","$$$unlink_this_parent_tag_from_this_tag");
+	$$$display_tags_from_url("p/0/"+_tag_id,$$$parent_tags_ls, "$$$unlink_this_parent_tag_from_this_tag");
 }
 function $$$display_child_tags(_tag_id){
-	$$$display_tags_from_url("c/0/"+_tag_id,"children","$$$unlink_this_child_tag_from_this_tag");
+	$$$display_tags_from_url("c/0/"+_tag_id,$$$child_tags_ls,  "$$$unlink_this_child_tag_from_this_tag");
+}
 }
 
 // Functions used in HTML

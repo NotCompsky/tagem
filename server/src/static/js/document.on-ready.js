@@ -24,6 +24,9 @@ function $$$on_document_ready(){
 	$$$document_getElementById_tasks = $$$document_getElementById("tasks");
 	$$$document_getElementById_qry = $$$document_getElementById("qry");
 	
+	$$$parent_tags_ls = $$$document_getElementById("parents");
+	$$$child_tags_ls = $$$document_getElementById("children");
+	
 	$$$document_getElementById_audio_only = $$$document_getElementById("audio-only");
 	$$$document_getElementById_add_f_backup_ytdl = $$$document_getElementById("add-f-backup-ytdl");
 	$$$document_getElementById_profile_name = $$$document_getElementById("profile-name");

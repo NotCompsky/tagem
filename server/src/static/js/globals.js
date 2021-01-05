@@ -86,6 +86,9 @@ var $$$document_getElementById_descr;
 var $$$document_getElementById_tasks;
 var $$$document_getElementById_qry;
 
+var $$$parent_tags_ls;
+var $$$child_tags_ls;
+
 var $$$document_getElementById_audio_only;
 var $$$document_getElementById_add_f_backup_ytdl;
 var $$$document_getElementById_profile_name;

@@ -12,8 +12,8 @@
 function $$$set_profile_name_from_this_dir(){
 	$$$set_profile_name($$$dir_name);
 }
-function $$$display_related_dirs(dir_id,rel,arr){
-	$$$document_getElementById(rel).innerHTML = arr.filter(x => x[0]!==dir_id).map(([id,name]) => "<a onclick=\"$$$view_dir('" + id + "',0)\">" + $$$escape_html_text(name) + "</a>").join("<br/>");
+function $$$display_related_dirs(dir_id,n,arr){
+	n.innerHTML = arr.filter(x => x[0]!==dir_id).map(([id,name]) => "<a onclick=\"$$$view_dir('" + id + "',0)\">" + $$$escape_html_text(name) + "</a>").join("<br/>");
 }
 
 
@@ -47,8 +47,8 @@ function $$$view_dir(_dir_id_or_path, is_not_in_db, page){
 			$$$dir_id = _dir_id_or_path;
 			$$$ajax_GET_w_JSON_response("a/d/i/"+$$$dir_id, function(data){
 				$$$dir_name = data[0];
-				$$$display_related_dirs($$$dir_id,"parents",data[1]);
-				$$$display_related_dirs($$$dir_id,"children",data[2]);
+				$$$display_related_dirs($$$dir_id,$$$parent_tags_ls,data[1]);
+				$$$display_related_dirs($$$dir_id,$$$child_tags_ls, data[2]);
 				$$$display_tags(data[3], "tags", "$$$unlink_this_tag_from_this", 'd');
 				$$$set_profile_name_from_this_dir();
 			});
