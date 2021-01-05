@@ -174,13 +174,13 @@ function $$$add_related_tags(rel1,rel2,reversed,relfn){
 	);
 }
 function $$$add_child_tags(){
-	$$$add_related_tags('c','p',0,$$$display_child_tags);
+	$$$add_related_tags('c','p',1,$$$display_child_tags);
 }
 function $$$add_sibling_tags(){
 	$$$add_related_tags('s','s',0,$$$display_sibling_tags);
 }
 function $$$add_parent_tags(){
-	$$$add_related_tags('p','p',1,$$$display_parent_tags);
+	$$$add_related_tags('p','p',0,$$$display_parent_tags);
 }
 
 function $$$update_tag_thumb(){
