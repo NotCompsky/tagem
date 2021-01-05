@@ -11,7 +11,7 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
 function $$$alert(s){
-	alert(s);
+	throw new Error(s);
 }
 
 function $$$alert_success(){
@@ -28,8 +28,4 @@ function $$$error_alert(title, text){
 
 function $$$err_alert(r,title,text){
 	$$$error_alert(r.statusText, text + "\nfor url: " + this.url);
-}
-
-function $$$debug__err_alert(s){
-	console.log("WARNING", s);
 }
