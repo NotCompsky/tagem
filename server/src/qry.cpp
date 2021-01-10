@@ -1126,8 +1126,6 @@ selected_field::Type parse_into(char* itr,  const char* qry,  const std::string&
 	// TODO: Look into filtering the filters with the user_id permission filters, to avoid brute-forcing.
 	// Not sure this is a big issue.
 	
-	const char* const buf = itr;
-	
 	char which_tbl;
 	std::string join = "";
 	std::string where = "";
