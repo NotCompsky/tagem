@@ -115,3 +115,7 @@ childy >
 	attribute_name = attribute_name::CHILDY;
 	attribute_kind = attribute_kind::many_to_many;
 	return (which_tbl=='t') ? successness::ok : successness::invalid
+rand >
+	attribute_name = "RAND()";
+	attribute_kind = attribute_kind::global_fn;
+	return successness::ok

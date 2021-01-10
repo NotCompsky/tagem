@@ -71,6 +71,8 @@ INPUT DATA TYPES
 				parenty (any ancestory)       t
 				child                         t
 				childy                        t
+			global functions:
+				rand (random number)          all
 
 FILTERS
 Each may be preceded by "not" (without the quotation marks) to invert the filter
@@ -247,4 +249,6 @@ EXAMPLES
 		Files which have any associated md5_of_path (i.e. locally downloaded files with thumbnails)
 	t attr time_origin > 1 order a time_origin
 		List the oldest (by start date) tags, ignoring those with a time_origin of 0
+	f t "Pop Music" order d rand
+		Get a random selection of pop music
 )========="

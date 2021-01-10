@@ -33,7 +33,8 @@ namespace attribute_kind {
 		unique,
 		many_to_one,
 		ersatz_many_to_one,
-		many_to_many
+		many_to_many,
+		global_fn
 	};
 }
 
@@ -848,6 +849,9 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 						++ersatz_count;
 						order_by = "ersatz" + std::to_string(ersatz_count) + ".x ";
 						add_join_for_ersatz_attr(join, attribute_name, which_tbl, ersatz_count);
+						break;
+					case attribute_kind::global_fn:
+						order_by = attribute_name;
 						break;
 				}
 				order_by += (arg_token==arg::order_by_asc)?" ASC":" DESC";
