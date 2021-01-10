@@ -208,7 +208,7 @@ function $$$get_selected_tag_ids(){
 }
 
 function $$$view_tag(_tag_id,page){
-	$$$hide_all_except(['parents-container','siblings-container','children-container','f','d','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn','meta','t1','t2','descr']);
+	$$$hide_all_except(['parents-container','siblings-container','children-container','f','d','tagselect-files-container','tagselect-files-btn','tagselect-self-p-container','tagselect-self-p-btn','tagselect-self-s-container','tagselect-self-s-btn','tagselect-self-c-container','tagselect-self-c-btn','merge-files-btn','backup-files-btn','view-as-playlist-btn','meta','t1','t2','descr']);
 	$$$document_getElementById_profile_img.onclick = $$$update_tag_thumb;
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
