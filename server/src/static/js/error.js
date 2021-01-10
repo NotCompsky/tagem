@@ -10,25 +10,6 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
-function $$$alert(s){
-	alert(s);
-}
-
-function $$$alert_success(){
-	$$$alert("Success");
-}
-
-function $$$alert_requires_login(){
-	$$$alert("Not authorised.\nPlease log in first.");
-	$$$throw_error();
-}
-
-function $$$error_alert(title, text){
-	$$$alert(title + "\n" + text);
-	$$$throw_error();
-}
-
-function $$$err_alert(r,title,text){
-	$$$error_alert(r.statusText, text + "\nfor url: " + this.url);
-	$$$throw_error();
+function $$$throw_error(){
+	throw new Error();
 }
