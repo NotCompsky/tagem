@@ -40,6 +40,16 @@ if [ "$COOKIES" = "" ]; then
 fi
 
 
+if [ $# -eq 0 ]; then
+	echo "USAGE"
+	echo "  ARGS"
+	echo "    [[URLS]]"
+	echo "  ENV VARS"
+	echo "    PUSHSHIFT_TOO"
+	exit
+fi
+
+
 declare -i limit=100
 for url in "$@"; do
 	sleep 2
