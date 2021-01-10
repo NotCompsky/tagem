@@ -18,14 +18,16 @@ INSERT INTO protocol (id, name) VALUES
 (1, "file://"),
 (2, "http://"),
 (3, "https://"),
-(4, "youtube-dl")
+(4, "youtube-dl"),
+(5, "magnet:?")
 ON DUPLICATE KEY UPDATE id=id;
 
 
 INSERT INTO device (name,user,protocol,embed_pre,embed_post) VALUES
 ("https://youtube.com/watch?v=",2,(SELECT id FROM protocol WHERE name='youtube-dl'), 'https://www.youtube.com/embed/', '?enablejsapi=1'),
 ("https://",2,(SELECT id FROM protocol WHERE name="https://"),"",""),
-("https://twitter.com/",2,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>')
+("https://twitter.com/",2,(SELECT id FROM protocol WHERE name='https://'), '<blockquote class="twitter-tweet"><a href="https://twitter.com/AnyUsernameWorksHere/status/', '?ref_src=twsrc%5Etfw">Link</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>'),
+("magnet:?",2,5,"","")
 ON DUPLICATE KEY UPDATE name=name;
 -- WARNING: The device IDs are assumed in the scripts, so these must be inserted in this order even if they are unused.
 
@@ -44,7 +46,8 @@ INSERT INTO dir
 VALUES
 (1,NULL,2,2,"https://","https://"),
 (2,1,1,2,"www.youtube.com/","https://www.youtube.com/"),
-(3,2,1,2,"watch?v=","https://www.youtube.com/watch?v=")
+(3,2,1,2,"watch?v=","https://www.youtube.com/watch?v="),
+(4,NULL,4,2,"magnet:?","magnet:?")
 ON DUPLICATE KEY UPDATE parent=parent
 ;
 SET FOREIGN_KEY_CHECKS=1;
