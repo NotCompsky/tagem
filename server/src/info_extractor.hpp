@@ -10,7 +10,7 @@
 
 
 #define CONVERT_TO_USUAL_DATETIME_FROM \
-	datetime = std::string_view(datetime.data(), std::char_traits<char>::length("2020-12-01T18:11:19"));
+	datetime = std::string_view(datetime.data(), std::char_traits<char>::length("2020-12-01T18:11"));
 
 
 // TODO: Change ThreadPool so that it allows non-pointers (and therefore avoids dynamic memory allocaitons)
@@ -82,15 +82,19 @@ enum DomainID {
 	Pajiba,
 	BuzzFeedNews,
 	ReportersWithoutBorders,
+	ObserverCom,
 	JPost,
 	Algemeiner,
 	TimesOfIsrael,
 	
 	SCMP,
+	TheIntercept,
 	DieWelt,
 	RussiaToday,
 	ElectronicIntifada,
 	CollegeFix,
+	
+	PLOSOneJournal,
 	
 	Wikipedia,
 	
@@ -261,10 +265,13 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
+		case PLOSOneJournal:
 		case JPost:
 		case Algemeiner:
 		case TimesOfIsrael:
+		case ObserverCom:
 		case SCMP:
+		case TheIntercept:
 		case NYT:
 		case Reuters:
 		case TheAtlantic: {
@@ -288,6 +295,11 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 					author = find_element_attr(doc, _author, ".");
 					break;
 				}
+				case ObserverCom: {
+					char _author[] = "*@article";
+					author = find_element_attr(doc, _author, "data-author");
+					break;
+				}
 				case NYT: {
 					char _author[] = "*@span.last-byline";
 					author = find_element_attr(doc, _author, ".");
@@ -296,6 +308,10 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 				case SCMP: {
 					char _author[] = "*@meta:name=cse_author";
 					author = find_element_attr(doc, _author, "content");
+					break;
+				}
+				case TheIntercept: {
+					author = STRING_VIEW_FROM_UP_TO(12, ",\"author\":[\"")(html_buf, '"');
 					break;
 				}
 				default: {
@@ -319,6 +335,17 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 					char _datetime[] = "*@span.date";
 					datetime = find_element_attr(doc, _datetime, ".");
 					datetime_fmt = "%d %M %Y, %h:%i %p";
+					break;
+				}
+				case PLOSOneJournal: {
+					char _datetime[] = "*@meta:name=citation_date";
+					datetime = find_element_attr(doc, _datetime, "content");
+					datetime_fmt = "%d-%b-%Y";
+					break;
+				}
+				case TheIntercept: {
+					datetime = STRING_VIEW_FROM_UP_TO(18, ",\"publishedTime\":\"")(html_buf, '"');
+					CONVERT_TO_USUAL_DATETIME_FROM
 					break;
 				}
 				case SCMP:

@@ -56,11 +56,18 @@ www.reuters.com/article/>
 	return Reuters
 www.scmp.com/>
 	return SCMP
-https://www.algemeiner.com/>
+www.algemeiner.com/>
 	return Algemeiner
+observer.com/>
+	return ObserverCom
+theintercept.com/>
+	return TheIntercept
 
 globalnews.ca/news/>
 	return GlobalNewsCA
+
+journals.plos.org/plosone/article?id=>
+	return PLOSOneJournal
 
 digg.com/>
 	return Digg
