@@ -3042,7 +3042,6 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		
 		this->mysql_exec("DELETE FROM file2thumbnail WHERE file IN (", dupl_f_ids_args..., ")");
 		
-		this->mysql_exec("DELETE FROM file_backup WHERE file IN (", dupl_f_ids_args..., ") AND dir IN (SELECT * FROM (SELECT dir FROM file_backup WHERE file=", orig_f_id, ") AS t)");
 		this->mysql_exec("UPDATE file_backup SET file=", orig_f_id, " WHERE file IN (", dupl_f_ids_args..., ")");
 		
 		this->mysql_exec("INSERT INTO file_backup (file,dir,name,mimetype,user) SELECT ", orig_f_id, ", f.dir, f.name, f.mimetype, ", user_id, " FROM file f WHERE f.id IN (", dupl_f_ids_args..., ") ON DUPLICATE KEY UPDATE file=file"); // WARNING: I think if there's a duplicate key, something has gone wrong previously.
