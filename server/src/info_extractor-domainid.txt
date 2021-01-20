@@ -62,9 +62,19 @@ observer.com/>
 	return ObserverCom
 theintercept.com/>
 	return TheIntercept
-
+thehill.com/>
+	return TheHill
+heavy.com/news/>
+	return HeavyCom
+www.vanityfair.com/news/>
+	return VanityFairNews
 globalnews.ca/news/>
 	return GlobalNewsCA
+www.mediaite.com/news/>
+	return Mediaite
+
+www.volkskrant.nl/>
+	return VolkskRant
 
 journals.plos.org/plosone/article?id=>
 	return PLOSOneJournal

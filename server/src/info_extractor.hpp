@@ -63,10 +63,12 @@ enum DomainID {
 	WSJ,
 	BusinessInsider,
 	Vice,
+	HeavyCom,
 	Medium,
 	WashPost,
 	Reuters,
 	TheAtlantic,
+	VanityFairNews,
 	NBCNews,
 	CBSNews,
 	APNews,
@@ -78,6 +80,7 @@ enum DomainID {
 	WBUR,
 	GlobalNewsCA,
 	ReasonCom,
+	Mediaite,
 	TheNation,
 	Pajiba,
 	BuzzFeedNews,
@@ -94,9 +97,14 @@ enum DomainID {
 	ElectronicIntifada,
 	CollegeFix,
 	
+	VolkskRant,
+	
 	PLOSOneJournal,
 	
 	Wikipedia,
+	
+	TheOnion,
+	BabylonBee,
 	
 	Reddit,
 	RedditVideo,
@@ -269,6 +277,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 			author_title = "Journalist: ";
 			break;
 		}
+		case VolkskRant:
 		case PLOSOneJournal:
 		case JPost:
 		case Algemeiner:
@@ -276,13 +285,19 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		case ObserverCom:
 		case SCMP:
 		case TheIntercept:
+		case TheHill:
+		case HeavyCom:
 		case NYT:
 		case Reuters:
+		case VanityFairNews:
+		case BabylonBee:
+		case Mediaite:
 		case TheAtlantic: {
 			char _title[] = "*@meta:property=og:title";
 			title = find_element_attr(doc, _title, "content");
 			char _descr[] = "*@meta:property=og:description";
 			description = find_element_attr(doc, _descr, "content");
+			author_title = "Journalist: ";
 			switch(domain_id){
 				case JPost: {
 					char _author[] = "*@span.article-reporter>@a";
@@ -318,13 +333,29 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 					author = STRING_VIEW_FROM_UP_TO(12, ",\"author\":[\"")(html_buf, '"');
 					break;
 				}
+				case TheHill: {
+					char _author[] = "*@meta:property=author";
+					author = find_element_attr(doc, _author, "content");
+					break;
+				}
+				case VolkskRant: {
+					char _author[] = "*@meta:property=article:author";
+					author = find_element_attr(doc, _author, "content");
+					break;
+				}
+				case Mediaite:
+				case BabylonBee:
+					break;
+				case HeavyCom:
+				case VanityFairNews:
 				default: {
 					char _author[] = "*@meta:name=author";
 					author = find_element_attr(doc, _author, "content");
 				}
 			}
 			switch(domain_id){
-				case JPost: {
+				case JPost:
+				case VanityFairNews: {
 					datetime = STRING_VIEW_FROM_UP_TO(18, "\"datePublished\": \"")(html_buf, '"');
 					CONVERT_TO_USUAL_DATETIME_FROM
 					break;
@@ -352,17 +383,26 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 					CONVERT_TO_USUAL_DATETIME_FROM
 					break;
 				}
+				case BabylonBee: {
+					char _datetime[] = "*@div.article-date";
+					datetime = find_element_attr(doc, _datetime, ".");
+					datetime_fmt = "%M %D, %Y";
+					break;
+				}
+				case VolkskRant:
 				case SCMP:
 				case NYT:
 				case Reuters:
 				case TheAtlantic:
+				case TheHill:
+				case HeavyCom:
+				case Mediaite:
 				default: {
 					char _datetime[] = "*@meta:property=article:published_time";
 					datetime = find_element_attr(doc, _datetime, "content");
 					CONVERT_TO_USUAL_DATETIME_FROM
 				}
 			}
-			author_title = "Journalist: ";
 			break;
 		}
 		case TheCourier: {
