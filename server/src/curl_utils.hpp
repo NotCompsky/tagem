@@ -142,6 +142,45 @@ bool dl_file(char*,  const Str url,  const char* const dst_pth,  const bool over
 	}
 }
 
+template<typename Str,  typename Str2>
+bool dl_file_w_additional_headers(char*,  const Str url,  const char* const dst_pth,  const bool overwrite_existing,  char*& mimetype,  const Str2 additional_headers){
+	// nonzero success
+	// NOTE: Overwrites dst_pth if it is empty.
+	
+	if (not overwrite_existing){
+		const size_t sz = compsky::os::get_file_sz(dst_pth);
+		if ((sz != 0) and (sz != -1))
+			return true;
+	}
+	
+	mimetype = nullptr;
+	
+	FILE* const f = fopen(dst_pth, "wb");
+	if (f == nullptr){
+		log("Cannot open file for writing: ",  dst_pth);
+		return false;
+	}
+	
+	compsky::dl::Curl curl(
+		CURLOPT_WRITEDATA, f,
+		CURLOPT_FOLLOWLOCATION, true
+#ifdef DNS_OVER_HTTPS_CLIENT_URL
+		, CURLOPT_DOH_URL, DNS_OVER_HTTPS_CLIENT_URL
+#endif
+	);
+	curl.append_header(additional_headers);
+	
+	const bool is_failed = curl.perform(url);
+	fclose(f);
+	if (unlikely(is_failed)){
+		compsky::os::del_file(dst_pth);
+		log("dl_file__curl error");
+		return false;
+	} else {
+		return true;
+	}
+}
+
 size_t dl_buf(const char* const url,  char*& dst_buf);
 
 void init();

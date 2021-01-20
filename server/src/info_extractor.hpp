@@ -218,6 +218,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 	std::string_view views = compsky::utils::nullstrview;
 	std::string_view duration = compsky::utils::nullstrview;
 	std::string_view link_url = compsky::utils::nullstrview; // The linked article or video
+	const char* additional_headers = nullptr;
 	
 	author_title = "Uploader: ";
 	switch(domain_id){
@@ -575,7 +576,7 @@ bool record_info(const FileIDType file_id,  const char* dest_dir,  char* resulti
 		char* _itr = resulting_fp_as_output;
 		compsky::asciify::asciify(_itr, dest_dir, file_id, '\0');
 		char* mimetype;
-		curl::dl_file(nullptr, link_url, resulting_fp_as_output, false, mimetype);
+		curl::dl_file_w_additional_headers(nullptr, link_url, resulting_fp_as_output, false, mimetype, additional_headers);
 	} else {
 		resulting_fp_as_output[0] = 0;
 	}
