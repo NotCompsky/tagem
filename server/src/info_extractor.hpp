@@ -143,10 +143,14 @@ void set_to_string_literal_zero_if_null(std::string_view& v){
 		v = "0";
 }
 
-std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selector_path,  const char* const attr){
+template<typename... Args>
+std::string_view find_element_attr(const sprexer::Doc& doc,  char* const selector_path,  const char* const attr,  Args&&... args){
 	sprexer::Element element(doc.get_element_from_class_selector_path(selector_path));
-	if (element.is_null())
+	if (element.is_null()){
+		if constexpr (sizeof...(Args) != 0)
+			return find_element_attr(doc, args...);
 		return compsky::utils::nullstrview;
+	}
 	return element.get_value(attr);
 }
 
