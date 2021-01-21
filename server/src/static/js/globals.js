@@ -104,4 +104,6 @@ var $$$recent_pages;
 
 var $$$jquery_dirselect;
 
+var $$$css_root;
+
 // for f in *.js; do sed -i -E "s/([\$][\$][\$]document_getElementById)[(]['\"](eras-info-tbody)['\"][)]/\1_eras_info_tbody/g" "$f"; done

@@ -130,3 +130,9 @@ function $$$toggle(id){
 function $$$toggle_class(x){
 	$$$for_node_in_document_getElementsByClassName(x, $$$toggle_node);
 }
+
+
+function $$$toggle_sidebar(id){
+	$$$toggle(id);
+	// TODO: Set CSS variables to be able to reclaim the space
+}

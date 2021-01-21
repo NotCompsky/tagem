@@ -42,6 +42,8 @@ function $$$on_document_ready(){
 	
 	$$$jquery_dirselect = $('#dirselect');
 	
+	$$$css_root = document.querySelector(':root').style;
+	
 	$.ajaxPrefilter($$$ajax_prefilter);
 	
 	$$$hide_all_except([]);

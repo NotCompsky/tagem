@@ -12,8 +12,12 @@
 // 
 
 function $$$set_css_colour(name,val){
-	document.querySelector(':root').style.setProperty("--"+name,val);
-	$$$local_storage_store("css_colour_"+name,val);
+	const x = "--"+name;
+	if(val === undefined)
+		val = $$$css_root.getPropertyValue(x);
+	else
+		$$$css_root.setProperty(x,val);
+	$$$local_storage_store("css_colour_"+name, val);
 }
 
 function $$$on_css_colour_picker_change(e){

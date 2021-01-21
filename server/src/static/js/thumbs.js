@@ -11,7 +11,7 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
 function $$$set_thumbnail_width(n){
-	document.querySelector(':root').style.setProperty("--thumbw",n+"px");
+	$$$css_root.setProperty("--thumbw",n+"px");
 	$$$local_storage_store("w",n);
 }
 function $$$prompt_thumb_w(){

@@ -86,20 +86,7 @@ The absense of this copyright notices on some other files in this project does n
 	
 	"<style>"
 		#include "../static/css/profile.css"
-		#include "../static/css/common.css"
 		#include "../static/css/3rd-party/datetimepicker.css"
-		"@media screen and (max-width:895px){"
-			#include "../static/css/895-.css"
-		"}"
-		"@media screen and (min-width:896px) and (max-width:1160px){"
-			#include "../static/css/896-1160.css"
-		"}"
-		"@media screen and (min-width:1161px){"
-			#include "../static/css/1161+.css"
-		"}"
-		"@media screen and (min-width:896px){"
-			#include "../static/css/896+.css"
-		"}"
 		
 		#include "../static/css/table_as_blocks.css"
 		#include "../static/css/table_as_table.css"
@@ -130,11 +117,11 @@ R"=========(
       </div>
     </div>
   </div>
-  <div class="main">
+  <div id="main-container">
     <div id="qry-bar" class="bg">
       <input id="qry" type="text" placeholder="Search"/>
     </div>
-    <div id="main-container" class="fg">
+    <div id="main" class="fg">
       <div id="profile">
         <div class="profile-avatar">
 )========="
@@ -152,7 +139,7 @@ R"=========(
 
 		"<div id=\"profile-menu\" class=\"bg\">"
 BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
-	(MINIMISED_JS_DECL_toggle "('left-side')", SVG_TRIANGLE_LEFT)\
+	(MINIMISED_JS_DECL_toggle_sidebar "('left-side')", SVG_TRIANGLE_LEFT)\
 	(MINIMISED_JS_DECL_view_dir "()", SVG_DIR)\
 	(MINIMISED_JS_DECL_setup_page_for_d_tbl "()", SVG_DIRS)\
 	(MINIMISED_JS_DECL_view_tag "()", SVG_TAG)\
@@ -160,7 +147,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	(MINIMISED_JS_DECL_play_current_files_as_playlist_if_not_already "()", SVG_REPEAT)\
 	(MINIMISED_JS_DECL_view_file "()", SVG_FILE)\
 	(MINIMISED_JS_DECL_setup_page_for_f_tbl "()", SVG_FILES)\
-	(MINIMISED_JS_DECL_toggle "('right-side')", SVG_TRIANGLE_RIGHT)
+	(MINIMISED_JS_DECL_toggle_sidebar "('right-side')", SVG_TRIANGLE_RIGHT)
 ))
 		"</div>"
 	"</div>"
@@ -225,7 +212,9 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("help-fg")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("likes-fg")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("likes-bg")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("dislikes")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("views")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("link")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("link-hover")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("db-name")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("thumb-outline")
@@ -598,16 +587,18 @@ R"=========(
     </div>
   </div>
   <div id="right-side" class="bg">
-    <div class="account bg">
-      <span class="account-user"><p id="username"></p>
+    <div id="account-stuff" class="bg">
+      <p id="username"></p>
+      <div id="account-actions">
 )========="
-		SVG_USER
-		"<a onclick=\"" MINIMISED_JS_DECL_toggle "('my-settings')\">" SVG_SETTINGS "</a>"
-		"<a onclick=\"" MINIMISED_JS_DECL_login  "()\">" SVG_LOGIN  "</a>"
-		"<a onclick=\"" MINIMISED_JS_DECL_logout "()\">" SVG_LOGOUT "</a>"
+		"<div>" SVG_USER "</div>"
+		"<div><a onclick=\"" MINIMISED_JS_DECL_toggle "('my-settings')\">" SVG_SETTINGS "</a></div>"
+		"<div><a onclick=\"" MINIMISED_JS_DECL_login  "()\">" SVG_LOGIN  "</a></div>"
+		"<div><a onclick=\"" MINIMISED_JS_DECL_logout "()\">" SVG_LOGOUT "</a></div>"
 R"=========(
-      </span>
+      </div>
     </div>
+    <div id="right-side-tag-stuff">
 )========="
 #define CREATE_SIDE_WRAPPER(r, data, elem) \
 	"<div id=\"" elem "-container\" class=\"side-wrapper\">" \
@@ -616,6 +607,7 @@ R"=========(
 	"</div>"
 BOOST_PP_SEQ_FOR_EACH(CREATE_SIDE_WRAPPER, _, ("values")("parents")("siblings")("children")("tags"))
 R"=========(
+    </div>
   </div>
 </div>
 )========="
