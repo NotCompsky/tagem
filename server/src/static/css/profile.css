@@ -16,8 +16,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 body {
   font-family: "Source Sans Pro", sans-serif;
-  background-color:#000;
-  color: #ccc8db;
 }
 
 #content{
@@ -41,13 +39,6 @@ body {
   width: 280px;
   display: flex;
   flex-direction: column;
-}
-
-.main {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #181d2f;
 }
 
 .side-title {
@@ -84,61 +75,6 @@ body {
 }
 .side-menu a:not(:last-child) {
   margin-bottom: 20px;
-}
-
-.follow-me {
-  text-decoration: none;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  margin-top: auto;
-  overflow: hidden;
-  color: #9c9cab;
-  padding: 0 20px;
-  height: 52px;
-  flex-shrink: 0;
-  border-top: 1px solid #272a3a;
-  position: relative;
-}
-.follow-me svg {
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-}
-
-.follow-text {
-  display: flex;
-  align-items: center;
-  transition: 0.3s;
-}
-
-.follow-me:hover .follow-text {
-  transform: translateY(100%);
-}
-.follow-me:hover .developer {
-  top: 0;
-}
-
-.developer {
-  position: absolute;
-  color: #fff;
-  left: 0;
-  top: -100%;
-  display: flex;
-  transition: 0.3s;
-  padding: 0 20px;
-  align-items: center;
-  background-color: #272a3a;
-  width: 100%;
-  height: 100%;
-}
-
-.developer img {
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  object-fit: cover;
-  margin-right: 10px;
 }
 
 #qry-bar{
@@ -287,26 +223,5 @@ body {
 
 #left-side-button {
   display: none;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  border-radius: 10px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.01);
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.11);
-  border-radius: 10px;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 )========="

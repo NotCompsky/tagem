@@ -85,9 +85,9 @@ function $$$on_document_ready(){
 	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('dislikes',true);
 	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('fps',true);
 	
-	$$$set_css_colour("fg",$$$local_storage_get("css_colour_fg"));
-	$$$set_css_colour("bg",$$$local_storage_get("css_colour_bg"));
-	$$$set_css_colour("bg2",$$$local_storage_get("css_colour_bg2"));
+	for(let name of ["fg","bg","bg2","sel1","sel2","sel3","help-fg","help-bg","likes-bg","likes-fg","views","link","link-hover","db-name","thumb-outline","table-row-outline"]){
+		$$$set_css_colour(name,$$$local_storage_get("css_colour_"+name));
+	}
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){
 		const val2 = $$$local_storage_get(key);

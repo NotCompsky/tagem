@@ -10,15 +10,10 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
-const $$$css_colour_name2indx = {"fg":1, "bg":2, "bg2": 3};
 
 function $$$set_css_colour(name,val){
-	if(val===null)
-		return;
-	$$$local_storage_store("css_colour_"+name, val);
-	const c = $$$document.styleSheets[0];
-	c.deleteRule($$$css_colour_name2indx[name]),
-	c.insertRule('.' + name + '{background-color:'+val+';}', $$$css_colour_name2indx[name]);
+	document.querySelector(':root').style.setProperty("--"+name,val);
+	$$$local_storage_store("css_colour_"+name,val);
 }
 
 function $$$on_css_colour_picker_change(e){
