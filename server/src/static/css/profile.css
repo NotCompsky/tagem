@@ -18,15 +18,6 @@ body {
   font-family: "Source Sans Pro", sans-serif;
 }
 
-#content{
-  left:0px;
-  display: flex;
-  max-width:100%;
-  height:100%;
-  overflow: hidden;
-  margin: 0 auto;
-}
-
 #left-side {
   width: 260px;
   border-right: 1px solid #272a3a;
@@ -52,29 +43,6 @@ body {
 
 .side-wrapper {
   padding: 30px;
-}
-
-.side-menu {
-  display: flex;
-  flex-direction: column;
-  font-size: 15px;
-  white-space: nowrap;
-}
-.side-menu svg {
-  margin-right: 16px;
-  width: 16px;
-}
-.side-menu a {
-  text-decoration: none;
-  color: #9c9cab;
-  display: flex;
-  align-items: center;
-}
-.side-menu a:hover {
-  color: #fff;
-}
-.side-menu a:not(:last-child) {
-  margin-bottom: 20px;
 }
 
 #qry-bar{

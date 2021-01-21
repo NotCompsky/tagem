@@ -42,6 +42,16 @@
 "}"
 "body{"
 	"color:var(--text);"
+	"display:flex;" // TODO: Remove flex stuff
+	"margin:0 auto;"
+"}"
+"#content{"
+	"overflow-y:hide;"
+	"display: flex;"
+	"max-width:100%;"
+	"height:100%;"
+	"overflow: hidden;"
+	"margin: 0 auto;"
 "}"
 ":root{"
 	"--thumbw:256px;"
@@ -62,6 +72,15 @@
 
 ".main{"
 	"overflow-y:scroll;"
+"}"
+
+".side-menu{"
+	"display:flex;"
+	"flex-direction:column;"
+	"font-size:15px;"
+"}"
+".side-menu svg{"
+	"width:16px;"
 "}"
 
 ".unselectable{"
