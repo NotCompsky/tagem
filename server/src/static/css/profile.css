@@ -9,8 +9,29 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-@media(prefers-color-scheme:dark) {
-	:root {
+.black {
+		--text:#fff;
+		--placeholder-text:#B4B4B4;
+		--fg:#000;
+		--bg:#021826;
+		--sel1:#003F04;
+		--sel2:#404300;
+		--sel3:#44004B;
+		--help-bg:#000;
+		--help-fg:#fff;
+		--likes-fg:#0EB900;
+		--dislikes:#AE0000;
+		--views:#CC00B0;
+		--link:#C2D4F6;
+		--link-hover:#CEFCFF;
+		--db-name:#E93870;
+		--thumb-outline:#86007E;
+		--table-row-outline:#886DA6;
+		--border:#272a3a;
+		
+		--box-outline:#999;
+}
+.dark {
 		--text:#ccc;
 		--placeholder-text:#5c5d71;
 		--fg:#24262B;
@@ -33,10 +54,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--border:#272a3a;
 		
 		--box-outline:#999;
-	}
 }
-@media(prefers-color-scheme:light) {
-	:root {
+.light {
 		--text:#000;
 		--placeholder-text:#5c5d71;
 		--fg:#ffffff;
@@ -59,7 +78,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--border:#272a3a;
 		
 		--box-outline:#999;
-	}
+}
+.custom {
+		--text:var(--custom-text);
+		--placeholder-text:var(--custom-placeholder-text);
+		--fg:var(--custom-fg);
+		--bg:var(--custom-bg);
+		--description:var(--custom-description);
+		--sel1:var(--custom-sel1);
+		--sel2:var(--custom-sel2);
+		--sel3:var(--custom-sel3);
+		--help-bg:var(--custom-help-bg);
+		--help-fg:var(--custom-help-fg);
+		--likes-bg:var(--custom-likes-bg);
+		--likes-fg:var(--custom-likes-fg);
+		--dislikes:var(--custom-dislikes);
+		--views:var(--custom-views);
+		--link:var(--custom-link);
+		--link-hover:var(--custom-link-hover);
+		--db-name:var(--custom-db-name);
+		--thumb-outline:var(--custom-thumb-outline);
+		--table-row-outline:var(--custom-table-row-outline);
+		--border:var(--custom-border);
+		
+		--box-outline:var(--custom-box-outline);
 }
 @media (orientation:landscape) {
 	:root {
@@ -99,8 +141,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--r-sidebar-h:10vh;
 	}
 }
+@media screen and (min-width:1920px) {
+	:root {
+		--avatar-w:256px;
+		--profile-name-sz:36px;
+	}
+}
+@media screen and (max-width:1919px) and (min-width:720px) {
+	:root {
+		--avatar-w:128px;
+		--profile-name-sz:30px;
+	}
+}
+@media screen and (max-width:719px) and (min-width:480px) {
+	:root {
+		--avatar-w:64px;
+		--profile-name-sz:24px;
+	}
+}
+@media screen and (max-width:479px) {
+	:root {
+		--avatar-w:32px;
+		--profile-name-sz:20px;
+	}
+}
 :root{
-	--avatar-w:256px;
 	--r-sidebar-thumb-w:64px;
 }
 body {
@@ -120,7 +185,7 @@ body {
 	display:inline;
 }
 #profile-name{
-	font-size:36px;
+	font-size:var(--profile-name-sz);
 	vertical-align:top;
 	position:absolute;
 	width:calc(var(--main-w) - var(--avatar-w));
@@ -259,9 +324,7 @@ p.selected2,
 p.selected3 {
 	display:inline!important;
 }
-.hidden {
-	display:none!important;
-}
+
 .invisible {
 	visibility:hidden;
 	max-width:0px;
@@ -485,7 +548,7 @@ a:hover {
 	display:block;
 }
 .value{
-	display:block; /* NOTE: Maybe need !important */
+	display:block!important;
 }
 
 #username{
@@ -523,8 +586,21 @@ a:hover {
 	color:var(--text);
 }
 
+.popup{
+	left:25vw;
+	top:25vh;
+	width:50vw;
+	height:50vh;
+}
+
 .select2-container{
 	min-width:25vw!important;
+}
+
+
+/* NOTE: Must be at bottom to override all */
+.hidden {
+	display:none!important;
 }
 
 )========="

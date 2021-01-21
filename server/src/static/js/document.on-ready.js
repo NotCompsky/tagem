@@ -43,6 +43,7 @@ function $$$on_document_ready(){
 	$$$jquery_dirselect = $('#dirselect');
 	
 	$$$css_root = document.querySelector(':root').style;
+	$$$document_body = $$$document_getElementsByTagName("body")[0];
 	
 	$.ajaxPrefilter($$$ajax_prefilter);
 	
@@ -55,7 +56,7 @@ function $$$on_document_ready(){
 	$$$init_selects__ajax('d');
 	$$$init_selects__ajax('t');
 	$$$init_selects('$$$users_dict');
-	$($$$document.body).on("change","#select-user-for-edit",$$$load_user_for_edit);
+	$$$document_getElementById("select-user-for-edit").addEventListener("change", $$$load_user_for_edit);
 	
 	if(!!!MACRO!!!USE_REMOTE_YT_JS__STR){
 	// From google's documentation: This code loads the IFrame Player API code asynchronously.
@@ -87,8 +88,11 @@ function $$$on_document_ready(){
 	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('dislikes',true);
 	$$$get_and_set_default_user_setting_tofrom_storage__tbl_f_hide_col('fps',true);
 	
-	for(let name of ["fg","bg","bg2","sel1","sel2","sel3","help-fg","help-bg","likes-bg","likes-fg","views","link","link-hover","db-name","thumb-outline","table-row-outline"]){
-		$$$set_css_colour(name,$$$local_storage_get("css_colour_"+name));
+	const thm = $$$local_storage_get("css-theme") || "dark";
+	$$$set_css_theme(thm);
+	$$$document_getElementById("css-theme").value = thm;
+	for(let opt of document.getElementById("my-settings").getElementsByClassName("css-colour-picker")){
+		$$$set_css_colour(opt.dataset.for,$$$local_storage_get("css_colour_"+opt.dataset.for));
 	}
 	
 	for(let [key,val] of [['sleep_on_inanimate_media',2],['sleep_after_media_err',2]]){

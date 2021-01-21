@@ -202,6 +202,20 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("dislikes")
 		CREATE_USER_SETTINGS_OPTION__HIDE_F_TBL_COL("fps")
 		
+		"<tr>"
+			"<td>CSS Theme</td>"
+			"<td>"
+				"<select id=\"css-theme\" onchange=\"" MINIMISED_JS_DECL_set_css_theme "(this.value)\">"
+					"<option value=\"dark\">Dark</option>"
+					"<option value=\"light\">Light</option>"
+					"<option value=\"black\">Black</option>"
+					"<option value=\"custom\">Custom</option>"
+				"</select>"
+			"</td>"
+		"</tr>"
+		
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("text")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("placeholder-text")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("fg")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("bg")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("description")
@@ -219,6 +233,8 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("db-name")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("thumb-outline")
 		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("table-row-outline")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("border")
+		CREATE_USER_SETTINGS_OPTION__CSS_COLOUR_PICKER("box-outline")
 	"</table>"
 "</div>"
 

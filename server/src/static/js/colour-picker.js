@@ -12,7 +12,7 @@
 // 
 
 function $$$set_css_colour(name,val){
-	const x = "--"+name;
+	const x = "--custom-"+name;
 	if(val === undefined)
 		val = $$$css_root.getPropertyValue(x);
 	else
@@ -23,4 +23,14 @@ function $$$set_css_colour(name,val){
 function $$$on_css_colour_picker_change(e){
 	const x = e.target;
 	$$$set_css_colour(x.dataset.for,x.value);
+}
+
+function $$$set_css_theme(name){
+	$$$local_storage_store("css-theme",name);
+	$$$document_body.classList.add(name);
+	for(let opt of $$$document_getElementById("css-theme").childNodes){
+		if(opt.value !== name){
+			$$$document_body.classList.remove(opt.value);
+		}
+	}
 }
