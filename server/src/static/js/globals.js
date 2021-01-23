@@ -102,6 +102,9 @@ var $$$view_btns;
 var $$$document_getElementById_eras_info_tbody;
 var $$$recent_pages;
 
+var $$$tagselect_popup_container;
+var $$$tagselect_popup_btn;
+
 var $$$jquery_dirselect;
 
 var $$$css_root;

@@ -40,6 +40,9 @@ function $$$on_document_ready(){
 	$$$document_getElementById_eras_info_tbody = $$$document_getElementById("eras-info-tbody");
 	$$$recent_pages = $$$document_getElementById("recent-pages");
 	
+	$$$tagselect_popup_container = $$$document_getElementById("tagselect-era-container");
+	$$$tagselect_popup_btn = $$$document_getElementById("tagselect-era-btn");
+	
 	$$$jquery_dirselect = $('#dirselect');
 	
 	$$$css_root = document.querySelector(':root').style;

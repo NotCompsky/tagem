@@ -11,9 +11,22 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
 
+function $$$get_popup_tag_ids(){
+	return $('#tagselect-era').select2('data');
+}
+
+function $$$ask_user_to_input_tags(fn){
+	function a(){
+		fn($$$get_popup_tag_ids());
+	}
+	$$$tagselect_popup_btn.addEventListener("click", a, {once:true});
+	$$$unhide_node($$$tagselect_popup_container);
+}
+
+
 function $$$prompt_for_tags(fn){
 	$$$tagselect_popup_fn = fn;
-	$$$unhide("tagselect-popup-container");
+	$$$unhide("tagselect-era-container");
 }
 
 function $$$tag_stuff_then(alias, ids, selector, fn){
