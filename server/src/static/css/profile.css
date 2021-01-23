@@ -29,6 +29,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#886DA6;
 		--border:#272a3a;
 		
+		--reply-border:#f00;
 		--box-outline:#999;
 }
 .dark {
@@ -53,6 +54,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#886DA6;
 		--border:#272a3a;
 		
+		--reply-border:#f00;
 		--box-outline:#999;
 }
 .light {
@@ -77,6 +79,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#a0f;
 		--border:#272a3a;
 		
+		--reply-border:#f00;
 		--box-outline:#999;
 }
 .custom {
@@ -101,6 +104,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:var(--custom-table-row-outline);
 		--border:var(--custom-border);
 		
+		--reply-border:var(--custom-reply-border);
 		--box-outline:var(--custom-box-outline);
 }
 @media (orientation:landscape) {
@@ -584,6 +588,14 @@ a:hover {
 	background-size: 16px;
 	background-position: 25px 50%;
 	color:var(--text);
+}
+
+.replies{
+	margin-left:20px;
+	border-left:var(--reply-border) solid 1px;
+}
+.cmnt .head *{
+	margin-right:5px;
 }
 
 .popup{
