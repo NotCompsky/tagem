@@ -167,7 +167,7 @@ function $$$create_box_from_dragging(e){
 		$$$draw_box__init_dimensions([x/scaleX,y/scaleY,(X-x)/scaleX,(Y-y)/scaleY]);
 		window.removeEventListener('mousemove', $$$user_dragging_new_box_event);
 		window.removeEventListener('mouseup', $$$user_mouseup_event);
-		$$$prompt_for_tags($$$add_box_given_tags);
+		$$$ask_user_to_input_tags($$$add_box_given_tags);
 	}
 	
 	console.log(x,y,X,Y);

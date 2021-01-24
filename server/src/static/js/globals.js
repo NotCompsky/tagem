@@ -68,9 +68,6 @@ var $$$dir_tagger_fn;
 // Admin variables
 var $$$users_dict; // Only really used by functions in this file, but *referred to* - for initialisation of select2 selects - in document-on-ready.js and here
 
-// fake async
-var $$$tagselect_popup_fn; // Function that is called after user closes the tagselect popup
-
 
 // Pointers to DOM objects (only those available in the root HTML; initialised after document loading)
 var $$$document_getElementById_username;

@@ -23,12 +23,6 @@ function $$$ask_user_to_input_tags(fn){
 	$$$unhide_node($$$tagselect_popup_container);
 }
 
-
-function $$$prompt_for_tags(fn){
-	$$$tagselect_popup_fn = fn;
-	$$$unhide("tagselect-era-container");
-}
-
 function $$$tag_stuff_then(alias, ids, selector, fn){
 	// alias is either file 'f', dir 'd', or device 'D'
 	const tagselect = $(selector);
