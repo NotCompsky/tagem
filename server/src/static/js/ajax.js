@@ -13,13 +13,6 @@ function $$$delete_standard_request_header(xhr,x){
 	xhr.setRequestHeader(x," ");
 }
 
-function $$$ajax_prefilter(opts, orig_opts, xhr){
-	for(let x of ["Accept-Language","User-Agent","X-Requested-With"]){
-		$$$delete_standard_request_header(xhr,x);
-	}
-}
-// Assigned in document.on-ready.js
-
 function $$$ajax(mthd,resp_type,url,fn){
 	fetch(
 		url,

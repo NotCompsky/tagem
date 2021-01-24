@@ -47,8 +47,6 @@ function $$$on_document_ready(){
 	$$$css_root = document.querySelector(':root').style;
 	$$$document_body = $$$document_getElementsByTagName("body")[0];
 	
-	$.ajaxPrefilter($$$ajax_prefilter);
-	
 	$$$hide_all_except([]);
 	
 	const uname = $$$get_cookie("username");
