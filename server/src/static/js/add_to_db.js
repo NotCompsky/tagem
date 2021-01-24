@@ -35,12 +35,12 @@ function $$$add_to_db(obj_type){
 		});
 		if(tag_names.length===0)
 			return;
-		const tagselect = $('#tagselect-self-p');
-		const parent_ids = tagselect.val();
-		if(parent_ids.length === 0)
+		const tagselect = $$$document_getElementById('tagselect-self-p');
+		const parent_ids = $$$select3__get_csv(tagselect);
+		if(parent_ids === "")
 			return;
-		$$$ajax_POST_data_w_text_response("/t/add/"+parent_ids.join(",")+"/", tag_names.join("\n"), function(){
-			tagselect.val("").change();
+		$$$ajax_POST_data_w_text_response("/t/add/"+parent_ids+"/", tag_names.join("\n"), function(){
+			$$$select3__wipe_values(tagselect);
 			queue.innerHTML = ""; // Remove URLs
 			$$$alert("Success");
 		});
@@ -52,9 +52,9 @@ function $$$add_to_db(obj_type){
 		$$$alert("No URLs");
 		return;
 	}
-	const tagselect = $('#tagselect-files');
-	const tag_ids = tagselect.val();
-	if(tag_ids.length === 0){
+	const tagselect = $$$document_getElementById('tagselect-files');
+	const tag_ids = $$$select3__get_csv(tagselect);
+	if(tag_ids === ""){
 		// TODO: Replace with confirmation dialog
 		$$$alert("No tags");
 		return;
@@ -70,7 +70,7 @@ function $$$add_to_db(obj_type){
 		"/" + obj_type + "/add/" + tag_ids.join(",")+"/" + backup_dir_id + "/" + $$$is_ytdl_checked() + "/" + $$$is_audio_only_checked(), // is_ytdl_checked etc is meaningless for anything other than files. Safe to include though.
 		urls.join("\n"),
 		function(){
-			tagselect.val("").change();
+			$$$select3__wipe_values(tagselect);
 			queue.innerHTML = ""; // Remove URLs
 			$$$alert("Success");
 			if((obj_type!=='f')&&(obj_type!=='d'))

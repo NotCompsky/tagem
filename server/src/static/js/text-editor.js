@@ -28,9 +28,9 @@ function $$$text_editor_save(){
 		$$$alert("File name must not contain newline, carriage return, or slashes of any kind");
 		return;
 	}
-	const tagselect = $('#tagselect-files');
-	const tag_ids = tagselect.val();
-	if(tag_ids.length === 0){
+	const tagselect = $$$document_getElementById('tagselect-files');
+	const tag_ids = $$$select3__get_csv(tagselect);
+	if(tag_ids === ""){
 		$$$alert("Must tag file");
 		return;
 	}
@@ -46,7 +46,7 @@ function $$$text_editor_save(){
 			return;
 	}
 	$$$ajax_POST_data_w_text_response_generic_success(
-		"/f/save/"+(($$$is_editing_existing_file)?$$$file_id:0)+"/"+_dir_id+"/"+tag_ids.join(","),
+		"/f/save/"+(($$$is_editing_existing_file)?$$$file_id:0)+"/"+_dir_id+"/"+tag_ids,
 		title+"\n"+$$$text_edit.innerText
 	);
 }

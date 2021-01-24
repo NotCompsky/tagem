@@ -190,8 +190,8 @@ function $$$display_file2_var(name, value){
 	// NOTE: No need to $$$escape_html_text(name), as name is already restricted due to SQL table name restrictions
 }
 function $$$assign_value_to_file(){
-	const select = $('#file2-select');
-	const f2_id = select.val();
+	const select = $$$document_getElementById('file2-select');
+	const f2_id = $$$select3__get_csv(select);
 	if(f2_id === "")
 		return;
 	const _file_ids = $$$get_file_ids();
@@ -206,7 +206,7 @@ function $$$assign_value_to_file(){
 	$$$ajax_POST_w_text_response(
 		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[f2_id][0],
 		function(){
-			select.val("").change(); // Deselect all
+			$$$select3__wipe_values(select);
 			input.value = "";
 			if($$$is_visible('values'))
 				$$$document_getElementById_values.innerHTML += $$$display_file2_var($$$f2[f2_id][0], value);
