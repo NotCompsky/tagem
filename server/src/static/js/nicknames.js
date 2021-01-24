@@ -64,3 +64,11 @@ function $$$get_dirselect_value(){
 function $$$unset_dirselect_value(){
 	$$$select3__wipe_values($$$dirselect);
 }
+
+function $$$rm_class_from_node(x,c){
+	x.classList.remove(c);
+}
+
+function $$$rm_class_from_applicable_nodes(name){
+	$$$for_node_in_document_getElementsByClassName_1args__reverse(name,$$$rm_class_from_node,name);
+}

@@ -11,9 +11,7 @@
 
 function $$$view_tasks(){
 	$$$hide_all_except(['tasks-container']);
-	$.get({
-		url:"a/exec.json",
-		success:function(data){
+	$$$ajax_GET_w_JSON_response("a/exec.json", function(data){
 			let _s = "";
 			for(const [id,name,descr,content] of data){
 				_s += `\t
@@ -31,8 +29,6 @@ function $$$view_tasks(){
 			for(const [id,name,descr,content] of data){
 				$$$document_getElementById('task-content'+id).innerText = content;
 			}
-		},
-		error:$$$alert_requires_login
 	});
 }
 

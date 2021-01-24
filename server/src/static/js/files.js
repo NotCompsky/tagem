@@ -133,7 +133,7 @@ function $$$merge_files(){
 	$$$ajax_POST_w_text_response(
 		"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
 		function(){
-			$$$deselect_rows('f', 1);
+			$$$deselect_all_rows('f', 1);
 			$$$rm_class("selected2");
 		}
 	);
