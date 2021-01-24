@@ -22,7 +22,7 @@ function $$$ask_user_to_input_tags(fn){
 function $$$tag_stuff_then(alias, ids, btn_node, fn){
 	// alias is either file 'f', dir 'd', or device 'D'
 	const tagselect_node = btn_node.parentNode.getElementsByTagName("input")[0];
-	const tags = tagselect_node.dataset.x;
+	const tags = $$$select3__get_csv(tagselect_node);
 	if(ids==="")
 		return;
 	if(!$$$logged_in())
