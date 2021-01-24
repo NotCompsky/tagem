@@ -29,8 +29,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#886DA6;
 		--border:#272a3a;
 		
+		--input-bg:#000;
+		--input-fg:#fff;
 		--reply-border:#f00;
 		--box-outline:#999;
+		--select3-opt:#002;
+		--select3-opt-hover:#446;
+		--select3-opt-text:#fff;
+		--select3-opt-chosen:#050;
+		--select3-opt-chosen-text:#0f0;
 }
 .dark {
 		--text:#ccc;
@@ -54,8 +61,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#886DA6;
 		--border:#272a3a;
 		
+		--input-bg:#333;
+		--input-fg:#fff;
 		--reply-border:#f00;
 		--box-outline:#999;
+		--select3-opt:#002;
+		--select3-opt-hover:#446;
+		--select3-opt-text:#fff;
+		--select3-opt-chosen:#050;
+		--select3-opt-chosen-text:#0f0;
 }
 .light {
 		--text:#000;
@@ -79,8 +93,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:#a0f;
 		--border:#272a3a;
 		
+		--input-bg:#fff;
+		--input-fg:#000;
 		--reply-border:#f00;
 		--box-outline:#999;
+		--select3-opt:#002;
+		--select3-opt-hover:#446;
+		--select3-opt-text:#fff;
+		--select3-opt-chosen:#050;
+		--select3-opt-chosen-text:#0f0;
 }
 .custom {
 		--text:var(--custom-text);
@@ -104,8 +125,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		--table-row-outline:var(--custom-table-row-outline);
 		--border:var(--custom-border);
 		
+		--input-bg:var(--custom-input-bg);
+		--input-fg:var(--custom-input-fg);
 		--reply-border:var(--custom-reply-border);
 		--box-outline:var(--custom-box-outline);
+		--select3-opt:var(--custom-select3-opt);
+		--select3-opt-hover:var(--custom-select3-opt-hover);
+		--select3-opt-text:var(--custom-select3-opt-text);
+		--select3-opt-chosen:var(--custom-select3-opt-chosen);
+		--select3-opt-chosen-text:var(--custom-select3-opt-chosen-text);
 }
 @media (orientation:landscape) {
 	:root {
@@ -605,8 +633,44 @@ a:hover {
 	height:50vh;
 }
 
-.select2-container{
-	min-width:25vw!important;
+.select3 {
+	display:inline;
+	min-width:25%;
+	max-width:max-content;
+}
+.select3 > div {
+	position:absolute;
+	width:25%;
+	background:var(--select3-opt);
+	color:var(--select3-opt-text);
+}
+.select3 > div > div:hover {
+	background:var(--select3-opt-hover);
+}
+.select3 > span {
+	color:#0f0f;
+	background:#050;
+	margin-right:10px;
+}
+.select3 > span > a {
+	color:#f00;
+}
+.select3 > input{
+	background:var(--input-bg);
+	color:var(--input-fg);
+}
+
+
+#img-canvas,#img-canvas-tmp{
+	left:0px;
+	position:absolute;
+	opacity:var(--svg-canvas-opacity,0.8);
+}
+#img-canvas-tmp{
+	z-index:999;
+}
+#img-canvas{
+	z-index:998;
 }
 
 

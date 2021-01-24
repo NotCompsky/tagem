@@ -169,10 +169,14 @@ POST /f/merge/>
 POST /f/backup/>
 	return this->post__backup_file(++str)
 
-GET /a/select2/regex/d?q=>
-	return this->select2_regex('d', ++str)
-GET /a/select2/regex/t?q=>
-	return this->select2_regex('t', ++str)
+POST /d/select3/0/>
+	return this->post__select3<select3::exact>('d', ++str)
+POST /t/select3/0/>
+	return this->post__select3<select3::exact>('t', ++str)
+POST /d/select3/1/>
+	return this->post__select3<select3::regex>('d', ++str)
+POST /t/select3/1/>
+	return this->post__select3<select3::regex>('t', ++str)
 
 GET /a/users.json >
 	return this->get_user_json(++str)

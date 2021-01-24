@@ -62,5 +62,5 @@ function $$$get_dirselect_value(){
 }
 
 function $$$unset_dirselect_value(){
-	$$$jquery_dirselect.val(null).trigger("change");
+	$$$select3__wipe_values($$$dirselect);
 }

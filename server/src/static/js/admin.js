@@ -32,7 +32,7 @@ function $$$recursively_record_filesystem_dir(){
 	const max_depth = $$$get_int_with_prompt("Maximum depth - 0 being 'no limit'");
 	if (max_depth === null)
 		return;
-	let tag_ids = $('#tagselect-record-fs-dir').val().join(",");
+	let tag_ids = $$$select3__get_csv($$$document_getElementById("tagselect-record-fs-dir"));
 	if (tag_ids === "")
 		tag_ids = "0";
 	$$$ajax_POST_data_w_text_response(
@@ -57,14 +57,14 @@ function $$$guess_mimetypes(){
 }
 
 function $$$get_id_of_user_currently_being_edited(){
-	return $$$document_getElementById('select-user-for-edit').value;
+	return $$$select3__get_csv($$$document_getElementById('select-user-for-edit'));
 }
 
 function $$$user_tag_bl_row(id,name){
 	return "<div class='tr' data-id='"+id+"'><div class='td username'>"+name+"</div><div class='td' onclick='$$$rm_user_bl_tag(this.parentNode)'>Remove</div></div>";
 }
 
-function $$$load_user_for_edit(){
+function $$$load_user_for_edit(user_id_name_tpls){
 	const [name,vals,bl] = $$$users_dict[$$$get_id_of_user_currently_being_edited()];
 	$$$document_getElementById("edit-user-permissions-username").innerText = name;
 	let s = "";
@@ -103,15 +103,16 @@ function $$$rm_user_bl_tag(e){
 }
 
 function $$$add_new_user_tag_blacklist_rule(){
-	const ls = $('#tagselect-useredit').val();
-	if(ls.length===0)
+	const node = $$$document_getElementById('tagselect-useredit');
+	const tags = $$$select3__get_csv(node);
+	if(tags==="")
 		return;
-	$$$ajax_POST_w_text_response("/user/bl/t+/"+$$$get_id_of_user_currently_being_edited()+"/"+ls.join(","), function(){
+	$$$ajax_POST_w_text_response("/user/bl/t+/"+$$$get_id_of_user_currently_being_edited()+"/"+tags, function(){
 		let s = "";
-		for(let x of $('#tagselect-useredit').select2('data'))
+		for(let x of $$$select3__get_dict(node))
 			s += $$$user_tag_bl_row(x.id,x.text);
 		$$$get_tbl_body("edit-user-tag-bl-tbl").innerHTML += s;
-		$('#tagselect-useredit').val(null).trigger('change');
+		$$$select3__wipe_values(node);
 	});
 }
 

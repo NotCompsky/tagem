@@ -41,9 +41,10 @@ The absense of this copyright notices on some other files in this project does n
 #endif
 
 
-#ifndef SELECT2_URL_ENDPOINT
-	#define SELECT2_URL_ENDPOINT "\"a/select2/regex/\"+var_name"
-#endif
+#define TOSTR_(x) #x
+#define TOSTR(x) TOSTR_(x)
+
+#define N_SELECT3_OPTS_STR TOSTR(N_SELECT3_OPTS)
 
 
 #include <boost/preprocessor.hpp>
@@ -60,10 +61,28 @@ The absense of this copyright notices on some other files in this project does n
 #define ADD_TOGGLE(id, name) \
 	ADD_TOGGLE_WITH_ACTION(id, name, "console.log")
 
+#define SELECT3_OPT(_, n, __) \
+	"<div onclick=\"" MINIMISED_JS_DECL_select3__selected_node "(this)\"></div>"
+
+#define SELECT3_INPUT(id, placeholder, var) \
+	"<div class=\"select3\" onmouseleave=\"" MINIMISED_JS_DECL_select3__root_div_mouseout "(this)\">" \
+		"<input id=\"" id "\" type=\"text\" placeholder=\"" placeholder "\" oninput=\"" MINIMISED_JS_DECL_select3__oninput "(this)\" onkeyup=\"" MINIMISED_JS_DECL_select3__onkeyup "(this,event)\" data-v=\"" var "\"/>" \
+		"<div>" \
+			BOOST_PP_REPEAT(N_SELECT3_OPTS, SELECT3_OPT, _) \
+		"</div>" \
+	"</div>"
+
+#define SELECT3_INPUT__ONINPUT(id, placeholder, var, fn) \
+	"<div class=\"select3\" onmouseleave=\"" MINIMISED_JS_DECL_select3__root_div_mouseout "(this)\">" \
+		"<input id=\"" id "\" type=\"text\" placeholder=\"" placeholder "\" oninput=\"" MINIMISED_JS_DECL_select3__oninput "(this)\" onkeyup=\"" MINIMISED_JS_DECL_select3__onkeyup "(this,event)\" data-v=\"" var "\" data-fn=\"" fn "\"/>" \
+		"<div>" \
+			BOOST_PP_REPEAT(N_SELECT3_OPTS, SELECT3_OPT, _) \
+		"</div>" \
+	"</div>"
 
 #define CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
 	"<div id=\"" id "-container\" class=\"tagselect-container\">" \
-		"<select class=\"tagselect\" id=\"" id "\" multiple=\"multiple\"></select>"
+		SELECT3_INPUT(id, "tag", "t")
 
 #define CREATE_TAG_SELECT_WO_BTN(id) \
 	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
@@ -91,7 +110,6 @@ The absense of this copyright notices on some other files in this project does n
 		#include "../static/css/table_as_blocks.css"
 		#include "../static/css/table_as_table.css"
 	"</style>"
-	"<link href=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css\" rel=\"stylesheet\" />"
 	"<link href=\"https://bgrins.github.com/spectrum/spectrum.css\" rel=\"stylesheet\"/>"
 "</head>"
 "<body class=\"dark\">"
@@ -254,7 +272,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"<a onclick=\"" MINIMISED_JS_DECL_guess_mimetypes "()\">Update mimetypes</a>"
 	"</br>"
 	
-	"<select class=\"userselect\" id=\"select-user-for-edit\"></select>"
+	SELECT3_INPUT__ONINPUT("select-user-for-edit", "username", "u", MINIMISED_JS_DECL_load_user_for_edit)
 	
 	CREATE_TAG_SELECT_WO_BTN("tagselect-useredit")
 	
@@ -511,9 +529,9 @@ ADD_TOGGLE("audio-only",       "Audio-Only?")
 "</div>"
 
 BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
-	("tagselect-eras", "Add to Eras",  MINIMISED_JS_DECL_tag_stuff_then "('e'," MINIMISED_JS_DECL_get_era_ids  "(), '#tagselect-eras',"  MINIMISED_JS_DECL_era_tagger_fn  ")")
-	("tagselect-dirs", "Add to Dirs",  MINIMISED_JS_DECL_tag_stuff_then "('d'," MINIMISED_JS_DECL_get_dir_ids  "(), '#tagselect-dirs',"  MINIMISED_JS_DECL_dir_tagger_fn  ")")
-	("tagselect-files","Add to Files", MINIMISED_JS_DECL_tag_stuff_then "('f'," MINIMISED_JS_DECL_get_file_ids "(), '#tagselect-files'," MINIMISED_JS_DECL_file_tagger_fn ")")
+	("tagselect-eras", "Add to Eras",  MINIMISED_JS_DECL_tag_stuff_then "('e'," MINIMISED_JS_DECL_get_era_ids  "(), this,"  MINIMISED_JS_DECL_era_tagger_fn  ")")
+	("tagselect-dirs", "Add to Dirs",  MINIMISED_JS_DECL_tag_stuff_then "('d'," MINIMISED_JS_DECL_get_dir_ids  "(), this,"  MINIMISED_JS_DECL_dir_tagger_fn  ")")
+	("tagselect-files","Add to Files", MINIMISED_JS_DECL_tag_stuff_then "('f'," MINIMISED_JS_DECL_get_file_ids "(), this," MINIMISED_JS_DECL_file_tagger_fn ")")
 ))
 
 "</div>"
@@ -627,7 +645,6 @@ R"=========(
 #ifdef USE_LOCAL_JS
 #else
 "<script src=\"https://code.jquery.com/jquery-3.5.0.min.js\"></script>"
-"<script src=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js\"></script>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 "<script src=\"https://bgrins.github.com/spectrum/spectrum.js\"></script>"
 #endif
@@ -636,7 +653,6 @@ R"=========(
 #ifdef USE_LOCAL_JS
 // NOTE: Must precede MINIMISED_JS_ALL
 # include "../static/js/3rd-party/jquery.js"
-# include "../static/js/3rd-party/select2.js"
 # include "../static/js/3rd-party/mousetrap.js"
 # include "../static/js/3rd-party/spectrum.js"
 #endif

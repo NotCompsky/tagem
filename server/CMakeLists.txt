@@ -17,6 +17,7 @@ set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir 
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 set(N_THREADS "4" CACHE STRING "Number of threads the server will spawn")
 set(HANDLER_BUF_SZ "11534336" CACHE STRING "Size of the buffer given to each handler - the default is 11MiB")
+set(N_SELECT3_OPTS "20" CACHE STRING "Number of options to display for tag/dir/etc queries from 'select3' inputs")
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
@@ -249,10 +250,7 @@ if(PREPOPULATE_F_TBL_FROM_IDS)
     target_compile_definitions(server PRIVATE PREPOPULATE_F_TBL_FROM_IDS="\\\"${PREPOPULATE_F_TBL_FROM_IDS}\\\"")
     # Why so many escapes? Not sure, but it works.
 endif()
-if(SELECT2_URL_ENDPOINT)
-    target_compile_definitions(server PRIVATE "SELECT2_URL_ENDPOINT=\"${SELECT2_URL_ENDPOINT}\"")
-    # WARNING: This string must not contain a semi-colon, because CMake interprets that as delineating an array
-endif()
+target_compile_definitions(server PRIVATE "N_SELECT3_OPTS=${N_SELECT3_OPTS}")
 add_dependencies(qry qry__process_arg__tokens qry__get_attribute_name__tokens)
 
 

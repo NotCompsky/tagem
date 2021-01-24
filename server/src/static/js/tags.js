@@ -11,30 +11,26 @@
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
 
-function $$$get_popup_tag_ids(){
-	return $('#tagselect-era').select2('data');
-}
-
 function $$$ask_user_to_input_tags(fn){
 	function a(){
-		fn($$$get_popup_tag_ids());
+		fn($$$select3__get_dict($$$tagselect_popup));
 	}
 	$$$tagselect_popup_btn.addEventListener("click", a, {once:true});
 	$$$unhide_node($$$tagselect_popup_container);
 }
 
-function $$$tag_stuff_then(alias, ids, selector, fn){
+function $$$tag_stuff_then(alias, ids, btn_node, fn){
 	// alias is either file 'f', dir 'd', or device 'D'
-	const tagselect = $(selector);
-	const tags = tagselect.select2('data');
+	const tagselect_node = btn_node.parentNode.getElementsByTagName("input")[0];
+	const tags = tagselect_node.dataset.x;
 	if(ids==="")
 		return;
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
-		"/" + alias + "/t/" + ids + "/" + tags.map(x => x.id).join(","),
+		"/" + alias + "/t/" + ids + "/" + tags,
 		function(){
-			tagselect.val("").change(); // Deselect all
+			$$$select3__wipe_values(tagselect_node);
 			fn(ids, tags);
 		}
 	);
@@ -163,12 +159,12 @@ function $$$display_sibling_tags(_tag_id){
 
 // Functions used in HTML
 function $$$add_related_tags(rel1,rel2,reversed,relfn){
-	const tagselect = $('#tagselect-self-'+rel1);
+	const tagselect = $$$document_getElementById('tagselect-self-'+rel1);
 	$$$ajax_POST_w_text_response(
 		"/t/"+rel2+"/" + (
 			reversed
-			? (tagselect.val().join(",") + "/" + $$$get_tag_ids())
-			: ($$$get_tag_ids() + "/" + tagselect.val().join(","))
+			? ($$$select3__get_csv(tagselect) + "/" + $$$get_tag_ids())
+			: ($$$get_tag_ids() + "/" + $$$select3__get_csv(tagselect))
 		),
 		function(){
 			const ls = $$$split_on_commas__guaranteed_nonempty($$$get_tag_ids());
@@ -176,7 +172,7 @@ function $$$add_related_tags(rel1,rel2,reversed,relfn){
 				// if not currently displaying the tag page
 				return;
 			relfn(ls);
-			tagselect.val("").change(); // Deselect all
+			$$$select3__wipe_values(tagselect);
 		}
 	);
 }

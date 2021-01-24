@@ -365,6 +365,13 @@ namespace atomic_signal {
 	std::atomic<bool> stop_updating_video_metadatas = false;
 }
 
+namespace select3 {
+	enum Matching {
+		exact,
+		regex
+	};
+}
+
 
 namespace compsky {
 namespace server {
@@ -1094,6 +1101,18 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->write_json_list_response_into_buf<0>(compsky::server::_r::flag::quote_no_escape);
 		
 		return this->get_buf_as_string_view();
+	}
+	
+	template<size_t i = 0,  typename ArrOrDict>
+	void asciify_id2name_arr_or_dict(char*& itr,  const ArrOrDict f_arr_or_dict){
+		compsky::asciify::asciify(itr, compsky::server::_r::opener_symbol(f_arr_or_dict));
+		this->asciify_json_response_rows<i>(
+			itr,
+			f_arr_or_dict,
+			compsky::server::_r::flag::quote_no_escape, // id,
+			compsky::server::_r::flag::quote_and_json_escape // name
+		);
+		compsky::asciify::asciify(itr, compsky::server::_r::closer_symbol(f_arr_or_dict));
 	}
 	
 	template<size_t i = 0,  typename ArrOrDict>
@@ -1962,7 +1981,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 	}
 	
 	template<typename... Args>
-	std::string_view select2(const char tbl_alias,  const UserIDIntType user_id,  const std::string_view ids,  Args... name_args){
+	std::string_view select3(const char tbl_alias,  const UserIDIntType user_id,  const std::string_view ids,  Args... name_args){
 		// The server filters out tags that are already applied to all ids
 		const unsigned n_ids = compsky::utils::count_occurances(ids, 'a') + 1;
 		constexpr compsky::asciify::flag::Replace<char,char> _f_replace;
@@ -1994,7 +2013,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		}
 		this->asciify(
 			  "AND ", (tbl_alias=='d')?"full_path ":"name ", name_args..., "\" "
-			"LIMIT 20"
+			"LIMIT " N_SELECT3_OPTS_STR
 		); // TODO: Tell client if results have been truncated
 		
 		if (unlikely(this->itr[-11] == '\\'))
@@ -2013,7 +2032,7 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		this->reset_buf_index();
 		this->init_json<0>(
 			&this->itr,
-			compsky::server::_r::flag::dict,
+			compsky::server::_r::flag::arr,
 			nullptr,
 			compsky::server::_r::flag::quote_no_escape, // id
 			compsky::server::_r::flag::quote_and_json_escape // name
@@ -2021,17 +2040,19 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return this->get_buf_as_string_view();
 	}
 	
-	std::string_view select2_regex(const char tbl_alias,  const char* s){
+	template<unsigned matching>
+	std::string_view post__select3(const char tbl_alias,  const char* s){
 		// NOTE: ids can be 0, to "pre-fill" tag selection box before selecting files
 		// 'a' is the terminating character of the IDs because even + and . are escaped into 3 characters
-		GET_INT_CSV__NOTNULL(ids, s, 'a', 'b')
+		GET_INT_CSV__NOTNULL(ids, s, ',', ' ')
+		GET_USER_ID
+		SKIP_TO_BODY
 		const char* const qry = s;
 		
-		GET_USER_ID
-		
-		return this->select2(tbl_alias, user_id, ids, "REGEXP BINARY \"", _f::esc_dblqt, _f::unescape_URI_until_space, _f::upper_case, qry);
-		// NOTE: AFAIK, in URLs, one should have spaces as %20 before the ? and + after.
-		// However, select2 encodes spaces as %20, not +, even though they are passed as URL parameters.
+		if constexpr(matching == select3::regex)
+			return this->select3(tbl_alias, user_id, ids, "REGEXP BINARY \"", _f::esc, '"', qry);
+		else
+			return this->select3(tbl_alias, user_id, ids, "=\"", _f::esc, '"', qry);
 	}
 	
 	std::string_view get_device_json(const char* s){

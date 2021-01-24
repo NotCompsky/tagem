@@ -9,10 +9,6 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
-function $$$select2_ids_default(){
-	return '0';
-}
-
 function $$$is_integer(x){
 	return Number.isInteger(x);
 }
@@ -29,62 +25,6 @@ function $$$sleep(ms){
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function $$$init_selects(var_name){
-	let s = "";
-	const col = $$$tbl2namecol[var_name];
-	$($$$tbl2selector[var_name]).select2({
-		placeholder: $$$nickname2fullname(var_name) + (($$$use_regex)?" regexp":""),
-		allowClear:true,
-		ajax:{
-			transport: function (params, success, failure){
-				let arr = Object.entries($$$window[var_name]); // WARNING: I don't see why there aren't scope issues
-				if(params.data.q !== undefined){
-					const pattern = ($$$use_regex) ? new RegExp(params.data.q) : params.data.q;
-					arr = arr.filter(x => x[1][0].search(pattern)>=0);
-				}
-				if(arr.length > 50){
-					arr = arr.slice(0, 50);
-					arr.unshift(['0', ['Truncated to 50 results']]);
-				}
-				success(arr);
-			},
-			processResults: function(data){
-				return{
-					results: data.map(([id,tpl]) => ({id:id, text:((col===null)?tpl:tpl[col])}))
-				};
-			}
-		}
-	}); // Initialise
-}
-
-function $$$init_selects__ajax(var_name){
-	let s = "";
-	const col = $$$tbl2namecol[var_name];
-	$($$$tbl2selector[var_name]).select2({
-		minimumInputLength:1,
-		placeholder: $$$nickname2fullname(var_name) + (($$$use_regex)?" regexp":""),
-		allowClear:true,
-		ajax:{
-			url: !!!MACRO!!!SELECT2_URL_ENDPOINT,
-			// Basically "a/select2/regex/" + var_name, but customisable because select2 needs a workaround for GitHub pages deployment, as GH Pages discards parameters.
-			dataType:"json",
-			data:function(params){
-				// The server filters out tags that are already applied to all ids
-				let ids = $$$select2_ids().replace(',','a')+'b'; // Separator and terminator cannot be 'special' characters like commas or plus signs, in order to avoid being escaped
-				if(ids==="b")
-					// This happens only if the user has done a file qry and attempts to select tags without any files selected.
-					ids="0b";
-				return ($$$use_regex) ? {'q': ids+params.term} : {'q': ids+$$$regexp_esc_for_mysql(params.term)}
-			},
-			processResults:function(data){
-				return{
-					results:Object.entries(data).map(([id,name]) => ({id:id, text:name}))
-				};
-			}
-		}
-	});
-}
-
 function $$$refetch_json(var_name, url, fn){
 	$$$ajax_GET_w_JSON_response(url + '?' + (new Date().getTime()), function(data){
 		// Cache buster url parameter
@@ -92,7 +32,6 @@ function $$$refetch_json(var_name, url, fn){
 		$$$window[var_name] = data;
 		if(fn !== undefined)
 			fn();
-		$$$init_selects(var_name);
 	});
 }
 

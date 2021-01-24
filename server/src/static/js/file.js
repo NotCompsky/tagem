@@ -349,8 +349,6 @@ function $$$view_file(_file_id_and_t){
 		$$$view_file__hides();
 		$$$set_profile_name($$$file_title);
 	}
-	
-	$$$select2_ids = $$$get_file_id;
 }
 
 function $$$create__view_dir_and_filename_w_filename_playable(id,mime,fname){

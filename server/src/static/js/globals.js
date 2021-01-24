@@ -9,8 +9,6 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
-var $$$select2_ids = $$$select2_ids_default;
-
 const $$$MAX_RESULTS_PER_PAGE = 100;
 
 const $$$YOUTUBE_DEVICE_ID = "1";
@@ -51,8 +49,6 @@ var $$$use_regex;
 var $$$prioritise_local_autoplay;
 
 const $$$stylesheet_opts = ["blocks","table"];
-
-const $$$tbl2selector = {"f2":"#file2-select","t":".tagselect","d":"#dirselect","D":"#deviceselect","P":"#protocolselect","$$$users_dict":".userselect"};
 
 const $$$tbl2namecol = {"f2":0,"t":0,"d":0,"D":0,"P":0,"$$$users_dict":0};
 
@@ -101,8 +97,7 @@ var $$$recent_pages;
 
 var $$$tagselect_popup_container;
 var $$$tagselect_popup_btn;
-
-var $$$jquery_dirselect;
+var $$$tagselect_popup;
 
 var $$$css_root;
 var $$$document_body;

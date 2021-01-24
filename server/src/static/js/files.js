@@ -174,7 +174,6 @@ function $$$setup_page_for_f_tbl(){
 	
 	$$$file_tagger_fn = $$$after_tagged_selected_files;
 	$$$get_file_ids = $$$get_selected_file_ids;
-	$$$select2_ids = $$$get_selected_file_ids;
 	
 	$$$set_profile_name("Files");
 }

@@ -110,5 +110,5 @@ function $$$add_to_db__append(obj_type){
 		return;
 	}
 	$$$document_getElementById('add-' + obj_type + '-queue').innerText += "\n" + x;
-	inp.value = "";
+	$$$select3__wipe_values(inp);
 }

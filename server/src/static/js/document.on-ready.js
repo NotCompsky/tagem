@@ -42,8 +42,7 @@ function $$$on_document_ready(){
 	
 	$$$tagselect_popup_container = $$$document_getElementById("tagselect-era-container");
 	$$$tagselect_popup_btn = $$$document_getElementById("tagselect-era-btn");
-	
-	$$$jquery_dirselect = $('#dirselect');
+	$$$tagselect_popup = $$$document_getElementById("tagselect-era");
 	
 	$$$css_root = document.querySelector(':root').style;
 	$$$document_body = $$$document_getElementsByTagName("body")[0];
@@ -56,9 +55,6 @@ function $$$on_document_ready(){
 	$$$document_getElementById_username.innerText = (uname === undefined)?"GUEST":uname;
 	
 	$$$refetch_all_jsons();
-	$$$init_selects__ajax('d');
-	$$$init_selects__ajax('t');
-	$$$init_selects('$$$users_dict');
 	$$$document_getElementById("select-user-for-edit").addEventListener("change", $$$load_user_for_edit);
 	
 	if(!!!MACRO!!!USE_REMOTE_YT_JS__STR){

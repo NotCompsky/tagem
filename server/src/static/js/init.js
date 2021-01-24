@@ -91,9 +91,10 @@ function $$$when_data_loaded(){
 	$$$init_tbls();
 	$$$load_page_from_a_hash_string($$$window.location.hash);
 	
-	$('#file2-select').on('select2:selecting', function(e){
-		$$$init_file2_input_for_file2_var_of_index(e.params.args.data.id);
-	});
+	// TODO: Implement whatever this is for select3
+	//$('#file2-select').on('select2:selecting', function(e){
+	//	$$$init_file2_input_for_file2_var_of_index(e.params.args.data.id);
+	//});
 	
 	$('#file2-value-dt').datetimepicker();
 }

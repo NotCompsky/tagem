@@ -46,7 +46,7 @@ function $$$ytdl_era(node){
 		return;
 	}
 	$$$ajax_POST_data_w_text_response("/e/dl/"+$$$dirselect.value+"/"+node.dataset.id,function(){
-		$$$dirselect.value = "";
+		$$$select3__wipe_values($$$dirselect.value);
 		$$$alert("Saved to '" + $$$file_id + "@" + node.dataset.start + "-" + node.dataset.end + ".mkv'");
 	});
 }
