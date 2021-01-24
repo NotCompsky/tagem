@@ -9,6 +9,9 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 
+const headers = new Headers({"Accept": ".","Accept-Encoding": ".","Accept-Language":".","Connection":".","Content-Type" : ".","Host":".","Origin":".","User-Agent": ""});
+//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
+
 function $$$delete_standard_request_header(xhr,x){
 	xhr.setRequestHeader(x," ");
 }
@@ -18,11 +21,8 @@ function $$$ajax(mthd,resp_type,url,fn){
 		url,
 		{
 			method:mthd,
-			//mode:"cors",
 			credentials:"include",
-		//headers:{
-		//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
-		//},
+			headers:headers,
 		}
 	).then(r => {
 		if(!r.ok){
@@ -33,7 +33,20 @@ function $$$ajax(mthd,resp_type,url,fn){
 	});
 }
 function $$$ajax_w_JSON_response(mthd,url,fn){
-	$$$ajax(mthd,"json",url,fn);
+	fetch(
+		url,
+		{
+			method:mthd,
+			credentials:"include",
+			headers:headers,
+		}
+	).then(r => {
+		if(!r.ok){
+			$$$err_alert();
+			throw Error(`Server returned ${r.status}: ${r.statusText}`);
+		}
+		r.json().then(fn);
+	});
 }
 
 function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
@@ -42,23 +55,34 @@ function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
 		{
 			method:mthd,
 			body:data,
-			//mode:"cors",
 			credentials:"include",
-		//headers:{
-		//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
-		//},
+			headers:headers,
+		}
+	).then(r => r.json())
+	.then(succ)
+	.catch(err);
+}
+
+function $$$ajax_data_w_JSON_response_and_err(mthd,url,data,fn,err){
+	fetch(
+		url,
+		{
+			method:mthd,
+			body:data,
+			credentials:"include",
+			headers:headers,
 		}
 	).then(r => {
 		if(!r.ok){
 			err();
 			throw Error(`Server returned ${r.status}: ${r.statusText}`);
 		}
-		succ(r);
+		r.json().then(fn);
 	});
 }
 
 function $$$ajax_data_w_JSON_response(mthd,url,data,fn){
-	$$$ajax_data_w_err(mthd,url,"json",data,fn,$$$err_alert);
+	$$$ajax_data_w_JSON_response_and_err(mthd,url,data,fn,$$$err_alert);
 }
 
 function $$$ajax_POST_w_JSON_response(url,fn){
@@ -68,7 +92,7 @@ function $$$ajax_POST_data_w_err(url,resp_type,data,succ,err){
 	$$$ajax_data_w_err("POST",url,resp_type,data,succ,err);
 }
 function $$$ajax_POST_data_w_JSON_response_and_err(url,data,succ,err){
-	$$$ajax_POST_data_w_err(url,"json",data,succ,err);
+	$$$ajax_data_w_JSON_response_and_err("POST",url,data,succ,err);
 }
 function $$$ajax_POST_data(url,resp_type,data,fn){
 	$$$ajax_POST_data_w_err(url,resp_type,data,fn,$$$err_alert);
@@ -77,7 +101,7 @@ function $$$ajax_POST_data_w_text_response(url,data,fn){
 	$$$ajax_POST_data(url,"text",data,fn);
 }
 function $$$ajax_POST_data_w_JSON_response(url,data,fn){
-	$$$ajax_POST_data(url,"json",data,fn);
+	$$$ajax_POST_data_w_JSON_response_and_err(url,data,fn,$$$err_alert);
 }
 
 function $$$ajax_POST_data_w_text_response_generic_success(url,data){
