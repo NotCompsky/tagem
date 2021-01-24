@@ -133,14 +133,14 @@ function $$$merge_files(){
 	$$$ajax_POST_w_text_response(
 		"/f/merge/"+master_f_id+"/"+dupl_file_ids.join(","),
 		function(){
-			$$$deselect_rows('#f .tbody .tr', 1);
-			$("#f .tbody .tr.selected2").remove();
+			$$$deselect_rows('f', 1);
+			$$$rm_class("selected2");
 		}
 	);
 }
 
 function $$$get_selected2_file_ids(){
-	return $("#f .tbody .tr.selected2").map((i, el) => el.dataset.id).get().join(",");
+	return Array.from($$$document_getElementById_f.getElementsByClassName("selected2")).map(el => el.dataset.id).join(",");
 }
 function $$$get_selected_file_ids(and_eras){
 	let file_ids = "";

@@ -74,11 +74,13 @@ function $$$filter_tbl(tbl_id, name_col_ids, tags_col_ids){
 function $$$toggle_row_selected(tr, which){
 	tr.classList.toggle("selected" + which);
 }
-function $$$select_rows(selector){
-	$(selector).addClass("selected1");
+function $$$select_all_rows(which_tbl){
+	// Except those with the 'hidden' class
+	Array.from($$$document_getElementById(which_tbl).getElementsByClassName("tr")).filter(x => !x.classList.contains("hidden")).map(x => x.classList.add("selected1"));
 }
-function $$$deselect_rows(selector, which){
-	$(selector).removeClass("selected" + which);
+function $$$deselect_all_rows(which_tbl, which_sel){
+	// NOTE: Removes from *all* tables. This isn't the desired effect, but it almost never matters.
+	$$$rm_class_from_applicable_nodes("selected"+which_sel);
 }
 function $$$make_tbl_selectable(id){
 	$$$get_tbl_body(id).addEventListener("mouseup", function(e){
@@ -107,18 +109,15 @@ function $$$comparer(idx, asc){
 	)($$$getCellValue(asc ? a : b, idx), $$$getCellValue(asc ? b : a, idx));
 }
 
-function $$$init_tbls(){
-	$(".thead .sort").each(function(i,el){el.addEventListener("click", function(){
-		const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
-		Array.from(tbl.querySelectorAll('.tr'))
-			.sort($$$comparer(Array.from(el.parentNode.children).indexOf(el), this.asc = !this.asc))
-			.forEach(tr => tbl.appendChild(tr) );
-	})});
-	$(".thead .hide").each(function(i,el){
-		el.addEventListener("click", function(){
-			const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
-			Array.from(tbl.querySelectorAll('.tr'))
-				.forEach(tr => tr.childNodes[Array.from(el.parentNode.children).indexOf(el)].classList.toggle('invisible'));
-		});
-	});
+function $$$sort_tbl(el){
+	const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
+	Array.from(tbl.querySelectorAll('.tr'))
+		.sort($$$comparer(Array.from(el.parentNode.children).indexOf(el), this.asc = !this.asc))
+		.forEach(tr => tbl.appendChild(tr) );
+}
+
+function $$$hide_tbl(el){
+	const tbl = el.parentNode.parentNode.parentNode.getElementsByClassName("tbody")[0]; // th < tr < thead < table
+	Array.from(tbl.querySelectorAll('.tr'))
+		.forEach(tr => tr.childNodes[Array.from(el.parentNode.children).indexOf(el)].classList.toggle('invisible'));
 }

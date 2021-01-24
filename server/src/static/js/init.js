@@ -88,7 +88,6 @@ function $$$init_file2_input_for_file2_var_of_index(id){
 function $$$when_data_loaded(){
 	if($$$D === undefined || $$$P === undefined || $$$x === undefined || $$$mt === undefined || $$$f2 === undefined || $$$yt_player === undefined)
 		return;
-	$$$init_tbls();
 	$$$load_page_from_a_hash_string($$$window.location.hash);
 }
 
