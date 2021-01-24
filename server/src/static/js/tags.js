@@ -28,7 +28,7 @@ function $$$tag_stuff_then(alias, ids, btn_node, fn){
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
 	$$$ajax_POST_w_text_response(
-		"/" + alias + "/t/" + ids + "/" + tags,
+		alias + "/t/" + ids + "/" + tags,
 		function(){
 			$$$select3__wipe_values(tagselect_node);
 			fn(ids, tags);

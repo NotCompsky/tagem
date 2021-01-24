@@ -204,7 +204,7 @@ function $$$assign_value_to_file(){
 	if(input.type === "datetime-local")
 		value = $$$dt2timestamp(value);
 	$$$ajax_POST_w_text_response(
-		"/f/f2/"+_file_ids+"/"+value+"/"+$$$f2[f2_id][0],
+		"f/f2/"+_file_ids+"/"+value+"/"+$$$f2[f2_id][0],
 		function(){
 			$$$select3__wipe_values(select);
 			input.value = "";
