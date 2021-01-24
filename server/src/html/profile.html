@@ -105,8 +105,6 @@ The absense of this copyright notices on some other files in this project does n
 	
 	"<style>"
 		#include "../static/css/profile.css"
-		#include "../static/css/3rd-party/datetimepicker.css"
-		
 		#include "../static/css/table_as_blocks.css"
 		#include "../static/css/table_as_table.css"
 	"</style>"
@@ -454,7 +452,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"<button onclick=\"" MINIMISED_JS_DECL_toggle "('file2')\">+Value</button>"
 	"<div id=\"file2\">"
 		"<h3>Assign Value</h3>"
-		"<select id=\"file2-select\"></select>"
+		SELECT3_INPUT__ONINPUT("file2-select", "f2", "var_name", MINIMISED_JS_DECL_init_file2_input_for_file2_var_of_index)
 		"<input class=\"file2-value\" id=\"file2-value\"/>"
 		"<input class=\"file2-value\" id=\"file2-value-dt\"/>"
 		"<button onclick=\"" MINIMISED_JS_DECL_assign_value_to_file "()\">Update DB</button>"
@@ -643,14 +641,12 @@ R"=========(
 
 #ifdef USE_LOCAL_JS
 #else
-"<script src=\"https://code.jquery.com/jquery-3.5.0.min.js\"></script>"
 "<script src=\"https://rawgit.com/ccampbell/mousetrap/master/mousetrap.js\"></script>"
 #endif
 "<script type=\"text/javascript\">"
 
 #ifdef USE_LOCAL_JS
 // NOTE: Must precede MINIMISED_JS_ALL
-# include "../static/js/3rd-party/jquery.js"
 # include "../static/js/3rd-party/mousetrap.js"
 #endif
 
@@ -658,9 +654,6 @@ R"=========(
 	
 	"window.addEventListener('popstate',  e => " MINIMISED_JS_DECL_load_page_from_a_hash_string "(e.state));"
 	// Although we could store the page's data, thereby reducing requests to the server, it wouldn't be easy to check whether the data is out of date or not.
-	
-	#include "../static/js/3rd-party/php-date-formatter.js"
-	#include "../static/js/3rd-party/datetimepicker.js"
 	
 	"$(document).ready("
 		MINIMISED_JS_DECL_on_document_ready

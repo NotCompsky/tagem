@@ -192,27 +192,6 @@ add_custom_target(
 	COMMENT "Generating SVG icons header"
 )
 
-add_custom_target(
-	_SRC_DIR_static_js_3rd_party_php_date_formatter_js ALL
-	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js" "https://raw.githubusercontent.com/kartik-v/php-date-formatter/master/js/php-date-formatter.min.js" 
-	BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/php-date-formatter.js"
-	COMMENT "Downloading datetimepicker.css"
-)
-
-add_custom_target(
-	_SRC_DIR_static_js_3rd_party_datetimepicker_js ALL
-	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/js/3rd-party/datetimepicker.js" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.js" 
-	BYPRODUCTS "${SRC_DIR}/static/js/3rd-party/datetimepicker.js"
-	COMMENT "Downloading datetimepicker.css"
-)
-
-add_custom_target(
-	_SRC_DIR_static_css_3rd_party_datetimepicker_css ALL
-	COMMAND "${SCRIPTS_DIR}/wget-and-escape" "${SRC_DIR}/static/css/3rd-party/datetimepicker.css" "https://raw.githubusercontent.com/xdan/datetimepicker/master/jquery.datetimepicker.css" 
-	BYPRODUCTS "${SRC_DIR}/static/css/3rd-party/datetimepicker.css"
-	COMMENT "Downloading datetimepicker.css"
-)
-
 
 add_executable(qry "${SRC_DIR}/qry-cli.cpp" "${SRC_DIR}/qry.cpp")
 set_property(TARGET qry PROPERTY CXX_STANDARD 17)

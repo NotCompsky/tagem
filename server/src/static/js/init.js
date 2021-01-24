@@ -73,7 +73,7 @@ function $$$init_file2_input_for_file2_var_of_index(id){
 			inp.max = max;
 			break;
 		case 2: // datetime
-			//inp.type = "datetime-local"; // Chrome-only
+			inp.type = "datetime-local"; // WARNING: Only Chrome has a nice GUI input, Firefox has mere text
 			break;
 		default:
 			$$$alert("Not implemented yet");
@@ -90,13 +90,6 @@ function $$$when_data_loaded(){
 		return;
 	$$$init_tbls();
 	$$$load_page_from_a_hash_string($$$window.location.hash);
-	
-	// TODO: Implement whatever this is for select3
-	//$('#file2-select').on('select2:selecting', function(e){
-	//	$$$init_file2_input_for_file2_var_of_index(e.params.args.data.id);
-	//});
-	
-	$('#file2-value-dt').datetimepicker();
 }
 
 function $$$refetch_all_jsons(){
