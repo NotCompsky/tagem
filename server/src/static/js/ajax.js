@@ -21,15 +21,22 @@ function $$$ajax_prefilter(opts, orig_opts, xhr){
 // Assigned in document.on-ready.js
 
 function $$$ajax(mthd,resp_type,url,fn){
-	$.ajax({
-		type:mthd,
-		dataType:resp_type,
-		url:url,
-		success:fn,
+	fetch(
+		url,
+		{
+			method:mthd,
+			//mode:"cors",
+			credentials:"include",
 		//headers:{
 		//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
 		//},
-		error:$$$err_alert
+		}
+	).then(r => {
+		if(!r.ok){
+			$$$err_alert();
+			throw Error(`Server returned ${r.status}: ${r.statusText}`);
+		}
+		fn(r);
 	});
 }
 function $$$ajax_w_JSON_response(mthd,url,fn){
@@ -37,13 +44,23 @@ function $$$ajax_w_JSON_response(mthd,url,fn){
 }
 
 function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
-	$.ajax({
-		type:mthd,
-		data:data,
-		dataType:resp_type,
-		url:url,
-		success:succ,
-		error:err
+	fetch(
+		url,
+		{
+			method:mthd,
+			body:data,
+			//mode:"cors",
+			credentials:"include",
+		//headers:{
+		//	'Expect': '' // Prevent "Expect: 100-continue" behaviour
+		//},
+		}
+	).then(r => {
+		if(!r.ok){
+			err();
+			throw Error(`Server returned ${r.status}: ${r.statusText}`);
+		}
+		succ(r);
 	});
 }
 
