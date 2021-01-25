@@ -367,12 +367,13 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	TOGGLEABLE_DIV_PRE("credits")
 		#include "credits.html"
 	TOGGLEABLE_DIV_POST
-	TOGGLEABLE_DIV_PRE("filter-syntax.html")
+	TOGGLEABLE_DIV_PRE("filter-syntax")
 		#include "filter-syntax.html"
 	TOGGLEABLE_DIV_POST
 	TOGGLEABLE_DIV_PRE("keyboard-shortcuts")
 		#include "keyboard-shortcuts.html"
 	TOGGLEABLE_DIV_POST
+	"<a onclick=\"" MINIMISED_JS_DECL_toggle_qry_help "()\">Show qry help</a>"
 	TOGGLEABLE_DIV_PRE("examples")
 		#include "examples.html"
 	TOGGLEABLE_DIV_POST
