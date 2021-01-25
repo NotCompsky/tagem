@@ -58,7 +58,7 @@ function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
 			credentials:"include",
 			headers:headers,
 		}
-	).then(r => r.json())
+	).then(r => r.body)
 	.then(succ)
 	.catch(err);
 }
