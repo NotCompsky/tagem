@@ -445,16 +445,23 @@ successness::ReturnType append_escaped_str(std::string& result,  const char*& qr
 	const char* qry_orig = qry;
 	while(true){
 		const char c = *(++qry);
-		if (*qry == '\\')
-			++qry;
-		if (*qry == '"')
+		if (unlikely(c == '\\')){
+			if (*(++qry) == 0)
+				return successness::invalid;
+			continue;
+		}
+		if (c == '"')
 			break;
-		if (*qry == 0)
+		if (c == 0)
 			return successness::invalid;
 	}
 	if (*(++qry) != ' ')
 		return successness::invalid;
-	result.append(qry_orig,  compsky::utils::ptrdiff(qry, qry_orig));
+	const size_t sz = compsky::utils::ptrdiff(qry, qry_orig);
+	if (unlikely(sz == 2))
+		// "" is an illegal regexp according to MySQL/MariaDB
+		return successness::invalid;
+	result.append(qry_orig, sz);
 	return successness::ok;
 }
 
@@ -491,7 +498,10 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 					}
 					if (c == '"'){
 						where += '"';
-						where.append(start,  compsky::utils::ptrdiff(qry, start));
+						const size_t sz = compsky::utils::ptrdiff(qry, start);
+						if (unlikely(sz == 0))
+							return successness::invalid;
+						where.append(start, sz);
 						where += '"';
 						where += ',';
 						if (*(++qry) != ' ')
