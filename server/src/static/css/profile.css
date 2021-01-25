@@ -635,6 +635,10 @@ a:hover {
 	width:25%;
 	background:var(--select3-opt);
 	color:var(--select3-opt-text);
+	
+	/* To capture mouse events happening in the <input>: */
+	margin-top:25px;
+	transform:translateY(-25px);
 }
 .select3 > div > div:hover {
 	background:var(--select3-opt-hover);

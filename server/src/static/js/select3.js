@@ -1,7 +1,7 @@
 // CSV
 
 function $$$select3__get_csv(inp){
-	return $$$select3__get_ls(inp).join('\n');
+	return $$$select3__get_ls(inp).join(',');
 }
 
 function $$$select3__get_ls(inp){
@@ -9,7 +9,15 @@ function $$$select3__get_ls(inp){
 }
 
 function $$$select3__get_dict(inp){
-	return $$$select3__get_spans_from_inp(inp).map(function(x){return {id:x.id, text:x.innerText};});
+	return $$$select3__get_spans_from_inp(inp).map(function(x){return {id:x.dataset.x, text:x.innerText};});
+}
+
+function $$$select3__d2csv(d){
+	return d.map(x => x.id).join(",");
+}
+
+function $$$select3__count(inp){
+	return inp.parentNode.childNodes.length-2;
 }
 
 
@@ -30,14 +38,19 @@ function $$$select3__onkeyup(inp, e, fn){
 			// DOWN
 			// TODO: Select opt
 			break;
+		case 27:
+			// ESCAPE
+			const node = inp.parentNode;
+			$$$select3__get_opts_div_from_root_div(node).style.display = "none";
+			$$$select3__get_input_node_from_root_div(node).value = "";
 	}
 }
 
 
 // DOM
 
-function $$$select3__get_opts_div_from_root_div(node){
-	return Array.from(node.childNodes).filter(x => x.tagName==="DIV")[0];
+function $$$select3__get_opts_div_from_root_div(r){
+	return Array.from(r.childNodes).filter(x => x.tagName==="DIV")[0];
 }
 
 function $$$select3__get_opts_from_root_div(node){
@@ -52,13 +65,8 @@ function $$$select3__oninput(node){
 	$$$select3__qry(node);
 }
 
-function $$$select3__root_div_mouseout(node){
-	$$$select3__get_opts_div_from_root_div(node).style.display = "none";
-	$$$select3__get_input_node_from_root_div(node).value = "";
-}
-
 function $$$select3__add_tag(root,id,name){
-	root.innerHTML += `<span data-x="${id}">${name}<a onclick="this.parentNode.remove()">x</a></span>`;
+	root.insertAdjacentHTML("beforeend", `<span data-x="${id}">${name}<a onclick="this.parentNode.remove()">x</a></span>`);
 }
 
 function $$$select3__get_spans_from_inp(inp){
@@ -66,14 +74,17 @@ function $$$select3__get_spans_from_inp(inp){
 }
 
 function $$$select3__selected_node(node){
+	xxx = node;
 	if (node.dataset.x!==""){
 		const root = node.parentNode.parentNode;
 		const inp = $$$select3__get_input_node_from_root_div(root);
-		if (!$$$select3__get_dict(inp).map(x=>x.id).includes(node.dataset.x)){
-			$$$select3__add_tag(root, node.dataset.x, node.innerText);
-			
-			if (inp.dataset.fn !== undefined){
-				window[inp.dataset.fn]($$$select3__get_ls(inp));
+		if (!((inp.dataset.one==="1") && $$$select3__count(inp))){
+			if (!$$$select3__get_dict(inp).map(x=>x.id).includes(node.dataset.x)){
+				$$$select3__add_tag(root, node.dataset.x, node.innerText);
+				inp.value = "";
+				if (inp.dataset.fn !== undefined){
+					window[inp.dataset.fn]($$$select3__get_ls(inp));
+				}
 			}
 		}
 	}

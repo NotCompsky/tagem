@@ -64,21 +64,22 @@ The absense of this copyright notices on some other files in this project does n
 #define SELECT3_OPT(_, n, __) \
 	"<div onclick=\"" MINIMISED_JS_DECL_select3__selected_node "(this)\"></div>"
 
-#define SELECT3_INPUT(id, placeholder, var) \
-	"<div class=\"select3\" onmouseleave=\"" MINIMISED_JS_DECL_select3__root_div_mouseout "(this)\">" \
-		"<input id=\"" id "\" type=\"text\" placeholder=\"" placeholder "\" oninput=\"" MINIMISED_JS_DECL_select3__oninput "(this)\" onkeyup=\"" MINIMISED_JS_DECL_select3__onkeyup "(this,event)\" data-v=\"" var "\"/>" \
+#define SELECT3_INPUT__BASE(id, placeholder, var, is_single, misc) \
+	"<div class=\"select3\">" \
+		"<input id=\"" id "\" data-one=\"" is_single "\" type=\"text\" placeholder=\"" placeholder "\" oninput=\"" MINIMISED_JS_DECL_select3__oninput "(this)\" onkeyup=\"" MINIMISED_JS_DECL_select3__onkeyup "(this,event)\" data-v=\"" var "\"" misc "/>" \
 		"<div>" \
 			BOOST_PP_REPEAT(N_SELECT3_OPTS, SELECT3_OPT, _) \
 		"</div>" \
 	"</div>"
 
+#define SELECT3_INPUT__SINGLE(id, placeholder, var) \
+	SELECT3_INPUT__BASE(id, placeholder, var, "1", "")
+
+#define SELECT3_INPUT(id, placeholder, var) \
+	SELECT3_INPUT__BASE(id, placeholder, var, "0", "")
+
 #define SELECT3_INPUT__ONINPUT(id, placeholder, var, fn) \
-	"<div class=\"select3\" onmouseleave=\"" MINIMISED_JS_DECL_select3__root_div_mouseout "(this)\">" \
-		"<input id=\"" id "\" type=\"text\" placeholder=\"" placeholder "\" oninput=\"" MINIMISED_JS_DECL_select3__oninput "(this)\" onkeyup=\"" MINIMISED_JS_DECL_select3__onkeyup "(this,event)\" data-v=\"" var "\" data-fn=\"" fn "\"/>" \
-		"<div>" \
-			BOOST_PP_REPEAT(N_SELECT3_OPTS, SELECT3_OPT, _) \
-		"</div>" \
-	"</div>"
+	SELECT3_INPUT__BASE(id, placeholder, var, "0", " data-fn=\"" fn "\"")
 
 #define CREATE_TAG_SELECT_WO_BTN__UNCLOSED(id) \
 	"<div id=\"" id "-container\" class=\"tagselect-container\">" \
@@ -474,11 +475,7 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagse
 	"<a onclick=\"" MINIMISED_JS_DECL_display_posts "(" MINIMISED_JS_DECL_db_id "," MINIMISED_JS_DECL_user_id ",'c')\">Commented Posts</a>"
 "</div>"
 
-#define CREATE_SELECT(r, data, elem) \
-	"<div id=\"" elem "select-container\">" \
-		"<select id=\"" elem "select\"></select>" \
-	"</div>"
-BOOST_PP_SEQ_FOR_EACH(CREATE_SELECT, _, ("dir"))
+SELECT3_INPUT__SINGLE("dirselect", "/Path/Of/Directory", "d")
 
 #include "components/change-file-to-backup.html"
 

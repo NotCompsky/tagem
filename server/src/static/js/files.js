@@ -180,7 +180,7 @@ function $$$setup_page_for_f_tbl(){
 
 function $$$toggle_dl_locally(){
 	const b = $$$document_getElementById_add_f_backup_toggle.checked;
-	for(let x of ['dirselect-container','add-f-backup-ytdl','audio-only']){
+	for(let x of ['dirselect','add-f-backup-ytdl','audio-only']){
 		$$$set_visibility(x,b);
 	}
 	$$$document_getElementById_add_f_backup_ytdl.checked = false;
@@ -226,7 +226,7 @@ function $$$backup_files(){
 	$$$ajax_POST_w_text_response(
 		"/f/backup/" + file_ids + "/" + _dir_id + "/" + $$$is_ytdl_checked() + "/"  + $$$is_audio_only_checked() + "/" + url,
 		function(){
-			$$$hide('dirselect-container');
+			$$$hide_node($$$dirselect);
 			$$$hide('add-f-backup');
 		}
 	);

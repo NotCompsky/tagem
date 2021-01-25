@@ -22,16 +22,16 @@ function $$$ask_user_to_input_tags(fn){
 function $$$tag_stuff_then(alias, ids, btn_node, fn){
 	// alias is either file 'f', dir 'd', or device 'D'
 	const tagselect_node = btn_node.parentNode.getElementsByTagName("input")[0];
-	const tags = $$$select3__get_csv(tagselect_node);
 	if(ids==="")
 		return;
 	if(!$$$logged_in())
 		return $$$alert_requires_login();
+	const tagd = $$$select3__get_dict(tagselect_node);
 	$$$ajax_POST_w_text_response(
-		alias + "/t/" + ids + "/" + tags,
+		alias + "/t/" + ids + "/" + $$$select3__d2csv(tagd),
 		function(){
 			$$$select3__wipe_values(tagselect_node);
-			fn(ids, tags);
+			fn(ids, tagd);
 		}
 	);
 }

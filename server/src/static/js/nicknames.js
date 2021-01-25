@@ -58,7 +58,7 @@ function $$$rm_class(s){
 }
 
 function $$$get_dirselect_value(){
-	return $$$dirselect.value;
+	return $$$select3__get_csv($$$dirselect);
 }
 
 function $$$unset_dirselect_value(){
@@ -71,4 +71,10 @@ function $$$rm_class_from_node(x,c){
 
 function $$$rm_class_from_applicable_nodes(name){
 	$$$for_node_in_document_getElementsByClassName_1args__reverse(name,$$$rm_class_from_node,name);
+}
+
+function $$$get_last_child_node(n){
+	// Weird stuff with inner text sometimes being considered the first child node
+	const ch = n.childNodes;
+	return ch[ch.length - 1];
 }
