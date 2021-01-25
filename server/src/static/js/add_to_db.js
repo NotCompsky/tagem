@@ -67,7 +67,7 @@ function $$$add_to_db(obj_type){
 	}
 	
 	$$$ajax_POST_data_w_text_response(
-		"/" + obj_type + "/add/" + tag_ids.join(",")+"/" + backup_dir_id + "/" + $$$is_ytdl_checked() + "/" + $$$is_audio_only_checked(), // is_ytdl_checked etc is meaningless for anything other than files. Safe to include though.
+		obj_type + "/add/" + tag_ids+"/" + backup_dir_id + "/" + $$$is_ytdl_checked() + "/" + $$$is_audio_only_checked(), // is_ytdl_checked etc is meaningless for anything other than files. Safe to include though.
 		urls.join("\n"),
 		function(){
 			$$$select3__wipe_values(tagselect);
