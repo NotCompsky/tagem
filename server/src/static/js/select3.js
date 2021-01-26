@@ -75,9 +75,9 @@ function $$$select3__get_spans_from_inp(inp){
 
 function $$$select3__selected_node(node){
 	xxx = node;
+	const root = node.parentNode.parentNode;
+	const inp = $$$select3__get_input_node_from_root_div(root);
 	if (node.dataset.x!==""){
-		const root = node.parentNode.parentNode;
-		const inp = $$$select3__get_input_node_from_root_div(root);
 		if (!((inp.dataset.one==="1") && $$$select3__count(inp))){
 			if (!$$$select3__get_dict(inp).map(x=>x.id).includes(node.dataset.x)){
 				$$$select3__add_tag(root, node.dataset.x, node.innerText);
@@ -89,6 +89,7 @@ function $$$select3__selected_node(node){
 		}
 	}
 	node.parentNode.style.display = "none";
+	inp.focus();
 }
 
 function $$$select3__wipe_values(inp){

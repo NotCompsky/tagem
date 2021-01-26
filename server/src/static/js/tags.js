@@ -17,6 +17,7 @@ function $$$ask_user_to_input_tags(fn){
 	}
 	$$$tagselect_popup_btn.addEventListener("click", a, {once:true});
 	$$$unhide_node($$$tagselect_popup_container);
+	$$$tagselect_popup.focus();
 }
 
 function $$$tag_stuff_then(alias, ids, btn_node, fn){
