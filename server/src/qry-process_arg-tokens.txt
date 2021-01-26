@@ -70,3 +70,5 @@ x >
 	return arg::select_delete_local_files
 ?check_local >
 	return arg::select_check_local_files
+?export >
+	return arg::select_export_results

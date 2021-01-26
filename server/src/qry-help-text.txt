@@ -189,6 +189,8 @@ OPTIONS
 				This deletes all selected primary local files. In future, it will delete backups too.
 
 EXAMPLES
+	f t "Music" limit 100 ?export
+		Download a file which can be imported by any tagem instance, which contains all metadata about the selected files (except for the numeric IDs)
 	f order d id limit 1
 		List the last added file
 	f t "Music" t "English (Language)" "French (Language)" "German (Language)" and value 90-100 "Musicness" "Score" and attr name r "[.]webm$" limit 100

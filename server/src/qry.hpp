@@ -94,6 +94,7 @@ namespace selected_field {
 		TOTAL_VIEWS,
 		DELETE_LOCAL_FILES,
 		CHECK_LOCAL_FILES,
+		EXPORT_RESULTS,
 		COUNT
 	};
 }

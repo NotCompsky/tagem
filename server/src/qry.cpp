@@ -84,6 +84,7 @@ namespace arg {
 		select_total_views,
 		select_check_local_files,
 		select_delete_local_files,
+		select_export_results,
 		
 		END_OF_STRING,
 		NOT = (1 << 30) // WARNING: Must be no other enums using this bit
@@ -125,7 +126,7 @@ namespace attribute_name {
 
 namespace selected_field {
 	// Array styles used to guarantee unique addresses
-	constexpr const char* x_id = "X.id";
+	constexpr const char x_id[] = "X.id";
 	constexpr const char* count = "COUNT(*)";
 	constexpr const char* list__file = "CONCAT(d.full_path, X.name)";
 	constexpr const char* list = "X.name";
@@ -134,6 +135,7 @@ namespace selected_field {
 	constexpr const char* total_views = "SUM(IFNULL(X.views,0))";
 	constexpr const char check_local_files[]  = "CONCAT(d.full_path, X.name)";
 	constexpr const char delete_local_files[] = "X.id, CONCAT(d.full_path, X.name)";
+	constexpr const char export_results[] = "X.id";
 	selected_field::Type get_enum(const char* const str){
 		return
 		  (str == selected_field::x_id)  ? selected_field::X_ID
@@ -143,6 +145,7 @@ namespace selected_field {
 		: (str == selected_field::check_local_files)  ? selected_field::CHECK_LOCAL_FILES
 		: (str == selected_field::delete_local_files) ? selected_field::DELETE_LOCAL_FILES
 		: (str == selected_field::url_and_title__markdown) ? selected_field::URL_AND_TITLE__MARKDOWN
+		: (str == selected_field::export_results) ? selected_field::EXPORT_RESULTS
 		: selected_field::LIST
 		;
 	}
@@ -1107,6 +1110,11 @@ successness::ReturnType process_args(const std::string& connected_local_devices_
 				if (which_tbl != 'f')
 					return successness::invalid;
 				select_fields = selected_field::delete_local_files;
+				break;
+			case arg::select_export_results:
+				if (which_tbl != 'f')
+					return successness::invalid;
+				select_fields = selected_field::export_results;
 				break;
 			case arg::limit: {
 				if (++n_calls__limit == 2)

@@ -235,6 +235,11 @@ magic_t magique;
 # define NO_LIMITS_WITHIN_GROUP_CONCATS_WORKAROUND2 ", ' ', -1)"
 #endif
 
+#define NULL8 "\0\0\0\0\0\0\0\0"
+#define NULL64 (NULL8 NULL8 NULL8 NULL8 NULL8 NULL8 NULL8 NULL8)
+#define NULL128 (NULL64 NULL64)
+#define NULL256 (NULL128 NULL128)
+
 #define SELECT_TAGS_INFOS__BASE__SELECT \
 	"SELECT " \
 		"t.id," \
@@ -521,6 +526,45 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		return not this->get_last_row_from_qry<bool>("SELECT COUNT(*) FROM tag t WHERE t.id IN(", tag_ids1, ',', tag_ids2, ") AND NOT ", NOT_DISALLOWED_TAG("t.id", user_id), " LIMIT 1");
 	}
 	
+#ifdef IGNORE_FOR_NOW
+	template<bool sanitise>
+	void create_backup_from_file_ids(const std::string_view file_ids){
+		this->mysql_query(
+			"SELECT "
+				"name,",
+				sanitise ? "0" : "added_on", ","
+				"dir,"
+				"mimetype,"
+				sanitise ? "1" : "user", ","
+				"size,"
+				"duration,"
+				"IFNULL(sha256,'" NULL256 "'),"
+				"IFNULL(md5,'" NULL128 "'),"
+				"IFNULL(md5_of_path,'" NULL128 "'),"
+				"t_origin,"
+				"title,"
+				"w,"
+				"h,"
+				"views,"
+				"likes,"
+				"dislikes,"
+				"fps,"
+				"description,"
+				"status,"
+				"latitude,"
+				"longitude "
+			"FROM file "
+			"WHERE id IN(", file_ids, ")"
+		);
+		const char* name, description, sha256, 
+		uint64_t added_on, dir, size, duration, t_origin, 
+		unsigned w, h, views, likes, dislikes, 
+		float fps, 
+		UserIDIntType user;
+		while(this->mysql_assign_next_row(
+	}
+#endif
+	
 	std::string_view parse_qry(const char* s){
 		GET_USER_ID
 		GREYLIST_USERS_WITHOUT_PERMISSION("exec_qry")
@@ -592,6 +636,12 @@ class TagemResponseHandler : public compsky::server::ResponseGeneration {
 		if ((selected_field == sql_factory::selected_field::COUNT) or (selected_field == sql_factory::selected_field::TOTAL_SIZE) or (selected_field == sql_factory::selected_field::TOTAL_VIEWS)){
 			--this->itr;
 			return this->get_buf_as_string_view();
+		}
+		
+		if (selected_field == sql_factory::selected_field::EXPORT_RESULTS){
+			return compsky::server::_r::not_implemented_yet;
+			//this->create_backup_from_file_ids<true>(this->get_buf_as_string_view());
+			//return this->get_buf_as_string_view();
 		}
 		
 		if (row == nullptr)
