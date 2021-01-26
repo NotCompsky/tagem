@@ -28,6 +28,9 @@ function $$$on_document_ready(){
 	$$$child_tags_ls = $$$document_getElementById("children");
 	$$$sibling_tags_ls = $$$document_getElementById("siblings");
 	
+	$$$qry_help = $$$document_getElementById("qry-help");
+	$$$qry_textarea = $$$document_getElementById("qry-textarea");
+	
 	$$$document_getElementById_audio_only = $$$document_getElementById("audio-only");
 	$$$document_getElementById_add_f_backup_ytdl = $$$document_getElementById("add-f-backup-ytdl");
 	$$$document_getElementById_profile_name = $$$document_getElementById("profile-name");

@@ -10,9 +10,15 @@
 // This copyright notice should be included in any copy or substantial copy of the tagem source code.
 // The absense of this copyright notices on some other files in this project does not indicate that those files do not also fall under this license, unless they have a different license written at the top of the file.
 // 
+
 function $$$unhide_qry_help(){
-	$$$unhide('qry-help');
+	$$$unhide_node($$$qry_help);
 }
+
+function $$$toggle_qry_help(){
+	$$$toggle_node($$$qry_help);
+}
+
 function $$$view_qry(s){
 	if(s==="")
 		return $$$unhide_qry_help();
@@ -22,8 +28,8 @@ function $$$view_qry(s){
 			return;
 		}
 		if ($$$is_string(data)){
-			$$$document_getElementById("qry-textarea").innerText = data;
-			$$$unhide("qry-textarea");
+			$$$qry_textarea.innerText = data;
+			$$$unhide_node($$$qry_textarea);
 			return;
 		}
 		switch(s[0]){
