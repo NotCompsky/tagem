@@ -13,6 +13,7 @@ The absense of this copyright notices on some other files in this project does n
 
 #include <compsky/mysql/query.hpp>
 #include <compsky/os/metadata.hpp>
+#include <compsky/ffmpeg/file.hpp>
 #include <pHash.h>
 #include <audiophash.h>
 #include <openssl/sha.h>
@@ -50,7 +51,8 @@ extern "C" {
 namespace _mysql {
 	MYSQL* obj;
 	constexpr static const size_t auth_sz = 512;
-	char auth[auth_sz];
+	char auth_buf[auth_sz];
+	compsky::mysql::MySQLAuth auth;
 }
 
 
@@ -98,7 +100,7 @@ void intercept_exit(int){
 			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
-	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	compsky::mysql::wipe_auth(_mysql::auth_buf, _mysql::auth_sz);
 	
 	exit(0);
 }
@@ -119,31 +121,9 @@ void intercept_abort(int _signal){
 			"WHERE CONCAT(d.full_path, f.name)=\"", _f::esc, '"', CURRENT_FILE_PATH, "\""
 		);
 	
-	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	compsky::mysql::wipe_auth(_mysql::auth_buf, _mysql::auth_sz);
 	
 	exit(1);
-}
-
-
-uint64_t duration_of(const char* fp){
-	uint64_t n = 0;
-	
-	if (avformat_open_input(&av_fmt_ctx, fp, NULL, NULL) != 0){
-		fprintf(logfile,  "Unable to open video file: %s\n",  fp);
-		return 0;
-	}
-	
-	if (avformat_find_stream_info(av_fmt_ctx, NULL) < 0){
-		fprintf(logfile,  "Unknown error processing file: %s\n",  fp);
-		goto cleanup;
-	}
-	
-	n = av_fmt_ctx->duration / 1000000;
-	
-	cleanup:
-	avformat_close_input(&av_fmt_ctx);
-	
-	return n;
 }
 
 
@@ -157,6 +137,9 @@ HASH_TYPE_STRUCT_W_SELECT(MimeType, "mimetype", 1, "(SELECT id FROM mimetype WHE
 HASH_TYPE_STRUCT(QT5_MD5_FLAG, "qt5md5", 0) // Used in KDE for thumbnails. A hash of the file url, rather than the contents.
 HASH_TYPE_STRUCT(Size, "size", 0)
 HASH_TYPE_STRUCT(Duration, "duration", 0)
+HASH_TYPE_STRUCT(Width,  "w", 0)
+HASH_TYPE_STRUCT(Height, "h", 0)
+HASH_TYPE_STRUCT(FFMPEGMeta, "h", 0)
 
 
 struct ManyToMany {
@@ -558,9 +541,18 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 }
 
 template<typename RelationType>
-void save_hash(const Duration file_type_flag,  const char* const hash_name,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
-	const uint64_t hash = duration_of(fp);
-	insert_hashes_into_db<0>(file_type_flag, file_id, dir_id, is_backup_tbl, &hash, hash_name, 1, which_relation);
+void save_hash(const FFMPEGMeta file_type_flag,  const char*,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
+	compsky::ffmpeg::AVFile avfile(fp);
+	
+	const auto duration = avfile.duration();
+	insert_hashes_into_db<0>(Duration(), file_id, dir_id, is_backup_tbl, &duration, "duration", 1, which_relation);
+	
+	if (not avfile.store_video_stream()){
+		const auto w = avfile.width();
+		const auto h = avfile.height();
+		insert_hashes_into_db<0>(Width(),    file_id, dir_id, is_backup_tbl, &w, "w", 1, which_relation);
+		insert_hashes_into_db<0>(Height(),   file_id, dir_id, is_backup_tbl, &h, "h", 1, which_relation);
+	}
 }
 
 
@@ -591,14 +583,14 @@ struct Options {
 	bool recursive;
 	
 	Options()
-	, device_regexp(".")
+	: device_regexp(".")
 	, recursive(false)
 	{}
 };
 
 
 template<typename FileType,  typename String1,  typename String2,  typename RelationType>
-void hash_all_from(const Options opts,  const FileType file_type_flag,  const String1 dir_regexp,  const String2 file_ext_regexp,  const char* const hash_name,  const RelationType& which_relation){
+void hash_all_from(const Options opts,  const FileType file_type_flag,  const String1 dir_regexp,  const String2 file_ext_regexp,  const char* const field_name,  const char* const column_checks,  const RelationType& which_relation){
 	const char* _id;
 	const char* _fp;
 	uint64_t _dir_id;
@@ -621,14 +613,8 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 		"WHERE TRUE "
 		  "AND D.name REGEXP BINARY \"", opts.device_regexp, "\" "
 		  "AND ",
-		which_relation.filter_previously_completed_pre, hash_name, which_relation.filter_previously_completed_post
+		which_relation.filter_previously_completed_pre, column_checks, which_relation.filter_previously_completed_post
 	);
-	if (not is_backup_tbl){
-		compsky::asciify::asciify(
-			itr,
-			" AND f.id NOT IN (SELECT file FROM hash_abortions__", hash_name, ")"
-		);
-	}
 	and_dir_regexp(itr,  dir_regexp);
 	and_name_regexp(itr, file_ext_regexp);
 	compsky::mysql::query_buffer(
@@ -640,13 +626,13 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 	
 	while(compsky::mysql::assign_next_row(RES1, &ROW1, &_id, &_dir_id, &_fp)){
 		try {
-			save_hash(file_type_flag, hash_name, _id, _dir_id, is_backup_tbl, _fp, which_relation);
+			save_hash(file_type_flag, field_name, _id, _dir_id, is_backup_tbl, _fp, which_relation);
 		} catch (...){
 			compsky::mysql::exec(
 				// Remove existing hashes so that file appears in the above result next time
 				_mysql::obj,
 				buf,
-				which_relation.delete_pre, hash_name, which_relation.delete_post, _id
+				which_relation.delete_pre, field_name, which_relation.delete_post, _id
 			);
 		}
 	}
@@ -655,7 +641,8 @@ void hash_all_from(const Options opts,  const FileType file_type_flag,  const St
 
 
 int main(const int argc,  char* const* argv){
-	compsky::mysql::init(_mysql::obj, _mysql::auth, _mysql::auth_sz, getenv("TAGEM_MYSQL_CFG"));
+	compsky::mysql::init_auth(_mysql::auth_buf, _mysql::auth, getenv("TAGEM_MYSQL_CFG"));
+	compsky::mysql::login_from_auth(_mysql::obj, _mysql::auth);
 	
 	Options opts;
 	do {
@@ -683,7 +670,7 @@ int main(const int argc,  char* const* argv){
 				"			Hash files whose names (not full paths) match the regexp\n"
 				"	HASH_TYPES a concatenation of any of\n"
 				"		a	Audio\n"
-				"		d	Duration\n"
+				"		f	FFMPEG Metadata: Duration, width, height\n"
 				"		i	Image DCT\n"
 				"		v	Video DCT\n"
 				"		s	SHA256\n"
@@ -710,7 +697,6 @@ int main(const int argc,  char* const* argv){
 				++verbosity;
 			case 'L':
 				logfile = fopen(*(++argv), "wb");
-				assert(logfile != nullptr);
 				break;
 			case 'r':
 				custom_regex = *(++argv);
@@ -735,7 +721,7 @@ int main(const int argc,  char* const* argv){
 	constexpr static const MimeType    mimetype_flag;
 	constexpr static const QT5_MD5_FLAG qt5_md5_flag;
 	constexpr static const Size   size_flag;
-	constexpr static const Duration duration_flag;
+	constexpr static const FFMPEGMeta ffmpeg_flag;
 	
 	constexpr static const ManyToMany many_to_many_flag;
 	constexpr static const OneToOne one_to_one_flag;
@@ -745,49 +731,49 @@ int main(const int argc,  char* const* argv){
 		const char c = file_types[i];
 		switch(c){
 			case 'a':
-				hash_all_from(opts,  audio_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", many_to_many_flag);
+				hash_all_from(opts,  audio_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi)$", "audio_hash", "audio_hash", many_to_many_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
-			case 'd':
-				hash_all_from(opts, duration_flag,  "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", one_to_one_flag);
+			case 'f':
+				hash_all_from(opts, ffmpeg_flag,  "^/",  (custom_regex!=nullptr)?custom_regex:"(mp3|webm|mp4|mkv|avi|gif)$", "duration", "duration||f.w||f.h", one_to_one_flag);
 				// WARNING: Ensure ADD_NAME_REGEXP_SZ >= max size of this and similar regexes
 				break;
 			case 'i':
-				hash_all_from(opts,  image_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",   "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  image_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",  "dct_hash", "dct_hash", many_to_many_flag);
 				// many_to_many_flag because they use the same hash as video files.
 				break;
 			case 'v':
-				hash_all_from(opts,  video_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", many_to_many_flag);
+				hash_all_from(opts,  video_flag,    "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "dct_hash", "dct_hash", many_to_many_flag);
 				break;
 			case 's':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  sha256_flag,   "^/",  nullptr, "sha256", one_to_one_flag);
+				hash_all_from(opts,  sha256_flag,   "^/",  nullptr, "sha256", "sha256", one_to_one_flag);
 				break;
 			case 'm':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  md5_flag,      "^/",  nullptr, "md5", one_to_one_flag);
+				hash_all_from(opts,  md5_flag,      "^/",  nullptr, "md5", "md5", one_to_one_flag);
 				break;
 			case 'M':
 				FFMPEG_INPUT_FMT_CTX = avformat_alloc_context();
 				if(unlikely(FFMPEG_INPUT_FMT_CTX==nullptr))
 					abort();
-				hash_all_from(opts,  mimetype_flag,   "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "mimetype", one_to_one_flag);
+				hash_all_from(opts,  mimetype_flag,   "^/",  (custom_regex!=nullptr)?custom_regex:"(gif|webm|mp4|mkv|avi)$", "mimetype", "mimetype", one_to_one_flag);
 				break;
 			case 'p':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  qt5_md5_flag,  "^/",     nullptr, "md5_of_path", one_to_one_flag);
+				hash_all_from(opts,  qt5_md5_flag,  "^/",     nullptr, "md5_of_path", "md5_of_path", one_to_one_flag);
 				break;
 			case 'S':
 				if(custom_regex!=nullptr)
 					abort();
-				hash_all_from(opts,  size_flag,     "^/",  nullptr, "size", one_to_one_flag);
+				hash_all_from(opts,  size_flag,     "^/",  nullptr, "size", "size", one_to_one_flag);
 				break;
 		}
 	}
 	static_assert(MAX_HASH_NAME_LENGTH == 10);
 	
-	compsky::mysql::wipe_auth(_mysql::auth, _mysql::auth_sz);
+	compsky::mysql::wipe_auth(_mysql::auth_buf, _mysql::auth_sz);
 }
