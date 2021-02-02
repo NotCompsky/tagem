@@ -159,10 +159,10 @@ function $$$display_sibling_tags(_tag_id){
 }
 
 // Functions used in HTML
-function $$$add_related_tags(rel1,rel2,reversed,relfn){
+function $$$add__or_rm_related_tags(add_or_rm,rel1,rel2,reversed,relfn){
 	const tagselect = $$$document_getElementById('tagselect-self-'+rel1);
 	$$$ajax_POST_w_text_response(
-		"/t/"+rel2+"/" + (
+		`/t/${rel2}${add_or_rm}/` + (
 			reversed
 			? ($$$select3__get_csv(tagselect) + "/" + $$$get_tag_ids())
 			: ($$$get_tag_ids() + "/" + $$$select3__get_csv(tagselect))
@@ -177,6 +177,12 @@ function $$$add_related_tags(rel1,rel2,reversed,relfn){
 		}
 	);
 }
+function $$$add_related_tags(rel1,rel2,reversed,relfn){
+	$$$add__or_rm_related_tags("+",rel1,rel2,reversed,relfn);
+}
+function $$$rm_related_tags(rel1,rel2,reversed,relfn){
+	$$$add__or_rm_related_tags("-",rel1,rel2,reversed,relfn);
+}
 function $$$add_child_tags(){
 	$$$add_related_tags('c','p',1,$$$display_child_tags);
 }
@@ -185,6 +191,15 @@ function $$$add_sibling_tags(){
 }
 function $$$add_parent_tags(){
 	$$$add_related_tags('p','p',0,$$$display_parent_tags);
+}
+function $$$rm_child_tags(){
+	$$$rm_related_tags('c','p',1,$$$display_child_tags);
+}
+function $$$rm_sibling_tags(){
+	$$$rm_related_tags('s','s',0,$$$display_sibling_tags);
+}
+function $$$rm_parent_tags(){
+	$$$rm_related_tags('p','p',0,$$$display_parent_tags);
 }
 
 function $$$update_tag_thumb(){

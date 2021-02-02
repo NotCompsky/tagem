@@ -95,6 +95,11 @@ The absense of this copyright notices on some other files in this project does n
 		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "\">" BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
 	"</div>"
 
+#define CREATE_TAG_SELECT_W_ADD_AND_REMOVE_BTNS(r, data, elem) \
+	CREATE_TAG_SELECT_WO_BTN__UNCLOSED(BOOST_PP_TUPLE_ELEM(0, elem)) \
+		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(2, elem) "()\">Add " BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+		"<button id=\"" BOOST_PP_TUPLE_ELEM(0, elem) "-btn\" onclick=\"" BOOST_PP_TUPLE_ELEM(3, elem) "()\">Remove " BOOST_PP_TUPLE_ELEM(1, elem) "</button>" \
+	"</div>"
 
 "<!DOCTYPE html>"
 "<html lang=\"en\">"
@@ -461,7 +466,11 @@ BOOST_PP_SEQ_FOR_EACH(CREATE_MENU_ITEM, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
 	"</div>"
 "</div>"
 
-BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(("tagselect-self-p","Add Parent Tags",MINIMISED_JS_DECL_add_parent_tags"()")("tagselect-self-c","Add Child Tags",MINIMISED_JS_DECL_add_child_tags"()")("tagselect-self-s","Add Sibling Tags",MINIMISED_JS_DECL_add_sibling_tags"()")))
+BOOST_PP_SEQ_FOR_EACH(CREATE_TAG_SELECT_W_ADD_AND_REMOVE_BTNS, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(
+	("tagselect-self-p","Parent Tags",MINIMISED_JS_DECL_add_parent_tags,MINIMISED_JS_DECL_rm_parent_tags)
+	("tagselect-self-c","Child Tags",MINIMISED_JS_DECL_add_child_tags,MINIMISED_JS_DECL_rm_child_tags)
+	("tagselect-self-s","Sibling Tags",MINIMISED_JS_DECL_add_sibling_tags,MINIMISED_JS_DECL_rm_sibling_tags)
+))
 
 "<div id=\"user-info\">"
 	"<h3 id=\"user-fullname\"></h3>"

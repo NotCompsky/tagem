@@ -120,11 +120,11 @@ POST /x/c/rm/>
 	return this->external_cmnt_rm(++str)
 POST /t/c-/>
 	return this->post__rm_children_from_tags(++str)
-POST /t/p/>
+POST /t/p+/>
 	return this->post__add_parents_to_tags(++str)
 POST /t/p-/>
 	return this->post__rm_parents_from_tags(++str)
-POST /t/s/>
+POST /t/s+/>
 	return this->post__add_siblings_to_tags(++str)
 POST /t/s-/>
 	return this->post__rm_siblings_from_tags(++str)
