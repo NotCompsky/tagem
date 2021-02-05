@@ -42,6 +42,7 @@ var x;
 var mt; // mimetypes
 var f2; // CSV of file2 variable names that needs to be split into an array
 var $$$f2_as_array;
+var $$$f2_for_select3;
 var $$$yt_player;
 
 // User options stored in localStorage

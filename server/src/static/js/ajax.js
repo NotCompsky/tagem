@@ -24,12 +24,10 @@ function $$$ajax(mthd,resp_type,url,fn){
 			credentials:"include",
 			headers:headers,
 		}
-	).then(r => {
-		if(!r.ok){
-			$$$err_alert();
-			throw Error(`Server returned ${r.status}: ${r.statusText}`);
-		}
-		fn(r);
+	).then(r => r.text().then(fn))
+	.catch(function(){
+		$$$err_alert();
+		throw Error(`Server returned ${r.status}: ${r.statusText}`);
 	});
 }
 function $$$ajax_w_JSON_response(mthd,url,fn){
@@ -58,8 +56,7 @@ function $$$ajax_data_w_err(mthd,url,resp_type,data,succ,err){
 			credentials:"include",
 			headers:headers,
 		}
-	).then(r => r.body)
-	.then(succ)
+	).then(r => r.text().then(succ))
 	.catch(err);
 }
 

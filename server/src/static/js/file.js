@@ -147,9 +147,8 @@ function $$$set_embed_html(_dir_id, _mimetype, _file_name){
 				break;
 			case 'text':
 				$$$ajax_GET_w_text_response(src,function(data){
-					const x = $$$text_edit;
-					x.innerText = data;
-					$$$unhide_node(x);
+					$$$text_edit.innerText = data;
+					$$$unhide_node($$$text_edit);
 					$$$unhide('text-editor');
 				});
 				break;
