@@ -203,7 +203,7 @@ const char* tbl_full_name(const char tbl_alias){
 }
 
 static
-const char tbl_arg_to_alias(const arg::ArgType arg){
+char tbl_arg_to_alias(const arg::ArgType arg){
 	switch(arg){
 		case arg::era:
 			return 'e';
@@ -239,7 +239,8 @@ const char* get_tbl_name_of_join_in_ersatz_many_to_one(const char* const attribu
 				return "file2tag";
 			case 'd':
 				return "file";
-			case 'D':
+			default:
+				// i.e. case 'D':
 				return "dir";
 		}
 	//}
@@ -342,15 +343,6 @@ const char* get_tbl_name_from_attr_name(const char* const attribute_name){
 static
 attribute_value_kind::AttributeValueKind get_attribute_value_kind(const char* const attribute_name){
 	return (false BOOST_PP_SEQ_FOR_EACH(X, _, (DIR)(DURATION)(ID)(SIZE)(ERSATZ_SIZE)(STATUS)(T_ORIGIN)(T_RECORDED)(WIDTH)(HEIGHT)(LIKES)(DISLIKES)(FPS)(VIEWS)(LIKES))) ? attribute_value_kind::integer : attribute_value_kind::string;
-}
-
-static
-size_t go_to_next(const char*& qry,  const char c){
-	// NOTE: *qry == c
-	size_t n = 0;
-	while(*(++qry) != c)
-		++n;
-	return n;
 }
 
 template<typename Int>
@@ -486,7 +478,6 @@ successness::ReturnType process_name_list(std::string& where,  const char tbl_al
 	log("process_name_list ", tbl_alias, qry);
 	const size_t where_length_orig = where.size();
 	where += " REGEXP BINARY "; // This is overwritten with " IN (   " if there is only one value in this list
-	const char* qry_begin = qry;
 	unsigned n_elements = 0;
 	while(true){
 		switch(*(++qry)){
