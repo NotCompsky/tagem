@@ -20,6 +20,7 @@ A single page application, with associated command-line utilities, for the rapid
 
 ## Features
 
+* **Supports most common file formats**
 * **Hashing** of local files.
   * Hashes include MD5, SHA256, and DCT (visual hashing of images and video).
   * These hashes can be used in `qry` to facilitate fast manual de-duplication.
@@ -57,10 +58,14 @@ A single page application, with associated command-line utilities, for the rapid
 * **file2 values**
   * Files can be assigned arbitrary values, currently integers and datetimes.
   * For instance, you could have a `Score` attribute for each user to assign to files.
-* **Extensive permissions system**
+* **Permissions system**
   * Different users can be assigned different blocklists of tags, and will not be able to view any era/file/directory/device with such a tag, or a descendant of such a tag.
   * Different users can have different allowed actions, such as viewing files, editing tags, creating eras, assigning tags, and adding files.
   * A big caveat here is that **the login system is currently only a placeholder** - it does not yet even ask for a password.
+* **Low footprint**
+  * Almost all executed JavaScript was written by hand - only one 3rd party library is loaded
+  * On Firefox, each page consumes 10-15MB - comparable to a Google search results page
+  * The CSS is designed to avoid unnecessarily moving parts
 
 ## Demonstration
 
