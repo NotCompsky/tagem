@@ -12,12 +12,17 @@ option(USE_LOCAL_YT_JS "Use local Youtube JavaScript file at static/js/3rd-party
 option(MONKEYPATCH_MY_SHA512 "Only for static builds. Linking against MariaDB requires this function to be defined, even though it is not used at all" ON)
 option(ENABLE_SPREXER "Enables the info-extractor, which grabs information such as timestamp, author, title from web pages. Requires lexbor to be installed." ON)
 option(ENABLE_CURL "Use libcurl instead of custom client based on boost::asio. This allows for downloading files from non-HTTP protocols, such as ftp" ON)
+option(VERBOSE_COMPILATION "For developers. Enables more compiler warnings" OFF)
 set(MAX_CACHE_AGE "0" CACHE STRING "Maximum age - in seconds - of the HTML and AJAX in the browser cache")
 set(TABLE_LIMIT "100" CACHE STRING "Maximum number of entries in file, tag, dir tables")
 set(DNS_OVER_HTTPS_CLIENT_URL "" CACHE STRING "URL of the web page to request DNS over HTTPS - e.g. https://cloudflare-dns.com/dns-query")
 set(N_THREADS "4" CACHE STRING "Number of threads the server will spawn")
 set(HANDLER_BUF_SZ "11534336" CACHE STRING "Size of the buffer given to each handler - the default is 11MiB")
 set(N_SELECT3_OPTS "20" CACHE STRING "Number of options to display for tag/dir/etc queries from 'select3' inputs")
+
+if(VERBOSE_COMPILATION)
+	add_compile_options(-Wall -Wextra -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wrestrict -Wnull-dereference -Wold-style-cast -Wdouble-promotion -Wconversion -Wsign-conversion -Wno-implicit-fallthrough -Wno-unused-parameter)
+endif()
 
 if(MANGLE_JS_NAMES)
 	set(MANGLE_JS_NAMES_ARGS "--mangle")
