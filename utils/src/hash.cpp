@@ -129,6 +129,7 @@ void intercept_abort(int _signal){
 
 /* For function overloading */
 HASH_TYPE_STRUCT(Image, "image", 0)
+HASH_TYPE_STRUCT(ImageDim, "h", 0)
 HASH_TYPE_STRUCT(Video, "video", 0)
 HASH_TYPE_STRUCT(Audio, "audio", 0)
 HASH_TYPE_STRUCT(SHA256_FLAG, "sha256", 0)
@@ -541,7 +542,7 @@ void save_hash(const Audio file_type_flag,  const char* const hash_name,  const 
 }
 
 template<typename RelationType>
-void save_hash(const FFMPEGMeta file_type_flag,  const char*,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
+void save_hash(const FFMPEGMeta,  const char*,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
 	compsky::ffmpeg::AVFile avfile(fp);
 	
 	const auto duration = avfile.duration();
@@ -553,6 +554,17 @@ void save_hash(const FFMPEGMeta file_type_flag,  const char*,  const char* const
 		insert_hashes_into_db<0>(Width(),    file_id, dir_id, is_backup_tbl, &w, "w", 1, which_relation);
 		insert_hashes_into_db<0>(Height(),   file_id, dir_id, is_backup_tbl, &h, "h", 1, which_relation);
 	}
+}
+
+template<typename RelationType>
+void save_hash(const ImageDim,  const char*,  const char* const file_id,  const uint64_t dir_id,  const bool is_backup_tbl,  const char* const fp,  const RelationType which_relation){
+	CImg<unsigned char> img(fp);
+	
+	const unsigned w = img.width();
+	const unsigned h = img.height();
+	
+	insert_hashes_into_db<0>(Width(),  file_id, dir_id, is_backup_tbl, &w, "w", 1, which_relation);
+	insert_hashes_into_db<0>(Height(), file_id, dir_id, is_backup_tbl, &h, "h", 1, which_relation);
 }
 
 
@@ -678,6 +690,7 @@ int main(const int argc,  char* const* argv){
 				"		M	Mime Type\n"
 				"		p	Qt5 MD5 (for thumbnails)\n"
 				"		S	Size\n"
+				"		w	Width and Height of images\n"
 			);
 			return 1;
 		}
@@ -714,6 +727,7 @@ int main(const int argc,  char* const* argv){
 	av_fmt_ctx = avformat_alloc_context();
 	
 	constexpr static const Image  image_flag;
+	constexpr static const ImageDim image_dim_flag;
 	constexpr static const Video  video_flag;
 	constexpr static const Audio  audio_flag;
 	constexpr static const SHA256_FLAG sha256_flag;
@@ -771,6 +785,8 @@ int main(const int argc,  char* const* argv){
 					abort();
 				hash_all_from(opts,  size_flag,     "^/",  nullptr, "size", "size", one_to_one_flag);
 				break;
+			case 'w':
+				hash_all_from(opts,  image_dim_flag,  "^/",  (custom_regex!=nullptr)?custom_regex:"(png|jpe?g|webp|bmp)$",  "h", "w||f.h", one_to_one_flag);
 		}
 	}
 	static_assert(MAX_HASH_NAME_LENGTH == 10);
